@@ -1,0 +1,392 @@
+from __future__ import annotations
+from enum import Enum, unique
+import json
+from inspect import stack
+
+__all__ = ["InterpreterException", "RS274Interpreter"]
+
+@unique
+class CoordinateMode(Enum):
+    Undefined = -1
+    AbsoluteMode = 0 # G90
+    IncrementMode = 1 # G91
+
+@unique
+class MotionMode(Enum):
+    Undefined = -1
+    G00 = 0
+    G01 = 1
+
+# 指令类型枚举
+@unique
+class CommandType(Enum):
+    Undefined = -1
+    G00MotionCommand = 0 # g00
+    G01MotionCommand = 1 # g01
+    CoordinateModeCommand = 2 # g90 g91
+    CoordinateIndexCommand = 3 # g54, g55, etc.
+    EleparamSetCommand = 4 # e001
+    FeedSpeedSetCommand = 5 # f1000
+    DelayCommand = 6 # g04t5
+    PauseCommand = 98 # m00
+    ProgramEndCommand = 99 # m02
+
+# 输出的命令字典(json)中的可用key
+@unique
+class CommandDictKey(Enum): 
+    Undefined = -1
+    CommandType = 0
+    CoordinateMode = 1
+    CoordinateIndex = 2
+    MotionMode = 3
+    Coordinates = 4
+    LineNumber = 5
+    EleparamIndex = 6
+    FeedSpeed = 7
+    DelayTime = 8
+
+def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
+    output = ""
+    for line in input.splitlines():
+        output += prefix
+        output += line
+        output += "\n"
+    
+    return output
+
+class InterpreterException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        if (len(args) > 0 and isinstance(args[0], str)):
+            self.error_info = args[0]
+        else:
+            self.error_info = 'Unknown Error'
+            
+        # self.error_info = _add_prefix_to_each_line_of_str(self.error_info, "**   ")
+    def __str__(self) -> str:
+        return self.error_info
+
+class Environment(object):
+    def __init__(self) -> None:
+        self.__coordinate_mode = CoordinateMode.Undefined # 坐标绝对、增量模式
+        self.__motion_mode = MotionMode.Undefined # 运动模式G00 G01等
+        self.__coordinate_index = -1 # 当前使用的坐标系序号
+        self.__program_end_flag = False # 程序结束标志, 有此标志后应当不再解释后续指令
+        
+    def set_coordinate_mode(self, mode : CoordinateMode) -> None:
+        assert(isinstance(mode, CoordinateMode))
+        self.__coordinate_mode = mode
+    def get_coordinate_mode(self) -> CoordinateMode:
+        return self.__coordinate_mode
+    
+    def set_motion_mode(self, mode : MotionMode) -> None:
+        assert(isinstance(mode, MotionMode))
+        self.__motion_mode = mode
+    def get_motion_mode(self) -> MotionMode:
+        return self.__motion_mode
+    
+    def set_coordinate_index(self, index : int) -> None:
+        assert(isinstance(index, (int, float)))
+        self.__coordinate_index = index
+    def get_coordinate_index(self) -> int:
+        return self.__coordinate_index
+    
+    def set_program_end_flag(self) -> None:
+        self.__program_end_flag = True
+    def is_program_end(self) -> bool:
+        return self.__program_end_flag
+    
+def _get_caller_linenumber(layer = 1) -> int:
+    return stack()[1 + layer].lineno
+
+def _get_caller_code(layer = 1) -> str:
+    return stack()[1 + layer].code_context[0][:-1]
+
+def _get_stackmessage(layer = 1) -> str:
+    # call_linenum = currentframe().f_back.f_back.f_lineno
+    call_linenum = _get_caller_linenumber(layer + 1)
+    call_code = _get_caller_code(layer + 1)
+    # stack_message = f"In Line {call_linenum}:\n{call_code}"
+    stack_message = f"(line {call_linenum}): {call_code}"
+    
+    return stack_message
+
+class RS274Interpreter(object):
+    def __init__(self) -> None:
+        self.__g_environment = Environment() # 初始化解释器全局环境
+        self.__g_command_list = [] # 解释出的command列表
+        
+    # 检查环境是否valid, 在输出运动指令时调用, 以防止未定义的模式
+    def _assert_environment_valid(self) -> None:
+        if (self.__g_environment.get_coordinate_mode() == CoordinateMode.Undefined):
+            raise InterpreterException("CoordinateMode Undefined " + _get_stackmessage(2))
+
+        if (self.__g_environment.get_motion_mode() == MotionMode.Undefined):
+            raise InterpreterException("MotionMode Undefined " + _get_stackmessage(2))
+        
+        if (self.__g_environment.get_coordinate_index() == -1):
+            raise InterpreterException("Coordinate Not Set " + _get_stackmessage(2))
+        elif (self.__g_environment.get_coordinate_index() < 0): # TODO 坐标系index检测合法
+            raise InterpreterException(f"Coordinate Index ({self.__g_environment.get_coordinate_index()}) not valid " + _get_stackmessage(2))
+    
+    # 设置绝对坐标模式
+    def g90(self) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        self.__g_environment.set_coordinate_mode(CoordinateMode.AbsoluteMode)
+        command = {
+            CommandDictKey.CommandType.name: CommandType.CoordinateModeCommand.name,
+            CommandDictKey.CoordinateMode.name: CoordinateMode.AbsoluteMode.name,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+    
+    # 设置相对坐标模式
+    def g91(self) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        self.__g_environment.set_coordinate_mode(CoordinateMode.IncrementMode)
+        command = {
+            CommandDictKey.CommandType.name: CommandType.CoordinateModeCommand.name,
+            CommandDictKey.CoordinateMode.name: CoordinateMode.IncrementMode.name,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+
+    # 延时
+    def g04(self, t : int) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        if (not isinstance(t, int)):
+            raise InterpreterException(f"Delay Time type invalid: {type(t)} " + _get_stackmessage())
+        
+        if (t < 0):
+            raise InterpreterException(f"Delay Time ({t}) Out of Range " + _get_stackmessage())
+        
+        command = {
+            CommandDictKey.CommandType.name: CommandType.DelayCommand.name,
+            CommandDictKey.DelayTime.name: t,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+    
+    # 设置电参数号
+    def e(self, index : int) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        if (not isinstance(index, int)):
+            raise InterpreterException(f"Eleparam Index type invalid: {type(index)} " + _get_stackmessage())
+        
+        if (index < 0):
+            raise InterpreterException(f"Eleparam Index ({index}) Out of Range " + _get_stackmessage())
+        
+        command = {
+            CommandDictKey.CommandType.name: CommandType.EleparamSetCommand.name,
+            CommandDictKey.EleparamIndex.name: index,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+    
+    # 设置坐标轴序号指令
+    def _command_set_coordinate_index(self, index : int) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        self.__g_environment.set_coordinate_index(index)
+        command = {
+            CommandDictKey.CommandType.name: CommandType.CoordinateIndexCommand.name,
+            CommandDictKey.CoordinateIndex.name: index,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(2) # indirect call
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+    
+    def g53(self) -> RS274Interpreter:
+        return self._command_set_coordinate_index(53)
+    def g54(self) -> RS274Interpreter:
+        return self._command_set_coordinate_index(54)
+    def g55(self) -> RS274Interpreter:
+        return self._command_set_coordinate_index(55)
+    def g56(self) -> RS274Interpreter:
+        return self._command_set_coordinate_index(56)
+    # TODO 其他坐标系指定
+    
+    # 程序结束指令
+    def m02(self) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        self.__g_environment.set_program_end_flag()
+        command = {
+            CommandDictKey.CommandType.name: CommandType.ProgramEndCommand.name,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+    
+    # 暂停指令
+    def m00(self) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        command = {
+            CommandDictKey.CommandType.name: CommandType.PauseCommand.name,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+
+    @staticmethod
+    def _get_coordinate_dict(x: float = None, y: float = None, z: float = None, a: float = None, b: float = None, c: float = None) -> dict:
+        coordinates = {}
+        if (x is not None):
+            if(not isinstance(x, (int, float))):
+                raise InterpreterException(f"Coordinate Value Type Not Valid: x, {type(x)} " + _get_stackmessage(2))
+            coordinates["x"] = x
+        else:
+            coordinates["x"] = None
+        
+        if (y is not None):
+            if(not isinstance(y, (int, float))):
+                raise InterpreterException(f"Coordinate Value Type Not Valid: y, {type(y)} " + _get_stackmessage(2))
+            coordinates["y"] = y
+        else:
+            coordinates["y"] = None
+            
+        if (z is not None):
+            if(not isinstance(z, (int, float))):
+                raise InterpreterException(f"Coordinate Value Type Not Valid: z, {type(z)} " + _get_stackmessage(2))
+            coordinates["z"] = z
+        else:
+            coordinates["z"] = None
+            
+        # TODO a b c
+        
+        return coordinates
+
+    # G01普通直线加工指令
+    def g01(self, x: float = None, y: float = None, z: float = None, a: float = None, b: float = None, c: float = None) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        self.__g_environment.set_motion_mode(MotionMode.G01)
+        self._assert_environment_valid()
+        command = {
+            CommandDictKey.CommandType.name: CommandType.G01MotionCommand.name,
+            CommandDictKey.CoordinateMode.name: self.__g_environment.get_coordinate_mode().name,
+            CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
+            CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        coordinates = self._get_coordinate_dict(x, y, z, a, b, c)
+        
+        command[CommandDictKey.Coordinates.name] = coordinates
+            
+        self.__g_command_list.append(command)
+        return self
+    
+    # G00快速直线运动
+    def g00(self, x: float = None, y: float = None, z: float = None, a: float = None, b: float = None, c: float = None) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        self.__g_environment.set_motion_mode(MotionMode.G00)
+        self._assert_environment_valid()
+        command = {
+            CommandDictKey.CommandType.name: CommandType.G00MotionCommand.name,
+            CommandDictKey.CoordinateMode.name: self.__g_environment.get_coordinate_mode().name,
+            CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
+            CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        coordinates = self._get_coordinate_dict(x, y, z, a, b, c)
+        
+        command[CommandDictKey.Coordinates.name] = coordinates
+            
+        self.__g_command_list.append(command)
+        return self
+    
+    # 进给率F设定
+    def f(self, speed : int) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        if (not isinstance(speed, int)):
+            raise InterpreterException(f"Feed Speed Type Not Valid: {type(speed)} " + _get_stackmessage())
+        
+        if (speed <= 0):
+            raise InterpreterException(f"Feed Speed Value ({speed}) Out of Range " + _get_stackmessage())
+        
+        command = {
+            CommandDictKey.CommandType.name: CommandType.EleparamSetCommand.name,
+            CommandDictKey.FeedSpeed.name: speed,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+
+    # 获取已解析的命令列表
+    def get_command_list(self) -> list:
+        return self.__g_command_list
+
+    # 获取命令列表的json字符串形式
+    def get_command_list_jsonstr(self) -> str:
+        return json.dumps(self.__g_command_list, indent=2, ensure_ascii=False)
+
+    # def reset(self) -> None:
+    #     self.__init__()
+        
+
+def _test():
+    i = RS274Interpreter()
+    
+    try :
+        i.g54()
+        i.g90()
+        i.g01(x=1, z=2)
+        i.m00()
+        i.g01(x=2)
+        i.e(11)
+        # i.e(-1)
+        i.f(-1)
+        i.g00(y=1)
+        
+        return i
+        
+    except Exception as e:
+        print(f"exception: {e}")
+        exit(0)    
+
+if __name__ == "__main__":
+    
+    i = _test()
+        
+    j = i.get_command_list_jsonstr()
+    print(j)
+    print(type(j))
+    # print(type(CoordinateMode))
+    print(CoordinateMode.AbsoluteMode.name)
+    # print(CoordinateMode.AbsoluteMode.AbsoluteMode)
+    
+    d = json.loads(j)
+    # print(d[1]['y'] is None)
+    
+    print(isinstance(MotionMode.G01, MotionMode))
