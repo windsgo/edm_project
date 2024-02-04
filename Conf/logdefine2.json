@@ -1,0 +1,31 @@
+{
+    "log_thread_pool": {
+        "size": 65535,
+        "thread_count": 1
+    },
+    "loggers": [
+        {
+            "name": "motion",
+            "async_mode": true,
+            "async_policy": "block",
+            "level": "trace",
+            "sinks": [
+                {
+                    "type": "file",
+                    "level": "warn",
+                    "filename": "motion.log",
+                    "multi_thread": false,
+                    "format": "[%T.%e]--> [%n] [%l] %v",
+                    "max_size": 10485760,
+                    "max_files": 5,
+                    "rotate_on_open": true
+                },
+                {
+                    "type": "stdout",
+                    "level": "debug",
+                    "multi_thread": false
+                }
+            ]
+        }
+    ]
+}

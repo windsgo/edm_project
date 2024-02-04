@@ -12,6 +12,10 @@ else()
     message(STATUS "CMAKE_BUILD_TYPE is set to ${CMAKE_BUILD_TYPE}")
 endif()
 
+## config
+add_definitions(-DEDM_ROOT_DIR="${PROJECT_SOURCE_DIR}")
+
+## libs
 # fmt library
 set(fmt_DIR ${PROJECT_SOURCE_DIR}/third_party/fmt/lib/cmake/fmt)
 find_package(fmt REQUIRED)
@@ -28,14 +32,17 @@ find_package(Boost COMPONENTS python REQUIRED)
 # spdlog
 # list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # include(spdlog)
+set(SPDLOG_BUILD_PIC ON)
 add_subdirectory(third_party/spdlog)
 
 ## Project
 set(PROJECT_SOURCES
     Interpreter/rs274pyInterpreter/src/RS274InterpreterWrapper.cpp
     Logger/LogManager.cpp
+    Logger/LogDefine.cpp
 )
 set(PROJECT_INCLUDE_DIRS
+    ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/Interpreter/rs274pyInterpreter/include  
     ${PROJECT_SOURCE_DIR}/Logger
 )

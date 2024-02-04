@@ -55,12 +55,13 @@ int main(int argc, char **argv) {
     const char* filename = argv[1];
     const char* module_path = argv[2];
 #else
-    const char *filename =
-        "/home/windsgo/Documents/project/tests/Interpreter/pytest/test1.py";
-    const char *filename2 =
-        "/home/windsgo/Documents/project/tests/Interpreter/pytest/test2.py";
-    const char *module_path = "/home/windsgo/Documents/project/Interpreter/"
-                              "rs274pyInterpreter/pymodule/";
+    const char *filename = "/home/windsgo/Documents/edmproject/edm_project/"
+                           "tests/Interpreter/pytest/test1.py";
+    const char *filename2 = "/home/windsgo/Documents/edmproject/edm_project/"
+                            "tests/Interpreter/pytest/test2.py";
+    const char *module_path =
+        "/home/windsgo/Documents/edmproject/edm_project/Interpreter/"
+        "rs274pyInterpreter/pymodule/";
 #endif
     for (int i = 0; i < 1; ++i) {
         test(filename, module_path);

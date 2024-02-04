@@ -2,8 +2,12 @@ build
 build/**
 .vscode
 .vscode/**
-*.txt
+__pycache__
+
+*.log
+
 *.json
+!Conf/*.json
 
-
+*.txt
 !CMakeLists.txt
