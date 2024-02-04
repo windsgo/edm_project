@@ -245,14 +245,14 @@ static void test_log() {
 
 #include "LogMacro.h"
 #include "LogManager.h"
-EDM_STATIC_LOGGER(s_motion_logger, "motion");
+EDM_STATIC_LOGGER_NAME(s_motion_logger, "motion");
+EDM_STATIC_LOGGER(s_root_logger, EDM_LOGGER_ROOT());
 static void test_log_manager() {
 
     using namespace edm::log;
     using namespace std::chrono_literals;
 
     auto s_logger = LogManager::instance()->get_logger("motion");
-    auto l1 = LogManager::instance()->get_logger("root");
     auto l2 = LogManager::instance()->get_logger("other");
 
     // std::this_thread::sleep_for(1s);
@@ -263,10 +263,12 @@ static void test_log_manager() {
 
     s_motion_logger->warn("haha");
 
-    l1->warn("111");
+    s_root_logger->warn("111");
     l2->warn("222");
 }
 
+#include <format>
+#include "Tools/Format/edm_format.h"
 int main() {
 
     // test_MyStruct();
@@ -278,6 +280,9 @@ int main() {
     // test_log();
 
     test_log_manager();
+
+    s_motion_logger->debug(std::format("hi std format\n"));
+    s_motion_logger->debug(EDM_FMT::format("hi std format 2\n"));
 
     return 0;
 }

@@ -12,6 +12,8 @@ else()
     message(STATUS "CMAKE_BUILD_TYPE is set to ${CMAKE_BUILD_TYPE}")
 endif()
 
+# set(CMAKE_CXX_COMPILER /usr/bin/g++-13)
+
 ## config
 add_definitions(-DEDM_ROOT_DIR="${PROJECT_SOURCE_DIR}")
 

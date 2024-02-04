@@ -11,6 +11,10 @@
 #include <boost/python/extract.hpp>
 #include <boost/python/import.hpp>
 
+// log
+#include "Logger/LogMacro.h"
+EDM_STATIC_LOGGER_NAME(s_logger, "interp");
+
 // #define DEBUG(str)
 #define DEBUG(str) std::cout << str;
 
@@ -32,14 +36,14 @@ class PythonInterpreterWrapper final {
 public:
     PythonInterpreterWrapper() {
         if (!Py_IsInitialized()) {
-            DEBUG("py initialize\n");
+            s_logger->trace("py initialize");
             Py_Initialize();
         }
     }
 
     ~PythonInterpreterWrapper() {
         if (Py_IsInitialized()) {
-            DEBUG("py finalize\n");
+            s_logger->trace("py finalize");
             Py_Finalize();
         }
     }
@@ -96,11 +100,11 @@ public:
     friend class RS274InterpreterWrapper;
 
     RS274InterpreterWrapperImpl() noexcept {
-        DEBUG("RS274InterpreterWrapperImpl ctor\n");
+        s_logger->trace("RS274InterpreterWrapperImpl ctor");
     }
 
     ~RS274InterpreterWrapperImpl() noexcept {
-        DEBUG("RS274InterpreterWrapperImpl dtor\n");
+        s_logger->trace("RS274InterpreterWrapperImpl dtor");
     }
 
     ::std::string parse_file_to_str(std::string_view filename);
@@ -192,7 +196,7 @@ RS274InterpreterWrapperImpl::parse_file_to_str(std::string_view filename) {
         return command_list_json_str;
 
     } catch (const bp::error_already_set &) {
-        DEBUG("error occured\n");
+        s_logger->error("parse_file_to_str error occured");
 
         handle_py_exception_and_throw();
 
@@ -279,6 +283,7 @@ void RS274InterpreterWrapperImpl::handle_py_exception_and_throw() {
                 err_value_str +=
                     " *(" + file_str + ", line " + std::to_string(line) + ")";
             } catch (const bp::error_already_set &) {
+                s_logger->error("exception in pyerror handle");
                 PyErr_Print();
             }
         }

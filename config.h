@@ -5,4 +5,6 @@
 
 #define EDM_LOG_CONFIG_FILE EDM_CONFIG_DIR "logdefine.json"
 
+#if __GNUC__ < 13 // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format
+#endif
