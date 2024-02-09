@@ -38,6 +38,11 @@ find_package(Boost COMPONENTS python REQUIRED)
 add_subdirectory(third_party/spdlog)
 target_compile_options(spdlog PRIVATE -fPIC)
 
+# soem
+add_subdirectory(third_party/SOEM-1.4.0)
+target_compile_options(soem PRIVATE -fPIC)
+set(SOEM_INCLUDE_DIRS third_party/SOEM-1.4.0/soem/ third_party/SOEM-1.4.0/osal/ third_party/SOEM-1.4.0/osal/linux/ third_party/SOEM-1.4.0/oshw/linux/)
+
 ## Project
 set(PROJECT_SOURCES
     Src/Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.cpp
@@ -49,6 +54,7 @@ set(PROJECT_SOURCES
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)
+include_directories(${SOEM_INCLUDE_DIRS})
 
 add_library(edm SHARED ${PROJECT_SOURCES})
 target_link_libraries(edm PUBLIC 
@@ -56,6 +62,7 @@ target_link_libraries(edm PUBLIC
     fmt::fmt 
     Boost::python 
     Python3::Python
+    soem
 )
 
 add_subdirectory(tests)

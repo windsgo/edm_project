@@ -2,6 +2,10 @@
 
 #include "config.h"
 
+#ifdef EDM_ECAT_DRIVER_SOEM
+#include "ethercat.h"
+#endif // EDM_ECAT_DRIVER_SOEM
+
 namespace edm {
 
 namespace ecat {
@@ -15,28 +19,30 @@ EcatManager::EcatManager(std::size_t iomap_size, uint32_t servo_num,
 
 EcatManager::~EcatManager() { delete[] iomap_; }
 
-bool EcatManager::connect_ecat(uint32_t max_try_times) { 
+bool EcatManager::connect_ecat(uint32_t max_try_times) {
     // TODO ec things
-    return false; 
+    return false;
 }
 
 void EcatManager::ecat_sync() {
-    // TODO ec things ...
+    int wkc;
 #ifdef EDM_ECAT_DRIVER_SOEM
-    // send ... 
-    // recv ...
-#endif // EDM_ECAT_DRIVER_SOEM
+    ec_send_processdata();
+    wkc = ec_receive_processdata(200); // at most 200 us
+#endif                                 // EDM_ECAT_DRIVER_SOEM
 
-    // wkc ...
     const uint32_t expected_wkc = (servo_num_ + io_num_) * 3;
-    // if wkc < expected wkc
-    wkc_failed_sc.push_back_valid(); 
-    // or 
-    wkc_failed_sc.push_back_invalid();
+    if (wkc < expected_wkc) {
+        wkc_failed_sc.push_back_valid();
+    } else {
+        wkc_failed_sc.push_back_invalid();
+    }
 
     if (wkc_failed_sc.valid_rate() > wkc_failed_threshold) {
         connected_ = false;
-        // ec_close() ... 
+#ifdef EDM_ECAT_DRIVER_SOEM
+        ec_close();
+#endif // EDM_ECAT_DRIVER_SOEM
     }
 }
 
