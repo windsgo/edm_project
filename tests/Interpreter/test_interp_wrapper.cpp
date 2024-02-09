@@ -1,5 +1,4 @@
-#include "RS274InterpreterWrapper.h"
-#include "fmt/format.h"
+#include "Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.h"
 #include <iostream>
 
 static void test(const char *filename, const char *module_path) {
@@ -55,12 +54,12 @@ int main(int argc, char **argv) {
     const char* filename = argv[1];
     const char* module_path = argv[2];
 #else
-    const char *filename = "/home/windsgo/Documents/edmproject/edm_project/"
+    const char *filename = EDM_ROOT_DIR
                            "tests/Interpreter/pytest/test1.py";
-    const char *filename2 = "/home/windsgo/Documents/edmproject/edm_project/"
+    const char *filename2 = EDM_ROOT_DIR
                             "tests/Interpreter/pytest/test2.py";
     const char *module_path =
-        "/home/windsgo/Documents/edmproject/edm_project/Interpreter/"
+        EDM_ROOT_DIR "Src/Interpreter/"
         "rs274pyInterpreter/pymodule/";
 #endif
     for (int i = 0; i < 1; ++i) {

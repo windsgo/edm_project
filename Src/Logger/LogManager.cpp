@@ -1,13 +1,14 @@
 #include "Logger/LogManager.h"
 #include "Logger/LogDefine.h"
 #include "Exception/exception.h"
-#include "Tools/Format/edm_format.h"
+#include "Utils/Format/edm_format.h"
 #include "config.h"
 
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <optional>
 
 #include <json.hpp>
 
@@ -54,14 +55,16 @@ logger_ptr LogManager::get_root_logger() {
 
 void LogManager::_init() {
     std::ifstream ifs(EDM_LOG_CONFIG_FILE);
-    std::stringstream ss;
-    ss << ifs.rdbuf();
-    ifs.close();
-    std::string str = ss.str();
+    // std::stringstream ss;
+    // ss << ifs.rdbuf();
+    // std::string str = ss.str();
 
     // fmt::print("str:\n{}\n", str);
 
-    auto ret = json::parse(str);
+    // auto ret = json::parse(str);
+
+    auto ret = json::parse(ifs, false);
+    ifs.close();
 
     if (!ret) {
         std::cout << EDM_FMT::format("error parse\n");

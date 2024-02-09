@@ -5,6 +5,13 @@
 
 #define EDM_LOG_CONFIG_FILE EDM_CONFIG_DIR "logdefine.json"
 
+// 坐标轴(=驱动器)数目
+#define EDM_SERVO_NUM 3
+#define EDM_AXIS_NUM EDM_SERVO_NUM
+
+#define EDM_ECAT_DRIVER_SOEM // Use "soem" as software driver
+#define EDM_ECAT_DRIVER_IGH // or "igh", choose only one
+
 #if __GNUC__ < 13 // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format
 #endif

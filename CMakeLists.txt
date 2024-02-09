@@ -15,7 +15,7 @@ endif()
 # set(CMAKE_CXX_COMPILER /usr/bin/g++-13)
 
 ## config
-add_definitions(-DEDM_ROOT_DIR="${PROJECT_SOURCE_DIR}")
+add_definitions(-DEDM_ROOT_DIR="${PROJECT_SOURCE_DIR}/")
 
 ## libs
 # fmt library
@@ -34,23 +34,23 @@ find_package(Boost COMPONENTS python REQUIRED)
 # spdlog
 # list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # include(spdlog)
-set(SPDLOG_BUILD_PIC ON)
+# set(SPDLOG_BUILD_PIC ON CACHE BOOL)
 add_subdirectory(third_party/spdlog)
+target_compile_options(spdlog PRIVATE -fPIC)
 
 ## Project
 set(PROJECT_SOURCES
-    Interpreter/rs274pyInterpreter/src/RS274InterpreterWrapper.cpp
-    Logger/LogManager.cpp
-    Logger/LogDefine.cpp
-)
-set(PROJECT_INCLUDE_DIRS
-    ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/Interpreter/rs274pyInterpreter/include  
-    ${PROJECT_SOURCE_DIR}/Logger
+    Src/Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.cpp
+    Src/Logger/LogManager.cpp
+    Src/Logger/LogDefine.cpp
+    Src/TaskManager/TaskManager.cpp
+    Src/EcatManager/ServoDevice.cpp
+    Src/EcatManager/EcatManager.cpp
 )
 
+include_directories(${PROJECT_SOURCE_DIR}/Src)
+
 add_library(edm SHARED ${PROJECT_SOURCES})
-target_include_directories(edm PUBLIC ${PROJECT_INCLUDE_DIRS})
 target_link_libraries(edm PUBLIC 
     spdlog::spdlog
     fmt::fmt 

@@ -1,8 +1,6 @@
 #include "json.hpp"
 using namespace json::literals;
 
-#include "fmt/format.h"
-
 #include <deque>
 #include <fstream>
 #include <iostream>
@@ -20,8 +18,11 @@ using namespace json::literals;
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-#include "../../Logger/LogDefine.h"
+#include "Logger/LogDefine.h"
 #include "config.h"
+#include "Logger/LogMacro.h"
+#include "Logger/LogManager.h"
+#include "Utils/Format/edm_format.h"
 
 #include <filesystem>
 
@@ -243,8 +244,6 @@ static void test_log() {
     // }
 }
 
-#include "LogMacro.h"
-#include "LogManager.h"
 EDM_STATIC_LOGGER_NAME(s_motion_logger, "motion");
 EDM_STATIC_LOGGER(s_root_logger, EDM_LOGGER_ROOT());
 static void test_log_manager() {
@@ -267,8 +266,6 @@ static void test_log_manager() {
     l2->warn("222");
 }
 
-#include <format>
-#include "Tools/Format/edm_format.h"
 int main() {
 
     // test_MyStruct();

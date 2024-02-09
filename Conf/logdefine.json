@@ -56,7 +56,7 @@
             "sinks": [
                 {
                     "type": "file",
-                    "level": "info",
+                    "level": "debug",
                     "filename": "interp.log",
                     "multi_thread": false,
                     "max_size": 10485760,

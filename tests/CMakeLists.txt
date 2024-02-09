@@ -1,2 +1,3 @@
 add_subdirectory(Interpreter)
 add_subdirectory(Logger)
+add_subdirectory(Filters)
