@@ -40,8 +40,15 @@ target_compile_options(spdlog PRIVATE -fPIC)
 
 # soem
 add_subdirectory(third_party/SOEM-1.4.0)
-target_compile_options(soem PRIVATE -fPIC -Wno-error=stringop-truncation)
+target_compile_options(soem PRIVATE -fPIC -Wno-error=stringop-truncation -Wno-stringop-truncation)
 set(SOEM_INCLUDE_DIRS third_party/SOEM-1.4.0/soem/ third_party/SOEM-1.4.0/osal/ third_party/SOEM-1.4.0/osal/linux/ third_party/SOEM-1.4.0/oshw/linux/)
+
+# find qt5
+set(Qt5_DIR $ENV{HOME}/Qt5.14.2/5.14.2/gcc_64/lib/cmake/Qt5)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+find_package(Qt5 COMPONENTS Core SerialBus REQUIRED)
 
 ## Project
 set(PROJECT_SOURCES
@@ -51,6 +58,7 @@ set(PROJECT_SOURCES
     Src/TaskManager/TaskManager.cpp
     Src/EcatManager/ServoDevice.cpp
     Src/EcatManager/EcatManager.cpp
+    Src/QtDependComponents/CanController/CanController.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)
@@ -64,6 +72,7 @@ target_link_libraries(edm PUBLIC
     Boost::python 
     Python3::Python
     soem
+    Qt5::Core Qt5::SerialBus
 )
 
 add_subdirectory(tests)
