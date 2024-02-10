@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "ServoDefines.h"
+#include "Panasonic.h"
 
 namespace edm {
 
@@ -43,6 +44,11 @@ public:
     PanasonicServoDevice(Panasonic_A5B_Ctrl *ctrl,
                          Panasonic_A5B_Stat *stat) noexcept;
     virtual ~PanasonicServoDevice() noexcept = default;
+
+    PanasonicServoDevice(const PanasonicServoDevice&) = delete;
+    PanasonicServoDevice& operator=(const PanasonicServoDevice&) = delete;
+    PanasonicServoDevice(PanasonicServoDevice&&) = delete;
+    PanasonicServoDevice& operator=(PanasonicServoDevice&&) = delete;
 
     constexpr ServoType type() const override {
         return ServoType::Panasonic_A5B;

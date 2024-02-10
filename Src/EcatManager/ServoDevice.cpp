@@ -1,5 +1,6 @@
 #include "ServoDevice.h"
 
+
 namespace edm {
 
 namespace ecat {
@@ -27,32 +28,32 @@ int32_t PanasonicServoDevice::get_actual_position() {
 }
 
 bool PanasonicServoDevice::sw_fault() const {
-    return (stat_->status_word & 0b01001111) == 0x08;
+    return (stat_->status_word & 0b01001111) == SW_Fault;
 }
 
 bool PanasonicServoDevice::sw_switch_on_disabled() const {
-    return (stat_->status_word & 0b01001111) == 0x40;
+    return (stat_->status_word & 0b01001111) == SW_SwitchOnDisabled;
 }
 
 bool PanasonicServoDevice::sw_ready_to_switch_on() const {
-    return (stat_->status_word & 0b01101111) == 0x21;
+    return (stat_->status_word & 0b01101111) == SW_ReadyToSwitchOn;
 }
 
 bool PanasonicServoDevice::sw_switched_on() const {
-    return (stat_->status_word & 0b01101111) == 0x23;
+    return (stat_->status_word & 0b01101111) == SW_SwitchedOn;
 }
 
 bool PanasonicServoDevice::sw_operational_enabled() const {
-    return (stat_->status_word & 0b01101111) == 0x27;
+    return (stat_->status_word & 0b01101111) == SW_OperationEnabled;
 }
 
-void PanasonicServoDevice::cw_fault_reset() { ctrl_->control_word = 1 << 7; }
+void PanasonicServoDevice::cw_fault_reset() { ctrl_->control_word = CW_FaultReset; }
 
-void PanasonicServoDevice::cw_shut_down() { ctrl_->control_word = 0x6; }
+void PanasonicServoDevice::cw_shut_down() { ctrl_->control_word = CW_Shutdown; }
 
-void PanasonicServoDevice::cw_switch_on() { ctrl_->control_word = 0x7; }
+void PanasonicServoDevice::cw_switch_on() { ctrl_->control_word = CW_SwitchOn; }
 
-void PanasonicServoDevice::cw_enable_operation() { ctrl_->control_word = 0xF; }
+void PanasonicServoDevice::cw_enable_operation() { ctrl_->control_word = CW_EnableOperation; }
 
 void PanasonicServoDevice::sync_actual_position_to_target_position() {
     ctrl_->target_position = stat_->position_actual_value;

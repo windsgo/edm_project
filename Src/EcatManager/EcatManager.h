@@ -12,12 +12,17 @@ namespace edm {
 
 namespace ecat {
 
-class EcatManager {
+class EcatManager final{
 public:
     using ptr = std::shared_ptr<EcatManager>;
-    EcatManager(std::size_t iomap_size, uint32_t servo_num,
+    EcatManager(const std::string& ifname, std::size_t iomap_size, uint32_t servo_num,
                 uint32_t io_num = 0);
     ~EcatManager();
+
+    EcatManager(const EcatManager&) = delete;
+    EcatManager& operator=(const EcatManager&) = delete;
+    EcatManager(EcatManager&&) = delete;
+    EcatManager& operator=(EcatManager&&) = delete;
 
     // do ethercat config and init
     // if all success, and slave numbers match
@@ -41,6 +46,15 @@ public:
     void clear_fault_cycle_run_once();
 
 private:
+    bool _connect_ecat_try_once(int expected_slavecount);
+    bool _wait_slaves_to_safe_op();
+    bool _wait_slaves_to_operational();
+
+    void _conf_servo_pdo_map();
+    void _conf_servo_default_op();
+
+private:
+    std::string ifname_;
     std::size_t iomap_size_;
     char *iomap_;
 

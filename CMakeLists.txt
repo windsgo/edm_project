@@ -40,7 +40,7 @@ target_compile_options(spdlog PRIVATE -fPIC)
 
 # soem
 add_subdirectory(third_party/SOEM-1.4.0)
-target_compile_options(soem PRIVATE -fPIC)
+target_compile_options(soem PRIVATE -fPIC -Wno-error=stringop-truncation)
 set(SOEM_INCLUDE_DIRS third_party/SOEM-1.4.0/soem/ third_party/SOEM-1.4.0/osal/ third_party/SOEM-1.4.0/osal/linux/ third_party/SOEM-1.4.0/oshw/linux/)
 
 ## Project
@@ -57,6 +57,7 @@ include_directories(${PROJECT_SOURCE_DIR}/Src)
 include_directories(${SOEM_INCLUDE_DIRS})
 
 add_library(edm SHARED ${PROJECT_SOURCES})
+target_compile_options(edm PUBLIC -fPIC -Wno-error=stringop-overflow -Wno-stringop-overflow) # gcc bug with fmtlib
 target_link_libraries(edm PUBLIC 
     spdlog::spdlog
     fmt::fmt 

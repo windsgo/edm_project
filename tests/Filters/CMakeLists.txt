@@ -1,5 +1,7 @@
 add_executable(test_slidingfilter test_slidingfilter.cpp)
+add_dependencies(test_slidingfilter edm)
 target_link_libraries(test_slidingfilter edm)
 
 add_executable(test_slidingcounter test_slidingcounter.cpp)
+add_dependencies(test_slidingcounter edm)
 target_link_libraries(test_slidingcounter edm)

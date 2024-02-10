@@ -40,7 +40,6 @@ struct PACKED Panasonic_A5B_Ctrl {
     uint16_t touch_probe_function;
 };
 PACKED_END
-// typedef struct Panasonic_A5B_Ctrl *Panasonic_A5B_Ctrl_t;
 
 PACKED_BEGIN
 struct PACKED Panasonic_A5B_Stat {
@@ -54,9 +53,6 @@ struct PACKED Panasonic_A5B_Stat {
     uint32_t digital_inputs;
 };
 PACKED_END
-// typedef struct Panasonic_A5B_Stat *Panasonic_A5B_Stat_t;
-
-
 
 } // namespace ecat
 

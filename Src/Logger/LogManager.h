@@ -25,7 +25,7 @@ public:
 
     // Gget root logger, which is initialized when LogManager instance is
     // constructed
-    logger_ptr get_root_logger();
+    logger_ptr get_root_logger() const;
 
 private:
     void _init();
@@ -37,6 +37,8 @@ private:
     // Root logger is used to ensure that there is at least one avaiable logger
     // when you get a logger from the LogManager instance.
     logger_ptr root_logger_;
+
+    mutable mutex_t mutex_;
 
 private:
     LogManager();

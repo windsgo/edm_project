@@ -37,6 +37,8 @@ LogManager *LogManager::instance() {
 }
 
 logger_ptr LogManager::get_logger(const std::string &logger_name) {
+    lockguard_t guard(mutex_);
+
     if (auto logger = spdlog::get(logger_name)) {
         return logger;
     } else {
@@ -49,7 +51,7 @@ logger_ptr LogManager::get_logger(const std::string &logger_name) {
     }
 }
 
-logger_ptr LogManager::get_root_logger() { 
+logger_ptr LogManager::get_root_logger() const { 
     return root_logger_; 
 }
 
