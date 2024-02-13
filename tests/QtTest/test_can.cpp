@@ -17,16 +17,19 @@ int main(int argc, char **argv) {
 
     QCoreApplication app(argc, argv);
 
-    edm::can::CanController can_ctrl("can0", 115200);
+    edm::can::CanController::instance()->add_device("can0", 115200);
+    edm::can::CanController::instance()->add_device("can1", 115200);
 
     QTimer t;
     QObject::connect(&t, &QTimer::timeout, [&]() {
         QByteArray array{8, 0x16};
-
         array.resize(8);
-        // array.append(0x11)
-        QCanBusFrame frame(0x123, array);
-        can_ctrl.send_frame(frame);
+        QCanBusFrame frame0(0x147, array);
+        edm::can::CanController::instance()->send_frame("can0", frame0);
+
+        array.fill(0xEF);
+        QCanBusFrame frame1(0x258, array);
+        edm::can::CanController::instance()->send_frame("can1", frame1);
     });
 
     t.start(1000);

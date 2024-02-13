@@ -5,6 +5,7 @@
 #include "Utils/Format/edm_format.h"
 #include "Utils/Netif/netif_utils.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QVariant>
 
@@ -17,29 +18,68 @@ namespace can {
 struct metatype_register__ {
     metatype_register__() { qRegisterMetaType<QCanBusFrame>("QCanBusFrame"); }
 };
-static struct metatype_register__ register__;
+static struct metatype_register__ mt_register__;
 
-CanController::CanController(const QString &can_if_name, uint32_t bitrate) {
-    can_worker_ = new CanWorker(can_if_name, bitrate);
+struct eventtype_register__ {
+    eventtype_register__() {
+        QEvent::registerEventType(CanSendFrameEvent::type);
+        QEvent::registerEventType(CanStartEvent::type);
+    }
+};
+static struct eventtype_register__ et_register;
+
+CanController::CanController() {
     worker_thread_ = new QThread(this);
-    can_worker_->moveToThread(worker_thread_);
-
-    QObject::connect(this, &CanController::_sig_worker_start_work, can_worker_,
-                     &CanWorker::slot_start_work, Qt::QueuedConnection);
-    QObject::connect(this, &CanController::_sig_worker_send_frame, can_worker_,
-                     &CanWorker::slot_send_frame, Qt::QueuedConnection);
-
-    QObject::connect(worker_thread_, &QThread::finished, can_worker_,
-                     &CanWorker::deleteLater);
 
     worker_thread_->start();
-    emit _sig_worker_start_work();
 }
 
 CanController::~CanController() {}
 
-void CanController::send_frame(const QCanBusFrame &frame) {
-    emit _sig_worker_send_frame(frame);
+int CanController::add_device(const QString &name, uint32_t bitrate) {
+
+    if (worker_map_.contains(name)) {
+        s_logger->error("CanController::add_device: already exist: {}",
+                        name.toStdString());
+        return -1;
+    }
+
+    int index = worker_vec_.size();
+
+    CanWorker *worker = new CanWorker(name, bitrate);
+    worker->moveToThread(worker_thread_);
+
+    QObject::connect(worker_thread_, &QThread::finished, worker,
+                     &CanWorker::deleteLater);
+
+    QCoreApplication::postEvent(worker, new CanStartEvent());
+
+    worker_vec_.push_back({name, worker});
+    worker_map_.insert(name, {index, worker});
+
+    return index;
+}
+
+void CanController::send_frame(int index, const QCanBusFrame &frame) {
+    if (index >= worker_vec_.size()) {
+        return;
+    }
+
+    QCoreApplication::postEvent(worker_vec_[index].second,
+                                new CanSendFrameEvent(frame));
+}
+
+void CanController::send_frame(const QString &device_name,
+                               const QCanBusFrame &frame) {
+
+    auto find_ret = worker_map_.find(device_name);
+
+    if (find_ret == worker_map_.end()) {
+        return;
+    }
+
+    QCoreApplication::postEvent((*find_ret).second,
+                                new CanSendFrameEvent(frame));
 }
 
 CanWorker::CanWorker(const QString &can_if_name, uint32_t bitrate)
@@ -47,11 +87,31 @@ CanWorker::CanWorker(const QString &can_if_name, uint32_t bitrate)
     can_if_name_std_ = can_if_name_.toStdString();
 }
 
-void CanWorker::slot_send_frame(const QCanBusFrame &frame) {
-    device_->writeFrame(frame);
+bool CanWorker::is_connected() { return connected_; }
+
+void CanWorker::customEvent(QEvent *event) {
+    QEvent::Type type = event->type();
+
+    if (type == CanSendFrameEvent::type) {
+        event->accept();
+        CanSendFrameEvent *e = dynamic_cast<CanSendFrameEvent *>(event);
+        if (!e) {
+            s_logger->critical("CanSendFrameEvent cast failed");
+            return;
+        }
+
+        if (!connected_) {
+            return;
+        }
+
+        device_->writeFrame(e->get_frame());
+    } else if (type == CanStartEvent::type) {
+        event->accept();
+        _start_work();
+    }
 }
 
-void CanWorker::slot_start_work() {
+void CanWorker::_start_work() {
     if (!reconnect_timer_) {
         reconnect_timer_ = new QTimer(this);
         QObject::connect(reconnect_timer_, &QTimer::timeout, this,
@@ -59,6 +119,9 @@ void CanWorker::slot_start_work() {
         reconnect_timer_->start(reconnect_timeout_);
     }
 
+    if (device_) {
+        return; // has been created
+    }
     // create device
     QString err_msg;
     device_ =
@@ -104,9 +167,11 @@ void CanWorker::_slot_reconnect() {
 
     // set can0 up, just use shell command
     int dummy;
-    dummy = system("sudo ip link set can0 down");
-    auto up_cmd = EDM_FMT::format(
-        "sudo ip link set can0 up type can bitrate {}", bitrate_);
+    auto dowm_cmd =
+        EDM_FMT::format("sudo ip link set {} down", can_if_name_std_);
+    auto up_cmd = EDM_FMT::format("sudo ip link set {} up type can bitrate {}",
+                                  can_if_name_std_, bitrate_);
+    dummy = system(dowm_cmd.c_str());
     dummy = system(up_cmd.c_str()); // bitrate here
 
     auto available_sockeccan_devices =

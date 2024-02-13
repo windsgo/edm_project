@@ -1,72 +1,106 @@
 #pragma once
 
-#include <string>
-#include <memory>
 #include <cstdint>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <unordered_map>
 
 #include <QCanBus>
-#include <QThread>
 #include <QCanBusDevice>
+#include <QEvent>
+#include <QMap>
+#include <QThread>
 #include <QTimer>
 
-namespace edm
-{
+namespace edm {
 
-namespace can
-{
+namespace can {
+
+class CanSendFrameEvent : public QEvent {
+public:
+    CanSendFrameEvent(const QCanBusFrame &frame)
+        : QEvent(type), frame_(frame) {}
+
+    constexpr static const QEvent::Type type =
+        QEvent::Type(QEvent::Type::User + 1);
+
+    const QCanBusFrame &get_frame() const { return frame_; }
+
+private:
+    QCanBusFrame frame_;
+};
+
+class CanStartEvent : public QEvent {
+public:
+    CanStartEvent() : QEvent(type) {}
+
+    constexpr static const QEvent::Type type =
+        QEvent::Type(QEvent::Type::User + 2);
+};
 
 class CanWorker : public QObject {
     Q_OBJECT
 public:
-    CanWorker(const QString& can_if_name, uint32_t bitrate);
+    CanWorker(const QString &can_if_name, uint32_t bitrate);
     ~CanWorker() {}
 
-    bool is_connected() const { return connected_; };
+    bool is_connected();
 
-public slots:
-    // can only be called once !
-    void slot_start_work();
-
-    void slot_send_frame(const QCanBusFrame& frame);
+private:
+    void _start_work();
 
 private slots:
     void _slot_reconnect();
+
+protected:
+    void customEvent(QEvent *event) override;
 
 private:
     QString can_if_name_;
     std::string can_if_name_std_;
     uint32_t bitrate_;
 
-    QCanBusDevice* device_ = nullptr;
+    QCanBusDevice *device_ = nullptr;
 
-    QTimer* reconnect_timer_ = nullptr;
+    QTimer *reconnect_timer_ = nullptr;
     static constexpr const int reconnect_timeout_ = 1000; // ms
 
     bool connected_ = false;
 };
 
-// support one single can device in one single thread at present
-// TODO is to support multi device in one thread
+// support multi devices in one thread
 class CanController : public QObject {
     Q_OBJECT
 public:
-    CanController(const QString& can_if_name, uint32_t bitrate);
-    ~CanController();
 
-    // not fully safe method ... // TODO
-    bool is_connected() const { return can_worker_->is_connected(); };
+    static CanController *instance() {
+        static CanController instance;
+        return &instance;
+    }
 
-    void send_frame(const QCanBusFrame& frame);
+public:
+    // add a device using its interface name,
+    // if success, return the device index of the device
+    // else, return -1
+    int add_device(const QString &name, uint32_t bitrate);
 
-signals:
-    void _sig_worker_start_work();
-    void _sig_worker_send_frame(const QCanBusFrame& frame);
+    void send_frame(int index, const QCanBusFrame &frame);
+    void send_frame(const QString& device_name, const QCanBusFrame &frame);
+
+    CanController() ;
+    ~CanController() ; // TODO, may stop thread
 
 private:
-    QThread* worker_thread_;
-    CanWorker* can_worker_;
+    QThread *worker_thread_;
+    CanWorker *can_worker_;
+
+    QMap<QString, QPair<int, CanWorker *>> worker_map_; // used for management
+    QVector<QPair<QString, CanWorker *>> worker_vec_;   // used for index
 };
-    
+
 } // namespace can
 
 } // namespace edm
