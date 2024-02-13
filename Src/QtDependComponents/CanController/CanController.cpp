@@ -13,13 +13,21 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 namespace edm {
 
 namespace can {
-CanController::CanController(const QString &can_if_name) {
-    can_worker_ = new CanWorker(can_if_name);
+
+struct metatype_register__ {
+    metatype_register__() { qRegisterMetaType<QCanBusFrame>("QCanBusFrame"); }
+};
+static struct metatype_register__ register__;
+
+CanController::CanController(const QString &can_if_name, uint32_t bitrate) {
+    can_worker_ = new CanWorker(can_if_name, bitrate);
     worker_thread_ = new QThread(this);
     can_worker_->moveToThread(worker_thread_);
 
     QObject::connect(this, &CanController::_sig_worker_start_work, can_worker_,
-                     &CanWorker::slot_start_work);
+                     &CanWorker::slot_start_work, Qt::QueuedConnection);
+    QObject::connect(this, &CanController::_sig_worker_send_frame, can_worker_,
+                     &CanWorker::slot_send_frame, Qt::QueuedConnection);
 
     QObject::connect(worker_thread_, &QThread::finished, can_worker_,
                      &CanWorker::deleteLater);
@@ -30,8 +38,17 @@ CanController::CanController(const QString &can_if_name) {
 
 CanController::~CanController() {}
 
-CanWorker::CanWorker(const QString &can_if_name) : can_if_name_(can_if_name) {
+void CanController::send_frame(const QCanBusFrame &frame) {
+    emit _sig_worker_send_frame(frame);
+}
+
+CanWorker::CanWorker(const QString &can_if_name, uint32_t bitrate)
+    : can_if_name_(can_if_name), bitrate_(bitrate) {
     can_if_name_std_ = can_if_name_.toStdString();
+}
+
+void CanWorker::slot_send_frame(const QCanBusFrame &frame) {
+    device_->writeFrame(frame);
 }
 
 void CanWorker::slot_start_work() {
@@ -88,8 +105,9 @@ void CanWorker::_slot_reconnect() {
     // set can0 up, just use shell command
     int dummy;
     dummy = system("sudo ip link set can0 down");
-    dummy = system(
-        "sudo ip link set can0 up type can bitrate 115200"); // bitrate here
+    auto up_cmd = EDM_FMT::format(
+        "sudo ip link set can0 up type can bitrate {}", bitrate_);
+    dummy = system(up_cmd.c_str()); // bitrate here
 
     auto available_sockeccan_devices =
         QCanBus::instance()->availableDevices("socketcan");
@@ -104,7 +122,8 @@ void CanWorker::_slot_reconnect() {
 
             // found, try to connect
             device_->setConfigurationParameter(QCanBusDevice::BitRateKey,
-                                               QVariant());
+                                               QVariant()); // avoid warn
+            // because we cannot set bitrate from qt
             bool connect_ret = device_->connectDevice();
 
             if (connect_ret) {
