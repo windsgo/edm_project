@@ -5,6 +5,8 @@
 #include <QDebug>
 #include <QTimer>
 
+#include "Utils/Netif/netif_utils.h"
+
 EDM_STATIC_LOGGER(s_root_logger, EDM_LOGGER_ROOT());
 
 bool exist_can0() {
@@ -73,6 +75,9 @@ int main(int argc, char **argv) {
             // if (!exist_can0()) return; 
             // 需要系统层面进行检查是否存在can0设备, qt无法进行,
             // 要么就不停调用下面的代码对can0尝试up和connect
+            if (!edm::util::is_netdev_exist("can0")) {
+                return;
+            }
 
             int a = system("sudo ip link set can0 down");
             int b = system("sudo ip link set can0 up type can bitrate 115200");

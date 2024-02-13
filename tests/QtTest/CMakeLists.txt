@@ -9,3 +9,8 @@ message(STATUS ${Qt5_VERSION})
 add_executable(test_qt test_qt.cpp)
 add_dependencies(test_qt edm)
 target_link_libraries(test_qt edm Qt5::Core Qt5::SerialBus)
+
+
+add_executable(test_can test_can.cpp)
+add_dependencies(test_can edm)
+target_link_libraries(test_can edm Qt5::Core Qt5::SerialBus)

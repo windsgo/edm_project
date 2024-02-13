@@ -15,47 +15,46 @@ namespace edm
 namespace can
 {
 
-class CanController : public QObject {
-    Q_OBJECT
-public:
-    CanController(const QString& can_if_name);
-    ~CanController();
-
-    // bool connect_device();
-    // bool is_connected() const;
-
-    // void disconnect();
-
-private:
-    QThread* worker_thread_;
-};
-
 class CanWorker : public QObject {
     Q_OBJECT
 public:
     CanWorker(const QString& can_if_name);
     ~CanWorker() {}
 
-    // bool is_connected() const;
+    bool is_connected() const { return connected_; };
 
 public slots:
     void slot_start_work();
 
-private:
-    void _scan_devices();
-
 private slots:
-    void _slot_device_disconnected();
     void _slot_reconnect();
 
 private:
     QString can_if_name_;
+    std::string can_if_name_std_;
     QCanBusDevice* device_ = nullptr;
 
     QTimer* reconnect_timer_ = nullptr;
     static constexpr const int reconnect_timeout_ = 1000; // ms
 
     bool connected_ = false;
+};
+
+class CanController : public QObject {
+    Q_OBJECT
+public:
+    CanController(const QString& can_if_name);
+    ~CanController();
+
+    // not fully safe method ... // TODO
+    bool is_connected() const { return can_worker_->is_connected(); };
+
+signals:
+    void _sig_worker_start_work();
+
+private:
+    QThread* worker_thread_;
+    CanWorker* can_worker_;
 };
     
 } // namespace can
