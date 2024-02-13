@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(edm LANGUAGES CXX VERSION 0.0.1)
+project(edm LANGUAGES C CXX VERSION 0.0.1)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
@@ -59,6 +59,7 @@ set(PROJECT_SOURCES
     Src/EcatManager/ServoDevice.cpp
     Src/EcatManager/EcatManager.cpp
     Src/QtDependComponents/CanController/CanController.cpp
+    Src/Utils/Netif/netif_utils.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)
