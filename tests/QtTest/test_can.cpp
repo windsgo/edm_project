@@ -17,8 +17,15 @@ int main(int argc, char **argv) {
 
     QCoreApplication app(argc, argv);
 
+    qDebug().noquote() << "main thread: " << QThread::currentThreadId();
+
     edm::can::CanController::instance()->add_device("can0", 115200);
     edm::can::CanController::instance()->add_device("can1", 115200);
+
+    edm::can::CanController::instance()->add_frame_received_listener(
+        "can1", [](const QCanBusFrame &frame) {
+            qDebug().noquote() << "thread: " << QThread::currentThreadId() << frame.toString();
+        });
 
     QTimer t;
     QObject::connect(&t, &QTimer::timeout, [&]() {
@@ -30,6 +37,12 @@ int main(int argc, char **argv) {
         array.fill(0xEF);
         QCanBusFrame frame1(0x258, array);
         edm::can::CanController::instance()->send_frame("can1", frame1);
+
+        static int i = 0;
+        ++i;
+        if (i == 4) {
+            QCoreApplication::exit(0);
+        }
     });
 
     t.start(1000);
