@@ -16,6 +16,19 @@
 #include <QThread>
 #include <QTimer>
 
+// ! 需要注意的是, CanController的正常工作依赖Qt的事件循环 (且为main主线程)
+// ! 也就是说, 任何对于CanController方法的调用, (如add_device,send_frame)
+// ! 都需要来自于已经启动了事件循环的Qt线程
+
+// ! 特殊情况, 如运动Motion线程一定是不存在事件循环的(实时性要求),
+// ! 那其对于CanController的调用
+// ! (包括间接调用, 如IOController, PowerController)
+// ! 还是需要让主线程进行中介(如主线程轮训Motion线程的标志位, 再进行IO操作)
+// ! 更安全
+// ! 但是, 当然了, 也可以在Motion线程直接调用如
+// ! CanController::instance()->send_frame()的代码, 也是生效的,
+// ! 目前副面作用未知, 但是调用涉及到post_event()操作, 时间成本会有
+
 namespace edm {
 
 namespace can {
@@ -56,12 +69,14 @@ public:
 
     void add_listener(std::function<void(const QCanBusFrame &)> listener_cb);
 
+private:
     // ! Not Safe Enough. Only call it when stop all things
     // ! This is only used for set device down, for test.
-    void terminate();
+    void _terminate();
 
-// signals:
-    // void sig_frame_received(const QCanBusFrame &frame); // received frame signal
+    // signals:
+    // void sig_frame_received(const QCanBusFrame &frame); // received frame
+    // signal
 
 private:
     void _start_work();
@@ -136,6 +151,10 @@ public:
         const QString &device_name,
         std::function<void(const QCanBusFrame &)> listener_cb);
 
+    // ! Not Safe Enough. Only call it when stop all things
+    // ! This is only used for set device down, for test.
+    void terminate();
+
     CanController();
     ~CanController(); // TODO, may stop thread
 
@@ -156,6 +175,8 @@ private:
     //      _get_device inside call (read), we assure device get by
     //      `_get_device`
     //          will not disappear or be deleted, so no need to protect it here
+
+    bool terminated_ = false;
 };
 
 } // namespace can

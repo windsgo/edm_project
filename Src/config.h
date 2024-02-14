@@ -12,6 +12,8 @@
 #define EDM_ECAT_DRIVER_SOEM // Use "soem" as software driver
 #define EDM_ECAT_DRIVER_IGH // or "igh", choose only one
 
+#define EDM_CAN_SET_DOWN_WHEN_WORKER_DELETED // canworker析构时, 将can设备设置down
+
 #if __GNUC__ < 13 // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format
 #endif

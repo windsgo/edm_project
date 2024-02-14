@@ -59,6 +59,7 @@ set(PROJECT_SOURCES
     Src/EcatManager/ServoDevice.cpp
     Src/EcatManager/EcatManager.cpp
     Src/QtDependComponents/CanController/CanController.cpp
+    Src/QtDependComponents/IOController/IOController.cpp
     Src/Utils/Netif/netif_utils.cpp
 )
 

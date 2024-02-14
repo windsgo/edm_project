@@ -1,5 +1,6 @@
 #include "CanController.h"
 
+#include "config.h"
 #include "Exception/exception.h"
 #include "Logger/LogMacro.h"
 #include "Utils/Format/edm_format.h"
@@ -37,18 +38,34 @@ CanController::CanController() {
 CanController::~CanController() {
     s_logger->trace("CanController exit. func: {}", __PRETTY_FUNCTION__);
 
+    terminate();
+}
+
+void CanController::terminate() {
+    if (terminated_) return;
+
+    s_logger->trace("CanController terminate.");
+
     worker_thread_->quit();
     worker_thread_->wait();
 
-    for (auto& i : worker_vec_) {
-        auto worker = i.second;
-        worker->terminate(); // ! Set can down, if needed here.
+    {
+        std::lock_guard guard(mutex_worker_map_and_vec_);
+        worker_vec_.clear();
+        worker_map_.clear();
     }
+
+    terminated_ = true;
+
+    // for (auto& i : worker_vec_) {
+    //     auto worker = i.second;
+    //     worker->terminate(); // ! Set can down, if needed here.
+    // }
 }
 
 CanWorker *CanController::_get_device(int index) const {
     std::lock_guard guard(mutex_worker_map_and_vec_);
-    if (index >= worker_vec_.size()) {
+    if (index >= worker_vec_.size() || index < 0) {
         return nullptr;
     }
 
@@ -159,11 +176,7 @@ CanWorker::CanWorker(const QString &can_if_name, uint32_t bitrate)
 CanWorker::~CanWorker() {
     s_logger->trace("{} set down.", can_if_name_std_);
 
-    if (connected_ && device_)
-        device_->disconnectDevice();
-    device_->deleteLater();
-
-    _set_can_down();
+    _terminate();
 }
 
 bool CanWorker::is_connected() const {
@@ -177,9 +190,9 @@ void CanWorker::add_listener(
     listener_vec_.push_back(listener_cb);
 }
 
-void CanWorker::terminate() {
-    s_logger->warn("{} terminated !", can_if_name_std_);
-    
+void CanWorker::_terminate() {
+    s_logger->trace("{} terminated !", can_if_name_std_);
+
     {
         std::lock_guard guard(mutex_connected_);
 
@@ -188,7 +201,11 @@ void CanWorker::terminate() {
 
         connected_ = false;
 
-        _set_can_down();
+#ifdef EDM_CAN_SET_DOWN_WHEN_WORKER_DELETED
+        _set_can_down(); // ! set can down when deleted
+#endif // EDM_CAN_SET_DOWN_WHEN_WORKER_DELETED
+
+        reconnect_timer_->stop();
     }
 }
 
@@ -225,6 +242,10 @@ void CanWorker::_start_work() {
         reconnect_timer_ = new QTimer(this);
         QObject::connect(reconnect_timer_, &QTimer::timeout, this,
                          &CanWorker::_slot_reconnect);
+        reconnect_timer_->start(reconnect_timeout_);
+    }
+
+    if (!reconnect_timer_->isActive()) {
         reconnect_timer_->start(reconnect_timeout_);
     }
 

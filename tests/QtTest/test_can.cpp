@@ -11,6 +11,22 @@
 
 EDM_STATIC_LOGGER(s_root_logger, EDM_LOGGER_ROOT());
 
+using namespace std::chrono_literals;
+
+static bool stop_flag = false;
+static void thread_func() {
+    s_root_logger->info("thread_func start");
+
+    while (!stop_flag) {
+        std::this_thread::sleep_for(1s);
+
+        QByteArray array{8, 0x16};
+        array.resize(8);
+        QCanBusFrame frame0(0x147, array);
+        edm::can::CanController::instance()->send_frame("can0", frame0);
+    }
+}
+
 int main(int argc, char **argv) {
 
     s_root_logger->debug("test can");
@@ -27,8 +43,24 @@ int main(int argc, char **argv) {
             qDebug().noquote() << "thread: " << QThread::currentThreadId() << frame.toString();
         });
 
+
+    // ! 测试非Qt线程调用QController
+    std::thread thread(thread_func);
+
     QTimer t;
     QObject::connect(&t, &QTimer::timeout, [&]() {
+        static int i = 0;
+        ++i;
+        if (i == 5) {
+            edm::can::CanController::instance()->terminate();
+            t.stop();
+            stop_flag = true;
+            thread.join();
+
+            QCoreApplication::exit(0);
+            return;
+        }
+
         QByteArray array{8, 0x16};
         array.resize(8);
         QCanBusFrame frame0(0x147, array);
@@ -38,14 +70,10 @@ int main(int argc, char **argv) {
         QCanBusFrame frame1(0x258, array);
         edm::can::CanController::instance()->send_frame("can1", frame1);
 
-        static int i = 0;
-        ++i;
-        if (i == 4) {
-            QCoreApplication::exit(0);
-        }
     });
 
     t.start(1000);
+    int ret = app.exec();
 
-    return app.exec();
+    return ret;
 }
