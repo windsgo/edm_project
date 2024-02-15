@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <mutex>
 
+#include <QByteArray>
+
 namespace edm
 {
 
@@ -36,8 +38,17 @@ public:
     uint32_t get_can_machineio_1_safe() const;
     uint32_t get_can_machineio_2_safe() const;
 
-    IOController() = default;
+    IOController();
     ~IOController() = default;
+
+private:
+    // 触发发送, private方法, 无锁设计
+    // 设计为输入要发送的io
+    // 在设置io马上发送的场合, 可以节省锁的开销
+    void _trigger_send_io_1(uint32_t io_1);
+    void _trigger_send_io_2(uint32_t io_2);
+
+    void _calc_endcheck(QByteArray& bytearray);
 
 private:
     uint32_t can_machineio_1_ {0x0};
@@ -48,6 +59,16 @@ private:
     int can_device_index_ = -1; // used to send can frames by can::CanController
 
     mutable std::mutex mutex_can_io_; // used to protect both 2 io variable
+
+private:
+    constexpr static const int CANIO1_TXID = 0x0356;
+    constexpr static const int CANIO2_TXID = 0x0358;
+
+    // QByteArray canio1_bytearray_ {8, 0x00};
+    // QByteArray canio2_bytearray_ {8, 0x00};
+
+    static const uint8_t canio1_raw_bytes_[8];
+    static const uint8_t canio2_raw_bytes_[8];
 };
 
 } // namespace io

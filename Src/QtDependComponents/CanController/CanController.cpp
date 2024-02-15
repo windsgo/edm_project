@@ -115,6 +115,7 @@ void CanController::send_frame(int index, const QCanBusFrame &frame) {
     if (!device)
         return;
 
+    // thread-safe call
     QCoreApplication::postEvent(device, new CanSendFrameEvent(frame));
 }
 
@@ -124,6 +125,7 @@ void CanController::send_frame(const QString &device_name,
     if (!device)
         return;
 
+    // thread-safe call
     QCoreApplication::postEvent(device, new CanSendFrameEvent(frame));
 }
 
@@ -324,15 +326,25 @@ void CanWorker::_slot_reconnect() {
 
     s_logger->trace("connecting can device: {}", can_if_name_std_);
 
-    bool exist = util::is_netdev_exist(can_if_name_std_);
-    if (!exist) {
+    // bool exist = util::is_netdev_exist(can_if_name_std_);
+    // if (!exist) {
+    //     s_logger->trace("device \"{}\" does not exists", can_if_name_std_);
+    //     return;
+    // }
+
+    auto netdev_info = util::get_netdev_info(can_if_name_std_);
+    if (!netdev_info){
         s_logger->trace("device \"{}\" does not exists", can_if_name_std_);
         return;
     }
 
     // set can0 up, just use shell command
-    _set_can_down();
-    _set_can_up_with_bitrate();
+    // _set_can_down();
+    // _set_can_up_with_bitrate();
+
+    if (!netdev_info->link_up) {
+        _set_can_up_with_bitrate();
+    }
 
     auto available_sockeccan_devices =
         QCanBus::instance()->availableDevices("socketcan");
