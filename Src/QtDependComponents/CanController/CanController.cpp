@@ -1,10 +1,10 @@
 #include "CanController.h"
 
-#include "config.h"
 #include "Exception/exception.h"
 #include "Logger/LogMacro.h"
 #include "Utils/Format/edm_format.h"
 #include "Utils/Netif/netif_utils.h"
+#include "config.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -42,7 +42,8 @@ CanController::~CanController() {
 }
 
 void CanController::terminate() {
-    if (terminated_) return;
+    if (terminated_)
+        return;
 
     s_logger->trace("CanController terminate.");
 
@@ -205,7 +206,7 @@ void CanWorker::_terminate() {
 
 #ifdef EDM_CAN_SET_DOWN_WHEN_WORKER_DELETED
         _set_can_down(); // ! set can down when deleted
-#endif // EDM_CAN_SET_DOWN_WHEN_WORKER_DELETED
+#endif                   // EDM_CAN_SET_DOWN_WHEN_WORKER_DELETED
 
         reconnect_timer_->stop();
     }
@@ -268,14 +269,18 @@ void CanWorker::_start_work() {
     // error call back
     QObject::connect(device_, &QCanBusDevice::errorOccurred, this,
                      [this](QCanBusDevice::CanBusError err) {
+                         s_logger->error("canbusdevice error: {}",
+                                         device_->errorString().toStdString());
+
                          {
                              std::lock_guard guard(mutex_connected_);
                              connected_ = false;
                          }
                          //  reconnect_timer_->start(reconnect_timeout_);
-                         device_->disconnectDevice();
-                         s_logger->error("canbusdevice error: {}",
-                                         device_->errorString().toStdString());
+                         if (device_->state() ==
+                             QCanBusDevice::ConnectedState) {
+                             device_->disconnectDevice();
+                         }
                      });
 
     // frames receive callback
@@ -284,11 +289,11 @@ void CanWorker::_start_work() {
 }
 
 void CanWorker::_process_sendframe_event(QEvent *event) {
-    CanSendFrameEvent *e = dynamic_cast<CanSendFrameEvent *>(event);
-    if (!e) {
-        s_logger->critical("CanSendFrameEvent cast failed");
-        return;
-    }
+    CanSendFrameEvent *e = static_cast<CanSendFrameEvent *>(event);
+    // if (!e) {
+    //     s_logger->critical("CanSendFrameEvent cast failed");
+    //     return;
+    // }
 
     // not mutex_ lock here, since inside write and read won't be done at the
     // same time
@@ -297,6 +302,9 @@ void CanWorker::_process_sendframe_event(QEvent *event) {
     }
 
     device_->writeFrame(e->get_frame());
+    if (device_->state() == QCanBusDevice::ConnectedState) {
+        device_->waitForFramesWritten(100);
+    }
 }
 
 void CanWorker::_set_can_down() {
@@ -333,7 +341,7 @@ void CanWorker::_slot_reconnect() {
     // }
 
     auto netdev_info = util::get_netdev_info(can_if_name_std_);
-    if (!netdev_info){
+    if (!netdev_info) {
         s_logger->trace("device \"{}\" does not exists", can_if_name_std_);
         return;
     }
