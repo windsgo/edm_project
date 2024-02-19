@@ -60,6 +60,8 @@ set(PROJECT_SOURCES
     Src/EcatManager/EcatManager.cpp
     Src/QtDependComponents/CanController/CanController.cpp
     Src/QtDependComponents/IOController/IOController.cpp
+    Src/QtDependComponents/PowerController/PowerController.cpp
+    Src/QtDependComponents/PowerController/EleparamDecoder.cpp
     Src/Utils/Netif/netif_utils.cpp
 )
 

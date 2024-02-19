@@ -31,12 +31,16 @@ int main(int argc, char **argv) {
 
 
     uint32_t tmp = 0x00000000;
+
+    // uint32_t mask = 0x0000000F;
+    uint32_t mask = 0b0011;
+
     QTimer t;
     QObject::connect(&t, &QTimer::timeout, [&]() {
         
         tmp += 0x01;
 
-        edm::io::IOController::instance()->set_can_machineio(tmp, (~tmp));
+        edm::io::IOController::instance()->set_can_machineio_1_withmask(tmp, mask);
 
     });
 

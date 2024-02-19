@@ -11,7 +11,7 @@ namespace edm
 namespace io
 {
     
-class IOController {
+class IOController final {
 public:
     static IOController* instance();
 
@@ -24,6 +24,10 @@ public:
     void set_can_machineio_1(uint32_t can_io_1);
     void set_can_machineio_2(uint32_t can_io_2);
     void set_can_machineio(uint32_t can_io_1, uint32_t can_io_2);
+
+    // 带演码设定io, 以达到只覆盖一部分io的目的 // TODO
+    void set_can_machineio_1_withmask(uint32_t part_of_can_io_1, uint32_t mask);
+    void set_can_machineio_2_withmask(uint32_t part_of_can_io_2, uint32_t mask);
 
     // trigger send once: send io to canbus once
     // this function will finally call QCoreApplication::post_event()
@@ -38,8 +42,10 @@ public:
     uint32_t get_can_machineio_1_safe() const;
     uint32_t get_can_machineio_2_safe() const;
 
+private:
+
     IOController();
-    ~IOController() = default;
+    ~IOController() noexcept = default;
 
 private:
     // 触发发送, private方法, 无锁设计

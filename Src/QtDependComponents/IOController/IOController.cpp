@@ -34,6 +34,8 @@ void IOController::set_can_machineio_1(uint32_t can_io_1) {
         if (can_io_1 == can_machineio_1_) {
             return;
         }
+
+        can_machineio_1_ = can_io_1;
     }
 
     s_logger->trace("set io 1: {0:#010X} {0:032B}", can_io_1);
@@ -48,6 +50,8 @@ void IOController::set_can_machineio_2(uint32_t can_io_2) {
         if (can_io_2 == can_machineio_2_) {
             return;
         }
+
+        can_machineio_2_ = can_io_2;
     }
 
     s_logger->trace("set io 2: {0:#010X} {0:032B}", can_io_2);
@@ -58,6 +62,34 @@ void IOController::set_can_machineio_2(uint32_t can_io_2) {
 void IOController::set_can_machineio(uint32_t can_io_1, uint32_t can_io_2) {
     set_can_machineio_1(can_io_1);
     set_can_machineio_2(can_io_2);
+}
+
+void IOController::set_can_machineio_1_withmask(uint32_t part_of_can_io_1,
+                                                uint32_t mask) {
+    uint32_t new_io_1;
+    {
+        std::lock_guard guard(mutex_can_io_);
+
+        new_io_1 = (can_machineio_1_ & (~mask)) | (part_of_can_io_1 & mask);
+    }
+
+    s_logger->trace(
+        "mask io1 set: ori: {0:#010X}, set: {1:#010X}, masked: {2:#010X}",
+        can_machineio_1_, part_of_can_io_1, new_io_1);
+
+    set_can_machineio_1(new_io_1);
+}
+
+void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
+                                                uint32_t mask) {
+    uint32_t new_io_2;
+    {
+        std::lock_guard guard(mutex_can_io_);
+
+        new_io_2 = (can_machineio_2_ & (~mask)) | (part_of_can_io_2 & mask);
+    }
+
+    set_can_machineio_1(new_io_2);
 }
 
 void IOController::trigger_send_current_io() {
