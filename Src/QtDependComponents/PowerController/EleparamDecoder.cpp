@@ -483,8 +483,8 @@ void EleparamDecoder::_iosettings_handle_MON_HON() {
     uint8_t hp_tens = (input_->ele_param()->hp / 10) % 10;
 
     if (pp_tens != 1) {
-        _set_contactor_io_HON(false);
         _set_contactor_io_MON(false);
+        _set_contactor_io_HON(false);
         return;
     }
 
@@ -492,19 +492,21 @@ void EleparamDecoder::_iosettings_handle_MON_HON() {
         // hp = *0* *2* *4* *6*
         // MON 吸合 HON 断开
         _set_contactor_io_MON(true);
-        _set_contactor_io_MON(false);
+        _set_contactor_io_HON(false);
     } else {
         // hp = *1* *3* *5* *7*
         // MON 断开 HON 吸合
         _set_contactor_io_MON(false);
-        _set_contactor_io_MON(true);
+        _set_contactor_io_HON(true);
     }
 }
 
 void EleparamDecoder::_iosettings_handle_IPx() {
-    uint16_t ip = input_->ele_param()->ip;
-    
-    if (ip == 0) {
+    auto ip = input_->ele_param()->ip;
+    auto upper_index = input_->ele_param()->upper_index;
+    // 特殊情况 C901, C902, 全部关断S
+
+    if (ip == 0 || upper_index == 901 || upper_index == 902) {
         _set_contactor_io_IP0(false);
         _set_contactor_io_IP7(false);
         _set_contactor_io_IP15(false);
@@ -527,7 +529,7 @@ void EleparamDecoder::_iosettings_handle_IPx() {
 }
 
 void EleparamDecoder::_iosettings_handle_LVx() {
-    uint8_t lv = input_->ele_param()->lv;
+    auto lv = input_->ele_param()->lv;
 
     if (lv == 1) {
         _set_contactor_io_LV1(true);

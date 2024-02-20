@@ -1,8 +1,8 @@
 #include "testpowerwidget.h"
 #include "ui_testpowerwidget.h"
 
-#include <QStyle>
 #include <QFile>
+#include <QStyle>
 
 static auto s_can_ctrler = can::CanController::instance();
 static auto s_io_ctrler = io::IOController::instance();
@@ -10,10 +10,8 @@ static auto s_power_ctrler = power::PowerController::instance();
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
-TestPowerWidget::TestPowerWidget(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::TestPowerWidget)
-{
+TestPowerWidget::TestPowerWidget(QWidget *parent)
+    : QWidget(parent), ui(new Ui::TestPowerWidget) {
     ui->setupUi(this);
 
     _init_io_buttons();
@@ -28,24 +26,20 @@ TestPowerWidget::TestPowerWidget(QWidget *parent) :
 
     // init timers
     ioboard_pulse_timer_ = new QTimer(this);
-    QObject::connect(ioboard_pulse_timer_, &QTimer::timeout, this, [&](){
+    QObject::connect(ioboard_pulse_timer_, &QTimer::timeout, this, [&]() {
         s_power_ctrler->trigger_send_ioboard_eleparam();
     });
     ioboard_pulse_timer_->start(1000);
 
     ele_cycle_timer_ = new QTimer(this);
-    QObject::connect(ele_cycle_timer_, &QTimer::timeout, this, [&](){
-        s_power_ctrler->trigger_send_eleparam();
-    });
+    QObject::connect(ele_cycle_timer_, &QTimer::timeout, this,
+                     [&]() { s_power_ctrler->trigger_send_eleparam(); });
     ele_cycle_timer_->start(1000);
-    
+
     _update_widget_status();
 }
 
-TestPowerWidget::~TestPowerWidget()
-{
-    delete ui;
-}
+TestPowerWidget::~TestPowerWidget() { delete ui; }
 
 void TestPowerWidget::_add_io_button(const QString &io_name, uint32_t out_num,
                                      int row, int col) {
@@ -89,6 +83,8 @@ void TestPowerWidget::_button_clicked(uint32_t io_num, bool checked) {
             s_io_ctrler->set_can_machineio_2_withmask(0x00, io_bit);
         }
     }
+
+    _update_widget_status();
 }
 
 void TestPowerWidget::_update_widget_status() {
@@ -97,8 +93,7 @@ void TestPowerWidget::_update_widget_status() {
     auto io_2 = s_io_ctrler->get_can_machineio_2_safe();
 
     // update io buttons
-    for (auto it = io_button_map_.begin();
-        it != io_button_map_.end(); ++it) {
+    for (auto it = io_button_map_.begin(); it != io_button_map_.end(); ++it) {
         if (it.key() <= 32) {
             uint32_t io_bit = 1 << (it.key() - 1);
             it.value()->setChecked(!!(io_1 & io_bit));
@@ -114,8 +109,50 @@ void TestPowerWidget::_update_widget_status() {
     ui->pb_MachBitOn->setChecked(s_power_ctrler->is_machbit_on());
 }
 
+template <typename T>
+T GetAndCorrectLineEditValue(QLineEdit *le, const T &default_value) {
+    bool ok = false;
+    auto value = static_cast<T>(le->text().toUInt(&ok));
+    if (!ok) {
+        value = default_value;
+    }
+
+    le->setText(QString::number(value));
+
+    return value;
+}
+
+#define ASSIGN_FROM_LE(assigned_to__, le__, default_value__)                   \
+    {                                                                          \
+        (assigned_to__) = GetAndCorrectLineEditValue<decltype(assigned_to__)>( \
+            (le__), (default_value__));                                        \
+    }
+
 void TestPowerWidget::_update_eleparam_from_ui_and_send() {
     // TODO
+    ASSIGN_FROM_LE(curr_eleparam_->pulse_on, ui->le_ele_on, 10);
+    ASSIGN_FROM_LE(curr_eleparam_->pulse_off, ui->le_ele_off, 10);
+    ASSIGN_FROM_LE(curr_eleparam_->ip, ui->le_ele_ip, 10);
+    ASSIGN_FROM_LE(curr_eleparam_->hp, ui->le_ele_hp, 10);
+    ASSIGN_FROM_LE(curr_eleparam_->pp, ui->le_ele_pp, 10);
+    ASSIGN_FROM_LE(curr_eleparam_->lv, ui->le_ele_lv, 1);
+    ASSIGN_FROM_LE(curr_eleparam_->c, ui->le_ele_c, 1);
+    ASSIGN_FROM_LE(curr_eleparam_->ma, ui->le_ele_ma, 1);
+    ASSIGN_FROM_LE(curr_eleparam_->al, ui->le_ele_al, 1);
+    ASSIGN_FROM_LE(curr_eleparam_->oc, ui->le_ele_oc, 1);
+    ASSIGN_FROM_LE(curr_eleparam_->pl, ui->le_ele_pl, 1);
+    ASSIGN_FROM_LE(curr_eleparam_->upper_index, ui->le_ele_upperindex, 100);
+
+    ASSIGN_FROM_LE(curr_eleparam_->sv, ui->le_ele_sv, 6);
+    ASSIGN_FROM_LE(curr_eleparam_->servo_sensitivity,
+                   ui->le_ele_servosensitivity, 100);
+    ASSIGN_FROM_LE(curr_eleparam_->UpperThreshold, ui->le_ele_upperthreshold,
+                   1);
+    ASSIGN_FROM_LE(curr_eleparam_->LowerThreshold, ui->le_ele_lowerthreshold,
+                   1);
+    ASSIGN_FROM_LE(curr_eleparam_->servo_speed, ui->le_ele_servospeed, 3);
+
+    s_power_ctrler->update_eleparam_and_send(curr_eleparam_);
 }
 
 void TestPowerWidget::_init_io_buttons() {
@@ -147,23 +184,35 @@ void TestPowerWidget::_init_io_buttons() {
 }
 
 void TestPowerWidget::_init_common_buttons() {
-    QObject::connect(ui->pb_UpdateAllStatus, &QPushButton::clicked, this, &TestPowerWidget::_update_widget_status);
+    QObject::connect(ui->pb_UpdateAllStatus, &QPushButton::clicked, this,
+                     &TestPowerWidget::_update_widget_status);
 
-    QObject::connect(ui->pb_PowerOn, &QPushButton::clicked, this, [this](bool checked){
-        s_logger->trace("pb_PowerOn : {}", checked);
-        s_power_ctrler->set_power_on(checked);
-    });
+    QObject::connect(ui->pb_PowerOn, &QPushButton::clicked, this,
+                     [this](bool checked) {
+                         s_logger->trace("pb_PowerOn : {}", checked);
+                         s_power_ctrler->set_power_on(checked);
+                         _update_widget_status();
+                     });
 
-    QObject::connect(ui->pb_HighPowerOn, &QPushButton::clicked, this, [this](bool checked){
-        s_logger->trace("pb_HighPowerOn : {}", checked);
-        s_power_ctrler->set_highpower_on(checked);
-        s_power_ctrler->update_eleparam_and_send(this->curr_eleparam_);
-    });
+    QObject::connect(
+        ui->pb_HighPowerOn, &QPushButton::clicked, this, [this](bool checked) {
+            s_logger->trace("pb_HighPowerOn : {}", checked);
+            s_power_ctrler->set_highpower_on(checked);
+            s_power_ctrler->update_eleparam_and_send(this->curr_eleparam_);
+            _update_widget_status();
+        });
 
-    QObject::connect(ui->pb_MachBitOn, &QPushButton::clicked, this, [this](bool checked){
-        s_logger->trace("pb_MachBitOn : {}", checked);
-        s_power_ctrler->set_machbit_on(checked);
-        s_power_ctrler->update_eleparam_and_send(this->curr_eleparam_);
+    QObject::connect(
+        ui->pb_MachBitOn, &QPushButton::clicked, this, [this](bool checked) {
+            s_logger->trace("pb_MachBitOn : {}", checked);
+            s_power_ctrler->set_machbit_on(checked);
+            s_power_ctrler->update_eleparam_and_send(this->curr_eleparam_);
+            _update_widget_status();
+        });
+
+    QObject::connect(ui->pb_SetEleParam, &QPushButton::clicked, this, [this]() {
+        _update_eleparam_from_ui_and_send();
+        _update_widget_status();
     });
 }
 
@@ -176,16 +225,18 @@ static void init_system() {
     while (!s_can_ctrler->is_connected("can0") ||
            s_can_ctrler->is_connected("can1"))
         ;
-    
+
     s_io_ctrler->init(can0);
     s_power_ctrler->init(can0);
 
-    s_can_ctrler->add_frame_received_listener(can1, [&](const QCanBusFrame& frame){
-        // s_logger->debug("{}", frame.toString().toStdString());
-    });
+    s_can_ctrler->add_frame_received_listener(can1,
+                                              [&](const QCanBusFrame &frame) {
+                                                  // s_logger->debug("{}",
+                                                  // frame.toString().toStdString());
+                                              });
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
 
@@ -203,7 +254,6 @@ int main(int argc, char** argv) {
 
     TestPowerWidget w;
     w.show();
-
 
     return app.exec();
 }
