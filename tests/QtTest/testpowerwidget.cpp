@@ -18,11 +18,10 @@ TestPowerWidget::TestPowerWidget(QWidget *parent)
     _init_common_buttons();
 
     // init the eleparam
-    curr_eleparam_ = std::make_shared<power::EleParam_dkd_t>();
-    // TODO get from gui or set to gui
-
     // init the power controller once by eleparam
-    s_power_ctrler->update_eleparam_and_send(curr_eleparam_);
+    curr_eleparam_ = std::make_shared<power::EleParam_dkd_t>();
+    //  get from gui or set to gui
+    _update_eleparam_from_ui_and_send();
 
     // init timers
     ioboard_pulse_timer_ = new QTimer(this);
@@ -237,12 +236,18 @@ static void init_system() {
 }
 
 int main(int argc, char **argv) {
+    s_logger->info("");
+    s_logger->info("***********************************");
+    s_logger->info("****     New Gui Power Test    ****");
+    s_logger->info("***********************************");
+    s_logger->info("");
+
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
 
     QFile stylefile(EDM_ROOT_DIR "Conf/gui.qss");
     stylefile.open(QFile::ReadOnly);
-    s_logger->info("style file: {}", EDM_ROOT_DIR "Conf/gui.qss");
+    // s_logger->info("style file: {}", EDM_ROOT_DIR "Conf/gui.qss");
     if (stylefile.isOpen()) {
         app.setStyleSheet(stylefile.readAll());
     } else {

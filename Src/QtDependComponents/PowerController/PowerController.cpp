@@ -4,6 +4,8 @@
 #include "QtDependComponents/CanController/CanController.h"
 #include "QtDependComponents/IOController/IOController.h"
 
+#include "Utils/Format/edm_format.h"
+
 namespace edm {
 
 namespace power {
@@ -123,6 +125,13 @@ void PowerController::_handle_servo_settings() {
         servo_setting_.servo_sv = curr_eleparam_->sv;
         servo_setting_.touch_zigbee_warning_enable = bz_enable;
 
+        s_logger->trace(
+            "send servo settings: ss: {}, s: {}, ut: {}, lt: {}, "
+            "sv: {}, bz: {}",
+            curr_eleparam_->servo_sensitivity, curr_eleparam_->servo_speed,
+            curr_eleparam_->UpperThreshold, curr_eleparam_->LowerThreshold,
+            curr_eleparam_->sv, bz_enable);
+
         // 装载 frame
         QByteArray ba{reinterpret_cast<char *>(&servo_setting_), 8};
         QCanBusFrame frame{EDM_CAN_TXID_IOBOARD_SERVOSETTING, ba};
@@ -143,6 +152,28 @@ PowerController *PowerController::instance() {
     return &instance;
 }
 
+std::array<std::string, 3>
+PowerController::eleparam_to_string(EleParam_dkd_t::ptr e) {
+    static constexpr const char *ele_fmt1 =
+        "ON: {}, OF: {}, IP: {}, HP: {}, PP: {}, LV: {}, C : {}, JM: {}";
+    static constexpr const char *ele_fmt2 =
+        "MA: {}, AL: {}, LD: {}, OC: {}, PL: {}, UP: {}, DN: {}, JS: {}";
+    static constexpr const char *ele_fmt3 =
+        "SV: {}, SS: {}, UT: {}, LT: {}, S : {}, 电参数: {}";
+
+    // 摇动参数不打印, 这个系统不做摇动
+
+    return {
+        EDM_FMT::format(ele_fmt1, e->pulse_on, e->pulse_off, e->ip, e->hp,
+                        e->pp, e->lv, e->c, e->jump_jm),
+        EDM_FMT::format(ele_fmt2, e->ma, e->al, e->ld, e->oc, e->pl, e->up,
+                        e->dn, e->jump_js),
+        EDM_FMT::format(ele_fmt3, e->sv, e->servo_sensitivity,
+                        e->UpperThreshold, e->LowerThreshold, e->servo_speed,
+                        e->upper_index),
+    };
+}
+
 void PowerController::init(int can_device_index) {
     inited_ = true;
     can_device_index_ = can_device_index;
@@ -153,6 +184,12 @@ void PowerController::update_eleparam_and_send(
     // 存储当前结构体
     //! 当前为浅拷贝
     curr_eleparam_ = new_eleparam;
+
+    s_logger->trace("update_eleparam_and_send:");
+    auto strs = eleparam_to_string(curr_eleparam_);
+    for (const auto &s : strs) {
+        s_logger->trace(s);
+    }
 
     // 心跳处理
     ++canframe_pulse_value_;
@@ -181,7 +218,11 @@ void PowerController::trigger_send_eleparam() {
     ++canframe_pulse_value_;
     curr_result_->set_pulse_count(canframe_pulse_value_);
 
+    // 发送can buffer
     _trigger_send_canbuffer();
+
+    // 检查伺服参数设定, 如果变化, 重新发送
+    _handle_servo_settings();
 }
 
 void PowerController::trigger_send_contactors_io() {

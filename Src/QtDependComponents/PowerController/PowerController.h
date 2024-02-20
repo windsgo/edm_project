@@ -18,6 +18,8 @@ class PowerController final {
 public:
     static PowerController *instance();
 
+    static std::array<std::string, 3> eleparam_to_string(EleParam_dkd_t::ptr ele_param);
+
 public:
     void init(int can_device_index);
 
