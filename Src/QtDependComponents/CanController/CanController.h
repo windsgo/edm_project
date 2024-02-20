@@ -16,6 +16,8 @@
 #include <QThread>
 #include <QTimer>
 
+#include "config.h"
+
 // ! 需要注意的是, CanController的正常工作依赖Qt的事件循环 (且为main主线程)
 // ! 也就是说, 任何对于CanController方法的调用, (如add_device,send_frame)
 // ! 都需要来自于已经启动了事件循环的Qt线程
@@ -39,7 +41,7 @@ public:
         : QEvent(type), frame_(frame) {}
 
     constexpr static const QEvent::Type type =
-        QEvent::Type(QEvent::Type::User + 1);
+        QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_CanSendFrameEvent);
 
     const QCanBusFrame &get_frame() const { return frame_; }
 
@@ -52,7 +54,7 @@ public:
     CanStartEvent() : QEvent(type) {}
 
     constexpr static const QEvent::Type type =
-        QEvent::Type(QEvent::Type::User + 2);
+        QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_CanStartEvent);
 };
 
 class CanWorker : public QObject {
@@ -134,6 +136,9 @@ public:
     }
 
 public:
+    // 初始化Controller, 外部在启动QApplication后init以启动QThread
+    void init();
+
     // add a device using its interface name,
     // if success, return the device index of the device
     // else, return -1

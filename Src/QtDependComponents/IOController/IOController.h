@@ -5,6 +5,8 @@
 
 #include <QByteArray>
 
+#include "config.h"
+
 namespace edm
 {
 
@@ -43,6 +45,12 @@ public:
     uint32_t get_can_machineio_2_safe() const;
 
 private:
+    // 无锁的设置函数, 仅仅是比对值和设置值
+    // 如果需要trigger发送(io发生变动), 返回true, 否则返回false
+    bool _set_can_machineio_1_no_lock_no_trigger(uint32_t can_io_1);
+    bool _set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2);
+
+private:
 
     IOController();
     ~IOController() noexcept = default;
@@ -67,8 +75,8 @@ private:
     mutable std::mutex mutex_can_io_; // used to protect both 2 io variable
 
 private:
-    constexpr static const int CANIO1_TXID = 0x0356;
-    constexpr static const int CANIO2_TXID = 0x0358;
+    constexpr static const int CANIO1_TXID = EDM_CAN_TXID_CANIO_1;
+    constexpr static const int CANIO2_TXID = EDM_CAN_TXID_CANIO_2;
 
     // QByteArray canio1_bytearray_ {8, 0x00};
     // QByteArray canio2_bytearray_ {8, 0x00};

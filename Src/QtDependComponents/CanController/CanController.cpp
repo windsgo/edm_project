@@ -29,10 +29,16 @@ struct eventtype_register__ {
 };
 static struct eventtype_register__ et_register;
 
-CanController::CanController() {
-    worker_thread_ = new QThread(this);
+CanController::CanController() {}
 
-    worker_thread_->start();
+void CanController::init() {
+    if (!worker_thread_) {
+        worker_thread_ = new QThread(this);
+
+        if (!worker_thread_->isRunning()) {
+            worker_thread_->start();
+        }
+    }
 }
 
 CanController::~CanController() {
@@ -47,8 +53,10 @@ void CanController::terminate() {
 
     s_logger->trace("CanController terminate.");
 
-    worker_thread_->quit();
-    worker_thread_->wait();
+    if (worker_thread_) {
+        worker_thread_->quit();
+        worker_thread_->wait();
+    }
 
     {
         std::lock_guard guard(mutex_worker_map_and_vec_);
@@ -84,6 +92,10 @@ CanWorker *CanController::_get_device(const QString &name) const {
 }
 
 int CanController::add_device(const QString &name, uint32_t bitrate) {
+    if (!worker_thread_) {
+        throw exception{"CanController not init!"};
+    } 
+
     std::lock_guard guard(mutex_worker_map_and_vec_);
     if (worker_map_.contains(name)) {
         s_logger->error("CanController::add_device: already exist: {}",

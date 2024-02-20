@@ -31,11 +31,10 @@ void IOController::set_can_machineio_1(uint32_t can_io_1) {
     {
         std::lock_guard guard(mutex_can_io_);
 
-        if (can_io_1 == can_machineio_1_) {
+        if (!_set_can_machineio_1_no_lock_no_trigger(can_io_1)) {
+            // 返回false, 说明io没发生变化, 不重复trigger
             return;
         }
-
-        can_machineio_1_ = can_io_1;
     }
 
     s_logger->trace("set io 1: {0:#010X} {0:032B}", can_io_1);
@@ -47,11 +46,10 @@ void IOController::set_can_machineio_2(uint32_t can_io_2) {
     {
         std::lock_guard guard(mutex_can_io_);
 
-        if (can_io_2 == can_machineio_2_) {
+        if (!_set_can_machineio_2_no_lock_no_trigger(can_io_2)) {
+            // 返回false, 说明io没发生变化, 不重复trigger
             return;
         }
-
-        can_machineio_2_ = can_io_2;
     }
 
     s_logger->trace("set io 2: {0:#010X} {0:032B}", can_io_2);
@@ -71,13 +69,15 @@ void IOController::set_can_machineio_1_withmask(uint32_t part_of_can_io_1,
         std::lock_guard guard(mutex_can_io_);
 
         new_io_1 = (can_machineio_1_ & (~mask)) | (part_of_can_io_1 & mask);
+
+        if (!_set_can_machineio_1_no_lock_no_trigger(new_io_1)) {
+            return;
+        }
     }
 
-    s_logger->trace(
-        "mask io1 set: ori: {0:#010X}, set: {1:#010X}, masked: {2:#010X}",
-        can_machineio_1_, part_of_can_io_1, new_io_1);
+    s_logger->trace("set io 1 with mask {1:#010X}: {0:#010X} {0:032B}", new_io_1, mask);
 
-    set_can_machineio_1(new_io_1);
+    _trigger_send_io_1(new_io_1);
 }
 
 void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
@@ -87,9 +87,15 @@ void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
         std::lock_guard guard(mutex_can_io_);
 
         new_io_2 = (can_machineio_2_ & (~mask)) | (part_of_can_io_2 & mask);
+
+        if (!_set_can_machineio_2_no_lock_no_trigger(new_io_2)) {
+            return;
+        }
     }
 
-    set_can_machineio_1(new_io_2);
+    s_logger->trace("set io 1 with mask {1:#010X}: {0:#010X} {0:032B}", new_io_2, mask);
+
+    _trigger_send_io_2(new_io_2);
 }
 
 void IOController::trigger_send_current_io() {
@@ -116,6 +122,24 @@ uint32_t IOController::get_can_machineio_1_safe() const {
 uint32_t IOController::get_can_machineio_2_safe() const {
     std::lock_guard guard(mutex_can_io_);
     return can_machineio_2_;
+}
+
+bool IOController::_set_can_machineio_1_no_lock_no_trigger(uint32_t can_io_1) {
+    if (can_io_1 == can_machineio_1_) {
+        return false;
+    }
+
+    can_machineio_1_ = can_io_1;
+    return true;
+}
+
+bool IOController::_set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2) {
+    if (can_io_2 == can_machineio_2_) {
+        return false;
+    }
+
+    can_machineio_2_ = can_io_2;
+    return true;
 }
 
 IOController::IOController() {

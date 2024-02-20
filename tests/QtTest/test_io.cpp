@@ -10,7 +10,6 @@
 
 EDM_STATIC_LOGGER(s_root_logger, EDM_LOGGER_ROOT());
 
-
 int main(int argc, char **argv) {
 
     s_root_logger->debug("test can");
@@ -18,17 +17,24 @@ int main(int argc, char **argv) {
     QCoreApplication app(argc, argv);
 
     qDebug().noquote() << "main thread: " << QThread::currentThreadId();
+    
+    edm::can::CanController::instance()->init();
 
-    int can0_index = edm::can::CanController::instance()->add_device("can0", 115200);
+    int can0_index =
+        edm::can::CanController::instance()->add_device("can0", 115200);
     edm::can::CanController::instance()->add_device("can1", 115200);
 
     edm::can::CanController::instance()->add_frame_received_listener(
         "can1", [](const QCanBusFrame &frame) {
-            qDebug().noquote() << "thread: " << QThread::currentThreadId() << frame.toString();
+            qDebug().noquote()
+                << "thread: " << QThread::currentThreadId() << frame.toString();
         });
 
     edm::io::IOController::instance()->init(can0_index);
 
+    while (!edm::can::CanController::instance()->is_connected("can0") &&
+           !edm::can::CanController::instance()->is_connected("can1"))
+        ;
 
     uint32_t tmp = 0x00000000;
 
@@ -37,15 +43,13 @@ int main(int argc, char **argv) {
 
     QTimer t;
     QObject::connect(&t, &QTimer::timeout, [&]() {
-        
         tmp += 0x01;
 
-        edm::io::IOController::instance()->set_can_machineio_1_withmask(tmp, mask);
-
+        edm::io::IOController::instance()->set_can_machineio_1_withmask(tmp,
+                                                                        mask);
     });
 
     t.start(500);
-
 
     int ret = app.exec();
 

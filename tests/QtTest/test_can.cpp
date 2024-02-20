@@ -52,6 +52,9 @@ int main(int argc, char **argv) {
 
     qDebug().noquote() << "main thread: " << QThread::currentThreadId();
 
+
+    edm::can::CanController::instance()->init();
+
     edm::can::CanController::instance()->add_device("can0", 115200);
     edm::can::CanController::instance()->add_device("can1", 115200);
 
