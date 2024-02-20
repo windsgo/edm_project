@@ -1,0 +1,873 @@
+/* This is the qss file for windows in drill project */
+/* author: x */
+/* Style: metal */
+
+/********************大窗体开始********************/
+QWidget:focus
+{
+/* 避免获得焦点的部件产生虚框
+*/
+outline: none;
+}
+
+QGroupBox {
+    background: qlineargradient(spread:reflect, x1:1, y1:1, x2:0, y2:0,
+                stop:0 rgba(255,255,255, 0), stop:1 rgba(71, 154, 199, 70));
+    border: 0px solid gray;
+    border-radius: 9px;
+    margin-top: 1em;
+}
+
+QGroupBox::title {
+    color: yellow;
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 3px 0 3px;
+}
+
+
+QMessageBox
+{
+background: qlineargradient(spread:reflect, x1:0, y1:1, x2:0, y2:-0.1,
+                stop:0 rgba(255, 192, 151, 255), stop:1 rgba(239,97,0, 255));
+}
+
+#TestPowerWidget
+{
+background: qlineargradient(spread:reflect, x1:0, y1:1, x2:0, y2:-0.1,
+                stop:0 rgba(29,47,59, 255), stop:1 rgba(94, 98, 99, 255));
+font: 16pt "Ubuntu";
+}
+#TestPowerWidget QPushButton:pressed
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
+border:6px groove rgb(59, 59, 59);
+border-radius:3px;
+}
+#TestPowerWidget QPushButton:checked
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(188,208,197, 255), stop:1 rgba(66,168,129, 255));
+border:6px groove rgb(59, 59, 59);
+border-radius:3px;
+}
+#TestPowerWidget QPushButton
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));   
+border:3px groove rgb(59, 59, 59);
+border-radius:3px;
+}
+#TestPowerWidget QLabel
+{
+color: rgb(127,255,0);
+/*color: rgb(230,230,230);*/
+}
+
+/*
+QTableWidget
+{
+border-radius: 10px;
+}
+
+#PageMachining QTextEdit
+{
+border-radius: 10px;
+font-size: 16pt;
+}
+
+#PageSettings QTableWidgetItem
+{
+font-size: 16pt;
+}
+*/
+
+#MicroMainWindow
+{
+background: qlineargradient(spread:reflect, x1:0, y1:1, x2:0, y2:-0.1,
+                stop:0 rgba(29,47,59, 255), stop:1 rgba(94, 98, 99, 255));
+font: 16pt "Ubuntu";
+}
+
+#PageMachining, #PageElectrode, PageMovement, #PagePreparation, #PageSettings
+{
+background: qlineargradient(spread:reflect, x1:0, y1:1, x2:0, y2:-0.1,
+                stop:0 rgba(29,47,59, 255), stop:1 rgba(94, 98, 99, 255));
+opacity: 0;
+}
+
+#NumKeyboard
+{
+border: 3px solid rgba(0,0,0,0);
+background: qlineargradient(spread:reflect, x1:0, y1:1, x2:0, y2:-0.1,
+                stop:0 rgba(29,47,59, 255), stop:1 rgba(94, 98, 99, 255));
+border-radius: 10px;
+}
+
+#fullKeyboard
+{
+border: 3px solid rgba(0,0,0,0);
+background: qlineargradient(spread:reflect, x1:0, y1:1, x2:0, y2:-0.1,
+                stop:0 rgba(29,47,59, 255), stop:1 rgba(94, 98, 99, 255));
+border-radius: 10px;
+}
+
+
+QProgressBar::chunk
+{
+/*width: 10px;*/
+margin: 0.5px;
+ /*background-color:#05B8CC;*/
+ background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
+                stop:0 rgba(82,136,112, 255), stop:0.995 rgb(240,116,132),
+                stop:0.9951 rgba(253, 236, 208, 255), stop:1 rgba(253, 236, 208, 255));
+ /*width:20px;*/
+}
+
+
+
+QScrollBar:vertical
+{
+    width:40px;
+    background:rgba(0,0,0,0);
+    margin:0px,0px,0px,0px;
+    padding-top:40px;
+    padding-bottom:40px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical
+{
+    width:40px;
+    background:qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+    stop:0 rgba(29,47,59, 255), stop:0.4 rgba(165, 165, 165, 255));
+    border-top: 4px solid qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+            stop:0 rgba(29,47,59, 255), stop:0.4 rgba(165, 165, 165, 255));
+    border-bottom: 4px solid qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+            stop:0 rgba(29,47,59, 255), stop:0.4 rgba(165, 165, 165, 255));
+    min-height:30;
+}
+
+QScrollBar::add-line:vertical
+{
+    height:40px;
+    width:40px;
+    border-bottom-right-radius:5px;
+    border-bottom-left-radius:15px;
+    background-color:qconicalgradient(cx:0.5, cy:0.9, angle:-90,
+    stop:0 rgba(29, 47, 59, 0),
+    stop:0.35 rgba(165, 165, 165, 200),
+    stop:0.5 rgba(29, 47, 59, 255),
+    stop:0.65 rgba(165, 165, 165, 200),
+    stop:1 rgba(29, 47, 59, 0));
+    subcontrol-position:bottom;
+}
+
+QScrollBar::add-line:vertical:pressed
+{
+    height:40px;
+    width:40px;
+    border-bottom-right-radius:5px;
+    border-bottom-left-radius:15px;
+    background-color:qconicalgradient(cx:0.5, cy:1, angle:-90,
+    stop:0 rgba(29, 47, 59, 0),
+    stop:0.35 rgba(165, 165, 165, 200),
+    stop:0.5 rgba(29, 47, 59, 255),
+    stop:0.65 rgba(165, 165, 165, 200),
+    stop:1 rgba(29, 47, 59, 0));
+    subcontrol-position:bottom;
+}
+
+QScrollBar::sub-line:vertical
+{
+    height:40px;
+    width:40px;
+    border-top-right-radius:5px;
+    border-top-left-radius:15px;
+    background-color:qconicalgradient(cx:0.5, cy:0.1, angle:-90,
+    stop:0 rgba(29, 47, 59, 255),
+    stop:0.15 rgba(165, 165, 165, 200),
+    stop:0.5 rgba(29, 47, 59, 0),
+    stop:0.85 rgba(165, 165, 165, 200),
+    stop:1 rgba(29, 47, 59, 255));
+    subcontrol-position:top;
+}
+
+QScrollBar::sub-line:vertical:pressed
+{
+    height:40px;
+    width:40px;
+    border-top-right-radius:5px;
+    border-top-left-radius:15px;
+    background-color:qconicalgradient(cx:0.5, cy:0, angle:-90,
+    stop:0 rgba(29, 47, 59, 255),
+    stop:0.15 rgba(165, 165, 165, 200),
+    stop:0.5 rgba(29, 47, 59, 0),
+    stop:0.85 rgba(165, 165, 165, 200),
+    stop:1 rgba(29, 47, 59, 255));
+    subcontrol-position:top;
+}
+
+
+/********************大窗体结束********************/
+
+/********************容器部件开始********************/
+
+#MicroMainWindow QGroupBox#gbFuncOperation, QGroupBox#gbMachiningStatus, QGroupBox#gbFuncMaintainance
+{
+color:red;
+font-size: 22pt;
+}
+
+#MicroMainWindow QGroupBox#gbVoltCurr, QGroupBox#gbWarning, QGroupBox#gbDischargeStatus, QGroupBox#gbToolInfo
+{
+font-size: 20pt;
+}
+
+#PageMachining QGroupBox#gbListFile, QGroupBox#gbEditFile, QGroupBox#gbSwitches, QGroupBox#gbPowerParam, QGroupBox#gbServoParam, QGroupBox#gbSelectionCondition
+{
+font-size: 20pt;
+}
+
+#SubPageMaintainance QGroupBox#gbLanguage, QGroupBox#gbRegister, QGroupBox#gbLog, QGroupBox#gbErrorFile
+{
+font-size: 20pt;
+}
+
+#PageMovement QGroupBox#gbMovementSpeedSettings, QGroupBox#gbSingleAxisMovementMode, QGroupBox#gbAimedMovementMode, QGroupBox#gbSetMovedWorkCoord, QGroupBox#gbMotorTest
+{
+font-size: 20pt;
+}
+
+#PageMovement QGroupBox#gbMovementSpeedSettings
+{
+font-size: 16pt;
+}
+
+#PageMovement QGroupBox#gbMovementSpeedRatio
+{
+background: qlineargradient(spread:reflect, x1:1, y1:1, x2:0, y2:0,
+                stop:0 rgba(255,255,255, 0), stop:1 rgba(20, 80, 100, 150));
+font-size: 16pt;
+}
+
+#SubPageMotorStatus QFrame#frCurve1, QFrame#frCurve2
+{
+background: qlineargradient(spread:reflect, x1:1, y1:1, x2:0, y2:0,
+                stop:0 rgba(230, 230, 230, 150), stop:1 rgba(255, 255, 255, 255));
+}
+
+
+
+#PagePreparation QGroupBox#gbHomingTask, QGroupBox#gbPositioningTask
+{
+font-size: 20pt;
+}
+
+#PagePreparation QGroupBox#gbHomingOperation, QGroupBox#gbPositioningResults,
+QGroupBox#gbPositioningDirection, QGroupBox#gbProbeCenterType, QGroupBox#gbPositioningPlane
+{
+background: qlineargradient(spread:reflect, x1:1, y1:1, x2:0, y2:0,
+                stop:0 rgba(255,255,255, 0), stop:1 rgba(20, 80, 100, 150));
+font-size: 16pt;
+}
+
+#PageSettings QGroupBox#gbPowerParam, QGroupBox#gbServoParam, QGroupBox#gbDatabase, QGroupBox#gbListFile
+{
+font-size: 20pt;
+}
+
+#PageSettings QGroupBox#gbCurrent, QGroupBox#gbPulse, QGroupBox#gbOther
+{
+background: qlineargradient(spread:reflect, x1:1, y1:1, x2:0, y2:0,
+                stop:0 rgba(255,255,255, 0), stop:1 rgba(20, 80, 100, 150));
+font-size: 16pt;
+}
+
+
+
+
+#MicroMainWindow QPushButton, #PageMachining QPushButton, #PageElectrode QPushButton, #PageMovement QPushButton, #PagePreparation QPushButton, #PageSettings QPushButton
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
+border:6px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 20pt "Ubuntu";
+}
+
+#MicroMainWindow QComboBox
+{
+color:rgb(0,0,0);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
+border:6px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 20pt "Ubuntu";
+}
+
+
+#MicroMainWindow QPushButton:pressed, #PageMachining QPushButton:pressed, #PageElectrode QPushButton:pressed, #PageMovement QPushButton:pressed, #PagePreparation QPushButton:pressed, #PageSettings QPushButton:pressed
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
+border:8px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 20pt "Ubuntu";
+font-style: oblique;
+}
+
+/*QComboBox QPushButton
+{
+background-color: rgb(0, 28, 53);
+}*/
+
+#MicroMainWindow QComboBox:pressed
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
+border:8px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 20pt "Ubuntu";
+font-style: oblique;
+}
+
+
+#MicroMainWindow QPushButton:checked, #PageMachining QPushButton:checked, #PageElectrode QPushButton:checked, #PageMovement QPushButton:checked, #PagePreparation QPushButton:checked, #PageSettings QPushButton:checked
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(188,208,197, 255), stop:1 rgba(66,168,129, 255));
+border:8px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 20pt "Ubuntu";
+}
+
+#MicroMainWindow QComboBox:checked
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(188,208,197, 255), stop:1 rgba(66,168,129, 255));
+border:8px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 20pt "Ubuntu";
+}
+
+
+/* 左边栏大按钮  */
+#MicroMainWindow QPushButton#pbPagePreparation, QPushButton#pbPageMovement, QPushButton#pbPageSettings, QPushButton#pbPageMachining, QPushButton#pbPageElectrode
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(255, 255, 255), stop:1 rgb(71, 154, 199));
+border:10px groove rgb(59, 59, 59);
+border-radius:15px;
+font: 20pt "Ubuntu";
+}
+
+#MicroMainWindow QPushButton#pbPagePreparation:pressed, QPushButton#pbPageMovement:pressed, QPushButton#pbPageSettings:pressed, QPushButton#pbPageMachining:pressed, QPushButton#pbPageElectrode:pressed
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
+border:10px groove rgb(59, 59, 59);
+border-radius:15px;
+font: 20pt "Ubuntu";
+font-style: oblique;
+}
+
+#MicroMainWindow QPushButton#pbPagePreparation:checked, QPushButton#pbPageMovement:checked, QPushButton#pbPageSettings:checked, QPushButton#pbPageMachining:checked, QPushButton#pbPageElectrode:checked
+{
+color:rgb(253,236,208);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(188,208,197, 255), stop:1 rgba(38,227,63, 255));
+border:10px groove rgb(59, 59, 59);
+border-radius:15px;
+font: 20pt "Ubuntu";
+}
+
+/*辅助功能区*/
+#MicroMainWindow QPushButton#pbSubPageMotorStatus, QPushButton#pbSubPageErrorCompensation, QPushButton#pbSubPageMaintainance, QPushButton#pbSubPageIOStatus, QPushButton#pbSubPageAxisSettings, QPushButton#pbSubPageSystemSettings, QPushButton#pbReturnProcessStatus
+{
+font: 14pt "Ubuntu";
+}
+
+/*加工相关按钮*/
+#PageMachining QPushButton#pbRun
+{
+/*color:rgb(253,236,208);*/
+color:rgb(0,100,255);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(0,255,0, 255), stop:1 rgba(0,255,0, 255));
+border:8px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 18pt "Ubuntu";
+}
+
+#PageMachining QPushButton#pbPause
+{
+/*color:rgb(253,236,208);*/
+color:rgb(0,100,255);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(255,0,0, 255), stop:1 rgba(255,0,0, 255));
+border:8px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 18pt "Ubuntu";
+}
+
+#PageMachining QPushButton#pbStop
+{
+/*color:rgb(253,236,208);*/
+color:rgb(0,100,255);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(255,255,255, 255), stop:1 rgba(255,255,255, 255));
+border:8px groove rgb(59, 59, 59);
+border-radius:10px;
+font: 18pt "Ubuntu";
+}
+
+#PageMachining QPushButton#pbRun:pressed, #PageMachining QPushButton#pbPause:pressed, #PageMachining QPushButton#pbStop:pressed
+{
+/*color:rgb(253,236,208);*/
+color:rgb(0,100,255);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
+border:10px groove rgb(59, 59, 59);
+border-radius:15px;
+font: 18pt "Ubuntu";
+font-style: oblique;
+}
+
+#PageMachining QPushButton#pbRun:checked
+{
+color:rgb(0,0,0);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(188,208,197, 255), stop:1 rgba(38,227,63, 255));
+border:10px groove rgb(59, 59, 59);
+border-radius:20px;
+font: 18pt "Ubuntu";
+}
+
+#PageMachining QPushButton#pbPause:checked
+{
+color:rgb(0,0,0);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(238,130,238, 255), stop:1 rgba(255,0,0, 255));
+border:10px groove rgb(59, 59, 59);
+border-radius:20px;
+font: 18pt "Ubuntu";
+}
+
+#PageMachining QPushButton#pbStop:checked
+{
+color:rgb(0,0,0);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
+                        stop:0 rgba(230,230,250, 255), stop:1 rgba(255,255,255, 255));
+border:10px groove rgb(59, 59, 59);
+border-radius:20px;
+font: 18pt "Ubuntu";
+}
+
+#PageMachining QLineEdit, #PageElectrode QLineEdit, #PageMovement QLineEdit, #PagePreparation QLineEdit, #PageSettings QLineEdit
+{
+outline: none;
+/*background: rgba(29,47,59, 255);
+color:rgb(253,236,208);*/
+border:4px groove rgb(59, 59, 59);
+border-radius: 8px;
+font: 20pt "Ubuntu";
+}
+
+#PageMachining QPushButton#pbTechnology, QPushButton#pbPowerTechnology, QPushButton#pbPowerTechnology2
+{
+font: 16pt "Ubuntu";
+}
+
+#PageMachining QPushButton#cbPolarity, QPushButton#cbMA
+{
+font: 12pt "Ubuntu";
+}
+
+#PageMachining QPushButton#pbLoadFile, QPushButton#pbNewFile, QPushButton#pbSaveFile, QPushButton#pbDeleteFile
+{
+font: 16pt "Ubuntu";
+}
+
+#PageSettings QPushButton#pbFileListEdit, QPushButton#pbNewFile, QPushButton#pbNewFile1, QPushButton#pbFileListDelete, QPushButton#pbReset, QPushButton#pbCopyFile
+{
+font: 16pt "Ubuntu";
+}
+
+
+#PageMachining QTextEdit#teFile
+{
+outline: none;
+font-size: 28pt;
+padding: 0 10px;
+/*background: rgba(29,47,59, 255);*/
+/*color:rgb(253,236,208);*/
+color: rgb(29,47,59);
+/*background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+        stop:0 rgba(29,47,59, 255), stop:0.02 rgba(195, 195, 195, 255));*/
+border-radius: 10px;
+}
+
+
+
+
+#MicroMainWindow QLabel, #PageMachining QLabel, #PageElectrode QLabel, #PageMovement QLabel, #PagePreparation QLabel, #PageSettings QLabel
+{
+/*color: rgb(29,47,59);*/
+color: rgb(230,230,230);
+font: 20pt "Ubuntu";
+}
+
+/*snow*/
+#SubPageIOStatus QLabel, #SubPageAxisSettings QLabel, #SubPageErrorCompensation QLabel, #SubPageMaintainance QLabel, #SubPageSystemSettings QLabel
+{
+/*color: rgb(29,47,59);*/
+color: rgb(230,230,230);
+font: 12pt "Ubuntu";
+}
+
+#PageElectrode QPushButton#btnLoadParFile2, QPushButton#btnSaveFile, QPushButton#pbNewParFile, QPushButton#btnDeleteFile
+{
+font: 16pt "Ubuntu";
+}
+
+#PageElectrode QPushButton#pbOpenDoor, QPushButton#pbCloseDoor, QPushButton#pbPushOut, QPushButton#pbReturn, QPushButton#pbLooseTool
+{
+font: 14pt "Ubuntu";
+}
+
+#PageElectrode QPushButton#pbOpenDoor:pressed, QPushButton#pbCloseDoor:pressed, QPushButton#pbPushOut:pressed, QPushButton#pbReturn:pressed, QPushButton#pbLooseTool:pressed
+{
+font: 14pt "Ubuntu";
+}
+
+#PageElectrode QPushButton#pbOpenDoor:checked, QPushButton#pbCloseDoor:checked, QPushButton#pbPushOut:checked, QPushButton#pbReturn:checked, QPushButton#pbLooseTool:checked
+{
+font: 14pt "Ubuntu";
+}
+
+#SubPageSystemSettings QPushButton#pbUnitSetting, QPushButton#pbLanguage, QPushButton#pbtimeset, QPushButton#pbSetSystemParas, QPushButton#pbClearSource, QPushButton#pbLock, QPushButton#pbRecoverTestMode, QPushButton#pbSystemUpdate
+{
+font: 12pt "Ubuntu";
+}
+
+#SubPageSystemSettings QComboBox
+{
+font: 12pt "Ubuntu";
+}
+
+#SubPageMotorStatus QComboBox
+{
+font: 12pt "Ubuntu";
+}
+
+#SubPageErrorCompensation QComboBox
+{
+font: 16pt "Ubuntu";
+}
+
+#SubPageAxisSettings QComboBox
+{
+font: 12pt "Ubuntu";
+}
+
+#SubPageErrorCompensation QPushButton
+{
+font: 16pt "Ubuntu";
+}
+
+#PageMachining QComboBox, #PageElectrode QComboBox, #PageMovement QComboBox, #PagePreparation QComboBox, #PageSettings QComboBox
+{
+/*color: rgb(29,47,59);*/
+color: rgb(0,0,0);
+font: 12pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbVoltage
+{
+font: 12pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbMessage
+{
+font: 16pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbCurrent
+{
+font: 12pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbCompany
+{
+/*background: rgb(17, 39, 73);*/
+background: qlineargradient(spread:reflect, x1:0.1, y1:0.95, x2:0.5, y2:0.5,
+                    stop:0 rgba(253, 236, 208, 255), stop:0.35 rgba(29,47,59, 255));
+/*color: rgb(253, 236, 208);*/
+color: rgb(195, 195, 195);
+border-radius: 10px;
+font: 32pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbWarning
+{
+/*background-color: rgb(108, 244, 17);*/
+background: qlineargradient(spread:reflect, x1:0.1, y1:0.1, x2:0.5, y2:0.3,
+                    stop:0 rgba(253, 236, 208, 255), stop:1 rgba(240,125,0, 255));
+color: rgb(29,47,59);
+border-radius: 10px;
+border: none;
+font: 16pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbConnectionStatus
+{
+/*background-color: rgb(108, 244, 17);*/
+background: qlineargradient(spread:reflect, x1:0.1, y1:0.1, x2:0.5, y2:0.3,
+                    stop:0 rgba(253, 236, 208, 255), stop:1 rgba(66,168,129, 255));
+color: rgb(29,47,59);
+border-radius: 10px;
+border: none;
+font: 16pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbCoordXName, QLabel#lbCoordXNum, QLabel#lbCoordYName, QLabel#lbCoordYNum, QLabel#lbCoordZName, QLabel#lbCoordZNum, QLabel#lbCoordAName, QLabel#lbCoordANum, QLabel#lbCoordBName, QLabel#lbCoordBNum, QLabel#lbCoordWName, QLabel#lbCoordWNum, QLabel#lbCoordTName, QLabel#lbCoordTNum
+{
+font: 28pt "Ubuntu";
+}
+
+#PageMachining QLabel#lbOilBumpOnOFF, QLabel#lbOilInOnOFF, QLabel#lbOilBackOnOFF, QLabel#lbIO1, QLabel#lbIO2, QLabel#lbIntervalBumpOnOff, QLabel#lbIntervalBumpMin, QLabel#lbIntervalBumpS, QLabel#lbZBumpOnOff, QLabel#lbZBumpMin, QLabel#lbZBumpS
+{
+font:16pt "Ubuntu";
+}
+
+
+
+#MicroMainWindow QLabel#lbXPosLimit, QLabel#lbYPosLimit, QLabel#lbZPosLimit, QLabel#lbAPosLimit, QLabel#lbBPosLimit, QLabel#lbWPosLimit, QLabel#lbTPosLimit
+{
+color: rgb(255,0,0);
+font: 24pt "Ubuntu";
+}
+
+#MicroMainWindow QLabel#lbPaintTitle
+{
+/*background-color: #21c1c1;*/
+/*background-color: rgb(82, 136, 112);*/
+background: qlineargradient(spread:reflect, x1:0.1, y1:0, x2:0.5, y2:0,
+                    stop:0 rgba(165, 165, 165, 255), stop:1 rgba(59, 59, 59, 255));
+color: rgb(253, 236, 208);
+/*color: rgb(188,208,197);*/
+border-radius: 10px;
+font: 20pt "Ubuntu";
+}
+
+#PageMachining QLabel#lbON, QLabel#lbOFF, QLabel#lbMA, QLabel#lbIP, QLabel#lbSV2, QLabel#lbV, QLabel#lbHP, QLabel#lbPP, QLabel#lbC, QLabel#lbLH, QLabel#lbSV1, QLabel#lbPL
+{
+color: rgb(230,230,230);
+border-radius: 10px;
+border: none;
+font: 16pt "Ubuntu";
+}
+
+#PageMachining QLabel#lbShowFile, QLabel#lbCurrentFile
+{
+color: rgb(230,230,230);
+border-radius: 10px;
+border: none;
+font: 16pt "Ubuntu";
+}
+
+#PageMachining QLineEdit#leCurrentDir, QLineEdit#leShowFileName
+{
+font: 16pt "Ubuntu";
+}
+
+#PageMachining QLabel#lbCurrentSpeedTitle
+{
+font: 11pt "Ubuntu";
+}
+
+#PageMachining QLabel#lbNone, QLabel#lbReversalRate, QLabel#lbForwardRate, QLabel#lbUpperThreshold, QLabel#lbLowerThreshold, QLabel#lbJumpDistance,
+QLabel#lbJumpInterval, QLabel#lbJumpSpeed, QLabel#lbPulseOff, QLabel#lbPulseOn, QLabel#lbSetVoltage, QLabel#lbSetCurrent, QLabel#lbJumpJerk, QLabel#lbSpindleRatio, QLabel#lbJumpHeight
+{
+color: rgb(230,230,230);
+border-radius: 10px;
+border: none;
+font: 16pt "Ubuntu";
+}
+
+#PagePreparation QLabel#lbTouchCoor, QLabel#lbSetCoor
+{
+color: rgb(230,230,230);
+border-radius: 10px;
+border: none;
+font: 16pt "Ubuntu";
+}
+
+#PageElectrode QLabel#lbToolNum
+{
+font: 16pt "Ubuntu";
+}
+
+#PageElectrode QLabel#lbFinder
+{
+font: 12pt "Ubuntu";
+}
+
+#SubPageMotorStatus QLabel#lbAxis1, QLabel#lbCurve1, QLabel#lbAxis2, QLabel#lbCurve2, QLabel#lbAxis3, QLabel#lbCurve3
+{
+color: rgb(0,0,0);
+font: 12pt "Ubuntu";
+}
+
+
+
+
+#SubPageMaintainance QTextBrowser#tbOperationInfo
+{
+outline: none;
+font-size: 12pt;
+padding: 0 10px;
+/*background: rgba(29,47,59, 255);*/
+/*color:rgb(253,236,208);*/
+color: rgb(29,47,59);
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+        stop:0 rgba(29,47,59, 255), stop:0.02 rgba(195, 195, 195, 255));
+border-radius: 10px;
+}
+
+
+#PageMachining QTextEdit#teFile
+{
+font-size: 12pt;
+}
+
+#PageMachining QLineEdit#leFileName
+{
+font-size: 16pt;
+}
+
+
+
+#PageElectrode QTableView#lstUsrParFile, QTableView#tbElecParam
+{
+color: rgb(29,47,59);
+font-size: 12pt;
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+                    stop:0 rgba(29,47,59, 255), stop:0.02 rgba(195, 195, 195, 255));
+border-radius: 10px;
+selection-color: rgb(255, 255, 255);
+border: 1px solid black;
+}
+
+
+#PageMachining QTableView#tbPowerTechFiles
+{
+color: rgb(29,47,59);
+font-size: 20pt;
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+                    stop:0 rgba(29,47,59, 255), stop:0.02 rgba(195, 195, 195, 255));
+border-radius: 10px;
+selection-color: rgb(255, 255, 255);
+border: 1px solid black;
+}
+
+#PageMachining QTableView#tbPowerTechFiles:item:selected:active
+{
+background: rgb(95, 95, 95, 255);
+text-align: center;
+}
+
+#PageElectrode QTableView#tbElecParam:item:selected:active
+{
+background: rgb(95, 95, 95, 255);
+text-align: center;
+}
+
+#PageSettings QTableView#twFiles:item:selected:active
+{
+background: rgb(95, 95, 95, 255);
+text-align: center;
+}
+
+QHeaderView
+{
+background: rgba(165, 165, 165, 0);
+border:none;
+border-top-left-radius:6px;
+border-top-right-radius:6px;
+}
+
+#PageSettings QHeaderView:section, #PageMachining QHeaderView:section
+{
+height: 50px;
+color: rgb(253,236,208);
+font-size: 24px;
+background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0,
+stop:0 rgba(165, 165, 165, 255), stop:1 rgba(59, 59, 59, 255));
+border: 1px solid rgb(144, 144, 144, 255);
+border-top-left-radius:5px;
+border-top-right-radius:5px;
+}
+
+
+
+
+
+#MicroMainWindow QLabel#lbVoltage
+{
+background-image: url(../mec_tire_molds/resources/images/MeterV.png);
+background-repeat:none;
+}
+
+#MicroMainWindow QLabel#lbCurrent
+{
+background-image: url(../mec_tire_molds/resources/images/MeterA.png);
+background-repeat:none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+#PageMachining QProgressBar#WorkProgressBar::chunk
+{
+/*width: 10px;*/
+margin: 0.5px;
+ /*background-color:#05B8CC;*/
+ background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
+                stop:0 rgba(82,136,112, 255), stop:0.995 rgb(240,116,132),
+                stop:0.9951 rgba(253, 236, 208, 255), stop:1 rgba(253, 236, 208, 255));
+ /*width:20px;*/
+}
+
+#PageMachining QProgressBar#WorkProgressBar
+{
+/* border:5px groove rgb(165, 165, 165);*/
+ border:5px solid qlineargradient(spread:reflect, x1:0.1, y1:0, x2:0.5, y2:0,
+                            stop:0 rgba(165, 165, 165, 255), stop:1 rgba(59, 59, 59, 255));
+ border-radius:5px;
+ text-align: center;
+ color: rgb(66,78,105);
+ background-color: rgb(195, 195, 195);
+ font-size: 28pt;
+}
+

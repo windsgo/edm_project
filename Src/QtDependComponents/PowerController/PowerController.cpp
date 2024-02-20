@@ -18,9 +18,13 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 #define OR_EQUAL(__ori, __or_value)  (__ori) = (__ori) | (__or_value)
 #define AND_EQUAL(__ori, __or_value) (__ori) = (__ori) & (__or_value)
 
-void PowerController::set_highpower_on(bool on) { highpower_on_flag_ = true; }
+void PowerController::set_highpower_on(bool on) { highpower_on_flag_ = on; }
 
 bool PowerController::is_highpower_on() const { return highpower_on_flag_; }
+
+void PowerController::set_machbit_on(bool on) { machpower_flag_ = on; }
+
+bool PowerController::is_machbit_on() const { return machpower_flag_; }
 
 void PowerController::set_power_on(bool on) {
     static const uint32_t pwon_io_1 = 1 << (EleContactorOut_PWON_JF1 - 1);

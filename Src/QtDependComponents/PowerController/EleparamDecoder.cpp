@@ -248,8 +248,8 @@ void EleparamDecoder::_canframe_handle_sv() {
     // sv 伺服电压 (应当由伺服采样模块(目前为IO采样板)处理, 不需要发送给电源)
     // TODO 外部要将sv值通过can发送给采样板
 
-    AND_EQUAL(CAN_BUFFER[1][3], 0x0F);                        // 清空高4位
-    OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param()->sv << 4); // 高4位设定sv
+    // AND_EQUAL(CAN_BUFFER[1][3], 0x0F);                        // 清空高4位
+    // OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param()->sv << 4); // 高4位设定sv
 }
 
 void EleparamDecoder::_canframe_handle_al() {

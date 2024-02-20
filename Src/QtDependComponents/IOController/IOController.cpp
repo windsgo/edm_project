@@ -93,7 +93,7 @@ void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
         }
     }
 
-    s_logger->trace("set io 1 with mask {1:#010X}: {0:#010X} {0:032B}", new_io_2, mask);
+    s_logger->trace("set io 2 with mask {1:#010X}: {0:#010X} {0:032B}", new_io_2, mask);
 
     _trigger_send_io_2(new_io_2);
 }

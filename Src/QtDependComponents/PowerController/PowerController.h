@@ -41,6 +41,9 @@ public:
     void set_highpower_on(bool on);
     bool is_highpower_on() const;
 
+    void set_machbit_on(bool on);
+    bool is_machbit_on() const;
+
     // Power ON 接口 设计 PWON, SOF 继电器, 单独设置, 与电参数刷新无关
     // 直接设置IO
     void set_power_on(bool on);
