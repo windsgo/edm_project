@@ -546,11 +546,11 @@ void EleparamDecoder::_iosettings_handle_LVx() {
 void EleparamDecoder::_iosettings_handle_PL() {
     uint8_t pl = input_->ele_param()->pl;
 
-    if (pl == 0) {
-        // 负极性, OUT39 = 0, RV继电器实际为吸合(反逻辑)
+    if (pl == 0) { /* pl = 0 (对应上位机发的是 (+), 正极性) */
+        // 正极性, OUT39 = 0, RV继电器实际为吸合(反逻辑)
         _set_contactor_io_RVNM(false);
-    } else {
-        // 正极性, OUT39 = 1, RV继电器实际为不吸合(反逻辑)
+    } else { /* pl = 1 (对应上位机发的是 (-), 负极性) */
+        // 负极性, OUT39 = 1, RV继电器实际为不吸合(反逻辑)
         _set_contactor_io_RVNM(true);
     }
 }

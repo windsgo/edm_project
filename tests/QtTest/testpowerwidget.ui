@@ -733,6 +733,19 @@
     <string>设置电参数</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="pb_TriggleSendIO">
+   <property name="geometry">
+    <rect>
+     <x>560</x>
+     <y>30</y>
+     <width>101</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>再次发送IO</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

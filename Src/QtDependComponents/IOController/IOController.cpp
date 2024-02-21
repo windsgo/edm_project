@@ -75,7 +75,8 @@ void IOController::set_can_machineio_1_withmask(uint32_t part_of_can_io_1,
         }
     }
 
-    s_logger->trace("set io 1 with mask {1:#010X}: {0:#010X} {0:032B}", new_io_1, mask);
+    s_logger->trace("set io 1 with mask {1:#010X}: io1: {0:#010X} {0:032B}",
+                    new_io_1, mask);
 
     _trigger_send_io_1(new_io_1);
 }
@@ -93,7 +94,8 @@ void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
         }
     }
 
-    s_logger->trace("set io 2 with mask {1:#010X}: {0:#010X} {0:032B}", new_io_2, mask);
+    s_logger->trace("set io 2 with mask {1:#010X}: io2: {0:#010X} {0:032B}",
+                    new_io_2, mask);
 
     _trigger_send_io_2(new_io_2);
 }
@@ -112,6 +114,10 @@ void IOController::trigger_send_current_io() {
 
     _trigger_send_io_1(io1);
     _trigger_send_io_2(io2);
+
+    s_logger->trace(
+        "IOController::trigger_send_current_io: 1: {:032B}, 2: {:032B}", io1,
+        io2);
 }
 
 uint32_t IOController::get_can_machineio_1_safe() const {

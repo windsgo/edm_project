@@ -81,6 +81,9 @@ void PowerController::_trigger_send_io_value() {
         curr_result_->io_1(), EleparamDecodeResult::get_io_1_mask());
     s_io_ctrler->set_can_machineio_2_withmask(
         curr_result_->io_2(), EleparamDecodeResult::get_io_2_mask());
+    
+    // 让IO控制器强制发送一次IO
+    s_io_ctrler->trigger_send_current_io();
 }
 
 void PowerController::_trigger_send_ioboard_eleparam() {
@@ -226,6 +229,7 @@ void PowerController::trigger_send_eleparam() {
 }
 
 void PowerController::trigger_send_contactors_io() {
+    s_logger->trace("PowerController::trigger_send_contactors_io");
     // 触发设置io
     _trigger_send_io_value();
 }

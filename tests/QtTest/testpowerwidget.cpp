@@ -210,29 +210,42 @@ void TestPowerWidget::_init_common_buttons() {
         });
 
     QObject::connect(ui->pb_SetEleParam, &QPushButton::clicked, this, [this]() {
+        s_logger->trace("pb_SetEleParam");
         _update_eleparam_from_ui_and_send();
         _update_widget_status();
     });
+
+    QObject::connect(ui->pb_TriggleSendIO, &QPushButton::clicked, this,
+                     [this]() {
+                         s_logger->trace("pb_TriggleSendIO");
+                         s_power_ctrler->trigger_send_contactors_io();
+                         _update_widget_status();
+                     });
 }
 
 static void init_system() {
     s_can_ctrler->init();
 
-    int can0 = s_can_ctrler->add_device("can0", 115200);
-    int can1 = s_can_ctrler->add_device("can1", 115200);
+    int can0 = s_can_ctrler->add_device("can0", 500000);
+    // int can1 = s_can_ctrler->add_device("can1", 115200);
 
-    while (!s_can_ctrler->is_connected("can0") ||
-           s_can_ctrler->is_connected("can1"))
+    // while (!s_can_ctrler->is_connected("can0") ||
+    //        s_can_ctrler->is_connected("can1"))
+    //     ;
+
+    while (!s_can_ctrler->is_connected(can0))
         ;
 
     s_io_ctrler->init(can0);
     s_power_ctrler->init(can0);
 
-    s_can_ctrler->add_frame_received_listener(can1,
-                                              [&](const QCanBusFrame &frame) {
-                                                  // s_logger->debug("{}",
-                                                  // frame.toString().toStdString());
-                                              });
+    // s_can_ctrler->add_frame_received_listener(can1,
+    //                                           [&](const QCanBusFrame &frame)
+    //                                           {
+    //                                               // s_logger->debug("{}",
+    //                                               //
+    //                                               frame.toString().toStdString());
+    //                                           });
 }
 
 int main(int argc, char **argv) {
