@@ -241,7 +241,7 @@ void EleparamDecoder::_canframe_handle_hp() {
 
 void EleparamDecoder::_canframe_handle_ma() {
     AND_EQUAL(CAN_BUFFER[1][3], 0xF0);                   // 清空低4位
-    OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param()->ma); // 低4位设定ma
+    OR_EQUAL(CAN_BUFFER[1][3], (input_->ele_param()->ma) & 0x0F); // 低4位设定ma
 }
 
 void EleparamDecoder::_canframe_handle_sv() {
@@ -258,7 +258,7 @@ void EleparamDecoder::_canframe_handle_al() {
 
 void EleparamDecoder::_canframe_handle_ld() {
     AND_EQUAL(CAN_BUFFER[1][5], 0xF0);                   // 清空低4位
-    OR_EQUAL(CAN_BUFFER[1][5], input_->ele_param()->ld); // 低4位设定ld
+    OR_EQUAL(CAN_BUFFER[1][5], (input_->ele_param()->ld) & 0x0F); // 低4位设定ld
 }
 
 void EleparamDecoder::_canframe_handle_oc() {
