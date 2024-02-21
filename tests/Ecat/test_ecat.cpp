@@ -65,8 +65,6 @@ OSAL_THREAD_FUNC_RT ecatthread(void *ptr) {
     dorun = 0;
     ec_send_processdata();
 
-
-
     while (1) {
         /* calculate next cycle start */
         //   add_timespec(&ts, cycletime + toff);
@@ -74,7 +72,6 @@ OSAL_THREAD_FUNC_RT ecatthread(void *ptr) {
         /* wait to cycle start */
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &tleft);
 
-        
         if (dorun > 0) {
             auto d = em->get_servo_device(0);
 
@@ -82,12 +79,14 @@ OSAL_THREAD_FUNC_RT ecatthread(void *ptr) {
 
             ++target_pos;
 
-            CYCLIC_DO(s_logger->debug, 500,
-                      "sw: {:016b}, cmd: {} ,pos: {}; {}, {}, {}, {}, {};; {}, {}",
-                      d->get_status_word(), target_pos, d->get_actual_position(), d->sw_fault(),
-                      d->sw_ready_to_switch_on(), d->sw_switch_on_disabled(),
-                      d->sw_switched_on(), d->sw_operational_enabled(),
-                      em->servo_has_fault(), em->servo_all_operation_enabled());
+            CYCLIC_DO(
+                s_logger->debug, 500,
+                "sw: {:016b}, cmd: {} ,pos: {}; {}, {}, {}, {}, {};; {}, {}",
+                d->get_status_word(), target_pos, d->get_actual_position(),
+                d->sw_fault(), d->sw_ready_to_switch_on(),
+                d->sw_switch_on_disabled(), d->sw_switched_on(),
+                d->sw_operational_enabled(), em->servo_has_fault(),
+                em->servo_all_operation_enabled());
 
             if (em->servo_has_fault()) {
                 // s_logger->debug("has fault");
@@ -121,6 +120,14 @@ static void test_ecat(void) {
     /* create RT thread */
     osal_thread_create_rt(&thread1, stack64k * 2, (void *)&ecatthread,
                           (void *)&ctime);
+
+    // TODO
+    // TODO
+    // TODO
+    //! ecat_sync dc同步未使用, 时间抖动未测量, motion thread中用async logger
+    //! cpu dmalatency 见一个收藏的csdn博客
+    //! 自己的motion thread, 再提高優先級
+    //! 网卡驱动优化(之后再说)
 
     em = std::make_shared<edm::ecat::EcatManager>("enx34298f700ae1", 4096, 1);
     bool ret = em->connect_ecat(3);
