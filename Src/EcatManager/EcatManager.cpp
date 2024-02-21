@@ -26,7 +26,7 @@ EcatManager::EcatManager(const std::string &ifname, std::size_t iomap_size,
     }
     memset(iomap_, 0, sizeof(iomap_));
 
-    servo_devices_.reserve(servo_num_);
+    servo_devices_.resize(servo_num_);
 }
 
 EcatManager::~EcatManager() { delete[] iomap_; }
@@ -138,6 +138,9 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         return false;
     }
 
+    _conf_servo_pdo_map();
+    _conf_servo_default_op();
+
     // 进行一次发送和接受
     ec_send_processdata();
     int wkc = ec_receive_processdata(EC_TIMEOUTRET);
@@ -157,6 +160,7 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
 void EcatManager::_conf_servo_pdo_map() {
 #ifdef EDM_ECAT_DRIVER_SOEM
     for (int i = 0; i < servo_num_; ++i) {
+        s_logger->trace("_conf_servo_pdo_map: {}", i);
         servo_devices_[i] = std::make_shared<PanasonicServoDevice>(
             (Panasonic_A5B_Ctrl *)(ec_slave[i + 1].outputs),
             (Panasonic_A5B_Stat *)(ec_slave[i + 1].inputs));
@@ -180,7 +184,7 @@ bool EcatManager::connect_ecat(uint32_t max_try_times) {
     bool ret = false;
 
     for (int try_times = 1; try_times <= max_try_times; ++try_times) {
-        s_logger->info("trying connect ecat, try times: %d", try_times);
+        s_logger->info("trying connect ecat, try times: {}", try_times);
         ret = _connect_ecat_try_once(servo_num_ + io_num_);
         if (!ret) {
             continue;
@@ -222,12 +226,25 @@ void EcatManager::ecat_sync() {
 
 ServoDevice::ptr
 edm::ecat::EcatManager::get_servo_device(uint32_t servo_index) const {
+    // TODO safe index
     return servo_devices_[servo_index];
     // if (servo_index < servo_index) [[likely]] {
     //     return servo_devices_[servo_index];
     // } else {
     //     return nullptr;
     // }
+}
+
+void EcatManager::set_servo_target_position(uint32_t servo_index,
+                                            int32_t target_position) {
+    // TODO safe index
+    servo_devices_[servo_index]->set_target_position(target_position);
+}
+
+
+int32_t EcatManager::get_servo_actual_position(uint32_t servo_index) const {
+    // TODO safe index
+    return servo_devices_[servo_index]->get_actual_position();
 }
 
 bool EcatManager::servo_has_fault() const {
@@ -251,19 +268,19 @@ bool EcatManager::servo_all_operation_enabled() const {
 }
 
 void EcatManager::clear_fault_cycle_run_once() {
-    for (auto& servo : servo_devices_) {
+    for (auto &servo : servo_devices_) {
         if (servo->sw_fault()) {
             servo->cw_fault_reset();
-        } 
-        else if (servo->sw_switch_on_disabled()) {
+        } else if (servo->sw_switch_on_disabled()) {
             servo->cw_shut_down();
-        } 
-        else if (servo->sw_ready_to_switch_on()) {
+        } else if (servo->sw_ready_to_switch_on()) {
             servo->cw_switch_on();
-        } 
-        else if (servo->sw_switched_on() || servo->sw_operational_enabled()) {
+        } else if (servo->sw_switched_on() || servo->sw_operational_enabled()) {
             servo->cw_enable_operation();
-            servo->sync_actual_position_to_target_position(); // to ensure the servo would not move suddenly or die again
+            servo->sync_actual_position_to_target_position(); // to ensure the
+                                                              // servo would not
+                                                              // move suddenly
+                                                              // or die again
         }
     }
 }
