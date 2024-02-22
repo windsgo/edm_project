@@ -1,0 +1,19 @@
+{
+    "settings": {
+        "netif_name": "",
+        "iomap_size": 4096,
+        "servo_num": 1,
+        "io_num": 0
+    },
+    "ecats": [
+        {
+            "type": "servo",
+            "servo_define": {
+                "index": 0,
+                "name": "x",
+                "type": "panasonic",
+                "max_acc": "500000"
+            }
+        }
+    ]
+}

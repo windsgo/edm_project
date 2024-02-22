@@ -48,12 +48,14 @@ struct LogDefine {
     std::string name;
     std::string level{SPDLOG_LEVEL_NAME_TRACE.begin(),
                       SPDLOG_LEVEL_NAME_TRACE.end()};
+    std::string flush_level{SPDLOG_LEVEL_NAME_INFO.begin(),
+                            SPDLOG_LEVEL_NAME_INFO.end()};
     std::vector<SinkDefine> sinks;
     bool async_mode = false;
     std::string async_policy{"block"};
 
     MEO_JSONIZATION(name, sinks, MEO_OPT async_mode, MEO_OPT async_policy,
-                    MEO_OPT level);
+                    MEO_OPT level, MEO_OPT flush_level);
 
     logger_ptr to_logger() const;
 

@@ -10,13 +10,13 @@
             "async_mode": true,
             "async_policy": "overrun_oldest",
             "level": "trace",
+            "flush_level": "info",
             "sinks": [
                 {
                     "type": "file",
-                    "level": "info",
+                    "level": "trace",
                     "filename": "motion.log",
                     "multi_thread": false,
-                    "format": "[%T.%e]--> [%n] [%l] %v",
                     "max_size": 10485760,
                     "max_files": 5,
                     "rotate_on_open": true
@@ -32,6 +32,7 @@
             "name": "root",
             "async_mode": false,
             "level": "trace",
+            "flush_level": "info",
             "sinks": [
                 {
                     "type": "file",
@@ -53,6 +54,7 @@
             "name": "interp",
             "async_mode": false,
             "level": "trace",
+            "flush_level": "trace",
             "sinks": [
                 {
                     "type": "file",

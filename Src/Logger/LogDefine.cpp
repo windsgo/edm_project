@@ -80,6 +80,7 @@ logger_ptr LogDefine::to_logger() const {
         return logger;
 
     logger->set_level(spdlog::level::from_str(this->level));
+    logger->flush_on(spdlog::level::from_str(this->flush_level));
 
     return logger;
 }

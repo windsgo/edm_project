@@ -16,7 +16,7 @@ namespace edm {
 
 namespace ecat {
 
-EcatManager::EcatManager(const std::string &ifname, std::size_t iomap_size,
+EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
                          uint32_t servo_num, uint32_t io_num)
     : ifname_(ifname), iomap_size_{iomap_size}, servo_num_{servo_num},
       io_num_{io_num} {
@@ -99,11 +99,19 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
     }
 
     // configure dc (?) // TODO
-    ec_configdc();
+    bool dc_ret = ec_configdc();
+    if (!dc_ret) {
+        s_logger->warn("ec_configdc failed.");
+    }
 
     // handle and print ethercat errors
     while (EcatError) {
         printf("%s", ec_elist2string());
+        // std::string error_str = ec_elist2string();
+        // if (error_str.ends_with("\n")) {
+        //     error_str.pop_back();
+        // }
+        // s_logger->trace("EcatError: {}", error_str);
     }
 
     s_logger->info("ec_config success, {} slaves found and configured",
@@ -240,7 +248,6 @@ void EcatManager::set_servo_target_position(uint32_t servo_index,
     // TODO safe index
     servo_devices_[servo_index]->set_target_position(target_position);
 }
-
 
 int32_t EcatManager::get_servo_actual_position(uint32_t servo_index) const {
     // TODO safe index

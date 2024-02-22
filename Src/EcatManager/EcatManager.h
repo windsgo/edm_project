@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ServoDevice.h"
+#include "EcatDefine.h"
 
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"
 
@@ -12,17 +13,18 @@ namespace edm {
 
 namespace ecat {
 
-class EcatManager final{
+class EcatManager final {
 public:
     using ptr = std::shared_ptr<EcatManager>;
-    EcatManager(const std::string& ifname, std::size_t iomap_size, uint32_t servo_num,
-                uint32_t io_num = 0);
+    // TODO EcatManager(std::string_view conf_path);
+    EcatManager(std::string_view ifname, std::size_t iomap_size,
+                uint32_t servo_num, uint32_t io_num = 0);
     ~EcatManager();
 
-    EcatManager(const EcatManager&) = delete;
-    EcatManager& operator=(const EcatManager&) = delete;
-    EcatManager(EcatManager&&) = delete;
-    EcatManager& operator=(EcatManager&&) = delete;
+    EcatManager(const EcatManager &) = delete;
+    EcatManager &operator=(const EcatManager &) = delete;
+    EcatManager(EcatManager &&) = delete;
+    EcatManager &operator=(EcatManager &&) = delete;
 
     // do ethercat config and init
     // if all success, and slave numbers match
