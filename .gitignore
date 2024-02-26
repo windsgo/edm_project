@@ -9,5 +9,6 @@ __pycache__
 *.json
 !Conf/*.json
 
-./*.txt
+decode.txt
+output.bin
 !CMakeLists.txt

@@ -3,7 +3,7 @@
 
 EDM_STATIC_LOGGER_NAME(s_root_logger, "root");
 
-static edm::utils::SlidingFilter<double> sf{10};
+static edm::util::SlidingFilter<double> sf{10};
 
 static void init() {
     

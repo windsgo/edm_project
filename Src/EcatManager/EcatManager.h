@@ -69,7 +69,7 @@ private:
     uint32_t io_num_;
 
     // used for wkc filter
-    utils::SlidingCounter<100> wkc_failed_sc;
+    util::SlidingCounter<100> wkc_failed_sc;
     const double wkc_failed_threshold = 0.95;
 };
 

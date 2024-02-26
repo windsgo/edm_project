@@ -4,7 +4,7 @@
 
 namespace edm {
 
-namespace utils {
+namespace util {
 
 template <typename value_type> class SlidingFilter {
 public:
@@ -64,6 +64,6 @@ private:
     value_type sum_;
 };
 
-} // namespace utils
+} // namespace util
 
 } // namespace edm

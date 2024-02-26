@@ -27,6 +27,9 @@
 #define EDM_CAN_TXID_IOBOARD_COMMONMESSAGE        0x0402
 #define EDM_CAN_TXID_IOBOARD_ELEPARAMS            0x0403
 
+// DataQueueRecorder Cache
+#define EDM_DATAQUEUERECORDER_ENABLE_CACHE // 使能cache缓存
+
 #if __GNUC__ < 13      // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format
 #endif

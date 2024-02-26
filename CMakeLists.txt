@@ -63,6 +63,7 @@ set(PROJECT_SOURCES
     Src/QtDependComponents/PowerController/PowerController.cpp
     Src/QtDependComponents/PowerController/EleparamDecoder.cpp
     Src/Utils/Netif/netif_utils.cpp
+    Src/Utils/DataQueueRecorder/DataQueueRecorder.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)

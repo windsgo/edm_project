@@ -3,7 +3,7 @@
 
 EDM_STATIC_LOGGER(s_root_logger, EDM_LOGGER_ROOT());
 
-edm::utils::SlidingCounter<20> sc;
+edm::util::SlidingCounter<20> sc;
 
 static void test () {
     for (int i = 0; i < 100; ++i) {

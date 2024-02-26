@@ -6,7 +6,7 @@
 
 namespace edm {
 
-namespace utils {
+namespace util {
 
 template <int size> class SlidingCounter {
     static_assert(size > 0);
@@ -87,6 +87,6 @@ private:
     std::size_t invalid_count_;
 };
 
-} // namespace utils
+} // namespace util
 
 } // namespace edm
