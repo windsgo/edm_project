@@ -30,7 +30,9 @@ public:
     }
 
     ~DataQueueRecorder() {
+        // TODO 改为调用 stop, 有锁更安全(要注意死锁)
         stop_flag_ = true;
+        cv_.notify_all();
         if (thread_.joinable()) {
             thread_.join();
         }

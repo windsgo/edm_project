@@ -32,6 +32,8 @@ public:
     bool connect_ecat(uint32_t max_try_times = 3);
     inline bool is_ecat_connected() const { return connected_; };
 
+    void disconnect_ecat();
+
     // do send and receive progress data object
     // check wkc when receiving
     void ecat_sync();
@@ -44,8 +46,10 @@ public:
 
     bool servo_has_fault() const;
     bool servo_all_operation_enabled() const;
-
+    bool servo_all_disabled() const;
+ 
     void clear_fault_cycle_run_once();
+    void disable_cycle_run_once(); //! note: if has fault, it will clear fault first.
 
 private:
     bool _connect_ecat_try_once(int expected_slavecount);

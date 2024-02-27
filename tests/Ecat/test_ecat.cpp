@@ -20,6 +20,8 @@
 
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 
+static std::atomic_bool s_stop_flag{false};
+
 pthread_t thread1;
 #define stack64k (64 * 1024)
 int dorun = 0;
@@ -145,6 +147,10 @@ void *ecatthread(void *ptr) {
         /* wake up here */
         /* this is the begin of this peroid */
 
+        if (s_stop_flag && dorun == 0) {
+            break;
+        }
+
         if (dorun > 0) {
 
             clock_gettime(CLOCK_MONOTONIC, &curr_ts);
@@ -165,40 +171,36 @@ void *ecatthread(void *ptr) {
             struct timespec sync_end_ts;
             clock_gettime(CLOCK_MONOTONIC, &sync_end_ts);
 
-            // ec_receive_processdata(200);
             auto d = em->get_servo_device(0);
+            auto sw = d->get_status_word();
+            EDM_CYCLIC_LOG(s_logger->debug, 500, "sw: {0:016b}, {0:08X}", sw);
 
-            em->set_servo_target_position(0, target_pos);
+            if (s_stop_flag) {
+                if (em->servo_all_disabled()) {
+                    s_logger->debug("servo_all_disabled: sw: {:016b}", sw);
 
-            target_pos += 3;
+                    em->disconnect_ecat();
+                    break; // 退出主循环
+                }
 
-            // EDM_CYCLIC_LOG(
-            //     s_logger->debug, 500,
-            //     "sw: {:016b}, cmd: {} ,pos: {}; {}, {}, {}, {}, {};; {}, {};
-            //     toff: {}", d->get_status_word(), target_pos,
-            //     d->get_actual_position(), d->sw_fault(),
-            //     d->sw_ready_to_switch_on(), d->sw_switch_on_disabled(),
-            //     d->sw_switched_on(), d->sw_operational_enabled(),
-            //     em->servo_has_fault(), em->servo_all_operation_enabled(),
-            //     toff);
+                em->disable_cycle_run_once();
+            } else {
 
-            if (data_recorder->is_running()) {
-                data_recorder->emplace(d->get_actual_position(), target_pos);
+                if (em->servo_has_fault()) {
+                    // s_logger->debug("has fault");
+                    em->clear_fault_cycle_run_once();
+                } else if (!em->servo_all_operation_enabled()) {
+                    // s_logger->debug("not all op enabled");
+                    em->clear_fault_cycle_run_once();
+                } else {
+                    em->set_servo_target_position(0, target_pos);
+                    target_pos += 3;
 
-                // ++record_count;
-
-                // if (record_count == 5000) {
-                //     data_recorder->stop_record();
-                //     s_logger->info("record over, stop recorder");
-                // }
-            }
-
-            if (em->servo_has_fault()) {
-                // s_logger->debug("has fault");
-                em->clear_fault_cycle_run_once();
-            } else if (!em->servo_all_operation_enabled()) {
-                // s_logger->debug("not all op enabled");
-                em->clear_fault_cycle_run_once();
+                    if (data_recorder->is_running()) {
+                        data_recorder->emplace(d->get_actual_position(),
+                                               target_pos);
+                    }
+                }
             }
 
             if (ec_slave[0].hasdc) {
@@ -340,14 +342,19 @@ static void test_ecat(void) {
         auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now -
                                                                   start_time)
-                .count() >= 5000) {
+                .count() >= 2000) {
             data_recorder->stop_record();
             s_logger->info("record over, stop recorder");
             break;
         } else {
             std::this_thread::sleep_for(100ms);
-            s_logger->info("sleep_for");
-            continue;
+            // s_logger->info("sleep_for");
+            
+        }
+
+        if (s_stop_flag) {
+            // data_recorder->stop_record();
+            break;
         }
     }
 
@@ -362,11 +369,25 @@ static void test_ecat(void) {
     //     ;
 }
 
+#include <signal.h>
+#include <unistd.h>
+
+static void fun_sig(int sig) {
+    s_stop_flag = true;
+    s_logger->info("ctrl+c");
+
+    signal(sig, SIG_DFL); // 防止多次ctrl+c退出不了
+}
+
 int main(int argc, char **argv) {
+
+    signal(SIGINT, fun_sig);
 
     pid_t pid = getpid();
     s_logger->info("pid: {}", pid);
 
     test_ecat();
+
+    s_logger->info("pid: {} exit", pid);
     return 0;
 }

@@ -210,6 +210,16 @@ bool EcatManager::connect_ecat(uint32_t max_try_times) {
     return true;
 }
 
+void EcatManager::disconnect_ecat() {
+    ec_slave[0].state = EC_STATE_INIT;
+    /* request INIT state for all slaves */
+    ec_writestate(0);
+    ec_close();
+    s_logger->info("ecat disconnected.");
+
+    connected_ = false;
+}
+
 void EcatManager::ecat_sync() {
     int wkc;
 #ifdef EDM_ECAT_DRIVER_SOEM
@@ -274,6 +284,16 @@ bool EcatManager::servo_all_operation_enabled() const {
     return true;
 }
 
+bool EcatManager::servo_all_disabled() const {
+    for (const auto &servo : servo_devices_) {
+        if (!servo->sw_switch_on_disabled()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void EcatManager::clear_fault_cycle_run_once() {
     for (auto &servo : servo_devices_) {
         if (servo->sw_fault()) {
@@ -288,6 +308,25 @@ void EcatManager::clear_fault_cycle_run_once() {
                                                               // servo would not
                                                               // move suddenly
                                                               // or die again
+        }
+    }
+}
+
+void EcatManager::disable_cycle_run_once() {
+    //! disabled 状态定义为 switch_on_disabled 状态
+    for (auto &servo : servo_devices_) {
+        s_logger->debug("sw: {:016b}", servo->get_status_word());
+        if (servo->sw_fault()) {
+            servo->cw_fault_reset();
+        } else if (servo->sw_switch_on_disabled()) {
+            // servo->cw_shut_down();
+            // Do nothing
+        } else if (servo->sw_ready_to_switch_on()) {
+            servo->cw_disable_voltage();
+        } else if (servo->sw_switched_on()) {
+            servo->cw_shut_down();
+        } else if (servo->sw_operational_enabled()) {
+            servo->cw_disable_operation();
         }
     }
 }

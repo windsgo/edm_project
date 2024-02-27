@@ -1,6 +1,5 @@
 #include "ServoDevice.h"
 
-
 namespace edm {
 
 namespace ecat {
@@ -47,13 +46,25 @@ bool PanasonicServoDevice::sw_operational_enabled() const {
     return (stat_->status_word & 0b01101111) == SW_OperationEnabled;
 }
 
-void PanasonicServoDevice::cw_fault_reset() { ctrl_->control_word = CW_FaultReset; }
+void PanasonicServoDevice::cw_fault_reset() {
+    ctrl_->control_word = CW_FaultReset;
+}
 
 void PanasonicServoDevice::cw_shut_down() { ctrl_->control_word = CW_Shutdown; }
 
 void PanasonicServoDevice::cw_switch_on() { ctrl_->control_word = CW_SwitchOn; }
 
-void PanasonicServoDevice::cw_enable_operation() { ctrl_->control_word = CW_EnableOperation; }
+void PanasonicServoDevice::cw_enable_operation() {
+    ctrl_->control_word = CW_EnableOperation;
+}
+
+void PanasonicServoDevice::cw_disable_operation() {
+    ctrl_->control_word = CW_DisableOperation;
+}
+
+void PanasonicServoDevice::cw_disable_voltage() {
+    ctrl_->control_word = CW_DisableVoltage;
+}
 
 void PanasonicServoDevice::sync_actual_position_to_target_position() {
     ctrl_->target_position = stat_->position_actual_value;

@@ -36,6 +36,9 @@ public:
     virtual void cw_switch_on() = 0;
     virtual void cw_enable_operation() = 0;
 
+    virtual void cw_disable_operation() = 0;
+    virtual void cw_disable_voltage() = 0;
+
     virtual void sync_actual_position_to_target_position() = 0;
 };
 
@@ -71,6 +74,9 @@ public:
     void cw_shut_down() override;
     void cw_switch_on() override;
     void cw_enable_operation() override;
+
+    void cw_disable_operation() override;
+    void cw_disable_voltage() override;
 
     void sync_actual_position_to_target_position() override;
 
