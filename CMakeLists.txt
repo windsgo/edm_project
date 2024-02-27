@@ -64,6 +64,8 @@ set(PROJECT_SOURCES
     Src/QtDependComponents/PowerController/EleparamDecoder.cpp
     Src/Utils/Netif/netif_utils.cpp
     Src/Utils/DataQueueRecorder/DataQueueRecorder.cpp
+    Src/Motion/Moveruntime/Moveruntime.cpp
+    Src/Motion/MoveruntimeWrapper/MoveruntimeWrapper.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)
@@ -78,6 +80,7 @@ target_link_libraries(edm PUBLIC
     Python3::Python
     soem
     Qt5::Core Qt5::SerialBus
+    m
 )
 
 add_subdirectory(tests)
