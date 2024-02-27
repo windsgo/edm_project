@@ -23,26 +23,56 @@ namespace util {
 template <typename DataType, int CacheSize = 1000>
 class DataQueueRecorder final {
 public:
-    //! use try ... catch ... to handle file operation error
-    DataQueueRecorder(std::string_view filename) : filename_(filename) {
-        ofs.open(filename_, std::ios::binary);
-        if (!ofs.is_open()) {
-            throw exception(
-                EDM_FMT::format("DataQueueRecorder: {} not opened", filename_));
-        }
-
+    DataQueueRecorder() {
 #ifdef EDM_DATAQUEUERECORDER_ENABLE_CACHE
         data_cache_.reserve(CacheSize);
 #endif // EDM_DATAQUEUERECORDER_ENABLE_CACHE
-
-        thread_ = std::thread(_ThreadEntry, this);
     }
+
     ~DataQueueRecorder() {
         stop_flag_ = true;
-        thread_.join();
+        if (thread_.joinable()) {
+            thread_.join();
+        }
+    }
+
+    inline bool start_record(std::string_view filename) {
+        if (running_flag_) {
+            return false;
+        }
+
+        filename_ = filename;
+
+        // init file ostream
+        ofs.open(filename_, std::ios::binary);
+        if (!ofs.is_open()) {
+            return false;
+        }
+
+#ifdef EDM_DATAQUEUERECORDER_ENABLE_CACHE
+        // clear cache
+        data_cache_.clear();
+#endif // EDM_DATAQUEUERECORDER_ENABLE_CACHE
+
+        // clear queue
+        while (!data_queue_.empty()) {
+            data_queue_.pop();
+        }
+
+        // clear stop flag
+        stop_flag_ = false;
+
+        // start recording thread
+        thread_ = std::thread(_ThreadEntry, this);
+
+        return true;
     }
 
     inline void push_data(const DataType &data) {
+        if (!running_flag_) {
+            return;
+        }
+
         std::lock_guard lg(mutex_);
         data_queue_.push(data);
         cv_.notify_all();
@@ -50,6 +80,10 @@ public:
 
     template <typename... _Args>
     inline decltype(auto) emplace(_Args &&...__args) {
+        if (!running_flag_) {
+            return;
+        }
+
         std::lock_guard lg(mutex_);
         data_queue_.emplace(std::forward<_Args>(__args)...);
         cv_.notify_all();
@@ -59,6 +93,8 @@ public:
         stop_flag_ = true;
         cv_.notify_all();
     }
+
+    inline bool is_running() const { return running_flag_; }
 
 private:
     static inline void _ThreadEntry(DataQueueRecorder *dqr) { dqr->_run(); }
@@ -73,7 +109,7 @@ private:
 
     inline void _flush_and_close_file() {
         if (ofs.is_open()) {
-            
+
 #ifdef EDM_DATAQUEUERECORDER_ENABLE_CACHE
             if (!data_cache_.empty()) {
                 _flush_cache();
@@ -86,6 +122,8 @@ private:
     }
 
     inline void _run() {
+        running_flag_ = true;
+
         DataType fetched_data;
         while (!stop_flag_) {
             bool queue_flag = 0;
@@ -124,6 +162,8 @@ private:
         }
 
         _flush_and_close_file();
+
+        running_flag_ = false;
     }
 
 private:
@@ -140,6 +180,7 @@ private:
     std::condition_variable cv_;
     std::thread thread_;
     std::atomic_bool stop_flag_{false};
+    std::atomic_bool running_flag_{false};
 };
 
 } // namespace util
