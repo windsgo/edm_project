@@ -56,6 +56,8 @@ public:
                 --invalid_count_;
             }
         }
+
+        cursor_ = (cursor_ + 1) % current_window_size_;
     }
 
     void push_back_invalid() {
@@ -70,11 +72,18 @@ public:
                 ++invalid_count_;
             }
         }
+        
+        cursor_ = (cursor_ + 1) % current_window_size_;
     }
 
     double valid_rate() const {
         return (double)valid_count_ / (double)current_window_size_;
     }
+
+    // void test_print() const {
+    //     printf("valid_count: %d, invalid_count: %d\n", valid_count_, invalid_count_);
+    //     printf("current_window_size: %d, cursor: %d\n", current_window_size_, cursor_);
+    // }
 
 private:
     static constexpr const std::size_t max_size_ = size;

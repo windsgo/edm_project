@@ -207,6 +207,9 @@ bool EcatManager::connect_ecat(uint32_t max_try_times) {
         return false;
     }
 
+    connected_ = true;
+    wkc_failed_sc.clear(); // 必须清除, 不然无法重联
+
     return true;
 }
 
@@ -227,16 +230,18 @@ void EcatManager::ecat_sync() {
     wkc = ec_receive_processdata(200); // at most 200 us
 #endif                                 // EDM_ECAT_DRIVER_SOEM
 
-    const uint32_t expected_wkc = (servo_num_ + io_num_) * 3;
-    if (wkc < expected_wkc) {
+    const int expected_wkc = (servo_num_ + io_num_) * 3;
+    if (wkc < expected_wkc || wkc < 0) {
         wkc_failed_sc.push_back_valid();
     } else {
         wkc_failed_sc.push_back_invalid();
     }
 
     if (wkc_failed_sc.valid_rate() > wkc_failed_threshold) {
+        s_logger->critical("ecat valid err: {}", wkc_failed_sc.valid_rate());
         connected_ = false;
 #ifdef EDM_ECAT_DRIVER_SOEM
+        // disconnect_ecat();
         ec_close();
 #endif // EDM_ECAT_DRIVER_SOEM
     }
@@ -315,7 +320,6 @@ void EcatManager::clear_fault_cycle_run_once() {
 void EcatManager::disable_cycle_run_once() {
     //! disabled 状态定义为 switch_on_disabled 状态
     for (auto &servo : servo_devices_) {
-        s_logger->debug("sw: {:016b}", servo->get_status_word());
         if (servo->sw_fault()) {
             servo->cw_fault_reset();
         } else if (servo->sw_switch_on_disabled()) {

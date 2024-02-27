@@ -94,7 +94,7 @@ static void set_latency_target(void) {
     }
 }
 
-int target_pos = 0;
+volatile int target_pos = 0;
 
 #include <chrono>
 
@@ -153,15 +153,22 @@ void *ecatthread(void *ptr) {
 
         if (dorun > 0) {
 
+            if (!em->is_ecat_connected()) {
+                s_logger->error("err: disconnected");
+                dorun = 0;
+
+                continue;
+            }
+
             clock_gettime(CLOCK_MONOTONIC, &curr_ts);
 
             int diff =
                 curr_ts.tv_nsec - (last_curr_ts.tv_nsec + next_cycle_time);
             if (diff > max_diff_ns && mmm > 1000)
                 max_diff_ns = diff;
-            if (diff > 5000) {
-                s_logger->warn("diff: {}", diff);
-            }
+            // if (diff > 5000) {
+            //     s_logger->warn("diff: {}", diff);
+            // }
 
             struct timespec sync_begin_ts;
             clock_gettime(CLOCK_MONOTONIC, &sync_begin_ts);
@@ -177,7 +184,7 @@ void *ecatthread(void *ptr) {
 
             if (s_stop_flag) {
                 if (em->servo_all_disabled()) {
-                    s_logger->debug("servo_all_disabled: sw: {:016b}", sw);
+                    // s_logger->debug("servo_all_disabled: sw: {:016b}", sw);
 
                     em->disconnect_ecat();
                     break; // 退出主循环
@@ -309,6 +316,8 @@ out:
     return ret;
 }
 
+static std::thread record_waiting_thread;
+static std::thread ecat_reconnect_thread;
 static void test_ecat(void) {
 
     if (create_thread()) {
@@ -324,45 +333,54 @@ static void test_ecat(void) {
     //! 网卡驱动优化(之后再说)
 
     em = std::make_shared<edm::ecat::EcatManager>("enx34298f700ae1", 4096, 1);
-    bool cret = em->connect_ecat(3);
-    if (cret) {
-        target_pos = em->get_servo_actual_position(0);
-        s_logger->debug("dorun = 1, init target_pos = {}", target_pos);
-        dorun = 1;
-        // em->ecat_sync();
-    }
+
+    using namespace std::chrono_literals;
+    ecat_reconnect_thread = std::thread([=]() {
+        while (!s_stop_flag) {
+
+            std::this_thread::sleep_for(1s);
+            if (dorun > 0) {
+                continue;
+            }
+
+            bool cret = em->connect_ecat(3);
+            if (cret) {
+                target_pos = em->get_servo_actual_position(0);
+                s_logger->debug("dorun = 1, init target_pos = {}", target_pos);
+                dorun = 1;
+                // em->ecat_sync();
+            }
+        }
+    });
 
     auto start_time =
         std::chrono::high_resolution_clock::now().time_since_epoch();
     data_recorder->start_record("output.bin");
-    using namespace std::chrono_literals;
     std::this_thread::sleep_for(100ms);
 
-    while (1) {
-        auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(now -
-                                                                  start_time)
-                .count() >= 2000) {
-            data_recorder->stop_record();
-            s_logger->info("record over, stop recorder");
-            break;
-        } else {
-            std::this_thread::sleep_for(100ms);
-            // s_logger->info("sleep_for");
-            
-        }
+    record_waiting_thread = std::thread([=]() {
+        while (1) {
+            auto now =
+                std::chrono::high_resolution_clock::now().time_since_epoch();
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now - start_time)
+                    .count() >= 500) {
+                data_recorder->stop_record();
+                s_logger->info("record over, stop recorder");
+                break;
+            } else {
+                std::this_thread::sleep_for(100ms);
+                // s_logger->info("sleep_for");
+            }
 
-        if (s_stop_flag) {
-            // data_recorder->stop_record();
-            break;
+            if (s_stop_flag) {
+                // data_recorder->stop_record();
+                break;
+            }
         }
-    }
+    });
 
     /* Join the thread and wait until it is done */
-
-    int ret = pthread_join(thread1, NULL);
-    if (ret)
-        printf("join pthread failed: %m\n");
 
     // // pthread_join(thread1);
     // while (1)
@@ -372,14 +390,33 @@ static void test_ecat(void) {
 #include <signal.h>
 #include <unistd.h>
 
+#include <QCoreApplication>
+#include <QObject>
+
 static void fun_sig(int sig) {
     s_stop_flag = true;
     s_logger->info("ctrl+c");
 
     signal(sig, SIG_DFL); // 防止多次ctrl+c退出不了
+
+    QCoreApplication::quit();
 }
 
+#include "QtDependComponents/CanController/CanController.h"
+static auto s_can_ctrler = edm::can::CanController::instance();
+
+class CanControllerHolder {
+public:
+    CanControllerHolder() { edm::can::CanController::instance()->init(); }
+    ~CanControllerHolder() { edm::can::CanController::instance()->terminate(); }
+};
+
 int main(int argc, char **argv) {
+
+    QCoreApplication a(argc, argv);
+
+    CanControllerHolder holder;
+    s_can_ctrler->add_device("can0", 500000);
 
     signal(SIGINT, fun_sig);
 
@@ -388,6 +425,15 @@ int main(int argc, char **argv) {
 
     test_ecat();
 
+    int ret = a.exec();
+
+    int join_ret = pthread_join(thread1, NULL);
+    if (join_ret)
+        printf("join pthread failed: %m\n");
+
+    record_waiting_thread.join();
+    ecat_reconnect_thread.join();
+
     s_logger->info("pid: {} exit", pid);
-    return 0;
+    return ret;
 }
