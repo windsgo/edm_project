@@ -38,6 +38,9 @@ public:
     // check wkc when receiving
     void ecat_sync();
 
+    // calulate toff to get linux time and DC synced
+    void dc_sync_time(int64_t cycletime, int64_t *offsettime);
+
     /* servo related interfaces */
     ServoDevice::ptr get_servo_device(uint32_t servo_index) const;
     void set_servo_target_position(uint32_t servo_index,

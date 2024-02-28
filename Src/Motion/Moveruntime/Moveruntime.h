@@ -14,8 +14,6 @@ namespace move {
 
 class MoveRuntimePlanSpeedInput {
 public:
-    using ptr = std::shared_ptr<MoveRuntimePlanSpeedInput>;
-
     unit_t acc0{500000};
     unit_t dec0{-acc0};
     unit_t cruise_v{1000};

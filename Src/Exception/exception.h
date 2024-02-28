@@ -10,7 +10,7 @@ class exception : public std::exception
 {
 public:
     exception() = default;
-    exception(const std::string& msg) : _what(msg) {}
+    exception(std::string_view msg) : _what(msg) {}
 
     exception(const exception&) = default;
     exception& operator=(const exception&) = default;

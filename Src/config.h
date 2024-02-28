@@ -11,6 +11,7 @@
 
 // 运动周期
 #define EDM_SERVO_PEROID_US                       1000 // 1000 us 周期
+#define EDM_SERVO_PEROID_NS                       (EDM_SERVO_PEROID_US * 1000) // 1000,000 ns 周期
 
 #define EDM_ECAT_DRIVER_SOEM                      // Use "soem" as software driver
 // #define EDM_ECAT_DRIVER_IGH                    // or "igh", choose only one
@@ -32,6 +33,9 @@
 
 // DataQueueRecorder Cache
 #define EDM_DATAQUEUERECORDER_ENABLE_CACHE        // 使能cache缓存
+
+// Motion Thread Stack Size
+#define EDM_MOTION_THREAD_STACK                   (64 * 1024)
 
 #if __GNUC__ < 13      // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format

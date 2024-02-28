@@ -247,6 +247,40 @@ void EcatManager::ecat_sync() {
     }
 }
 
+/* PI calculation to get linux time synced to DC time */
+static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
+    static int64_t integral = 0;
+    int64_t delta;
+    /* set linux sync point 50us later than DC sync, just as example */
+    delta = (reftime - 50000) % cycletime;
+    if (delta > (cycletime / 2)) {
+        delta = delta - cycletime;
+    }
+    if (delta > 0) {
+        integral++;
+    }
+    if (delta < 0) {
+        integral--;
+    }
+    *offsettime = -(delta / 100) - (integral / 20);
+    //    gl_delta = delta;
+}
+
+/* PI calculation to get linux time synced to DC time */
+void EcatManager::dc_sync_time(int64_t cycletime,
+                               int64_t *offsettime) {
+    if (!this->connected_) {
+        *offsettime = 0;
+        return;
+    }
+
+    if (!ec_slave[0].hasdc) {
+        *offsettime = 0;
+    } else {
+        ec_sync(ec_DCtime, cycletime, offsettime);
+    }
+}
+
 ServoDevice::ptr
 edm::ecat::EcatManager::get_servo_device(uint32_t servo_index) const {
     // TODO safe index
