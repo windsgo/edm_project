@@ -9,7 +9,7 @@ namespace edm {
 namespace move {
 MotionThreadController::MotionThreadController(
     std::string_view ifname, MotionCommandQueue::ptr motion_cmd_queue,
-    uint32_t servo_num, uint32_t io_num = 0)
+    uint32_t servo_num, uint32_t io_num)
     : motion_cmd_queue_(motion_cmd_queue) {
     //! 需要注意的是, 构造函数中的代码允许在Caller线程, 不运行在新的线程
     //! 所以线程要最后创建, 防止数据竞争, 和使用未初始化成员变量的问题
@@ -285,9 +285,37 @@ void MotionThreadController::_threadstate_running() {
     }
 }
 
-bool MotionThreadController::_set_cpu_dma_latency() { return false; }
+bool MotionThreadController::_set_cpu_dma_latency() {
+    /* 消除系统时钟偏移函数，取自cyclic_test */
+    struct stat s;
 
-void MotionThreadController::_fetch_command_and_handle() {}
+    if (stat("/dev/cpu_dma_latency", &s) == 0) {
+        int latency_target_fd = open("/dev/cpu_dma_latency", O_RDWR);
+        if (latency_target_fd == -1) {
+            s_logger->error("open /dev/cpu_dma_latency failed");
+            return false;
+        }
+
+        int ret = write(latency_target_fd, &latency_target_value_, 4);
+        if (ret <= 0) {
+            s_logger->error("# error setting cpu_dma_latency to {}!: {}\n",
+                            latency_target_value_, strerror(errno));
+            close(latency_target_fd);
+            return false;
+        }
+
+        close(latency_target_fd);
+        s_logger->info("# /dev/cpu_dma_latency set to {}us\n",
+                       latency_target_value_);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void MotionThreadController::_fetch_command_and_handle() {
+    // TODO
+}
 
 void MotionThreadController::_dc_sync() {
     /* calulate toff to get linux time and DC synced */

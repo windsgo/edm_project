@@ -110,7 +110,6 @@ private: // Data
     const int64_t cycletime_ns_{EDM_SERVO_PEROID_NS}; // 周期(ns)
     int64_t toff_{0}; // 每周期cycletime的修正量(ns) (基于DC同步)
 
-    int latency_target_fd_ = -1;
     const int32_t latency_target_value_{0}; // 消除系统时钟偏移(禁止电源休眠)
 };
 

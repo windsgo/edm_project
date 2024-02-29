@@ -68,6 +68,7 @@ set(PROJECT_SOURCES
     Src/Motion/MoveruntimeWrapper/MoveruntimeWrapper.cpp
     Src/Motion/MotionThread/MotionCommandQueue.cpp 
     Src/Motion/MotionThread/MotionThreadController.cpp
+    Src/GlobalCommandQueue/GlobalCommandQueue.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)
