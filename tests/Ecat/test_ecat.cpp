@@ -166,9 +166,9 @@ void *ecatthread(void *ptr) {
                 curr_ts.tv_nsec - (last_curr_ts.tv_nsec + next_cycle_time);
             if (diff > max_diff_ns && mmm > 1000)
                 max_diff_ns = diff;
-            // if (diff > 5000) {
-            //     s_logger->warn("diff: {}", diff);
-            // }
+            if (diff > 5000) {
+                s_logger->warn("diff: {}", diff);
+            }
 
             struct timespec sync_begin_ts;
             clock_gettime(CLOCK_MONOTONIC, &sync_begin_ts);

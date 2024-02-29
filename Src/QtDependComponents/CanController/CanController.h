@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -109,11 +110,11 @@ private:
     QTimer *reconnect_timer_ = nullptr;
     static constexpr const int reconnect_timeout_ = 1000; // ms
 
-    bool connected_ = false;
+    std::atomic_bool connected_ = false;
 
     std::vector<std::function<void(const QCanBusFrame &)>> listener_vec_;
 
-    mutable std::mutex mutex_connected_;
+    // mutable std::mutex mutex_connected_;
     // mutex protect:
     // 1. connected_:
     //      outside read (is_connected() function call)

@@ -94,7 +94,7 @@ CanWorker *CanController::_get_device(const QString &name) const {
 int CanController::add_device(const QString &name, uint32_t bitrate) {
     if (!worker_thread_) {
         throw exception{"CanController not init!"};
-    } 
+    }
 
     std::lock_guard guard(mutex_worker_map_and_vec_);
     if (worker_map_.contains(name)) {
@@ -194,10 +194,7 @@ CanWorker::~CanWorker() {
     _terminate();
 }
 
-bool CanWorker::is_connected() const {
-    std::lock_guard guard(mutex_connected_);
-    return connected_;
-}
+bool CanWorker::is_connected() const { return connected_; }
 
 void CanWorker::add_listener(
     std::function<void(const QCanBusFrame &)> listener_cb) {
@@ -209,8 +206,6 @@ void CanWorker::_terminate() {
     s_logger->trace("{} terminated !", can_if_name_std_);
 
     {
-        std::lock_guard guard(mutex_connected_);
-
         if (device_ && connected_)
             device_->disconnectDevice();
 
@@ -284,10 +279,7 @@ void CanWorker::_start_work() {
                          s_logger->error("canbusdevice error: {}",
                                          device_->errorString().toStdString());
 
-                         {
-                             std::lock_guard guard(mutex_connected_);
-                             connected_ = false;
-                         }
+                         connected_ = false;
                          //  reconnect_timer_->start(reconnect_timeout_);
                          if (device_->state() ==
                              QCanBusDevice::ConnectedState) {
@@ -314,9 +306,12 @@ void CanWorker::_process_sendframe_event(QEvent *event) {
     }
 
     device_->writeFrame(e->get_frame());
-    if (device_->state() == QCanBusDevice::ConnectedState) {
-        device_->waitForFramesWritten(100);
-    }
+    // if (device_->state() == QCanBusDevice::ConnectedState) {
+    //     if (!device_->waitForFramesWritten(1000)) {
+    //         s_logger->warn("frames not fully written: {}",
+    //         device_->framesToWrite());
+    //     }
+    // }
 }
 
 void CanWorker::_set_can_down() {
@@ -359,8 +354,8 @@ void CanWorker::_slot_reconnect() {
     }
 
     // set can0 up, just use shell command
-    // _set_can_down();
-    // _set_can_up_with_bitrate();
+    _set_can_down();
+    _set_can_up_with_bitrate();
 
     if (!netdev_info->link_up) {
         _set_can_up_with_bitrate();
@@ -385,10 +380,8 @@ void CanWorker::_slot_reconnect() {
 
             if (connect_ret) {
                 // connected, stop reconnect timer
-                {
-                    std::lock_guard guard(mutex_connected_);
-                    connected_ = true;
-                }
+                connected_ = true;
+
                 // reconnect_timer_->stop();
                 s_logger->info("device \"{}\" connected.", can_if_name_std_);
             }

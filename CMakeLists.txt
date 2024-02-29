@@ -78,12 +78,13 @@ add_library(edm SHARED ${PROJECT_SOURCES})
 target_compile_options(edm PUBLIC -fPIC -Wno-error=stringop-overflow -Wno-stringop-overflow) # gcc bug with fmtlib
 target_link_libraries(edm PUBLIC 
     spdlog::spdlog
-    fmt::fmt 
+    fmt::fmt # fmtlib, use if libstdc++ does not support <format>
     Boost::python 
     Python3::Python
     soem
     Qt5::Core Qt5::SerialBus
-    m
+    m # <math.h> or <cmath>
+    pthread # <pthread.h>
 )
 
 add_subdirectory(tests)

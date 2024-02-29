@@ -8,8 +8,8 @@ message(STATUS ${Qt5_VERSION})
 
 add_executable(test_ecat test_ecat.cpp)
 add_dependencies(test_ecat edm)
-target_link_libraries(test_ecat edm Qt5::Core Qt5::SerialBus -lpthread)
+target_link_libraries(test_ecat edm Qt5::Core Qt5::SerialBus)
 
 add_executable(test_decode_output test_decode_output.cpp)
 add_dependencies(test_decode_output edm)
-target_link_libraries(test_decode_output edm Qt5::Core Qt5::SerialBus -lpthread)
+target_link_libraries(test_decode_output edm Qt5::Core Qt5::SerialBus)

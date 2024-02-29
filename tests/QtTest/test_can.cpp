@@ -55,8 +55,13 @@ int main(int argc, char **argv) {
 
     edm::can::CanController::instance()->init();
 
-    edm::can::CanController::instance()->add_device("can0", 115200);
-    edm::can::CanController::instance()->add_device("can1", 115200);
+    edm::can::CanController::instance()->add_device("can0", 500000);
+    edm::can::CanController::instance()->add_device("can1", 500000);
+
+    while (!edm::can::CanController::instance()->is_connected("can0"))
+        ;
+    while (!edm::can::CanController::instance()->is_connected("can1"))
+        ;
 
     edm::can::CanController::instance()->add_frame_received_listener(
         "can1", [](const QCanBusFrame &frame) {
