@@ -55,7 +55,6 @@ set(PROJECT_SOURCES
     Src/Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.cpp
     Src/Logger/LogManager.cpp
     Src/Logger/LogDefine.cpp
-    Src/TaskManager/TaskManager.cpp
     Src/EcatManager/ServoDevice.cpp
     Src/EcatManager/EcatManager.cpp
     Src/QtDependComponents/CanController/CanController.cpp
@@ -69,6 +68,8 @@ set(PROJECT_SOURCES
     Src/Motion/MotionThread/MotionCommandQueue.cpp 
     Src/Motion/MotionThread/MotionThreadController.cpp
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
+    Src/QtDependComponents/TaskManager/TaskManager.cpp 
+    Src/QtDependComponents/TaskManager/GCodeManager.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)

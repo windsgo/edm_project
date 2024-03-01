@@ -6,6 +6,8 @@
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
+using namespace std::chrono_literals;
+
 // static bool exit_flag = false; // oh no
 // static std::atomic_bool exit_flag = false; // ok
 static volatile bool exit_flag = false; // ok
@@ -20,7 +22,10 @@ static void fff(int x) { s_logger->info("fff: x = {}", x); }
 static void fff2(int x, const std::string &s) {
     s_logger->info("fff2: x = {}, s = {}", x, s);
 }
-static void fff1() { s_logger->info("fff1: no arg"); }
+static void fff1() {
+    s_logger->info("fff1: no arg");
+    std::this_thread::sleep_for(600ms);
+}
 
 static void push_a_command(int x) {
     auto f = [](int x) { s_logger->info("hi: x = {}", x); };
@@ -49,7 +54,6 @@ static void push_cmds() {
         push_a_command(i);
     }
 
-    using namespace std::chrono_literals;
     std::this_thread::sleep_for(1s);
 
     for (int i = 10; i < 20; ++i) {

@@ -37,6 +37,14 @@
 // Motion Thread Stack Size
 #define EDM_MOTION_THREAD_STACK                   (64 * 1024)
 
+// OFFLINE DEFINE 
+// #define EDM_OFFLINE_RUN
+#ifdef EDM_OFFLINE_RUN
+#define EDM_OFFLINE_RUN_NO_ECAT
+#define EDM_OFFLINE_RUN_NO_CAN
+#endif // EDM_OFFLINE_RUN
+
+
 #if __GNUC__ < 13      // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format
 #endif

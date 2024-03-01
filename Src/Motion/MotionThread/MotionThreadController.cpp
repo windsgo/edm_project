@@ -188,6 +188,8 @@ void *MotionThreadController::_run() {
             ecat_manager_->ecat_sync();
         }
 
+        _fetch_command_and_handle();
+
         switch (thread_state_) {
         default:
         case ThreadState::Init:
@@ -260,6 +262,7 @@ void MotionThreadController::_threadstate_running() {
     case EcatState::EcatConnectedNotAllEnabled: {
         if (ecat_manager_->servo_all_operation_enabled()) {
             ecat_state_ = EcatState::EcatReady;
+            ecat_clear_fault_reenable_flag_ = false;
             break;
         }
 
@@ -276,12 +279,26 @@ void MotionThreadController::_threadstate_running() {
         }
         break;
     }
-    case EcatState::EcatReady:
+    case EcatState::EcatReady: {
+
+        // 先检查驱动器情况
+        if (!ecat_manager_->is_ecat_connected()) {
+            ecat_state_ = EcatState::EcatDisconnected;
+            // TODO 重置 运动状态机
+            break;
+        }
+
+        if (!ecat_manager_->servo_all_operation_enabled()) {
+            ecat_state_ = EcatState::EcatConnectedNotAllEnabled;
+            // TODO 重置 运动状态机
+            break;
+        }
 
         // TODO StateMachine Operate Cycle
 
         _dc_sync(); //! 只在正常的情况下进行DC同步
         break;
+    }
     }
 }
 
@@ -315,6 +332,37 @@ bool MotionThreadController::_set_cpu_dma_latency() {
 
 void MotionThreadController::_fetch_command_and_handle() {
     // TODO
+
+    auto cmd_opt = motion_cmd_queue_->try_get_command();
+    if (!cmd_opt) {
+        return;
+    }
+
+    auto cmd = *cmd_opt;
+
+    // TODO handle cmd
+    switch (cmd->type()) {
+    case MotionCommandManual_StartPointMove:
+        s_logger->trace("Handle MotionCmd: Manual_StartPointMove");
+        cmd->accept();
+        // TODO
+        break;
+    case MotionCommandManual_StopPointMove:
+        s_logger->trace("Handle MotionCmd: Manual_StopPointMove");
+        cmd->accept();
+        // TODO
+        break;
+    case MotionCommandSetting_TriggerEcatConnect:
+        s_logger->trace("Handle MotionCmd: Setting_TriggerEcatConnect");
+        cmd->accept();
+        ecat_connect_flag_ = true;
+        ecat_clear_fault_reenable_flag_ = true;
+        break;
+    default:
+        s_logger->warn("Unsupported MotionCommandType: {}", (int)cmd->type());
+        cmd->ignore();
+        break;
+    }
 }
 
 void MotionThreadController::_dc_sync() {

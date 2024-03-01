@@ -273,5 +273,9 @@ int main(int argc, char **argv) {
     TestPowerWidget w;
     w.show();
 
-    return app.exec();
+    int ret = app.exec();
+
+    s_can_ctrler->terminate();
+
+    return ret;
 }
