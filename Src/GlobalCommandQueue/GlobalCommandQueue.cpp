@@ -14,6 +14,7 @@ GlobalCommandQueue::GlobalCommandQueue() {
 }
 
 GlobalCommandQueue::~GlobalCommandQueue() {
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
     // stop the thread
     thread_exit_flag_ = true;
 

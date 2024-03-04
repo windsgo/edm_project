@@ -1,9 +1,7 @@
 {
     "settings": {
-        "netif_name": "",
-        "iomap_size": 4096,
-        "servo_num": 1,
-        "io_num": 0
+        "netif_name": "enx34298f700ae1",
+        "iomap_size": 4096
     },
     "ecats": [
         {

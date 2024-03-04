@@ -9,15 +9,15 @@ namespace edm {
 namespace move {
 MotionThreadController::MotionThreadController(
     std::string_view ifname, MotionCommandQueue::ptr motion_cmd_queue,
-    MotionSignalQueue::ptr motion_signal_queue, uint32_t servo_num,
-    uint32_t io_num)
+    MotionSignalQueue::ptr motion_signal_queue, uint32_t iomap_size,
+    uint32_t servo_num, uint32_t io_num)
     : motion_cmd_queue_(motion_cmd_queue),
       motion_signal_queue_(motion_signal_queue) {
     //! 需要注意的是, 构造函数中的代码允许在Caller线程, 不运行在新的线程
     //! 所以线程要最后创建, 防止数据竞争, 和使用未初始化成员变量的问题
 
-    ecat_manager_ =
-        std::make_shared<ecat::EcatManager>(ifname, servo_num, io_num);
+    ecat_manager_ = std::make_shared<ecat::EcatManager>(ifname, iomap_size,
+                                                        servo_num, io_num);
     if (!ecat_manager_) {
         s_logger->critical("MotionThreadController ecat_manager create failed");
         throw exception("MotionThreadController ecat_manager create failed");
@@ -45,6 +45,8 @@ MotionThreadController::MotionThreadController(
 }
 
 MotionThreadController::~MotionThreadController() {
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
+
     // 停止线程
     thread_stop_flag_ = true;
 
@@ -209,13 +211,13 @@ void *MotionThreadController::_run() {
         switch (thread_state_) {
         default:
         case ThreadState::Init:
-            thread_state_ = ThreadState::Running;
+            _switch_thread_state(ThreadState::Running);
             break;
         case ThreadState::Running: {
             _threadstate_running();
 
             if (thread_stop_flag_) {
-                thread_state_ = ThreadState::Stopping; //! 准备退出线程
+                _switch_thread_state(ThreadState::Stopping); //! 准备退出线程
             }
             break;
         }
@@ -236,17 +238,22 @@ void *MotionThreadController::_run() {
 void MotionThreadController::_threadstate_stopping() {
     ++stopping_count_;
     if (stopping_count_ > stopping_count_max_) {
-        thread_state_ = ThreadState::CanExit;
+        s_logger->warn("stopping count overflow: {} > {}", stopping_count_,
+                       stopping_count_max_);
+        ecat_manager_->disconnect_ecat();
+        _switch_thread_state(ThreadState::CanExit);
         return;
     }
 
     if (!ecat_manager_->is_ecat_connected()) {
-        thread_state_ = ThreadState::CanExit;
+        ecat_manager_->disconnect_ecat();
+        _switch_thread_state(ThreadState::CanExit);
         return;
     }
 
     if (ecat_manager_->servo_all_disabled()) {
-        thread_state_ = ThreadState::CanExit;
+        ecat_manager_->disconnect_ecat(); //! 一定要调用, 不然驱动器报警
+        _switch_thread_state(ThreadState::CanExit);
         return;
     }
 
@@ -257,11 +264,11 @@ void MotionThreadController::_threadstate_running() {
     switch (ecat_state_) {
     default:
     case EcatState::Init:
-        ecat_state_ = EcatState::EcatDisconnected;
+        _switch_ecat_state(EcatState::EcatDisconnected);
         break;
     case EcatState::EcatDisconnected:
         if (ecat_connect_flag_) {
-            ecat_state_ = EcatState::EcatConnecting;
+            _switch_ecat_state(EcatState::EcatConnecting);
             ecat_connect_flag_ = false;
         }
         break;
@@ -270,7 +277,7 @@ void MotionThreadController::_threadstate_running() {
 
         bool ret = ecat_manager_->connect_ecat(3);
         if (ret) {
-            ecat_state_ = EcatState::EcatConnectedNotAllEnabled;
+            _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
         }
 
         break;
@@ -283,7 +290,7 @@ void MotionThreadController::_threadstate_running() {
         }
 
         if (ecat_clear_fault_reenable_flag_) {
-            ecat_state_ = EcatState::EcatConnectedEnabling;
+            _switch_ecat_state(EcatState::EcatConnectedEnabling);
             ecat_clear_fault_reenable_flag_ = false;
             break;
         }
@@ -304,7 +311,7 @@ void MotionThreadController::_threadstate_running() {
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {
             s_logger->warn("in EcatReady, ecat disconnected");
-            ecat_state_ = EcatState::EcatDisconnected;
+            _switch_ecat_state(EcatState::EcatDisconnected);
             // 重置 运动状态机
             motion_state_machine_->reset();
             break;
@@ -312,7 +319,7 @@ void MotionThreadController::_threadstate_running() {
 
         if (!ecat_manager_->servo_all_operation_enabled()) {
             s_logger->warn("in EcatReady, ecat not all enabled");
-            ecat_state_ = EcatState::EcatConnectedNotAllEnabled;
+            _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
             // 重置 运动状态机
             motion_state_machine_->reset();
             break;
@@ -371,7 +378,7 @@ void MotionThreadController::_threadstate_running() {
 }
 
 void MotionThreadController::_ecat_state_switch_to_ready() {
-    ecat_state_ = EcatState::EcatReady;
+    _switch_ecat_state(EcatState::EcatReady);
     motion_state_machine_->reset();
     motion_state_machine_->refresh_axis_using_actpos();
     motion_state_machine_->set_enable(true);
@@ -490,6 +497,53 @@ bool MotionThreadController::_get_act_pos(axis_t &axis) {
     }
 
     return true;
+}
+
+const char *MotionThreadController::GetThreadStateStr(ThreadState s) {
+    switch (s) {
+#define XX_(v__)           \
+    case ThreadState::v__: \
+        return #v__;
+        XX_(Init)
+        XX_(Running)
+        XX_(Stopping)
+        XX_(CanExit)
+#undef XX_
+    default:
+        return "Unknow";
+    }
+}
+
+const char *MotionThreadController::GetEcatStateStr(EcatState s) {
+    switch (s) {
+#define XX_(v__)         \
+    case EcatState::v__: \
+        return #v__;
+        XX_(Init)
+        XX_(EcatDisconnected)
+        XX_(EcatConnecting)
+        XX_(EcatConnectedNotAllEnabled)
+        XX_(EcatConnectedEnabling)
+        XX_(EcatReady)
+#undef XX_
+    default:
+        return "Unknow";
+    }
+}
+
+void MotionThreadController::_switch_thread_state(
+    ThreadState new_thread_state) {
+    s_logger->trace("motion thread state: {} -> {}",
+                    GetThreadStateStr(thread_state_),
+                    GetThreadStateStr(new_thread_state));
+    thread_state_ = new_thread_state;
+}
+
+void MotionThreadController::_switch_ecat_state(EcatState new_ecat_state) {
+    s_logger->trace("motion thread ecat state: {} -> {}",
+                    GetEcatStateStr(ecat_state_),
+                    GetEcatStateStr(new_ecat_state));
+    ecat_state_ = new_ecat_state;
 }
 
 } // namespace move

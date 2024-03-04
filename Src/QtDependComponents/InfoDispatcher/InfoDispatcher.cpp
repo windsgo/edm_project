@@ -33,6 +33,8 @@ void InfoDispatcher::_info_get_timer_slot() {
     if (!signal_handled) {
         info_cache_ = motion_controller_->get_info_cache();
     }
+
+    emit info_updated(info_cache_);
 }
 
 void InfoDispatcher::_handle_signal_callback(const move::MotionSignal &signal) {

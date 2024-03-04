@@ -3,9 +3,9 @@
 #include <mutex>
 
 #include "EcatManager/EcatManager.h"
-#include "MotionCommandQueue.h"
-#include "Motion/MotionStateMachine/MotionStateMachine.h"
 #include "Motion/MotionSignalQueue/MotionSignalQueue.h"
+#include "Motion/MotionStateMachine/MotionStateMachine.h"
+#include "MotionCommandQueue.h"
 
 // C Headers
 #include <fcntl.h>
@@ -32,7 +32,8 @@ public:
     MotionThreadController(std::string_view ifname,
                            MotionCommandQueue::ptr motion_cmd_queue,
                            MotionSignalQueue::ptr motion_signal_queue,
-                           uint32_t servo_num, uint32_t io_num = 0);
+                           uint32_t iomap_size, uint32_t servo_num,
+                           uint32_t io_num = 0);
     ~MotionThreadController();
 
     MotionThreadController(const MotionThreadController &) = delete;
@@ -78,28 +79,35 @@ private: // Thread
     void _dc_sync();
 
     // 用于生成获取实际坐标的回调, 以及info cache获取实际坐标
-    bool _get_act_pos(axis_t& axis);
+    bool _get_act_pos(axis_t &axis);
 
 private: // Command
 
-private: // State
+public: // State
     // Ecat State
     enum class EcatState {
-        Init, // Init State
-        EcatDisconnected, // Ecat未连接
-        EcatConnecting, // Ecat连接中
+        Init,                       // Init State
+        EcatDisconnected,           // Ecat未连接
+        EcatConnecting,             // Ecat连接中
         EcatConnectedNotAllEnabled, // Ecat已连接但需要清错误并使能
-        EcatConnectedEnabling, // Ecat已连接, 正在清错并使能
-        EcatReady, // Ecat已连接
-    } ecat_state_ {EcatState::Init};
+        EcatConnectedEnabling,      // Ecat已连接, 正在清错并使能
+        EcatReady,                  // Ecat已连接
+    } ecat_state_{EcatState::Init};
 
-    // Thread State: 
+    // Thread State:
     enum class ThreadState {
-        Init, // Init, 未启动
-        Running, // 线程在跑
+        Init,     // Init, 未启动
+        Running,  // 线程在跑
         Stopping, // 线程停止中
-        CanExit, // 线程可以退出
-    } thread_state_ {ThreadState::Init};
+        CanExit,  // 线程可以退出
+    } thread_state_{ThreadState::Init};
+
+    static const char* GetThreadStateStr(ThreadState s);
+    static const char* GetEcatStateStr(EcatState s);
+
+private:
+    void _switch_thread_state(ThreadState new_thread_state);
+    void _switch_ecat_state(EcatState new_ecat_state);
 
 private: // Data
     // 用于获取外部输入的命令的队列
@@ -107,7 +115,7 @@ private: // Data
 
     // 用于信号发生
     SignalBuffer::ptr signal_buffer_;
-    MotionSignalQueue::ptr motion_signal_queue_ {nullptr};
+    MotionSignalQueue::ptr motion_signal_queue_{nullptr};
 
     // EcatManager
     ecat::EcatManager::ptr ecat_manager_{nullptr};
@@ -115,9 +123,10 @@ private: // Data
         false}; // 启动ecat的标志位, 一旦有这个标志位, 就会检查ecat是否连接,
                 // 如果未连接就会在线程的某个周期尝试连接
     bool ecat_clear_fault_reenable_flag_{false}; // 清错重新使能标志位
-    
+
     int stopping_count_ = 0; // 线程退出时的计数器
-    const int stopping_count_max_ = 2000; // 线程退出时计数器最大值, 超过此值就直接退出
+    const int stopping_count_max_ =
+        2000; // 线程退出时计数器最大值, 超过此值就直接退出
 
     // 每周期结束获取状态机的状态, 并缓存到:
     MotionInfo info_cache_;
