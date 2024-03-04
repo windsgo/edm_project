@@ -36,8 +36,8 @@ public:
 
     unit_t run_once(); // 运行一次, 返回本次运行的增量值
 
-    unit_t get_current_length() const { return curr_length_; }
-    unit_t get_target_length() const { return target_length_; }
+    inline unit_t get_current_length() const { return curr_length_; }
+    inline unit_t get_target_length() const { return target_length_; }
 
     inline auto state() const { return state_; }
     inline bool is_started() const { return state_ != State::NotStarted; }

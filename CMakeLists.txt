@@ -65,8 +65,12 @@ set(PROJECT_SOURCES
     Src/Utils/DataQueueRecorder/DataQueueRecorder.cpp
     Src/Motion/Moveruntime/Moveruntime.cpp
     Src/Motion/MoveruntimeWrapper/MoveruntimeWrapper.cpp
+    Src/Motion/PointMoveHandler/PointMoveHandler.cpp
     Src/Motion/MotionThread/MotionCommandQueue.cpp 
     Src/Motion/MotionThread/MotionThreadController.cpp
+    Src/Motion/MotionSignalQueue/MotionSignalQueue.cpp
+    Src/Motion/MotionStateMachine/MotionStateMachine.cpp
+    Src/Motion/SignalBuffer/SignalBuffer.cpp
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
     Src/QtDependComponents/TaskManager/TaskManager.cpp 
     Src/QtDependComponents/TaskManager/GCodeManager.cpp
@@ -81,6 +85,7 @@ target_link_libraries(edm PUBLIC
     spdlog::spdlog
     fmt::fmt # fmtlib, use if libstdc++ does not support <format>
     Boost::python 
+    Boost::boost
     Python3::Python
     soem
     Qt5::Core Qt5::SerialBus

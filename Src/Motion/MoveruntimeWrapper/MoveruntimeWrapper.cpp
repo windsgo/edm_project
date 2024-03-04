@@ -1,6 +1,7 @@
 #include "MoveruntimeWrapper.h"
 
 #include "Logger/LogMacro.h"
+
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 
 namespace edm {

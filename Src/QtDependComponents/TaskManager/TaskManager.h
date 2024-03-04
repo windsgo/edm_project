@@ -34,8 +34,8 @@ class TaskManager final : public QObject {
     Q_OBJECT 
     // need to emit signals ...
 public:
-    TaskManager();
-    ~TaskManager();
+    TaskManager() {}
+    ~TaskManager() {}
 
 public: // GUI命令接口
     bool operation_start_pointmove();

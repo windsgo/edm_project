@@ -2,6 +2,16 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <boost/lockfree/queue.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
+
+boost::lockfree::spsc_queue<int, boost::lockfree::fixed_sized<true>,
+                            boost::lockfree::capacity<256>>
+    spsc_q;
+boost::lockfree::queue<int, boost::lockfree::fixed_sized<false>,
+                       boost::lockfree::capacity<256>>
+    q;
+
 #include "Logger/LogMacro.h"
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -75,7 +85,72 @@ static void fun_sig(int sig) {
     signal(sig, SIG_DFL); // switch to default
 }
 
+#include "Motion/MotionSignalQueue/MotionSignalQueue.h"
+static void test_spsc_queue() {
+
+    auto msq = edm::move::MotionSignalQueue{};
+
+    edm::move::MotionSignal s;
+
+    msq.pop(s);
+
+    // spsc_q.consume_all([&](int i){
+    //     s_logger->debug("consume: {}", i);
+    // });
+    // s_logger->debug("size: {}, {}", spsc_q.read_available(),
+    // spsc_q.write_available()); s_logger->info("push ret: {}",
+    // spsc_q.push(1)); s_logger->info("push ret: {}", spsc_q.push(5));
+    // s_logger->info("push ret: {}", spsc_q.push(2));
+    // s_logger->info("push ret: {}", spsc_q.push(3));
+    // s_logger->info("push ret: {}", spsc_q.push(3));
+    // s_logger->info("push ret: {}", spsc_q.push(3));
+    // s_logger->info("push ret: {}", spsc_q.push(3));
+
+    // q.consume_all([](){});
+
+    spsc_q.consume_all([&](int i) { s_logger->debug("consume: {}", i); });
+    // s_logger->debug("size: {}, {}", spsc_q.read_available(),
+    // spsc_q.write_available());
+
+    std::thread t1([&]() {
+        std::this_thread::sleep_for(1s);
+        for (int i = 0; i < 1000; ++i) {
+            std::this_thread::sleep_for(2ms);
+            s_logger->info("pushing: {}", i);
+            // auto ret = spsc_q.push(i);
+            edm::move::MotionSignal ms;
+            ms.type = edm::move::MotionSignalType::MotionSignal_AutoStopped;
+            // ms.signal_data1 = i * 10;
+            ms.info.curr_cmd_axis_blu[1] = i + i;
+            auto ret = msq.push(ms);
+            s_logger->info("pushing over: {}", ret);
+        }
+    });
+
+    std::thread t2([&]() {
+        while (1) {
+            // spsc_q.consume_one([&](int v){
+            //     s_logger->info("consuming: {}", v);
+            //     std::this_thread::sleep_for(0.5s);
+            //     s_logger->info("consume over");
+            // });
+            msq.consume_one([&](const edm::move::MotionSignal& ms) {
+                s_logger->info("consuming: {}, {}", (int)ms.type, ms.info.curr_cmd_axis_blu[1]);
+                std::this_thread::sleep_for(10ms);
+                s_logger->info("consume over");
+            });
+        }
+    });
+
+    t1.join();
+    t2.join();
+}
+
 int main(int argc, char **argv) {
+
+    test_spsc_queue();
+
+    return 0;
 
     signal(SIGINT, fun_sig);
 

@@ -9,8 +9,10 @@ namespace edm {
 namespace move {
 MotionThreadController::MotionThreadController(
     std::string_view ifname, MotionCommandQueue::ptr motion_cmd_queue,
-    uint32_t servo_num, uint32_t io_num)
-    : motion_cmd_queue_(motion_cmd_queue) {
+    MotionSignalQueue::ptr motion_signal_queue, uint32_t servo_num,
+    uint32_t io_num)
+    : motion_cmd_queue_(motion_cmd_queue),
+      motion_signal_queue_(motion_signal_queue) {
     //! 需要注意的是, 构造函数中的代码允许在Caller线程, 不运行在新的线程
     //! 所以线程要最后创建, 防止数据竞争, 和使用未初始化成员变量的问题
 
@@ -19,6 +21,20 @@ MotionThreadController::MotionThreadController(
     if (!ecat_manager_) {
         s_logger->critical("MotionThreadController ecat_manager create failed");
         throw exception("MotionThreadController ecat_manager create failed");
+    }
+
+    signal_buffer_ = std::make_shared<SignalBuffer>();
+
+    auto get_act_pos_cb =
+        std::bind_front(&MotionThreadController::_get_act_pos, this);
+    auto touch_detect_cb = [this]() -> bool {
+        return false; // TODO
+    };
+    motion_state_machine_ = std::make_shared<MotionStateMachine>(
+        get_act_pos_cb, touch_detect_cb, signal_buffer_);
+    if (!motion_state_machine_) {
+        s_logger->critical("MotionStateMachine create failed");
+        throw exception("MotionStateMachine create failed");
     }
 
     //! 线程最后创建, 在成员变量都初始化完毕后再创建
@@ -261,7 +277,7 @@ void MotionThreadController::_threadstate_running() {
     }
     case EcatState::EcatConnectedNotAllEnabled: {
         if (ecat_manager_->servo_all_operation_enabled()) {
-            ecat_state_ = EcatState::EcatReady;
+            _ecat_state_switch_to_ready();
             ecat_clear_fault_reenable_flag_ = false;
             break;
         }
@@ -276,30 +292,89 @@ void MotionThreadController::_threadstate_running() {
         ecat_clear_fault_reenable_flag_ = false;
         if (!ecat_manager_->servo_all_operation_enabled()) {
             ecat_manager_->clear_fault_cycle_run_once();
+        } else {
+            _ecat_state_switch_to_ready();
         }
         break;
     }
     case EcatState::EcatReady: {
 
+        signal_buffer_->reset_all();
+
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {
+            s_logger->warn("in EcatReady, ecat disconnected");
             ecat_state_ = EcatState::EcatDisconnected;
-            // TODO 重置 运动状态机
+            // 重置 运动状态机
+            motion_state_machine_->reset();
             break;
         }
 
         if (!ecat_manager_->servo_all_operation_enabled()) {
+            s_logger->warn("in EcatReady, ecat not all enabled");
             ecat_state_ = EcatState::EcatConnectedNotAllEnabled;
-            // TODO 重置 运动状态机
+            // 重置 运动状态机
+            motion_state_machine_->reset();
             break;
         }
 
-        // TODO StateMachine Operate Cycle
+        // StateMachine Operate Cycle
+        motion_state_machine_->run_once();
+
+        // set to motor axis
+        const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
+        for (int i = 0; i < cmd_axis.size(); ++i) {
+            ecat_manager_->set_servo_target_position(
+                i,
+                static_cast<int32_t>(
+                    std::lround(cmd_axis[i])) // TODO, gear ratio, default 1.0
+            );
+        }
+
+        // handle info buffer
+        // TODO
+        {
+            std::lock_guard guard(info_cache_mutex_);
+
+            info_cache_.curr_cmd_axis_blu =
+                motion_state_machine_->get_cmd_axis();
+            _get_act_pos(info_cache_.curr_act_axis_blu);
+
+            info_cache_.main_mode = motion_state_machine_->main_mode();
+            info_cache_.auto_state = motion_state_machine_->auto_state();
+
+            // bit_state1
+            info_cache_.setEcatConnected(ecat_manager_->is_ecat_connected());
+            info_cache_.setEcatAllEnabled(ecat_state_ == EcatState::EcatReady);
+            info_cache_.setTouchDetectEnabled(false); // TODO
+            info_cache_.setTouchDetected(false);      // TODO
+            info_cache_.setTouchWarning(false);       // TODO
+        }
+
+        // handle signal
+        if (signal_buffer_->has_signal()) {
+            const auto &signal_arr = signal_buffer_->get_signals_arr();
+            for (int i = 0; i < signal_arr.size(); ++i) {
+                if (signal_arr[i]) {
+                    MotionSignal signal{static_cast<MotionSignalType>(i),
+                                        info_cache_};
+                    auto ret = motion_signal_queue_->push(signal);
+                    s_logger->trace("push signal: {}, success? {}", i, ret);
+                }
+            }
+        }
 
         _dc_sync(); //! 只在正常的情况下进行DC同步
         break;
     }
     }
+}
+
+void MotionThreadController::_ecat_state_switch_to_ready() {
+    ecat_state_ = EcatState::EcatReady;
+    motion_state_machine_->reset();
+    motion_state_machine_->refresh_axis_using_actpos();
+    motion_state_machine_->set_enable(true);
 }
 
 bool MotionThreadController::_set_cpu_dma_latency() {
@@ -342,22 +417,55 @@ void MotionThreadController::_fetch_command_and_handle() {
 
     // TODO handle cmd
     switch (cmd->type()) {
-    case MotionCommandManual_StartPointMove:
+    case MotionCommandManual_StartPointMove: {
         s_logger->trace("Handle MotionCmd: Manual_StartPointMove");
-        cmd->accept();
-        // TODO
+        if (ecat_state_ != EcatState::EcatReady ||
+            thread_state_ != ThreadState::Running) {
+            cmd->ignore();
+            break;
+        }
+
+        auto spm_cmd =
+            std::static_pointer_cast<MotionCommandManualStartPointMove>(cmd);
+
+        auto ret = motion_state_machine_->start_manual_pointmove(
+            spm_cmd->speed_param(), spm_cmd->end_pos());
+
+        if (ret) {
+            cmd->accept();
+        } else {
+            cmd->ignore();
+        }
         break;
-    case MotionCommandManual_StopPointMove:
+    }
+    case MotionCommandManual_StopPointMove: {
         s_logger->trace("Handle MotionCmd: Manual_StopPointMove");
-        cmd->accept();
-        // TODO
+        if (ecat_state_ != EcatState::EcatReady ||
+            thread_state_ != ThreadState::Running) {
+            cmd->ignore();
+            break;
+        }
+
+        auto spm_cmd =
+            std::static_pointer_cast<MotionCommandManualStopPointMove>(cmd);
+
+        auto ret =
+            motion_state_machine_->stop_manual_pointmove(spm_cmd->immediate());
+
+        if (ret) {
+            cmd->accept();
+        } else {
+            cmd->ignore();
+        }
         break;
-    case MotionCommandSetting_TriggerEcatConnect:
+    }
+    case MotionCommandSetting_TriggerEcatConnect: {
         s_logger->trace("Handle MotionCmd: Setting_TriggerEcatConnect");
         cmd->accept();
         ecat_connect_flag_ = true;
         ecat_clear_fault_reenable_flag_ = true;
         break;
+    }
     default:
         s_logger->warn("Unsupported MotionCommandType: {}", (int)cmd->type());
         cmd->ignore();
@@ -369,6 +477,19 @@ void MotionThreadController::_dc_sync() {
     /* calulate toff to get linux time and DC synced */
     ecat_manager_->dc_sync_time(cycletime_ns_,
                                 &toff_); //! 对指令速度突变的改善很有效果
+}
+
+bool MotionThreadController::_get_act_pos(axis_t &axis) {
+    if (!this->ecat_manager_->is_ecat_connected()) {
+        // MotionUtils::ClearAxis(axis);
+        return false;
+    }
+
+    for (int i = 0; i < axis.size(); ++i) {
+        axis[i] = this->ecat_manager_->get_servo_actual_position(i);
+    }
+
+    return true;
 }
 
 } // namespace move

@@ -6,7 +6,9 @@ find_package(Qt5 COMPONENTS Core Widgets Network SerialBus REQUIRED)
 message(STATUS ${Qt5_DIR})
 message(STATUS ${Qt5_VERSION})
 
+find_package(Boost REQUIRED)
+
 add_executable(test_cmd_queue test_cmd_queue.cpp)
 add_dependencies(test_cmd_queue edm)
-target_link_libraries(test_cmd_queue edm Qt5::Core Qt5::SerialBus)
+target_link_libraries(test_cmd_queue edm Qt5::Core Qt5::SerialBus Boost::boost)
 

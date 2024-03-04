@@ -4,6 +4,8 @@
 
 #include "EcatManager/EcatManager.h"
 #include "MotionCommandQueue.h"
+#include "Motion/MotionStateMachine/MotionStateMachine.h"
+#include "Motion/MotionSignalQueue/MotionSignalQueue.h"
 
 // C Headers
 #include <fcntl.h>
@@ -28,6 +30,7 @@ class MotionThreadController final {
 public:
     MotionThreadController(std::string_view ifname,
                            MotionCommandQueue::ptr motion_cmd_queue,
+                           MotionSignalQueue::ptr motion_signal_queue,
                            uint32_t servo_num, uint32_t io_num = 0);
     ~MotionThreadController();
 
@@ -40,7 +43,13 @@ public:
     // 停止线程
     // void stop_thread() { thread_stop_flag_ = true; }
 
-    // TODO 获取info状态的线程安全接口
+    // 获取info状态的线程安全接口
+    // 利用RVO/NRVO的优化, 这里可以直接返回值 (返回引用是不安全的)
+    auto get_info_cache() const {
+        std::lock_guard guard(info_cache_mutex_);
+
+        return info_cache_;
+    }
 
 private: // Thread
     // pass this function ptr to thread controller
@@ -53,6 +62,8 @@ private: // Thread
     void _threadstate_stopping(); // return true if the thread can exit
     void _threadstate_running();
 
+    void _ecat_state_switch_to_ready(); // ecat转为ready, 以及需要做的事情
+
     // 设置 cpu dma latency 防止cpu休眠
     bool _set_cpu_dma_latency();
 
@@ -64,6 +75,9 @@ private: // Thread
 
     // 处理DC时间同步
     void _dc_sync();
+
+    // 用于生成获取实际坐标的回调, 以及info cache获取实际坐标
+    bool _get_act_pos(axis_t& axis);
 
 private: // Command
 
@@ -90,6 +104,10 @@ private: // Data
     // 用于获取外部输入的命令的队列
     MotionCommandQueue::ptr motion_cmd_queue_{nullptr};
 
+    // 用于信号发生
+    SignalBuffer::ptr signal_buffer_;
+    MotionSignalQueue::ptr motion_signal_queue_ {nullptr};
+
     // EcatManager
     ecat::EcatManager::ptr ecat_manager_{nullptr};
     bool ecat_connect_flag_{
@@ -101,8 +119,8 @@ private: // Data
     const int stopping_count_max_ = 2000; // 线程退出时计数器最大值, 超过此值就直接退出
 
     // 每周期结束获取状态机的状态, 并缓存到:
-    // TODO 缓存结构体
-    std::mutex info_cache_mutex_; // TODO(改名), 用于保护该缓存结构体
+    MotionInfo info_cache_;
+    mutable std::mutex info_cache_mutex_;
 
     // Thread 相关
     pthread_t thread_;
@@ -111,6 +129,9 @@ private: // Data
     int64_t toff_{0}; // 每周期cycletime的修正量(ns) (基于DC同步)
 
     const int32_t latency_target_value_{0}; // 消除系统时钟偏移(禁止电源休眠)
+
+private: // 运动状态机
+    MotionStateMachine::ptr motion_state_machine_;
 };
 
 } // namespace move

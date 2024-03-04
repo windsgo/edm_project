@@ -9,6 +9,9 @@
 #define EDM_SERVO_NUM                             3
 #define EDM_AXIS_NUM                              EDM_SERVO_NUM
 
+// 单位定义
+#define EDM_BLU_PER_UM                            10 // blu定义, 1blu为0.1um, 1um为10个blu
+
 // 运动周期
 #define EDM_SERVO_PEROID_US                       1000 // 1000 us 周期
 #define EDM_SERVO_PEROID_NS                       (EDM_SERVO_PEROID_US * 1000) // 1000,000 ns 周期
@@ -37,13 +40,15 @@
 // Motion Thread Stack Size
 #define EDM_MOTION_THREAD_STACK                   (64 * 1024)
 
-// OFFLINE DEFINE 
+// MotionSignalQueue 使用的queue类型
+#define EDM_MOTION_SIGNAL_QUEUE_USE_SPSC          // 使用spsc队列
+
+// OFFLINE DEFINE
 // #define EDM_OFFLINE_RUN
 #ifdef EDM_OFFLINE_RUN
 #define EDM_OFFLINE_RUN_NO_ECAT
 #define EDM_OFFLINE_RUN_NO_CAN
 #endif // EDM_OFFLINE_RUN
-
 
 #if __GNUC__ < 13      // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format
