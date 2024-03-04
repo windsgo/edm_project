@@ -92,6 +92,7 @@ bool MotionStateMachine::start_manual_pointmove(
         auto ret = pm_handler_.start(speed_param, cmd_axis_, target_pos);
         if (ret) {
             _mainmode_switch_to(MotionMainMode::Manual);
+            signal_buffer_->set_signal(MotionSignal_ManualPointMoveStopped);
         }
         return ret;
     }

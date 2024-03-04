@@ -74,6 +74,7 @@ set(PROJECT_SOURCES
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
     Src/QtDependComponents/TaskManager/TaskManager.cpp 
     Src/QtDependComponents/TaskManager/GCodeManager.cpp
+    Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)

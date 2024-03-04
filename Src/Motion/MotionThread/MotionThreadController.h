@@ -28,6 +28,7 @@ namespace move {
 
 class MotionThreadController final {
 public:
+    using ptr = std::shared_ptr<MotionThreadController>;
     MotionThreadController(std::string_view ifname,
                            MotionCommandQueue::ptr motion_cmd_queue,
                            MotionSignalQueue::ptr motion_signal_queue,
