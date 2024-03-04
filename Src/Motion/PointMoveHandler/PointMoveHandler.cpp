@@ -23,6 +23,8 @@ bool PointMoveHandler::start(const MoveRuntimePlanSpeedInput &speed_param,
     target_length_ = MotionUtils::CalcAxisLength(start_pos, target_pos);
     curr_length_ = 0.0;
 
+    // s_logger->debug("sp: {}, tp: {}, uv:{}, tl: {}", start_pos_[0], target_pos_[0], unit_vector_[0], target_length_);
+
     return mrt_wrapper_.start(speed_param, target_length_);
 }
 

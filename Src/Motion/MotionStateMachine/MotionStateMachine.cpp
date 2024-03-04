@@ -93,6 +93,9 @@ bool MotionStateMachine::start_manual_pointmove(
         if (ret) {
             _mainmode_switch_to(MotionMainMode::Manual);
             signal_buffer_->set_signal(MotionSignal_ManualPointMoveStopped);
+
+            //! test
+            // r_.start_record("output.bin");
         }
         return ret;
     }
@@ -140,6 +143,7 @@ void MotionStateMachine::_mainmode_manual() {
         // emit manual stopped signal
         signal_buffer_->set_signal(MotionSignal_ManualPointMoveStopped);
         _mainmode_switch_to(MotionMainMode::Idle);
+        // r_.stop_record();
         return;
     }
 
@@ -155,7 +159,11 @@ void MotionStateMachine::_mainmode_manual() {
 
     pm_handler_.run_once();
 
+    // double last = cmd_axis_[0];
+
     cmd_axis_ = pm_handler_.get_current_pos();
+
+    // r_.emplace(cmd_axis_[0] - last, last, cmd_axis_[0]);
 }
 
 void MotionStateMachine::_mainmode_auto() {

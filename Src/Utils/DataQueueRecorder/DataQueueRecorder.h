@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <cassert>
 
 #include "Exception/exception.h"
 #include "Utils/Format/edm_format.h"

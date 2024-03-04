@@ -63,25 +63,54 @@ static void system_init() {
         EDM_SERVO_NUM, 0);
 
     info_dispatcher = new edm::InfoDispatcher(motion_signal_queue,
-                                              motion_controller, nullptr, 1000);
+                                              motion_controller, nullptr, 500);
 }
 
 using namespace std::chrono_literals;
 
-auto ecat_connect_cmd =
-    std::make_shared<edm::move::MotionCommandSettingTriggerEcatConnect>();
 static void cmd_ecat_connect() {
-
+    auto ecat_connect_cmd =
+        std::make_shared<edm::move::MotionCommandSettingTriggerEcatConnect>();
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
-        []() { motion_cmd_queue->push_command(ecat_connect_cmd); });
+        [&](edm::move::MotionCommandSettingTriggerEcatConnect::ptr) {
+            motion_cmd_queue->push_command(ecat_connect_cmd);
+        },
+        ecat_connect_cmd);
 
     global_command_queue->push_command(gcmd);
+}
 
-    // if (ecat_connect_cmd->is_accepted()) {
+static void cmd_start_pointmove() {
 
-    // } else if (ecat_connect_cmd->is_ignored()) {
+    while (!info_dispatcher->get_info().EcatAllEnabled()) {
+        std::this_thread::sleep_for(1s);
+    }
 
-    // }
+    auto start_pos = info_dispatcher->get_info().curr_cmd_axis_blu;
+    auto target_pos = start_pos;
+    target_pos[0] += 5000;
+
+    s_logger->debug("start: {}, target: {}", start_pos[0], target_pos[0]);
+
+    edm::move::MoveRuntimePlanSpeedInput speed;
+    speed.nacc = 60;
+    speed.entry_v = 0;
+    speed.exit_v = 0;
+    speed.cruise_v = 50000;
+    speed.acc0 = 500000;
+    speed.dec0 = -speed.acc0;
+
+    auto start_pointmove_cmd =
+        std::make_shared<edm::move::MotionCommandManualStartPointMove>(
+            start_pos, target_pos, speed);
+
+    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+        [&](edm::move::MotionCommandManualStartPointMove::ptr) {
+            motion_cmd_queue->push_command(start_pointmove_cmd);
+        },
+        start_pointmove_cmd);
+
+    global_command_queue->push_command(gcmd);
 }
 
 static void test_init() {
@@ -90,9 +119,9 @@ static void test_init() {
         info_dispatcher, &edm::InfoDispatcher::info_updated,
         [](const edm::move::MotionInfo &info) {
             s_logger->info(
-                "* info: cmd: {}, act: {} | ecat: {}, {} | mode: {}",
+                "* info: cmd: {}, act: {} | ecat: {}, {}, {:04b} | mode: {}",
                 info.curr_cmd_axis_blu[0], info.curr_act_axis_blu[0],
-                info.EcatConnected(), info.EcatAllEnabled(),
+                info.EcatConnected(), info.EcatAllEnabled(), info.bit_state1,
                 edm::move::MotionStateMachine::GetMainModeStr(info.main_mode));
         });
 
@@ -102,7 +131,9 @@ static void test_init() {
         s_logger->debug("cmd_ecat_connect");
         cmd_ecat_connect();
 
-        std::this_thread::sleep_for(1s);
+        std::this_thread::sleep_for(2s);
+        s_logger->debug("cmd_start_pointmove");
+        cmd_start_pointmove();
     });
 }
 

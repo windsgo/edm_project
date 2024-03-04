@@ -230,6 +230,13 @@ void *MotionThreadController::_run() {
             break;
         }
         }
+
+        //! 在最外层 返回info, 以及处理要返回的信号
+
+        _copy_info_cache();
+
+        // handle signal
+        _handle_signal();
     }
 
     return NULL;
@@ -284,6 +291,9 @@ void MotionThreadController::_threadstate_running() {
     }
     case EcatState::EcatConnectedNotAllEnabled: {
         if (ecat_manager_->servo_all_operation_enabled()) {
+            s_logger->debug(
+                "{:08b}",
+                ecat_manager_->get_servo_device(0)->get_status_word());
             _ecat_state_switch_to_ready();
             ecat_clear_fault_reenable_flag_ = false;
             break;
@@ -294,6 +304,8 @@ void MotionThreadController::_threadstate_running() {
             ecat_clear_fault_reenable_flag_ = false;
             break;
         }
+
+        break;
     }
     case EcatState::EcatConnectedEnabling: {
         ecat_clear_fault_reenable_flag_ = false;
@@ -318,6 +330,9 @@ void MotionThreadController::_threadstate_running() {
         }
 
         if (!ecat_manager_->servo_all_operation_enabled()) {
+            s_logger->debug(
+                "{:08b}",
+                ecat_manager_->get_servo_device(0)->get_status_word());
             s_logger->warn("in EcatReady, ecat not all enabled");
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
             // 重置 运动状态机
@@ -339,37 +354,6 @@ void MotionThreadController::_threadstate_running() {
         }
 
         // handle info buffer
-        // TODO
-        {
-            std::lock_guard guard(info_cache_mutex_);
-
-            info_cache_.curr_cmd_axis_blu =
-                motion_state_machine_->get_cmd_axis();
-            _get_act_pos(info_cache_.curr_act_axis_blu);
-
-            info_cache_.main_mode = motion_state_machine_->main_mode();
-            info_cache_.auto_state = motion_state_machine_->auto_state();
-
-            // bit_state1
-            info_cache_.setEcatConnected(ecat_manager_->is_ecat_connected());
-            info_cache_.setEcatAllEnabled(ecat_state_ == EcatState::EcatReady);
-            info_cache_.setTouchDetectEnabled(false); // TODO
-            info_cache_.setTouchDetected(false);      // TODO
-            info_cache_.setTouchWarning(false);       // TODO
-        }
-
-        // handle signal
-        if (signal_buffer_->has_signal()) {
-            const auto &signal_arr = signal_buffer_->get_signals_arr();
-            for (int i = 0; i < signal_arr.size(); ++i) {
-                if (signal_arr[i]) {
-                    MotionSignal signal{static_cast<MotionSignalType>(i),
-                                        info_cache_};
-                    auto ret = motion_signal_queue_->push(signal);
-                    s_logger->trace("push signal: {}, success? {}", i, ret);
-                }
-            }
-        }
 
         _dc_sync(); //! 只在正常的情况下进行DC同步
         break;
@@ -421,6 +405,8 @@ void MotionThreadController::_fetch_command_and_handle() {
     }
 
     auto cmd = *cmd_opt;
+
+    fprintf(stderr, "cmd! %d\n", (int)cmd->type());
 
     // TODO handle cmd
     switch (cmd->type()) {
@@ -493,10 +479,44 @@ bool MotionThreadController::_get_act_pos(axis_t &axis) {
     }
 
     for (int i = 0; i < axis.size(); ++i) {
-        axis[i] = this->ecat_manager_->get_servo_actual_position(i);
+        axis[i] = (double)this->ecat_manager_->get_servo_actual_position(i);
     }
 
     return true;
+}
+
+void MotionThreadController::_copy_info_cache() {
+    std::lock_guard guard(info_cache_mutex_);
+
+    info_cache_.curr_cmd_axis_blu = motion_state_machine_->get_cmd_axis();
+    _get_act_pos(info_cache_.curr_act_axis_blu);
+
+    info_cache_.main_mode = motion_state_machine_->main_mode();
+    info_cache_.auto_state = motion_state_machine_->auto_state();
+
+    // bit_state1
+    info_cache_.bit_state1 = 0;
+
+    info_cache_.setEcatConnected(ecat_manager_->is_ecat_connected());
+    info_cache_.setEcatAllEnabled(ecat_state_ == EcatState::EcatReady);
+    info_cache_.setTouchDetectEnabled(false); // TODO
+    info_cache_.setTouchDetected(false);      // TODO
+    info_cache_.setTouchWarning(false);       // TODO
+}
+
+void MotionThreadController::_handle_signal() {
+    if (signal_buffer_->has_signal()) {
+        const auto &signal_arr = signal_buffer_->get_signals_arr();
+        for (int i = 0; i < signal_arr.size(); ++i) {
+            if (signal_arr[i]) {
+                MotionSignal signal{static_cast<MotionSignalType>(i),
+                                    info_cache_};
+                auto ret = motion_signal_queue_->push(signal);
+                s_logger->trace("push signal: {}, success? {}", i, ret);
+            }
+        }
+    }
+    signal_buffer_->reset_all(); //! clear
 }
 
 const char *MotionThreadController::GetThreadStateStr(ThreadState s) {

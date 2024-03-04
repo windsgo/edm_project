@@ -18,7 +18,7 @@
                     "filename": "motion.log",
                     "multi_thread": false,
                     "max_size": 10485760,
-                    "max_files": 5,
+                    "max_files": 10,
                     "rotate_on_open": true
                 },
                 {

@@ -64,7 +64,7 @@ public:
 
         // dont use reference function type
         // incase the compiler optimize sth ...
-        unit_vec = ScaleAxis(unit_vec, CalcAxisLength(unit_vec));
+        unit_vec = ScaleAxis(unit_vec, (double)1 / CalcAxisLength(unit_vec));
     }
 
     static inline axis_t CalcAxisUnitVector(const axis_t &begin_axis,

@@ -8,6 +8,8 @@
 #include "Motion/PointMoveHandler/PointMoveHandler.h"
 #include "Motion/SignalBuffer/SignalBuffer.h"
 
+#include "Utils/DataQueueRecorder/DataQueueRecorder.h"
+
 namespace edm {
 
 namespace move {
@@ -89,6 +91,13 @@ private: // signal dispatcher
     // TODO, 用于接收当前周期需要输出的信号,
     // 在外层周期结束时统一和info状态一同发出
     SignalBuffer::ptr signal_buffer_;
+
+    // struct data {
+    //     double diff;
+    //     double last;
+    //     double now;
+    // };
+    // edm::util::DataQueueRecorder<data> r_;
 
 public:
     static const char *GetMainModeStr(MotionMainMode mode);

@@ -81,6 +81,10 @@ private: // Thread
     // 用于生成获取实际坐标的回调, 以及info cache获取实际坐标
     bool _get_act_pos(axis_t &axis);
 
+    void _copy_info_cache();
+
+    void _handle_signal();
+
 private: // Command
 
 public: // State
