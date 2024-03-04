@@ -72,8 +72,8 @@ static void cmd_ecat_connect() {
     auto ecat_connect_cmd =
         std::make_shared<edm::move::MotionCommandSettingTriggerEcatConnect>();
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
-        [&](edm::move::MotionCommandSettingTriggerEcatConnect::ptr) {
-            motion_cmd_queue->push_command(ecat_connect_cmd);
+        [&](edm::move::MotionCommandSettingTriggerEcatConnect::ptr a) {
+            motion_cmd_queue->push_command(a);
         },
         ecat_connect_cmd);
 
@@ -82,9 +82,9 @@ static void cmd_ecat_connect() {
 
 static void cmd_start_pointmove() {
 
-    while (!info_dispatcher->get_info().EcatAllEnabled()) {
-        std::this_thread::sleep_for(1s);
-    }
+    // while (!info_dispatcher->get_info().EcatAllEnabled()) {
+    //     std::this_thread::sleep_for(1s);
+    // }
 
     auto start_pos = info_dispatcher->get_info().curr_cmd_axis_blu;
     auto target_pos = start_pos;
@@ -96,8 +96,8 @@ static void cmd_start_pointmove() {
     speed.nacc = 60;
     speed.entry_v = 0;
     speed.exit_v = 0;
-    speed.cruise_v = 50000;
-    speed.acc0 = 500000;
+    speed.cruise_v = 1000;
+    speed.acc0 = 100000;
     speed.dec0 = -speed.acc0;
 
     auto start_pointmove_cmd =
@@ -105,8 +105,8 @@ static void cmd_start_pointmove() {
             start_pos, target_pos, speed);
 
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
-        [&](edm::move::MotionCommandManualStartPointMove::ptr) {
-            motion_cmd_queue->push_command(start_pointmove_cmd);
+        [&](edm::move::MotionCommandManualStartPointMove::ptr a) {
+            motion_cmd_queue->push_command(a);
         },
         start_pointmove_cmd);
 
@@ -131,7 +131,7 @@ static void test_init() {
         s_logger->debug("cmd_ecat_connect");
         cmd_ecat_connect();
 
-        std::this_thread::sleep_for(2s);
+        // std::this_thread::sleep_for(2s);
         s_logger->debug("cmd_start_pointmove");
         cmd_start_pointmove();
     });

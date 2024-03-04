@@ -398,15 +398,12 @@ bool MotionThreadController::_set_cpu_dma_latency() {
 
 void MotionThreadController::_fetch_command_and_handle() {
     // TODO
-
     auto cmd_opt = motion_cmd_queue_->try_get_command();
     if (!cmd_opt) {
         return;
     }
 
     auto cmd = *cmd_opt;
-
-    fprintf(stderr, "cmd! %d\n", (int)cmd->type());
 
     // TODO handle cmd
     switch (cmd->type()) {
