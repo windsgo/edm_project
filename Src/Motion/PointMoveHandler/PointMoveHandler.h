@@ -48,8 +48,12 @@ public:
     inline bool is_started() const { return mrt_wrapper_.is_started(); }
     inline bool is_normal_running() const { return mrt_wrapper_.is_normal_running(); }
     inline bool is_paused() const { return mrt_wrapper_.is_paused(); }
+    inline bool is_pausing() const { return mrt_wrapper_.is_pausing(); }
     inline bool is_stopped() const { return mrt_wrapper_.is_stopped(); }
     inline bool is_over() const { return mrt_wrapper_.is_over(); }
+    inline bool is_stopping() const { return mrt_wrapper_.is_stopping(); }
+
+    const auto& get_speed_param() const { return mrt_wrapper_.get_speed_param(); }
  
 private:
     MoveruntimeWrapper mrt_wrapper_;

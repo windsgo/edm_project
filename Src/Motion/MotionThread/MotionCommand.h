@@ -130,16 +130,21 @@ class MotionCommandManualStartPointMove final
 public:
     MotionCommandManualStartPointMove(
         const axis_t &start, const axis_t &end,
-        const MoveRuntimePlanSpeedInput &speed_param)
+        const MoveRuntimePlanSpeedInput &speed_param,
+        bool touch_detect_enable = true)
         : MotionCommandLinearMoveBase(MotionCommandManual_StartPointMove, start,
                                       end),
-          speed_param_(speed_param) {}
+          speed_param_(speed_param), touch_detect_enable_(touch_detect_enable) {
+    }
     ~MotionCommandManualStartPointMove() noexcept override = default;
 
-    const auto &speed_param() const { return speed_param_; };
+    inline const auto &speed_param() const { return speed_param_; };
+
+    inline bool touch_detect_enable() const { return touch_detect_enable_; }
 
 private:
     MoveRuntimePlanSpeedInput speed_param_;
+    bool touch_detect_enable_;
 };
 
 // 停止手动直线点动
@@ -170,16 +175,21 @@ class MotionCommandAutoStartG00FastMove final
 public:
     MotionCommandAutoStartG00FastMove(
         const axis_t &start, const axis_t &end,
-        const MoveRuntimePlanSpeedInput &speed_param)
+        const MoveRuntimePlanSpeedInput &speed_param,
+        bool touch_detect_enable = true)
         : MotionCommandLinearMoveBase(MotionCommandAuto_StartG00FastMove, start,
                                       end),
-          speed_param_(speed_param) {}
+          speed_param_(speed_param), touch_detect_enable_(touch_detect_enable) {
+    }
     ~MotionCommandAutoStartG00FastMove() noexcept override = default;
 
-    const auto &speed_param() const { return speed_param_; };
+    inline const auto &speed_param() const { return speed_param_; };
+
+    inline bool touch_detect_enable() const { return touch_detect_enable_; }
 
 private:
     MoveRuntimePlanSpeedInput speed_param_;
+    bool touch_detect_enable_;
 };
 
 // class MotionCommandStartLinearServoMove final

@@ -35,7 +35,7 @@ enum class MotionAutoState {
     Paused,
     Resuming,
     Stopping,
-    Stopped
+    Stopped,
 };
 
 enum MotionInfoBitState1 {

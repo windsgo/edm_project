@@ -42,13 +42,17 @@ public:
     inline auto state() const { return state_; }
     inline bool is_started() const { return state_ != State::NotStarted; }
     inline bool is_normal_running() const { return state_ == State::Running; }
+    inline bool is_pausing() const { return state_ == State::Pausing; }
     inline bool is_paused() const { return state_ == State::Paused; }
+    inline bool is_stopping() const { return state_ == State::Stopping; }
 
     // 如果规划错误/启动错误, 也认为处于stopped状态
     inline bool is_stopped() const {
         return state_ == State::Stopped || state_ == State::NotStarted;
     }
     inline bool is_over() const { return is_stopped(); }
+
+    const auto& get_speed_param() const { return record_speed_param_; }
 
 private:
     Moveruntime mrt_; // 用于每段的加减速规划

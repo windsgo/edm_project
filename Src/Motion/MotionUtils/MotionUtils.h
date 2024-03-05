@@ -87,6 +87,10 @@ public:
         MotionUtils::ScaleAxis(axis, scale, ret);
         return ret;
     }
+
+    static inline bool IsAxisTheSame(const axis_t& axis1, const axis_t& axis2) {
+        return axis1 == axis2;
+    }
 };
 
 } // namespace move

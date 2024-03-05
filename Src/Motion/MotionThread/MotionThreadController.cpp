@@ -30,8 +30,10 @@ MotionThreadController::MotionThreadController(
     auto touch_detect_cb = [this]() -> bool {
         return false; // TODO
     };
+    touch_detect_handler_ =
+        std::make_shared<TouchDetectHandler>(touch_detect_cb);
     motion_state_machine_ = std::make_shared<MotionStateMachine>(
-        get_act_pos_cb, touch_detect_cb, signal_buffer_);
+        get_act_pos_cb, touch_detect_handler_, signal_buffer_);
     if (!motion_state_machine_) {
         s_logger->critical("MotionStateMachine create failed");
         throw exception("MotionStateMachine create failed");
@@ -235,7 +237,7 @@ void *MotionThreadController::_run() {
 
         _copy_info_cache();
 
-        // handle signal
+        // handle signal and clear signal buffer
         _handle_signal();
     }
 
@@ -317,8 +319,6 @@ void MotionThreadController::_threadstate_running() {
         break;
     }
     case EcatState::EcatReady: {
-
-        signal_buffer_->reset_all();
 
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {
@@ -421,6 +421,12 @@ void MotionThreadController::_fetch_command_and_handle() {
         auto ret = motion_state_machine_->start_manual_pointmove(
             spm_cmd->speed_param(), spm_cmd->end_pos());
 
+        // 接触感知开启设定 //! 注意在点动结束后关闭接触感知
+        if (ret) {
+            touch_detect_handler_->set_detect_enable(
+                spm_cmd->touch_detect_enable());
+        }
+
         if (ret) {
             cmd->accept();
         } else {
@@ -496,9 +502,10 @@ void MotionThreadController::_copy_info_cache() {
 
     info_cache_.setEcatConnected(ecat_manager_->is_ecat_connected());
     info_cache_.setEcatAllEnabled(ecat_state_ == EcatState::EcatReady);
-    info_cache_.setTouchDetectEnabled(false); // TODO
-    info_cache_.setTouchDetected(false);      // TODO
-    info_cache_.setTouchWarning(false);       // TODO
+    info_cache_.setTouchDetectEnabled(
+        touch_detect_handler_->is_detect_enable());
+    info_cache_.setTouchDetected(touch_detect_handler_->physical_detected());
+    info_cache_.setTouchWarning(touch_detect_handler_->has_warning());
 }
 
 void MotionThreadController::_handle_signal() {

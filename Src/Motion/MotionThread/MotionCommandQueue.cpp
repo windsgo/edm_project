@@ -54,9 +54,10 @@ void MotionCommandQueue::push_command(MotionCommandBase::ptr command) {
 void MotionCommandQueue::clear() {
     std::lock_guard guard(queue_mutex_);
 
-    while (!command_queue_.empty()) {
-        command_queue_.pop();
-    }
+    decltype(command_queue_)().swap(command_queue_);
+    // while (!command_queue_.empty()) {
+    //     command_queue_.pop();
+    // }
 }
 
 std::size_t MotionCommandQueue::size() const {

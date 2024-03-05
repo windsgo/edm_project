@@ -70,7 +70,12 @@ set(PROJECT_SOURCES
     Src/Motion/MotionThread/MotionThreadController.cpp
     Src/Motion/MotionSignalQueue/MotionSignalQueue.cpp
     Src/Motion/MotionStateMachine/MotionStateMachine.cpp
+    Src/Motion/MotionStateMachine/MotionAutoTask.cpp
+    Src/Motion/MotionStateMachine/MotionAutoTaskRunner.cpp
+    Src/Motion/PauseMoveController/AxisRecorder.cpp
+    Src/Motion/PauseMoveController/PauseMoveController.cpp
     Src/Motion/SignalBuffer/SignalBuffer.cpp
+    Src/Motion/TouchDetectHandler/TouchDetectHandler.cpp
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
     Src/QtDependComponents/TaskManager/TaskManager.cpp 
     Src/QtDependComponents/TaskManager/GCodeManager.cpp

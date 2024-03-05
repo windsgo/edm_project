@@ -13,9 +13,10 @@ namespace edm {
 namespace move {
 MotionStateMachine::MotionStateMachine(
     const std::function<bool(axis_t &)> &cb_get_act_axis,
-    const std::function<bool(void)> &cb_touch_detected,
+    TouchDetectHandler::ptr touch_detect_handler,
     SignalBuffer::ptr signal_buffer)
-    : cb_get_act_axis_(cb_get_act_axis), cb_touch_detected_(cb_touch_detected),
+    : cb_get_act_axis_(cb_get_act_axis),
+      touch_detect_handler_(touch_detect_handler),
       signal_buffer_(signal_buffer) {
     reset();
 
@@ -24,13 +25,16 @@ MotionStateMachine::MotionStateMachine(
         throw exception("no cb_get_act_axis_");
     }
 
-    if (!cb_touch_detected_) {
-        throw exception("no cb_touch_detected_");
+    if (!touch_detect_handler_) {
+        throw exception("no touch_detect_handler_");
     }
 
     if (!signal_buffer_) {
         throw exception("no signal_buffer_");
     }
+
+    auto_task_runner_ =
+        std::make_shared<AutoTaskRunner>(touch_detect_handler_, signal_buffer_);
 
     // 初始化计算坐标
     // 先清0 (离线调试模式时实际坐标会直接返回当前值)
@@ -70,9 +74,11 @@ void MotionStateMachine::reset() {
     auto_state_ = MotionAutoState::Stopped;
 
     pm_handler_.clear();
+
+    touch_detect_handler_->reset();
 }
 
-void MotionStateMachine::set_cmd_axis(const axis_t& init_cmd_axis) {
+void MotionStateMachine::set_cmd_axis(const axis_t &init_cmd_axis) {
     s_logger->info("MotionStateMachine::set_cmd_axis.");
     cmd_axis_ = init_cmd_axis;
 }
@@ -134,8 +140,65 @@ bool MotionStateMachine::stop_manual_pointmove(bool immediate) {
     }
 }
 
+bool MotionStateMachine::start_auto_g00(
+    const MoveRuntimePlanSpeedInput &speed_param, const axis_t &target_pos,
+    bool enable_touch_detect) {
+    s_logger->trace("{}", __FUNCTION__);
+
+    if (main_mode_ != MotionMainMode::Idle) {
+        return false;
+    }
+
+    auto new_g00_auto_task = std::make_shared<G00AutoTask>(
+        cmd_axis_, target_pos, speed_param, enable_touch_detect,
+        touch_detect_handler_);
+
+    if (new_g00_auto_task->is_over()) {
+        return false;
+    }
+
+    auto ret = auto_task_runner_->restart_task(new_g00_auto_task);
+    if (!ret) {
+        return false;
+    }
+
+    _mainmode_switch_to(MotionMainMode::Auto);
+    return true;
+}
+
+bool MotionStateMachine::pause_auto() {
+    s_logger->trace("{}", __FUNCTION__);
+
+    if (main_mode_ != MotionMainMode::Auto) {
+        return false;
+    }
+
+    return auto_task_runner_->pause();
+}
+
+bool MotionStateMachine::resume_auto() {
+    s_logger->trace("{}", __FUNCTION__);
+
+    if (main_mode_ != MotionMainMode::Auto) {
+        return false;
+    }
+
+    return auto_task_runner_->resume();
+}
+
+bool MotionStateMachine::stop_auto(bool immediate) {
+    s_logger->trace("{}", __FUNCTION__);
+
+    if (main_mode_ != MotionMainMode::Auto) {
+        return false;
+    }
+
+    return auto_task_runner_->stop(immediate);
+}
+
 void MotionStateMachine::_mainmode_idle() {
     // TODO
+    touch_detect_handler_->set_detect_enable(false);
 }
 
 void MotionStateMachine::_mainmode_manual() {
@@ -147,15 +210,14 @@ void MotionStateMachine::_mainmode_manual() {
         return;
     }
 
-    // TODO touch detect
-    // if (cb_touch_detected_) {
-    //     if (cb_touch_detected_()) {
-    //         pm_handler_.stop(true); // stop immediately
-    //         // TODO touch detect signal / warn
-    //         _mainmode_switch_to(MotionMainMode::Idle);
-    //         return;
-    //     }
-    // }
+    // touch detect
+    if (touch_detect_handler_->run_detect_once()) {
+        pm_handler_.stop(true);
+        signal_buffer_->set_signal(MotionSignal_ManualPointMoveStopped);
+        // 接触感知报警需要上层控制处理
+        _mainmode_switch_to(MotionMainMode::Idle);
+        return; // return 掉, 防止继续run 或产生赋值
+    }
 
     pm_handler_.run_once();
 

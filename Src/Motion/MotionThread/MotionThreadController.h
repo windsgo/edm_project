@@ -7,6 +7,8 @@
 #include "Motion/MotionStateMachine/MotionStateMachine.h"
 #include "MotionCommandQueue.h"
 
+#include "Motion/TouchDetectHandler/TouchDetectHandler.h"
+
 // C Headers
 #include <fcntl.h>
 #include <limits.h>
@@ -146,6 +148,8 @@ private: // Data
 
 private: // 运动状态机
     MotionStateMachine::ptr motion_state_machine_;
+
+    TouchDetectHandler::ptr touch_detect_handler_;
 };
 
 } // namespace move
