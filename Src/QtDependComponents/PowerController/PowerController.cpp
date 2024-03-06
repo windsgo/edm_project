@@ -10,8 +10,8 @@ namespace edm {
 
 namespace power {
 
-static auto s_can_ctrler = can::CanController::instance();
-static auto s_io_ctrler = io::IOController::instance();
+// static auto s_can_ctrler = can::CanController::instance();
+// static auto s_io_ctrler = io::IOController::instance();
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -19,6 +19,15 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 #define ELEBUFFER                    curr_elesettings_buffer_.canframe_buffer_
 #define OR_EQUAL(__ori, __or_value)  (__ori) = (__ori) | (__or_value)
 #define AND_EQUAL(__ori, __or_value) (__ori) = (__ori) & (__or_value)
+
+PowerController::PowerController(can::CanController::ptr can_ctrler,
+                                 io::IOController::ptr io_ctrler,
+                                 int can_device_index)
+    : can_ctrler_(can_ctrler), io_ctrler_{io_ctrler},
+      can_device_index_(can_device_index) {
+    memset(&servo_setting_, 0, sizeof(servo_setting_));
+    memset(&ioboard_eleparam_, 0, sizeof(ioboard_eleparam_));
+}
 
 void PowerController::set_highpower_on(bool on) { highpower_on_flag_ = on; }
 
@@ -33,12 +42,12 @@ void PowerController::set_power_on(bool on) {
     static const uint32_t sof_io_2 = 1 << (EleContactorOut_SOF - 33);
 
     if (on) {
-        s_io_ctrler->set_can_machineio_1_withmask(pwon_io_1, pwon_io_1);
-        s_io_ctrler->set_can_machineio_2_withmask(sof_io_2, sof_io_2);
+        io_ctrler_->set_can_machineio_1_withmask(pwon_io_1, pwon_io_1);
+        io_ctrler_->set_can_machineio_2_withmask(sof_io_2, sof_io_2);
     } else {
         // 通过设置mask并设置io0来关闭对应io
-        s_io_ctrler->set_can_machineio_1_withmask(0x00, pwon_io_1);
-        s_io_ctrler->set_can_machineio_2_withmask(0x00, sof_io_2);
+        io_ctrler_->set_can_machineio_1_withmask(0x00, pwon_io_1);
+        io_ctrler_->set_can_machineio_2_withmask(0x00, sof_io_2);
     }
 }
 
@@ -49,7 +58,7 @@ bool PowerController::is_power_on() const {
     // s_logger->debug("pwon_io_1: {:08X}", pwon_io_1);
     // s_logger->debug("s_io_ctrler->get_can_machineio_1_safe() : {:08X}",
     //                 s_io_ctrler->get_can_machineio_1_safe());
-    return !!(s_io_ctrler->get_can_machineio_1_safe() & pwon_io_1);
+    return !!(io_ctrler_->get_can_machineio_1_safe() & pwon_io_1);
 }
 
 void PowerController::set_finishing_cut_flag(bool on) {
@@ -60,30 +69,25 @@ bool PowerController::is_finishing_cut_flag_on() const {
     return finishing_cut_flag_;
 }
 
-PowerController::PowerController() {
-    memset(&servo_setting_, 0, sizeof(servo_setting_));
-    memset(&ioboard_eleparam_, 0, sizeof(ioboard_eleparam_));
-}
-
 void PowerController::_trigger_send_canbuffer() {
     QCanBusFrame frame1{POWERCAN_TXID, curr_result_->can_buffer()[0]};
-    s_can_ctrler->send_frame(can_device_index_, frame1);
+    can_ctrler_->send_frame(can_device_index_, frame1);
 
     QCanBusFrame frame2{POWERCAN_TXID, curr_result_->can_buffer()[1]};
-    s_can_ctrler->send_frame(can_device_index_, frame2);
+    can_ctrler_->send_frame(can_device_index_, frame2);
 }
 
 void PowerController::_trigger_send_io_value() {
     if (!curr_result_)
         return;
 
-    s_io_ctrler->set_can_machineio_1_withmask(
+    io_ctrler_->set_can_machineio_1_withmask(
         curr_result_->io_1(), EleparamDecodeResult::get_io_1_mask());
-    s_io_ctrler->set_can_machineio_2_withmask(
+    io_ctrler_->set_can_machineio_2_withmask(
         curr_result_->io_2(), EleparamDecodeResult::get_io_2_mask());
-    
+
     // 让IO控制器强制发送一次IO
-    s_io_ctrler->trigger_send_current_io();
+    io_ctrler_->trigger_send_current_io();
 }
 
 void PowerController::_trigger_send_ioboard_eleparam() {
@@ -103,7 +107,7 @@ void PowerController::_trigger_send_ioboard_eleparam() {
     QCanBusFrame frame(IOBOARD_ELEPARAMS_TXID, ba);
 
     // 发送
-    s_can_ctrler->send_frame(can_device_index_, frame);
+    can_ctrler_->send_frame(can_device_index_, frame);
 }
 
 void PowerController::_handle_servo_settings() {
@@ -140,7 +144,7 @@ void PowerController::_handle_servo_settings() {
         QCanBusFrame frame{EDM_CAN_TXID_IOBOARD_SERVOSETTING, ba};
 
         // 发送 frame
-        s_can_ctrler->send_frame(can_device_index_, frame);
+        can_ctrler_->send_frame(can_device_index_, frame);
     }
 }
 
@@ -150,10 +154,10 @@ bool PowerController::_is_bz_enable() {
     return is_power_on() && (!is_highpower_on());
 }
 
-PowerController *PowerController::instance() {
-    static PowerController instance;
-    return &instance;
-}
+// PowerController *PowerController::instance() {
+//     static PowerController instance;
+//     return &instance;
+// }
 
 std::array<std::string, 3>
 PowerController::eleparam_to_string(EleParam_dkd_t::ptr e) {
@@ -177,10 +181,10 @@ PowerController::eleparam_to_string(EleParam_dkd_t::ptr e) {
     };
 }
 
-void PowerController::init(int can_device_index) {
-    inited_ = true;
-    can_device_index_ = can_device_index;
-}
+// void PowerController::init(int can_device_index) {
+//     inited_ = true;
+//     can_device_index_ = can_device_index;
+// }
 
 void PowerController::update_eleparam_and_send(
     EleParam_dkd_t::ptr new_eleparam) {

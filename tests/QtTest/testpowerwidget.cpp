@@ -4,15 +4,13 @@
 #include <QFile>
 #include <QStyle>
 
-static auto s_can_ctrler = can::CanController::instance();
-static auto s_io_ctrler = io::IOController::instance();
-static auto s_power_ctrler = power::PowerController::instance();
-
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 TestPowerWidget::TestPowerWidget(QWidget *parent)
     : QWidget(parent), ui(new Ui::TestPowerWidget) {
     ui->setupUi(this);
+
+    _init_system();
 
     _init_io_buttons();
     _init_common_buttons();
@@ -39,6 +37,24 @@ TestPowerWidget::TestPowerWidget(QWidget *parent)
 }
 
 TestPowerWidget::~TestPowerWidget() { delete ui; }
+
+void TestPowerWidget::_init_system() {
+    s_can_ctrler = std::make_shared<can::CanController>();
+
+    int can0 = s_can_ctrler->add_device("can0", 500000);
+    int can1 = s_can_ctrler->add_device("can1", 500000);
+
+    while (!s_can_ctrler->is_connected("can0") ||
+           s_can_ctrler->is_connected("can1"))
+        ;
+
+    // while (!s_can_ctrler->is_connected(can0))
+    //     ;
+
+    s_io_ctrler = std::make_shared<io::IOController>(s_can_ctrler, can0);
+    s_power_ctrler = std::make_shared<power::PowerController>(
+        s_can_ctrler, s_io_ctrler, can0);
+}
 
 void TestPowerWidget::_add_io_button(const QString &io_name, uint32_t out_num,
                                      int row, int col) {
@@ -223,31 +239,6 @@ void TestPowerWidget::_init_common_buttons() {
                      });
 }
 
-static void init_system() {
-    s_can_ctrler->init();
-
-    int can0 = s_can_ctrler->add_device("can0", 500000);
-    // int can1 = s_can_ctrler->add_device("can1", 115200);
-
-    // while (!s_can_ctrler->is_connected("can0") ||
-    //        s_can_ctrler->is_connected("can1"))
-    //     ;
-
-    while (!s_can_ctrler->is_connected(can0))
-        ;
-
-    s_io_ctrler->init(can0);
-    s_power_ctrler->init(can0);
-
-    // s_can_ctrler->add_frame_received_listener(can1,
-    //                                           [&](const QCanBusFrame &frame)
-    //                                           {
-    //                                               // s_logger->debug("{}",
-    //                                               //
-    //                                               frame.toString().toStdString());
-    //                                           });
-}
-
 int main(int argc, char **argv) {
     s_logger->info("");
     s_logger->info("***********************************");
@@ -268,14 +259,10 @@ int main(int argc, char **argv) {
     }
     stylefile.close();
 
-    init_system();
-
     TestPowerWidget w;
     w.show();
 
     int ret = app.exec();
-
-    s_can_ctrler->terminate();
 
     return ret;
 }

@@ -29,15 +29,13 @@ struct eventtype_register__ {
 };
 static struct eventtype_register__ et_register;
 
-CanController::CanController() {}
+CanController::CanController() : QObject(nullptr) { _init(); }
 
-void CanController::init() {
-    if (!worker_thread_) {
-        worker_thread_ = new QThread(this);
+void CanController::_init() {
+    worker_thread_ = new QThread(this);
 
-        if (!worker_thread_->isRunning()) {
-            worker_thread_->start();
-        }
+    if (!worker_thread_->isRunning()) {
+        worker_thread_->start();
     }
 }
 
@@ -276,8 +274,8 @@ void CanWorker::_start_work() {
     // error call back
     QObject::connect(device_, &QCanBusDevice::errorOccurred, this,
                      [this](QCanBusDevice::CanBusError err) {
-                         s_logger->error("canbusdevice error: {}",
-                                         device_->errorString().toStdString());
+                         s_logger->error("canbusdevice error: {}, {}",
+                                         device_->errorString().toStdString(), can_if_name_std_);
 
                          connected_ = false;
                          //  reconnect_timer_->start(reconnect_timeout_);
@@ -305,7 +303,8 @@ void CanWorker::_process_sendframe_event(QEvent *event) {
         return;
     }
 
-    device_->writeFrame(e->get_frame());
+    bool ret = device_->writeFrame(e->get_frame());
+    // s_logger->debug("{}, {}, {}", ret, device_->framesAvailable(), device_->framesToWrite());
     // if (device_->state() == QCanBusDevice::ConnectedState) {
     //     if (!device_->waitForFramesWritten(1000)) {
     //         s_logger->warn("frames not fully written: {}",

@@ -15,14 +15,14 @@ add_executable(test_can test_can.cpp)
 add_dependencies(test_can edm)
 target_link_libraries(test_can edm Qt5::Core Qt5::SerialBus)
 
-add_executable(test_io test_io.cpp)
-add_dependencies(test_io edm)
-target_link_libraries(test_io edm Qt5::Core Qt5::SerialBus)
+# add_executable(test_io test_io.cpp)
+# add_dependencies(test_io edm)
+# target_link_libraries(test_io edm Qt5::Core Qt5::SerialBus)
 
 
-add_executable(test_power test_power.cpp)
-add_dependencies(test_power edm)
-target_link_libraries(test_power edm Qt5::Core Qt5::SerialBus)
+# add_executable(test_power test_power.cpp)
+# add_dependencies(test_power edm)
+# target_link_libraries(test_power edm Qt5::Core Qt5::SerialBus)
 
 add_executable(testpowerwidget testpowerwidget.cpp)
 add_dependencies(testpowerwidget edm)

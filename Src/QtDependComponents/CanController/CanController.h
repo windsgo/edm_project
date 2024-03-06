@@ -130,15 +130,18 @@ private:
 // support multi devices in one thread
 class CanController : public QObject {
     Q_OBJECT
-public:
-    static CanController *instance() {
-        static CanController instance;
-        return &instance;
-    }
+// public:
+//     static CanController *instance() {
+//         static CanController instance;
+//         return &instance;
+//     }
 
 public:
-    // 初始化Controller, 外部在启动QApplication后init以启动QThread
-    void init();
+    // 尽量使用智能指针管理自己的控制类, 不要依赖qt的父子机制
+    using ptr = std::shared_ptr<CanController>;
+
+    CanController();
+    ~CanController(); // TODO, may stop thread
 
     // add a device using its interface name,
     // if success, return the device index of the device
@@ -161,9 +164,10 @@ public:
     // ! This is only used for set device down, for test.
     void terminate();
 
-    CanController();
-    ~CanController(); // TODO, may stop thread
-
+private:
+    // 初始化Controller, 启动QThread
+    void _init();
+    
 private:
     CanWorker *_get_device(int index) const;
     CanWorker *_get_device(const QString &name) const;

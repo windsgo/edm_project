@@ -11,6 +11,8 @@
 
 EDM_STATIC_LOGGER(s_root_logger, EDM_LOGGER_ROOT());
 
+static edm::can::CanController::ptr can_ctrler;
+
 using namespace std::chrono_literals;
 
 static bool stop_flag = false;
@@ -21,7 +23,7 @@ static void thread_func() {
         std::this_thread::sleep_for(2000us);
 
         static int aa = 0;
-        if (!edm::can::CanController::instance()->is_connected("can0")) {
+        if (!can_ctrler->is_connected("can0")) {
             ++aa;
             continue;;
         }
@@ -29,15 +31,15 @@ static void thread_func() {
         QByteArray array{8, 0x16};
         array.resize(8);
         QCanBusFrame frame0(0x147, array);
-        edm::can::CanController::instance()->send_frame("can0", frame0);
-        edm::can::CanController::instance()->send_frame("can0", frame0);
+        can_ctrler->send_frame("can0", frame0);
+        can_ctrler->send_frame("can0", frame0);
 
         static int x = 0, j = 0;
         ++x;
         if (x >= 500) {
             x = 0;
             ++j;
-            qDebug() << "sent" << j << edm::can::CanController::instance()->is_connected("can0") << aa;
+            qDebug() << "sent" << j << can_ctrler->is_connected("can0") << aa;
         }
     }
 }
@@ -52,18 +54,17 @@ int main(int argc, char **argv) {
 
     qDebug().noquote() << "main thread: " << QThread::currentThreadId();
 
+    can_ctrler = std::make_shared<edm::can::CanController>();
 
-    edm::can::CanController::instance()->init();
+    can_ctrler->add_device("can0", 500000);
+    can_ctrler->add_device("can1", 500000);
 
-    edm::can::CanController::instance()->add_device("can0", 500000);
-    edm::can::CanController::instance()->add_device("can1", 500000);
-
-    while (!edm::can::CanController::instance()->is_connected("can0"))
+    while (!can_ctrler->is_connected("can0"))
         ;
-    while (!edm::can::CanController::instance()->is_connected("can1"))
+    while (!can_ctrler->is_connected("can1"))
         ;
 
-    edm::can::CanController::instance()->add_frame_received_listener(
+    can_ctrler->add_frame_received_listener(
         "can1", [](const QCanBusFrame &frame) {
             // qDebug().noquote() << "thread: " << QThread::currentThreadId() << frame.toString();
             static int i = 0;
@@ -84,39 +85,30 @@ int main(int argc, char **argv) {
 
     QTimer t;
     QObject::connect(&t, &QTimer::timeout, [&]() {
-        // static int i = 0;
-        // ++i;
-        // if (i == 10000) {
-        //     // edm::can::CanController::instance()->terminate();
-        //     t.stop();
-        //     // stop_flag = true;
-        //     // thread.join();
-
-        //     // QCoreApplication::exit(0);
-        //     return;
-        // }
-
-        // static int x = 0, j = 0;
-        // ++x;
-        // if (x >= 500) {
-        //     x = 0;
-        //     ++j;
-        //     qDebug() << "sent" << j;
-        // }
 
         QByteArray array{8, 0x16};
         array.resize(8);
         QCanBusFrame frame0(0x147, array);
-        edm::can::CanController::instance()->send_frame("can0", frame0);
-        edm::can::CanController::instance()->send_frame("can0", frame0);
-
-        // array.fill(0xEF);
-        // QCanBusFrame frame1(0x258, array);
-        // edm::can::CanController::instance()->send_frame("can1", frame1);
-
+        can_ctrler->send_frame("can0", frame0);
+        can_ctrler->send_frame("can0", frame0);
+        
     });
 
     t.start(2);
+
+    QTimer t2;
+    QObject::connect(&t2, &QTimer::timeout, [&]() {
+
+        QByteArray array{8, 0x23};
+        array.resize(8);
+        QCanBusFrame frame0(0x148, array);
+        can_ctrler->send_frame("can1", frame0);
+        can_ctrler->send_frame("can1", frame0);
+        
+    });
+
+    t2.start(200);
+
     int ret = app.exec();
 
     return ret;

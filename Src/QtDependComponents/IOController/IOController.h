@@ -1,24 +1,25 @@
 #pragma once
 
+#include "QtDependComponents/CanController/CanController.h"
 #include <cstdint>
+#include <memory>
 #include <mutex>
 
 #include <QByteArray>
 
 #include "config.h"
 
-namespace edm
-{
+namespace edm {
 
-namespace io
-{
-    
+namespace io {
+
 class IOController final {
 public:
-    static IOController* instance();
+    using ptr = std::shared_ptr<IOController>;
+    // static IOController* instance();
 
-    // init device
-    void init(int can_device_index);
+    IOController(can::CanController::ptr can_ctrler, int can_device_index);
+    ~IOController() noexcept = default;
 
     // io settings
     // if one of the io is changed
@@ -51,10 +52,6 @@ private:
     bool _set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2);
 
 private:
-
-    IOController();
-    ~IOController() noexcept = default;
-
 private:
     // 触发发送, private方法, 无锁设计
     // 设计为输入要发送的io
@@ -62,13 +59,13 @@ private:
     void _trigger_send_io_1(uint32_t io_1);
     void _trigger_send_io_2(uint32_t io_2);
 
-    void _calc_endcheck(QByteArray& bytearray);
+    void _calc_endcheck(QByteArray &bytearray);
 
 private:
-    uint32_t can_machineio_1_ {0x0};
-    uint32_t can_machineio_2_ {0x0};
+    can::CanController::ptr can_ctrler_;
 
-    bool inited_ = false; // if not inited, no io can frame will be sent
+    uint32_t can_machineio_1_{0x0};
+    uint32_t can_machineio_2_{0x0};
 
     int can_device_index_ = -1; // used to send can frames by can::CanController
 
@@ -83,6 +80,7 @@ private:
 
     static const uint8_t canio1_raw_bytes_[8];
     static const uint8_t canio2_raw_bytes_[8];
+
 };
 
 } // namespace io

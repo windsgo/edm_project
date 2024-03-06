@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <mutex>
 
 #include <QByteArray>
@@ -10,18 +11,27 @@
 
 #include "config.h"
 
+#include "QtDependComponents/CanController/CanController.h"
+#include "QtDependComponents/IOController/IOController.h"
+
 namespace edm {
 
 namespace power {
 
 class PowerController final {
 public:
-    static PowerController *instance();
+    // static PowerController *instance();
 
-    static std::array<std::string, 3> eleparam_to_string(EleParam_dkd_t::ptr ele_param);
+    static std::array<std::string, 3>
+    eleparam_to_string(EleParam_dkd_t::ptr ele_param);
 
 public:
-    void init(int can_device_index);
+    using ptr = std::shared_ptr<PowerController>;
+    PowerController(can::CanController::ptr can_ctrler,
+                    io::IOController::ptr io_ctrler, int can_device_index);
+    ~PowerController() noexcept = default;
+
+    // void init(int can_device_index);
 
     // 更新电参数缓冲区, 设置标志位之后需要重新调用
     // 根据电参数结构体、高频等标志位，设定缓冲区报文、缓冲区io
@@ -56,12 +66,8 @@ public:
     bool is_finishing_cut_flag_on() const;
 
 private:
-    PowerController();
-    ~PowerController() noexcept = default;
-
-private:
     void _trigger_send_canbuffer(); // 内部函数, 无锁, 不会操作心跳值
-    void _trigger_send_io_value(); // 内部函数, 无锁
+    void _trigger_send_io_value();         // 内部函数, 无锁
     void _trigger_send_ioboard_eleparam(); // 内部函数, 无锁
 
 private:
@@ -70,8 +76,8 @@ private:
     bool _is_bz_enable();
 
 private:
-    //! 初始化相关
-    bool inited_ = false; // if not inited, no io can frame will be sent
+    can::CanController::ptr can_ctrler_;
+    io::IOController::ptr io_ctrler_;
 
     int can_device_index_ = -1; // used to send can frames by can::CanController
 
@@ -93,10 +99,10 @@ private:
 
     //! decode 缓存
     // 存储当前的电参数 参数结构体
-    EleParam_dkd_t::ptr curr_eleparam_ {nullptr};
+    EleParam_dkd_t::ptr curr_eleparam_{nullptr};
 
     // 存储当前的 decode 结果缓存
-    EleparamDecodeResult::ptr curr_result_ {nullptr};
+    EleparamDecodeResult::ptr curr_result_{nullptr};
 
     //! io板发送缓存
     // 存储上一次发送的 伺服参数 结构体
@@ -111,7 +117,8 @@ private:
     constexpr static const int IOBOARD_SERVOSETTINGS_TXID =
         EDM_CAN_TXID_IOBOARD_SERVOSETTING; // IO板: 伺服参数设定 CAN帧TxID
     constexpr static const int IOBOARD_ELEPARAMS_TXID =
-        EDM_CAN_TXID_IOBOARD_ELEPARAMS; // IO板: 心跳包, 部分电参数与精加工标志位
+        EDM_CAN_TXID_IOBOARD_ELEPARAMS; // IO板: 心跳包,
+                                        // 部分电参数与精加工标志位
 };
 
 } // namespace power

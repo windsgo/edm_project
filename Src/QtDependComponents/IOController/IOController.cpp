@@ -14,17 +14,25 @@ const uint8_t IOController::canio1_raw_bytes_[8] = {0xED, 0x00, 0xDE, 0x00,
 const uint8_t IOController::canio2_raw_bytes_[8] = {0xDE, 0x00, 0xED, 0x00,
                                                     0,    0,    0,    0};
 
-static auto s_can_ctrler = can::CanController::instance();
+// static auto s_can_ctrler = can::CanController::instance();
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
-IOController *IOController::instance() {
-    static IOController instance;
-    return &instance;
-}
+// IOController *IOController::instance() {
+//     static IOController instance;
+//     return &instance;
+// }
 
-void IOController::init(int can_device_index) {
-    inited_ = true;
-    can_device_index_ = can_device_index;
+IOController::IOController(can::CanController::ptr can_ctrler,
+                           int can_device_index)
+    : can_ctrler_(can_ctrler), can_device_index_(can_device_index) {
+    // init bytearray
+    // canio1_bytearray_[0] = 0xED;
+    // canio1_bytearray_[1] = 0x00;
+    // canio1_bytearray_[2] = 0xDE;
+
+    // canio2_bytearray_[0] = 0xDE;
+    // canio2_bytearray_[1] = 0x00;
+    // canio2_bytearray_[2] = 0xED;
 }
 
 void IOController::set_can_machineio_1(uint32_t can_io_1) {
@@ -101,9 +109,6 @@ void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
 }
 
 void IOController::trigger_send_current_io() {
-    if (!inited_)
-        return;
-
     uint32_t io1;
     uint32_t io2;
     {
@@ -148,17 +153,6 @@ bool IOController::_set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2) {
     return true;
 }
 
-IOController::IOController() {
-    // init bytearray
-    // canio1_bytearray_[0] = 0xED;
-    // canio1_bytearray_[1] = 0x00;
-    // canio1_bytearray_[2] = 0xDE;
-
-    // canio2_bytearray_[0] = 0xDE;
-    // canio2_bytearray_[1] = 0x00;
-    // canio2_bytearray_[2] = 0xED;
-}
-
 void IOController::_trigger_send_io_1(uint32_t io_1) {
     // construct bytearray
     QByteArray bytearray(reinterpret_cast<const char *>(canio1_raw_bytes_),
@@ -170,7 +164,7 @@ void IOController::_trigger_send_io_1(uint32_t io_1) {
     _calc_endcheck(bytearray);
 
     QCanBusFrame frame(CANIO1_TXID, bytearray);
-    s_can_ctrler->send_frame(can_device_index_, frame);
+    can_ctrler_->send_frame(can_device_index_, frame);
 }
 
 void IOController::_trigger_send_io_2(uint32_t io_2) {
@@ -184,7 +178,7 @@ void IOController::_trigger_send_io_2(uint32_t io_2) {
     _calc_endcheck(bytearray);
 
     QCanBusFrame frame(CANIO2_TXID, bytearray);
-    s_can_ctrler->send_frame(can_device_index_, frame);
+    can_ctrler_->send_frame(can_device_index_, frame);
 }
 
 void IOController::_calc_endcheck(QByteArray &bytearray) {

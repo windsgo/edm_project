@@ -403,20 +403,20 @@ static void fun_sig(int sig) {
 }
 
 #include "QtDependComponents/CanController/CanController.h"
-static auto s_can_ctrler = edm::can::CanController::instance();
+// static auto s_can_ctrler = edm::can::CanController::instance();
 
-class CanControllerHolder {
-public:
-    CanControllerHolder() { edm::can::CanController::instance()->init(); }
-    ~CanControllerHolder() { edm::can::CanController::instance()->terminate(); }
-};
+// class CanControllerHolder {
+// public:
+//     CanControllerHolder() { edm::can::CanController::instance()->init(); }
+//     ~CanControllerHolder() { edm::can::CanController::instance()->terminate(); }
+// };
 
 int main(int argc, char **argv) {
 
     QCoreApplication a(argc, argv);
 
-    CanControllerHolder holder;
-    s_can_ctrler->add_device("can0", 500000);
+    // CanControllerHolder holder;
+    // s_can_ctrler->add_device("can0", 500000);
 
     signal(SIGINT, fun_sig);
 
