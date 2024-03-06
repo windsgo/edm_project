@@ -192,6 +192,30 @@ private:
     bool touch_detect_enable_;
 };
 
+class MotionCommandAutoStop final : public MotionCommandBase {
+public:
+    MotionCommandAutoStop(bool immediate = false)
+        : MotionCommandBase(MotionCommandAuto_Stop), immediate_(immediate) {}
+    ~MotionCommandAutoStop() noexcept override = default;
+
+    inline bool immediate() const { return immediate_; }
+
+private:
+    bool immediate_;
+};
+
+class MotionCommandAutoPause final : public MotionCommandBase {
+public:
+    MotionCommandAutoPause() : MotionCommandBase(MotionCommandAuto_Pause) {}
+    ~MotionCommandAutoPause() noexcept override = default;
+};
+
+class MotionCommandAutoResume final : public MotionCommandBase {
+public:
+    MotionCommandAutoResume() : MotionCommandBase(MotionCommandAuto_Resume) {}
+    ~MotionCommandAutoResume() noexcept override = default;
+};
+
 // class MotionCommandStartLinearServoMove final
 //     : public MotionCommandSimpleMoveBase {
 // public:

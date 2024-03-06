@@ -12,3 +12,5 @@ __pycache__
 decode.txt
 output.bin
 !CMakeLists.txt
+
+*.txt.user

@@ -59,6 +59,7 @@ bool MoveruntimeWrapper::start(const MoveRuntimePlanSpeedInput &speed_param,
     // 规划成功
     // 拷贝输入速度参数, 输入的其他参数
     record_speed_param_ = speed_param;
+    temp_using_speed_param_ = record_speed_param_;
     curr_length_ = 0.0; // 清空当前长度
     target_length_ = target_length;
 
@@ -235,6 +236,13 @@ bool MoveruntimeWrapper::stop(bool immediate) {
         temp_using_speed_param_.exit_v = 0.0;
         bool replan_ret = mrt_.plan(temp_using_speed_param_, dec_length);
 
+        s_logger->debug(
+            "stop replan: entry_v: {}, cruise_v: {}, acc: {}, dec: {}, nacc: "
+            "{}",
+            temp_using_speed_param_.entry_v, temp_using_speed_param_.cruise_v,
+            temp_using_speed_param_.acc0, temp_using_speed_param_.dec0,
+            temp_using_speed_param_.nacc);
+
         if (!replan_ret) {
             s_logger->critical("MoveruntimeWrapper stop error: replan failed!");
             state_ = State::Stopped;
@@ -332,8 +340,7 @@ unit_t MoveruntimeWrapper::run_once() {
     case State::Paused:
     case State::Stopped:
         break;
-    case State::Running:
-    {
+    case State::Running: {
         result_inc = mrt_.run_once();
         curr_length_ += result_inc;
         if (mrt_.is_over()) {
@@ -341,8 +348,7 @@ unit_t MoveruntimeWrapper::run_once() {
         }
         break;
     }
-    case State::Pausing:
-    {
+    case State::Pausing: {
         result_inc += mrt_.run_once();
         curr_length_ += result_inc;
         if (mrt_.is_over()) {
@@ -350,8 +356,7 @@ unit_t MoveruntimeWrapper::run_once() {
         }
         break;
     }
-    case State::Stopping:
-    {
+    case State::Stopping: {
         result_inc += mrt_.run_once();
         curr_length_ += result_inc;
         if (mrt_.is_over()) {

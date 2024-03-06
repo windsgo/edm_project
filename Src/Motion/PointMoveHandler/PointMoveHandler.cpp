@@ -59,8 +59,7 @@ void PointMoveHandler::run_once() {
     }
 
     if (mrt_wrapper_.is_over()) {
-        curr_length_ = target_length_;
-        curr_pos_ = target_pos_;
+        //! 这里要修正的话, 要考虑到是被动停止
         return;
     }
 

@@ -13,8 +13,11 @@
 #define EDM_BLU_PER_UM                            10 // blu定义, 1blu为0.1um, 1um为10个blu
 
 // 运动周期
-#define EDM_SERVO_PEROID_US                       1000 // 1000 us 周期
+#define EDM_SERVO_PEROID_US                       2000 // 1000 us 周期
 #define EDM_SERVO_PEROID_NS                       (EDM_SERVO_PEROID_US * 1000) // 1000,000 ns 周期
+#define EDM_SERVO_PEROID_MS                       ((double)EDM_SERVO_PEROID_US / 1000.0)
+#define EDM_SERVO_PEROID_MS_PER_PEROID            (EDM_SERVO_PEROID_MS)
+#define EDM_SERVO_PEROID_PEROID_PER_MS            (1.0 / EDM_SERVO_PEROID_MS)
 
 #define EDM_ECAT_DRIVER_SOEM                      // Use "soem" as software driver
 // #define EDM_ECAT_DRIVER_IGH                    // or "igh", choose only one
@@ -46,8 +49,14 @@
 // OFFLINE DEFINE
 // #define EDM_OFFLINE_RUN
 #ifdef EDM_OFFLINE_RUN
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
 #define EDM_OFFLINE_RUN_NO_ECAT
-#define EDM_OFFLINE_RUN_NO_CAN
+#endif // EDM_OFFLINE_RUN_NO_ECAT
+#ifndef EDM_OFFLINE_RUN_NO_CAN
+#define EDM_OFFLINE_RUN_NO_CAN // TODO
+#endif                         // EDM_OFFLINE_RUN_NO_CAN
+// TODO Touch Detect
+// TODO ServoDir ServoDis
 #endif // EDM_OFFLINE_RUN
 
 #if __GNUC__ < 13      // gcc1 13.0之后支持 std::format

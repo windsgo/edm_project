@@ -79,6 +79,7 @@ bool MotionThreadController::_create_thread() {
     pthread_attr_t attr;
     int ret;
 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT 
     /* Lock memory */
     if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
         printf("mlockall failed: %m\n");
@@ -87,6 +88,7 @@ bool MotionThreadController::_create_thread() {
         // exit(-2);
         return false;
     }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
     /* Initialize pthread attributes (default values) */
     ret = pthread_attr_init(&attr);
@@ -102,6 +104,7 @@ bool MotionThreadController::_create_thread() {
         return false;
     }
 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
     /* Set scheduler policy and priority of pthread */
     ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
     if (ret) {
@@ -133,6 +136,7 @@ bool MotionThreadController::_create_thread() {
         s_logger->critical("pthread_attr_setaffinity_np failed: {}", ret);
         return false;
     }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
     /* Create a pthread with specified attributes */
     ret = pthread_create(&this->thread_, &attr,
@@ -192,9 +196,11 @@ void *MotionThreadController::_run() {
 
     bool thread_exit = false;
     while (!thread_exit) {
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
         if (!ecat_manager_->is_ecat_connected()) {
             toff_ = 0; // 未连接, toff是不对的值
         }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
         /* calculate next cycle start */
         add_timespec(&ts, cycletime_ns_ + toff_);
@@ -204,9 +210,11 @@ void *MotionThreadController::_run() {
 
         //! 下一个周期开始的位置
 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
         if (ecat_manager_->is_ecat_connected()) {
             ecat_manager_->ecat_sync();
         }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
         _fetch_command_and_handle();
 
@@ -245,6 +253,7 @@ void *MotionThreadController::_run() {
 }
 
 void MotionThreadController::_threadstate_stopping() {
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
     ++stopping_count_;
     if (stopping_count_ > stopping_count_max_) {
         s_logger->warn("stopping count overflow: {} > {}", stopping_count_,
@@ -267,6 +276,9 @@ void MotionThreadController::_threadstate_stopping() {
     }
 
     ecat_manager_->disable_cycle_run_once();
+#else  // EDM_OFFLINE_RUN_NO_ECAT
+    _switch_thread_state(ThreadState::CanExit);
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 }
 
 void MotionThreadController::_threadstate_running() {
@@ -284,18 +296,22 @@ void MotionThreadController::_threadstate_running() {
     case EcatState::EcatConnecting: {
         ecat_connect_flag_ = false;
 
+#ifdef EDM_OFFLINE_RUN_NO_ECAT
+        _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
+#else  // EDM_OFFLINE_RUN_NO_ECAT
         bool ret = ecat_manager_->connect_ecat(3);
         if (ret) {
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
         }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
         break;
     }
     case EcatState::EcatConnectedNotAllEnabled: {
+#ifdef EDM_OFFLINE_RUN_NO_ECAT
+        _ecat_state_switch_to_ready();
+#else  // EDM_OFFLINE_RUN_NO_ECAT
         if (ecat_manager_->servo_all_operation_enabled()) {
-            s_logger->debug(
-                "{:08b}",
-                ecat_manager_->get_servo_device(0)->get_status_word());
             _ecat_state_switch_to_ready();
             ecat_clear_fault_reenable_flag_ = false;
             break;
@@ -306,20 +322,26 @@ void MotionThreadController::_threadstate_running() {
             ecat_clear_fault_reenable_flag_ = false;
             break;
         }
-
+#endif // EDM_OFFLINE_RUN_NO_ECAT
         break;
     }
     case EcatState::EcatConnectedEnabling: {
         ecat_clear_fault_reenable_flag_ = false;
+#ifdef EDM_OFFLINE_RUN_NO_ECAT
+        _ecat_state_switch_to_ready();
+#else  // EDM_OFFLINE_RUN_NO_ECAT
         if (!ecat_manager_->servo_all_operation_enabled()) {
             ecat_manager_->clear_fault_cycle_run_once();
         } else {
             _ecat_state_switch_to_ready();
         }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
         break;
     }
     case EcatState::EcatReady: {
+        ecat_clear_fault_reenable_flag_ = false;
 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {
             s_logger->warn("in EcatReady, ecat disconnected");
@@ -339,12 +361,15 @@ void MotionThreadController::_threadstate_running() {
             motion_state_machine_->reset();
             break;
         }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
         // StateMachine Operate Cycle
         motion_state_machine_->run_once();
 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
         // set to motor axis
         const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
+
         for (int i = 0; i < cmd_axis.size(); ++i) {
             ecat_manager_->set_servo_target_position(
                 i,
@@ -353,9 +378,8 @@ void MotionThreadController::_threadstate_running() {
             );
         }
 
-        // handle info buffer
-
         _dc_sync(); //! 只在正常的情况下进行DC同步
+#endif              // EDM_OFFLINE_RUN_NO_ECAT
         break;
     }
     }
@@ -455,6 +479,45 @@ void MotionThreadController::_fetch_command_and_handle() {
         }
         break;
     }
+    case MotionCommandAuto_StartG00FastMove: {
+        s_logger->trace("Handle MotionCmd: Auto_StartG00FastMove");
+        if (ecat_state_ != EcatState::EcatReady ||
+            thread_state_ != ThreadState::Running) {
+            cmd->ignore();
+            break;
+        }
+
+        auto g00_cmd =
+            std::static_pointer_cast<MotionCommandAutoStartG00FastMove>(cmd);
+
+        auto ret = motion_state_machine_->start_auto_g00(
+            g00_cmd->speed_param(), g00_cmd->end_pos(),
+            g00_cmd->touch_detect_enable());
+
+        if (ret) {
+            cmd->accept();
+        } else {
+            cmd->ignore();
+        }
+
+        break;
+    }
+    case MotionCommandAuto_Stop: {
+        s_logger->trace("Handle MotionCmd: Auto_Stop");
+        auto autostop_cmd = std::static_pointer_cast<MotionCommandAutoStop>(cmd);
+        motion_state_machine_->stop_auto(autostop_cmd->immediate());
+        break;
+    }
+    case MotionCommandAuto_Pause: {
+        s_logger->trace("Handle MotionCmd: Auto_Pause");
+        motion_state_machine_->pause_auto();
+        break;
+    }
+    case MotionCommandAuto_Resume: {
+        s_logger->trace("Handle MotionCmd: Auto_Resume");
+        motion_state_machine_->resume_auto();
+        break;
+    }
     case MotionCommandSetting_TriggerEcatConnect: {
         s_logger->trace("Handle MotionCmd: Setting_TriggerEcatConnect");
         cmd->accept();
@@ -476,6 +539,9 @@ void MotionThreadController::_dc_sync() {
 }
 
 bool MotionThreadController::_get_act_pos(axis_t &axis) {
+#ifdef EDM_OFFLINE_RUN_NO_ECAT
+    axis = motion_state_machine_->get_cmd_axis(); // 离线, 返回指令位置
+#else                                             // EDM_OFFLINE_RUN_NO_ECAT
     if (!this->ecat_manager_->is_ecat_connected()) {
         // MotionUtils::ClearAxis(axis);
         return false;
@@ -484,6 +550,7 @@ bool MotionThreadController::_get_act_pos(axis_t &axis) {
     for (int i = 0; i < axis.size(); ++i) {
         axis[i] = (double)this->ecat_manager_->get_servo_actual_position(i);
     }
+#endif                                            // EDM_OFFLINE_RUN_NO_ECAT
 
     return true;
 }
@@ -500,7 +567,11 @@ void MotionThreadController::_copy_info_cache() {
     // bit_state1
     info_cache_.bit_state1 = 0;
 
+#ifdef EDM_OFFLINE_RUN_NO_ECAT
+    info_cache_.setEcatConnected(ecat_state_ > EcatState::EcatConnecting);
+#else  // EDM_OFFLINE_RUN_NO_ECAT
     info_cache_.setEcatConnected(ecat_manager_->is_ecat_connected());
+#endif // EDM_OFFLINE_RUN_NO_ECAT
     info_cache_.setEcatAllEnabled(ecat_state_ == EcatState::EcatReady);
     info_cache_.setTouchDetectEnabled(
         touch_detect_handler_->is_detect_enable());

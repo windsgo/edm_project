@@ -39,7 +39,9 @@ MotionStateMachine::MotionStateMachine(
     // 初始化计算坐标
     // 先清0 (离线调试模式时实际坐标会直接返回当前值)
     MotionUtils::ClearAxis(cmd_axis_);
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
     cb_get_act_axis_(cmd_axis_);
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 }
 
 void MotionStateMachine::run_once() {
@@ -98,7 +100,7 @@ bool MotionStateMachine::start_manual_pointmove(
         auto ret = pm_handler_.start(speed_param, cmd_axis_, target_pos);
         if (ret) {
             _mainmode_switch_to(MotionMainMode::Manual);
-            signal_buffer_->set_signal(MotionSignal_ManualPointMoveStopped);
+            signal_buffer_->set_signal(MotionSignal_ManualPointMoveStarted);
 
             //! test
             // r_.start_record("output.bin");

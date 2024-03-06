@@ -11,3 +11,6 @@ add_dependencies(test_pm edm)
 target_link_libraries(test_pm edm Qt5::Core Qt5::SerialBus)
 
 
+add_executable(testmotiongui testmotiongui.cpp)
+add_dependencies(testmotiongui edm)
+target_link_libraries(testmotiongui edm Qt5::Core Qt5::SerialBus Qt5::Widgets)
