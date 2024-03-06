@@ -50,6 +50,8 @@ public:
     // 当前状态机状态
     auto state() const { return state_; }
 
+    const auto& get_curr_cmd_axis() const { return curr_cmd_axis_; }
+
 private:
     void _autostate_switch_to(MotionAutoState new_state);
 

@@ -71,7 +71,7 @@ public: // state interfaces
 
     MotionMainMode main_mode() const { return main_mode_; }
 
-    MotionAutoState auto_state() const { return auto_state_; }
+    MotionAutoState auto_state() const { return auto_task_runner_->state(); }
 
 private: // inside functions: state process
     void _mainmode_idle();
@@ -87,7 +87,7 @@ private:              // state data
     bool enabled_{
         false}; // 使能位 (防止reset后, 还未重新设置初始指令位置, 就进行运算)
     MotionMainMode main_mode_{MotionMainMode::Idle};       // 主模式
-    MotionAutoState auto_state_{MotionAutoState::Stopped}; // Auto状态
+    // MotionAutoState auto_state_{MotionAutoState::Stopped}; // Auto状态
 
     // TODO 各轴软限位参数 (普通直线抬刀判断)
 

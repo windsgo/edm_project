@@ -18,7 +18,6 @@ MotionStateMachine::MotionStateMachine(
     : cb_get_act_axis_(cb_get_act_axis),
       touch_detect_handler_(touch_detect_handler),
       signal_buffer_(signal_buffer) {
-    reset();
 
     //! use assert more than exception is better
     if (!cb_get_act_axis_) {
@@ -36,6 +35,7 @@ MotionStateMachine::MotionStateMachine(
     auto_task_runner_ =
         std::make_shared<AutoTaskRunner>(touch_detect_handler_, signal_buffer_);
 
+    reset();
     // 初始化计算坐标
     // 先清0 (离线调试模式时实际坐标会直接返回当前值)
     MotionUtils::ClearAxis(cmd_axis_);
@@ -60,7 +60,7 @@ void MotionStateMachine::run_once() {
         _mainmode_auto();
         break;
     default:
-        s_logger->error("{}: unknown main mode: {}", __FUNCTION__,
+        s_logger->error("{}: unknown main mode: {}", __PRETTY_FUNCTION__,
                         static_cast<int>(main_mode_));
         assert(false);
         enabled_ = false;
@@ -73,11 +73,13 @@ void MotionStateMachine::reset() {
 
     enabled_ = false;
     main_mode_ = MotionMainMode::Idle;
-    auto_state_ = MotionAutoState::Stopped;
+    // auto_state_ = MotionAutoState::Stopped;
 
     pm_handler_.clear();
 
     touch_detect_handler_->reset();
+
+    auto_task_runner_->reset(cmd_axis_);
 }
 
 void MotionStateMachine::set_cmd_axis(const axis_t &init_cmd_axis) {
@@ -96,7 +98,7 @@ bool MotionStateMachine::start_manual_pointmove(
     const MoveRuntimePlanSpeedInput &speed_param, const axis_t &target_pos) {
     switch (main_mode_) {
     case MotionMainMode::Idle: {
-        s_logger->trace("{}: idle mode.", __FUNCTION__);
+        s_logger->trace("{}: idle mode.", __PRETTY_FUNCTION__);
         auto ret = pm_handler_.start(speed_param, cmd_axis_, target_pos);
         if (ret) {
             _mainmode_switch_to(MotionMainMode::Manual);
@@ -108,12 +110,11 @@ bool MotionStateMachine::start_manual_pointmove(
         return ret;
     }
     case MotionMainMode::Manual:
-        s_logger->warn("{}: manual mode not stopped", __FUNCTION__);
+        s_logger->warn("{}: manual mode not stopped", __PRETTY_FUNCTION__);
         return false;
     case MotionMainMode::Auto:
-        s_logger->trace("{}: in auto mode", __FUNCTION__);
-        return false;
-        // TODO
+        s_logger->trace("{}: in auto mode", __PRETTY_FUNCTION__);
+        return auto_task_runner_->start_manual_pointmove(speed_param, cmd_axis_, target_pos);
         // 处理暂停点动的启动.
         break;
     default:
@@ -124,18 +125,16 @@ bool MotionStateMachine::start_manual_pointmove(
 bool MotionStateMachine::stop_manual_pointmove(bool immediate) {
     switch (main_mode_) {
     case MotionMainMode::Idle:
-        s_logger->warn("{}: idle mode.", __FUNCTION__);
+        s_logger->warn("{}: idle mode.", __PRETTY_FUNCTION__);
         return false;
     case MotionMainMode::Manual:
-        s_logger->trace("{}: in manual mode, immediate = {}", __FUNCTION__,
+        s_logger->trace("{}: in manual mode, immediate = {}", __PRETTY_FUNCTION__,
                         immediate);
         return pm_handler_.stop(immediate);
     case MotionMainMode::Auto:
-        s_logger->trace("{}: in auto mode, immediate = {}", __FUNCTION__,
+        s_logger->trace("{}: in auto mode, immediate = {}", __PRETTY_FUNCTION__,
                         immediate);
-        return false;
-        // TODO
-        // 处理暂停点动.
+        return auto_task_runner_->stop_manual_pointmove(immediate);
         break;
     default:
         return false;
@@ -145,7 +144,7 @@ bool MotionStateMachine::stop_manual_pointmove(bool immediate) {
 bool MotionStateMachine::start_auto_g00(
     const MoveRuntimePlanSpeedInput &speed_param, const axis_t &target_pos,
     bool enable_touch_detect) {
-    s_logger->trace("{}", __FUNCTION__);
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
 
     if (main_mode_ != MotionMainMode::Idle) {
         return false;
@@ -169,7 +168,7 @@ bool MotionStateMachine::start_auto_g00(
 }
 
 bool MotionStateMachine::pause_auto() {
-    s_logger->trace("{}", __FUNCTION__);
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
 
     if (main_mode_ != MotionMainMode::Auto) {
         return false;
@@ -179,7 +178,7 @@ bool MotionStateMachine::pause_auto() {
 }
 
 bool MotionStateMachine::resume_auto() {
-    s_logger->trace("{}", __FUNCTION__);
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
 
     if (main_mode_ != MotionMainMode::Auto) {
         return false;
@@ -189,7 +188,7 @@ bool MotionStateMachine::resume_auto() {
 }
 
 bool MotionStateMachine::stop_auto(bool immediate) {
-    s_logger->trace("{}", __FUNCTION__);
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
 
     if (main_mode_ != MotionMainMode::Auto) {
         return false;
@@ -231,7 +230,14 @@ void MotionStateMachine::_mainmode_manual() {
 }
 
 void MotionStateMachine::_mainmode_auto() {
-    // TODO
+    auto_task_runner_->run_once();
+
+    cmd_axis_ = auto_task_runner_->get_curr_cmd_axis();
+
+    if (auto_task_runner_->state() == MotionAutoState::Stopped) {
+        _mainmode_switch_to(MotionMainMode::Idle);
+        return;
+    }
 }
 
 void MotionStateMachine::_mainmode_switch_to(MotionMainMode new_main_mode) {

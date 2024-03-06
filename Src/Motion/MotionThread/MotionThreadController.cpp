@@ -429,6 +429,8 @@ void MotionThreadController::_fetch_command_and_handle() {
 
     auto cmd = *cmd_opt;
 
+    // s_logger->debug("cmd type: {}", (int)cmd->type());
+
     // TODO handle cmd
     switch (cmd->type()) {
     case MotionCommandManual_StartPointMove: {

@@ -30,7 +30,7 @@ bool AutoTaskRunner::restart_task(AutoTask::ptr task) {
     }
 
     if (!curr_task_->is_over()) {
-        s_logger->warn("{}: curr task not over", __FUNCTION__);
+        s_logger->warn("{}: curr task not over", __PRETTY_FUNCTION__);
     }
 
     curr_task_ = task;
@@ -64,7 +64,7 @@ void AutoTaskRunner::run_once() {
         // Do nothing
         break;
     default:
-        s_logger->critical("{}: unknow state: {}", __FUNCTION__, (int)state_);
+        s_logger->critical("{}: unknow state: {}", __PRETTY_FUNCTION__, (int)state_);
         break;
     }
 }
@@ -96,7 +96,7 @@ bool AutoTaskRunner::pause() {
 
     }
 
-    s_logger->warn("{}: should not here", __FUNCTION__);
+    s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
     return false;
 }
 
@@ -112,16 +112,24 @@ bool AutoTaskRunner::resume() {
     case MotionAutoState::Stopped:
         return false;
     
-    case MotionAutoState::Paused:
+    case MotionAutoState::Paused: {
+
+        auto pmc_state = pausemove_controller_->state();
+        if (pmc_state == PauseMoveController::State::AllowManualPointMove) {
+            return pausemove_controller_->activate_recover();
+        } else {
+            return pausemove_controller_->resume();
+        }
+
         // 暂停点动恢复完后会自动恢复curr task
-        return pausemove_controller_->resume();
+    }
 
     case MotionAutoState::Resuming:
         return true;
 
     }
 
-    s_logger->warn("{}: should not here", __FUNCTION__);
+    s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
     return false;
 }
 
@@ -152,7 +160,7 @@ bool AutoTaskRunner::stop(bool immediate) {
 
     }
 
-    s_logger->warn("{}: should not here", __FUNCTION__);
+    s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
     return false;
 }
 
@@ -226,7 +234,7 @@ void AutoTaskRunner::_pausing() {
     if (curr_task_->is_normal_running()) {
         s_logger->warn("{}: should not be here, in pausing, but task is "
                        "running",
-                       __FUNCTION__);
+                       __PRETTY_FUNCTION__);
         _autostate_switch_to(MotionAutoState::Resuming);
         return;
     }
@@ -248,7 +256,7 @@ void AutoTaskRunner::_paused() {
         if (ret) {
             _autostate_switch_to(MotionAutoState::Resuming);
         } else {
-            s_logger->critical("{}: resume auto task failed", __FUNCTION__);
+            s_logger->critical("{}: resume auto task failed", __PRETTY_FUNCTION__);
         }
     }
 }
@@ -277,7 +285,16 @@ void AutoTaskRunner::_resuming() {
     }
 }
 
-void AutoTaskRunner::_stopping() {}
+void AutoTaskRunner::_stopping() {
+    curr_task_->run_once();
+    curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
+
+    if (curr_task_->is_stopped()) {
+        signal_buffer_->set_signal(MotionSignal_AutoStopped);
+        _autostate_switch_to(MotionAutoState::Stopped);
+        return;
+    }
+}
 
 const char *AutoTaskRunner::GetAutoStateStr(MotionAutoState state) {
     switch (state) {

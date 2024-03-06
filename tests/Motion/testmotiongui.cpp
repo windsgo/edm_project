@@ -99,6 +99,7 @@ void TestMotionGui::_init_motion_controller() {
 void TestMotionGui::_init_button_slots() {
     _init_ecat_button();
     _init_pm_buttons();
+    _init_g00test_buttons();
 }
 
 void TestMotionGui::_init_ecat_button() {
@@ -131,6 +132,66 @@ void TestMotionGui::_init_pm_buttons() {
     connect(ui->pb_x_negative_pm, &QPushButton::released, this, [this]() {
         _cmd_stop_pointmove(false);
         s_logger->debug("pb_x_negative_pm released");
+    });
+
+    connect(ui->pb_x_pm_start, &QPushButton::clicked, this, [this]() {
+        move::axis_t target{0.0};
+        target[0] = MM_STRING_TO_BLU_DFT(ui->le_x_pm_target_pos->text(), 0.0);
+
+        auto max_x =
+            MM_STRING_TO_BLU_DFT(ui->le_x_positive_softlimit->text(), 10.0);
+        auto min_x =
+            MM_STRING_TO_BLU_DFT(ui->le_x_negative_softlimit->text(), -10.0);
+
+        if (target[0] > max_x) {
+            target[0] = max_x;
+        } else if (target[0] < min_x) {
+            target[0] = min_x;
+        }
+
+        _cmd_start_pointmove(target);
+        s_logger->debug("pb_x_pm_start clicked: target[0] = {}", target[0]);
+    });
+
+    connect(ui->pb_x_pm_stop, &QPushButton::clicked, this, [this]() {
+        _cmd_stop_pointmove(false);
+        s_logger->debug("pb_x_pm_stop clicked");
+    });
+}
+
+void TestMotionGui::_init_g00test_buttons() {
+    connect(ui->pb_start_g00, &QPushButton::clicked, this, [this]() {
+        move::axis_t target{0.0};
+        target[0] = MM_STRING_TO_BLU_DFT(ui->le_x_g00_target_pos->text(), 0.0);
+
+        auto max_x =
+            MM_STRING_TO_BLU_DFT(ui->le_x_positive_softlimit->text(), 10.0);
+        auto min_x =
+            MM_STRING_TO_BLU_DFT(ui->le_x_negative_softlimit->text(), -10.0);
+
+        if (target[0] > max_x) {
+            target[0] = max_x;
+        } else if (target[0] < min_x) {
+            target[0] = min_x;
+        }
+
+        _cmd_start_g00(target);
+        s_logger->debug("pb_start_g00 clicked: target[0] = {}", target[0]);
+    });
+
+    connect(ui->pb_pause_auto, &QPushButton::clicked, this, [this]() {
+        _cmd_pause_auto();
+        s_logger->debug("pb_pause_auto clicked");
+    });
+
+    connect(ui->pb_resume_auto, &QPushButton::clicked, this, [this]() {
+        _cmd_resume_auto();
+        s_logger->debug("pb_resume_auto clicked");
+    });
+
+    connect(ui->pb_stop_auto, &QPushButton::clicked, this, [this]() {
+        _cmd_stop_auto(false);
+        s_logger->debug("pb_stop_auto clicked");
     });
 }
 
@@ -171,7 +232,7 @@ void TestMotionGui::_cmd_start_pointmove(const edm::move::axis_t &target_pos) {
     // create motion cmd
     auto start_pointmove_cmd =
         std::make_shared<edm::move::MotionCommandManualStartPointMove>(
-            start_pos, target_pos, speed);
+            start_pos, target_pos, speed, true);
 
     // wrap and push to global command queue
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
@@ -195,6 +256,85 @@ void TestMotionGui::_cmd_stop_pointmove(bool immediate) {
             this->motion_cmd_queue_->push_command(a);
         },
         stop_pointmove_command);
+
+    global_command_queue_->push_command(gcmd);
+}
+
+void TestMotionGui::_cmd_start_g00(const edm::move::axis_t &target_pos) {
+    auto start_pos = info_dispatcher_->get_info().curr_cmd_axis_blu;
+
+    edm::move::MoveRuntimePlanSpeedInput speed;
+    speed.nacc =
+        EDM_SERVO_PEROID_PEROID_PER_MS * ui->le_nacc_ms->text().toDouble();
+    if (speed.nacc == 0) {
+        speed.nacc = 60;
+    }
+    speed.entry_v = 0;
+    speed.exit_v = 0;
+    speed.cruise_v = UM_STRING_TO_BLU_DFT(ui->le_speed_um_s->text(), 1000.0);
+    speed.acc0 = UM_STRING_TO_BLU_DFT(ui->le_acc_um_s2->text(), 1000.0);
+    speed.dec0 = -speed.acc0;
+
+    s_logger->debug("_cmd_start_g00: x: {} -> {}, speed: {}, acc: {}, nacc: {}",
+                    start_pos[0], target_pos[0], speed.cruise_v, speed.acc0,
+                    speed.nacc);
+
+    // create motion cmd
+    auto start_g00_cmd =
+        std::make_shared<edm::move::MotionCommandAutoStartG00FastMove>(
+            start_pos, target_pos, speed, true);
+
+    // wrap and push to global command queue
+    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+        [this](edm::move::MotionCommandAutoStartG00FastMove::ptr a) {
+            this->motion_cmd_queue_->push_command(a);
+        },
+        start_g00_cmd);
+
+    global_command_queue_->push_command(gcmd);
+}
+
+void TestMotionGui::_cmd_pause_auto() {
+    // create motion cmd
+    auto pause_auto_command =
+        std::make_shared<edm::move::MotionCommandAutoPause>();
+
+    // wrap and push to global command queue
+    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+        [this](edm::move::MotionCommandAutoPause::ptr a) {
+            this->motion_cmd_queue_->push_command(a);
+        },
+        pause_auto_command);
+
+    global_command_queue_->push_command(gcmd);
+}
+
+void TestMotionGui::_cmd_resume_auto() {
+    // create motion cmd
+    auto resume_auto_command =
+        std::make_shared<edm::move::MotionCommandAutoResume>();
+
+    // wrap and push to global command queue
+    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+        [this](edm::move::MotionCommandAutoResume::ptr a) {
+            this->motion_cmd_queue_->push_command(a);
+        },
+        resume_auto_command);
+
+    global_command_queue_->push_command(gcmd);
+}
+
+void TestMotionGui::_cmd_stop_auto(bool immediate) {
+    // create motion cmd
+    auto stop_auto_command =
+        std::make_shared<edm::move::MotionCommandAutoStop>(immediate);
+
+    // wrap and push to global command queue
+    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+        [this](edm::move::MotionCommandAutoStop::ptr a) {
+            this->motion_cmd_queue_->push_command(a);
+        },
+        stop_auto_command);
 
     global_command_queue_->push_command(gcmd);
 }
@@ -244,8 +384,10 @@ int main(int argc, char **argv) {
     s_logger->info("");
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    qDebug() << __PRETTY_FUNCTION__ << __LINE__;
 
     QApplication app(argc, argv);
+    qDebug() << __PRETTY_FUNCTION__ << __LINE__;
 
     QFile stylefile(EDM_ROOT_DIR "Conf/gui.qss");
     stylefile.open(QFile::ReadOnly);

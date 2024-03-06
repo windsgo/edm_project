@@ -40,12 +40,19 @@ private:
     void _init_ecat_button();
     // 0.3.2
     void _init_pm_buttons();
+    // 0.3.3
+    void _init_g00test_buttons();
 
 private: // motion cmds
     void _cmd_ecat_trigger_connect();
 
     void _cmd_start_pointmove(const edm::move::axis_t& target_pos);
     void _cmd_stop_pointmove(bool immediate = false);
+
+    void _cmd_start_g00(const edm::move::axis_t& target_pos);
+    void _cmd_pause_auto();
+    void _cmd_resume_auto();
+    void _cmd_stop_auto(bool immediate = false);
 
 private: // info dispatcher slot
     void _info_slot(const edm::move::MotionInfo& info);

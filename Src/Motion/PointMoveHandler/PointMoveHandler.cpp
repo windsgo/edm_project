@@ -54,7 +54,7 @@ void PointMoveHandler::run_once() {
     mrt_wrapper_.run_once();
 
     if (!mrt_wrapper_.is_started()) {
-        s_logger->warn("{}, not started.", __FUNCTION__);
+        s_logger->warn("{}, not started.", __PRETTY_FUNCTION__);
         return;
     }
 

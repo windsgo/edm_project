@@ -229,19 +229,19 @@ bool MoveruntimeWrapper::stop(bool immediate) {
         if (dec_length > remaining_length) {
             dec_length = remaining_length;
         }
-        s_logger->trace("MoveruntimeWrapper stop: dec_length: {}", dec_length);
+        // s_logger->trace("MoveruntimeWrapper stop: dec_length: {}", dec_length);
 
         // 规划减速
         temp_using_speed_param_.entry_v = curr_speed;
         temp_using_speed_param_.exit_v = 0.0;
         bool replan_ret = mrt_.plan(temp_using_speed_param_, dec_length);
 
-        s_logger->debug(
-            "stop replan: entry_v: {}, cruise_v: {}, acc: {}, dec: {}, nacc: "
-            "{}",
-            temp_using_speed_param_.entry_v, temp_using_speed_param_.cruise_v,
-            temp_using_speed_param_.acc0, temp_using_speed_param_.dec0,
-            temp_using_speed_param_.nacc);
+        // s_logger->debug(
+        //     "stop replan: entry_v: {}, cruise_v: {}, acc: {}, dec: {}, nacc: "
+        //     "{}",
+        //     temp_using_speed_param_.entry_v, temp_using_speed_param_.cruise_v,
+        //     temp_using_speed_param_.acc0, temp_using_speed_param_.dec0,
+        //     temp_using_speed_param_.nacc);
 
         if (!replan_ret) {
             s_logger->critical("MoveruntimeWrapper stop error: replan failed!");
