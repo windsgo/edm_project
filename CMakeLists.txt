@@ -84,6 +84,7 @@ set(PROJECT_SOURCES
     Src/QtDependComponents/TaskManager/TaskManager.cpp 
     Src/QtDependComponents/TaskManager/GCodeManager.cpp
     Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
+    Src/Coordinate/Coordinate.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)
