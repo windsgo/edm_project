@@ -30,6 +30,9 @@ public:
     inline const auto &end_pos() const { return end_pos_; }
     inline const auto &curr_pos() const { return curr_pos_; }
 
+    inline virtual void set_at_start() = 0;
+    inline virtual void set_at_end() = 0;
+
     inline virtual bool at_start() const = 0;
     inline virtual bool at_end() const = 0;
 
@@ -58,7 +61,6 @@ public:
           curr_length_(0.0) {}
 
     // custom set curr_pos to user-set value (using curr_length)
-    //! curr_length should be
     TrajectoryLinearSegement(const axis_t &start_pos, const axis_t &end_pos,
                              unit_t curr_length)
         : TrajectorySegementBase(TrajectorySegementType::Linear, start_pos,
@@ -71,18 +73,20 @@ public:
 
     ~TrajectoryLinearSegement() noexcept override = default;
 
-    inline bool at_start() const override;
-    inline bool at_end() const override;
+    void set_at_start() override;
+    void set_at_end() override;
 
-    inline void run_once(unit_t inc) override;
+    bool at_start() const override;
+    bool at_end() const override;
+    void run_once(unit_t inc) override;
 
 public:
     inline const unit_t curr_length() const { return curr_length_; }
     inline const unit_t total_length() const { return total_length_; }
 
 private:
-    inline void _add_inc(unit_t inc);
-    inline void _validate_curr_length();
+    void _add_inc(unit_t inc);
+    void _validate_curr_length();
 
 public:
     static axis_t CalcCurrPos(const axis_t &start_pos, const axis_t &end_pos,

@@ -6,6 +6,16 @@ namespace edm {
 
 namespace move {
 
+void TrajectoryLinearSegement::set_at_start() {
+    curr_length_ = 0;
+    curr_pos_ = start_pos_;
+}
+
+void TrajectoryLinearSegement::set_at_end() {
+    curr_length_ = total_length_;
+    curr_pos_ = end_pos_;
+}
+
 bool TrajectoryLinearSegement::at_start() const { return curr_length_ <= 0.0; }
 
 bool TrajectoryLinearSegement::at_end() const {
