@@ -41,17 +41,25 @@ public:
 
     // auto operate
     //! 操作的是recover过程中的快速移动的暂停、继续
-    bool pause();
-    bool resume();
-    bool stop(bool immediate = false);
+    bool activate_recover();
+    bool pause_recover();
+    bool resume_recover();
 
-    bool is_paused() const { return state_ == State::RecoveringPaused; }
+    bool is_before_recover() const {
+        return state_ == State::AllowManualPointMove ||
+               state_ == State::ManualPointMoving;
+    }
+    bool is_recover_activated() const {
+        return is_recovering() || is_recover_paused() || is_recover_over();
+    }
+    bool is_recover_paused() const { return state_ == State::RecoveringPaused; }
+    bool is_recovering() const { return state_ == State::Recovering; }
+
+    bool is_recover_over() const { return state_ == State::RecorverOver; }
 
     //! need to terminate
+    bool stop(bool immediate = false);
     bool is_stopped() const { return state_ == State::OutSideOrErrorStopped; }
-
-    bool activate_recover();
-    bool is_recover_over() const { return state_ == State::RecorverOver; }
 
     void run_once();
 

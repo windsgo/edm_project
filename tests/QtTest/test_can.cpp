@@ -46,6 +46,8 @@ static void thread_func() {
 
 #include <stdio.h>
 
+std::atomic_uint8_t dummy[8];
+
 int main(int argc, char **argv) {
 
     s_root_logger->debug("test can");
@@ -71,8 +73,12 @@ int main(int argc, char **argv) {
             static int j = 0;
             ++i;
             // fprintf(stderr, "%d,", i);
+
+            for (int b = 0; b < 8; ++b) {
+                dummy[b] = frame.payload()[b];
+            }
             
-            if (i >= 500) {
+            if (i >= 500 * 60) {
                 i = 0;
                 ++j;
                 s_root_logger->debug("recv: {}", j);
@@ -89,6 +95,7 @@ int main(int argc, char **argv) {
         QByteArray array{8, 0x16};
         array.resize(8);
         QCanBusFrame frame0(0x147, array);
+        can_ctrler->send_frame("can0", frame0);
         can_ctrler->send_frame("can0", frame0);
         can_ctrler->send_frame("can0", frame0);
         

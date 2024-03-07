@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <future>
 
 #include <cstdint>
 
@@ -47,6 +48,20 @@ public:
             std::forward<__CallableType>(callable),
             std::forward<__Args>(args)...);
     }
+};
+
+
+template <typename RetT>
+class CommandPackagedTask : public CommandBase {
+public:
+    CommandPackagedTask(std::packaged_task<RetT(void)>&& task) : CommandBase()
+    , task_(std::move(task)) {}
+    ~CommandPackagedTask() noexcept override = default;
+
+    void run() override { task_(); }
+
+private:
+    std::packaged_task<RetT(void)> task_;
 };
 
 } // namespace global

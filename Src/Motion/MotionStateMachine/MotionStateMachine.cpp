@@ -163,6 +163,7 @@ bool MotionStateMachine::start_auto_g00(
         return false;
     }
 
+    signal_buffer_->set_signal(MotionSignal_AutoStarted);
     _mainmode_switch_to(MotionMainMode::Auto);
     return true;
 }

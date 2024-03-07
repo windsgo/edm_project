@@ -57,7 +57,7 @@ bool PauseMoveController::stop_manual_pointmove(bool immediate) {
     return pm_handler_.stop(immediate);
 }
 
-bool PauseMoveController::pause() {
+bool PauseMoveController::pause_recover() {
     if (state_ == State::RecoveringPausing ||
         state_ == State::RecoveringPaused) {
         return true;
@@ -76,7 +76,7 @@ bool PauseMoveController::pause() {
     return true;
 }
 
-bool PauseMoveController::resume() {
+bool PauseMoveController::resume_recover() {
     if (state_ == State::Recovering || state_ == State::RecorverOver) {
         return true;
     }
@@ -136,7 +136,7 @@ bool PauseMoveController::activate_recover() {
     if (state_ == State::RecoveringPaused) {
         s_logger->warn("{} state_ == State::RecoveringPaused",
                        __PRETTY_FUNCTION__);
-        return resume(); // 当作继续指令
+        return resume_recover(); // 当作继续指令
     }
 
     if (axis_recorder_.empty()) {

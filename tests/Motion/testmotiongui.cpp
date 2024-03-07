@@ -3,6 +3,8 @@
 
 #include <QFile>
 
+#include <future>
+
 #include <json.hpp>
 
 #include <fstream>
@@ -233,7 +235,7 @@ void TestMotionGui::_cmd_start_pointmove(const edm::move::axis_t &target_pos) {
     auto start_pointmove_cmd =
         std::make_shared<edm::move::MotionCommandManualStartPointMove>(
             start_pos, target_pos, speed, true);
-
+#if 1
     // wrap and push to global command queue
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
         [this](edm::move::MotionCommandManualStartPointMove::ptr a) {
@@ -242,6 +244,37 @@ void TestMotionGui::_cmd_start_pointmove(const edm::move::axis_t &target_pos) {
         start_pointmove_cmd);
 
     global_command_queue_->push_command(gcmd);
+
+#else
+
+    // test packaged task
+    std::packaged_task<edm::move::MotionCommandManualStartPointMove::ptr(void)>
+        pt{std::bind(
+            [this](edm::move::MotionCommandManualStartPointMove::ptr a)
+                -> decltype(auto) {
+                this->motion_cmd_queue_->push_command(a);
+                return a;
+            },
+            start_pointmove_cmd)};
+
+    auto f = pt.get_future();
+
+    auto gcmd = std::make_shared<edm::global::CommandPackagedTask<
+        edm::move::MotionCommandManualStartPointMove::ptr>> (std::move(pt));
+    global_command_queue_->push_command(gcmd);
+
+    f.wait();
+    auto r = f.get();
+    while (1) {
+        if (r->is_accepted()) {
+            s_logger->info("*** accepted");
+            break;
+        } else if (r->is_ignored()) {
+            s_logger->info("*** ignored");
+            break;
+        }
+    }
+#endif
 }
 
 void TestMotionGui::_cmd_stop_pointmove(bool immediate) {

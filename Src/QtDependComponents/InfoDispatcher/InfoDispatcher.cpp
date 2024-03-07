@@ -41,6 +41,10 @@ void InfoDispatcher::_handle_signal_callback(const move::MotionSignal &signal) {
     // 拷贝info
     info_cache_ = signal.info;
 
+    s_logger->debug(
+        "InfoDispatcher signal handle: {}",
+        move::MotionSignalQueue::GetMotionSignalTypeStr(signal.type));
+
     switch (signal.type) {
     case move::MotionSignalType::MotionSignal_ManualPointMoveStarted:
         emit manual_pointmove_started();

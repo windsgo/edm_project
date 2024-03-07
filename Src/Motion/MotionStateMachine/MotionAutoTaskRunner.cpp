@@ -92,7 +92,7 @@ bool AutoTaskRunner::pause() {
         return true;
     
     case MotionAutoState::Paused:
-        return pausemove_controller_->pause();
+        return pausemove_controller_->pause_recover();
 
     }
 
@@ -114,11 +114,10 @@ bool AutoTaskRunner::resume() {
     
     case MotionAutoState::Paused: {
 
-        auto pmc_state = pausemove_controller_->state();
-        if (pmc_state == PauseMoveController::State::AllowManualPointMove) {
-            return pausemove_controller_->activate_recover();
+        if (pausemove_controller_->is_recover_activated()) {
+            return pausemove_controller_->resume_recover();
         } else {
-            return pausemove_controller_->resume();
+            return pausemove_controller_->activate_recover();
         }
 
         // 暂停点动恢复完后会自动恢复curr task

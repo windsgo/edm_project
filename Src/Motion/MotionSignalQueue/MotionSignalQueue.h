@@ -68,6 +68,9 @@ public:
     //! unsafe
     queue_t& raw_queue() { return queue_; }
 
+public:
+    static const char* GetMotionSignalTypeStr(MotionSignalType signal_type);
+
 private:
     queue_t queue_;
 };
