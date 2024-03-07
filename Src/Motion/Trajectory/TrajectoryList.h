@@ -45,6 +45,12 @@ public:
     inline bool at_start_segement() const {
         return curr_segement_const_iter_ == segements_.begin();
     }
+    inline bool at_end() const {
+        return at_end_segement() && (*curr_segement_const_iter_)->at_end();
+    }
+    inline bool at_start() const {
+        return at_start_segement() && (*curr_segement_const_iter_)->at_start();
+    }
 
     // for special segement operation or information fetch
     element_type get_curr_segement() const;

@@ -38,19 +38,19 @@ static void print_status(int i, unit_t inc, TrajectoryList::ptr tl) {
     if (inc > 0)
         s_logger->debug(
             "i = {:03d}, inc = {: 02.4f}: size: {}, idx: {}, "
-            "axis[0]: {: 02.4f}; as: {}, ae: {}; type: {}",
+            "axis[0]: {: 02.4f}; as: {},{}, ae: {},{}; type: {}",
             i, fmt::styled(inc, fmt::fg(fmt::color::green)), tl->size(),
             tl->curr_segement_index(), tl->get_curr_cmd_axis()[0],
-            (int)tl->at_start_segement(), (int)tl->at_end_segement(),
+            (int)tl->at_start_segement(), (int)tl->at_start(), (int)tl->at_end_segement(), (int)tl->at_end(),
             (int)tl->get_curr_segement()->type());
 
     else
         s_logger->debug(
             "i = {:03d}, inc = {: 02.4f}: size: {}, idx: {}, "
-            "axis[0]: {: 02.4f}; as: {}, ae: {}; type: {}",
+            "axis[0]: {: 02.4f}; as: {},{}, ae: {},{}; type: {}",
             i, fmt::styled(inc, fmt::fg(fmt::color::red)), tl->size(),
             tl->curr_segement_index(), tl->get_curr_cmd_axis()[0],
-            (int)tl->at_start_segement(), (int)tl->at_end_segement(),
+            (int)tl->at_start_segement(), (int)tl->at_start(), (int)tl->at_end_segement(), (int)tl->at_end(),
             (int)tl->get_curr_segement()->type());
 }
 
@@ -58,6 +58,8 @@ static void test_trajectory() {
     init();
 
     unit_t inc = 0.3;
+
+    print_status(-1, 0, trajectory_list);
 
     for (int i = 0; i < 500; ++i) {
         std::srand(i * 10 * std::time(nullptr));
