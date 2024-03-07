@@ -53,13 +53,16 @@ public:
     }
 
     // for special segement operation or information fetch
-    element_type get_curr_segement() const;
+    inline element_type get_curr_segement() const {
+        return *curr_segement_const_iter_;
+    }
     inline TrajectorySegementType get_curr_segement_type() const {
         return get_curr_segement()->type();
     }
 
-    bool get_curr_cmd_axis(axis_t &axis) const;
-    const axis_t &get_curr_cmd_axis() const;
+    const axis_t &get_curr_cmd_axis() const {
+        return (*curr_segement_const_iter_)->curr_pos();
+    }
 
     inline std::size_t curr_segement_index() const {
         // std::distance is O(1) to std::deque's `LegacyRandomAccessIterator`
@@ -71,8 +74,14 @@ public:
 private:
     void _assert_not_empty_or_throw();
 
-    inline void _add_iter() { ++curr_segement_iter_; ++curr_segement_const_iter_; }
-    inline void _dec_iter() { --curr_segement_iter_; --curr_segement_const_iter_; }
+    inline void _add_iter() {
+        ++curr_segement_iter_;
+        ++curr_segement_const_iter_;
+    }
+    inline void _dec_iter() {
+        --curr_segement_iter_;
+        --curr_segement_const_iter_;
+    }
 
 private:
     //! 使用迭代器表示当前段, 为了防止迭代器失效,

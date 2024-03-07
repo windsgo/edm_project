@@ -10,29 +10,11 @@ namespace edm {
 
 namespace move {
 
-TrajectoryList::element_type TrajectoryList::get_curr_segement() const {
-    assert(!empty());
-
-    return *curr_segement_const_iter_;
-}
-
-bool TrajectoryList::get_curr_cmd_axis(axis_t &axis) const {
-    assert(!empty());
-
-    axis = (*curr_segement_const_iter_)->curr_pos();
-    return true;
-}
-
-const axis_t &TrajectoryList::get_curr_cmd_axis() const {
-    assert(!empty());
-
-    return (*curr_segement_const_iter_)->curr_pos();
-}
-
 void TrajectoryList::run_once(unit_t inc) {
     assert(!empty());
     if (empty()) {
-        s_logger->error("{}: running empty TrajectoryList", __PRETTY_FUNCTION__);
+        s_logger->error("{}: running empty TrajectoryList",
+                        __PRETTY_FUNCTION__);
         return;
     }
 
@@ -44,7 +26,7 @@ void TrajectoryList::run_once(unit_t inc) {
             (*curr_segement_iter_)->set_at_start();
         }
     } else if (inc < 0) {
-        if ((*curr_segement_const_iter_)->at_start() && !at_start_segement() ) {
+        if ((*curr_segement_const_iter_)->at_start() && !at_start_segement()) {
             _dec_iter();
             (*curr_segement_iter_)->set_at_end();
         }
@@ -54,7 +36,7 @@ void TrajectoryList::run_once(unit_t inc) {
 void TrajectoryList::_assert_not_empty_or_throw() {
     assert(!empty());
     bool member_has_nullptr = false;
-    for (const auto& i : segements_) {
+    for (const auto &i : segements_) {
         if (i == nullptr) {
             member_has_nullptr = true;
             break;
@@ -62,7 +44,8 @@ void TrajectoryList::_assert_not_empty_or_throw() {
     }
 
     if (empty() || member_has_nullptr) {
-        s_logger->critical("empty trajectory or member_has_nullptr, size: {}", segements_.size());
+        s_logger->critical("empty trajectory or member_has_nullptr, size: {}",
+                           segements_.size());
         throw exception("empty trajectory or member_has_nullptr");
     }
 }
