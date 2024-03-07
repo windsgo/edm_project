@@ -48,6 +48,13 @@ static void thread_func() {
 
 std::atomic_uint8_t dummy[8];
 
+struct dummy_canfetcher {
+    uint8_t data[8];
+};
+std::atomic<dummy_canfetcher> ddd;
+
+static_assert(sizeof(dummy_canfetcher) == sizeof(ddd));
+
 int main(int argc, char **argv) {
 
     s_root_logger->debug("test can");
@@ -74,9 +81,14 @@ int main(int argc, char **argv) {
             ++i;
             // fprintf(stderr, "%d,", i);
 
-            for (int b = 0; b < 8; ++b) {
-                dummy[b] = frame.payload()[b];
-            }
+            // for (int b = 0; b < 8; ++b) {
+            //     dummy[b] = frame.payload()[b];
+            // }
+
+
+            ddd = *(dummy_canfetcher*)frame.payload().data();
+
+            frame.frameType();
             
             if (i >= 500 * 60) {
                 i = 0;
@@ -115,6 +127,16 @@ int main(int argc, char **argv) {
     });
 
     t2.start(200);
+
+
+    QTimer t3;
+    QObject::connect(&t3, &QTimer::timeout, [&]() {
+
+        dummy_canfetcher c = ddd;
+        
+    });
+
+    t2.start(1);
 
     int ret = app.exec();
 
