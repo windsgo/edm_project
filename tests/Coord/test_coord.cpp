@@ -21,7 +21,9 @@ int main () {
         s_logger->debug("{}: {}, {}", i, c.index(), c.offset()[0]);
     } 
 
-    cm.set_filename(EDM_CONFIG_DIR  "c1.json");
+    cm.save_as(EDM_CONFIG_DIR  "coord6.json");
+
+    auto ccc = std::make_shared<CoordinateManager>(EDM_CONFIG_DIR "coord6.json");
 
     return 0;
 }

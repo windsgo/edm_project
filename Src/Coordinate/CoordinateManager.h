@@ -15,6 +15,7 @@ namespace coord {
 // 负责维护坐标系列表及其偏置
 // 每次对坐标系有增、删、改操作, 都会触发文件操作, 将当前的坐标系列表整个保存入json文件
 class CoordinateManager final {
+    using ptr = std::shared_ptr<CoordinateManager>;
 public:
     // 另存为, 备份, 不会改变当前默认保存的文件名
     void save_as(const std::string& filename) const;
@@ -27,7 +28,7 @@ public:
     const auto& data() const { return coordinates_map_; }
 
 public: // change
-    
+
 
 public:
     // 默认构造函数, 不包含任何坐标系集合
