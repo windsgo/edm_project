@@ -15,7 +15,7 @@ endif()
 # set(CMAKE_CXX_COMPILER /usr/bin/g++-13)
 
 ## config
-add_definitions(-DEDM_ROOT_DIR="${PROJECT_SOURCE_DIR}/")
+add_definitions(-DEDM_ROOT_DIR="${PROJECT_SOURCE_DIR}/") ## 最后要有斜杠
 
 ## libs
 # fmt library
@@ -86,6 +86,7 @@ set(PROJECT_SOURCES
     Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
     Src/Coordinate/Coordinate.cpp
     Src/Coordinate/CoordinateManager.cpp
+    Src/SystemSettings/SystemSettings.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)

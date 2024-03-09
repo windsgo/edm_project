@@ -18,6 +18,7 @@ using namespace json::literals;
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include "SystemSettings/SystemSettings.h"
 #include "Logger/LogDefine.h"
 #include "config.h"
 #include "Logger/LogMacro.h"
@@ -199,7 +200,7 @@ static void test_opt() {
 static void test_log() {
     // std::ifstream ifs(
     //     "/home/windsgo/Documents/edmproject/edm_project/Conf/logdefine.json");
-    std::ifstream ifs(EDM_LOG_CONFIG_FILE);
+    std::ifstream ifs(edm::SystemSettings::instance().get_log_config_file());
     std::stringstream ss;
     ss << ifs.rdbuf();
     std::string str = ss.str();

@@ -1,0 +1,5 @@
+{
+    "coord_config_file": "coord.json",
+    "log_config_file": "logdefine.json",
+    "qss_file": "gui.qss"
+}

@@ -9,6 +9,45 @@
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
+static bool _check_json_has_int(const json::value &j,
+                                const std::string &key_name,
+                                bool need_positive = true) {
+    auto int_find_ret = j.find(key_name);
+    if (!int_find_ret) {
+        return false;
+    }
+
+    if (!int_find_ret->is_number()) {
+        return false;
+    }
+
+    auto int_value = int_find_ret->as_integer();
+    if (need_positive && int_value < 0) {
+        return false;
+    }
+
+    if ((double)int_find_ret->as_double() != int_value) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool _check_json_has_vector(const json::value &j,
+                                   const std::string &key_name,
+                                   std::size_t vec_min_size) {
+    auto vec_find_ret = j.find<std::vector<double>>(key_name);
+    if (!vec_find_ret) {
+        return false;
+    }
+
+    if (vec_find_ret->size() < vec_min_size) {
+        return false;
+    }
+
+    return true;
+}
+
 namespace json::ext {
 /**
  * {
@@ -29,66 +68,115 @@ public:
         return json::object{{"index", t.index()}, {"offset", std::move(vec)}};
     }
     bool check_json(const json::value &j) const {
-        if (!j.is<json::object>()) {
-            s_logger->error("Coordinate: !j.is<json::object>()");
+        if (!j.is_object()) {
+            s_logger->error("Coordinate: !j.is_object()");
             return false;
         }
 
-        auto index_find_ret = j.find("index");
-        if (!index_find_ret) {
-            s_logger->error("Coordinate: index not exist");
-            return false;
-        }
-
-        if (!index_find_ret->is_number()) {
-            s_logger->error("Coordinate: index not number");
-            return false;
-        }
-
-        if ((double)index_find_ret->as_integer() != index_find_ret->as_double()) {
-            s_logger->error("Coordinate: index not integer");
-            return false;
-        }
-
-        if (index_find_ret->as_integer() < 0) {
-            s_logger->error("Coordinate: index not positive");
-            return false;
-        }
-
-        auto offset_value_opt = j.find<std::vector<double>>("offset");
-        if (!offset_value_opt) {
-            s_logger->error(
-                "Coordinate: offset not exist or not std::vector<double> type");
-            return false;
-        }
-        if (offset_value_opt->size() < edm::coord::coord_offset_t{}.size()) {
-            s_logger->error("Coordinate: offset size not enough: {}",
-                            offset_value_opt->size());
+        if (!_check_json_has_int(j, "index", true) ||
+            !_check_json_has_vector(j, "offset",
+                                    edm::coord::Coordinate::Size)) {
             return false;
         }
 
         return true;
     }
     bool from_json(const json::value &j, edm::coord::Coordinate &out) const {
-        if (!check_json(j)) {
-            return false;
-        }
-
         const auto &jo = j.as_object();
         const auto &joffset_arr = jo.at("offset").as_array();
+        const auto &jindex = jo.at("index");
+
         edm::coord::coord_offset_t offset;
         for (std::size_t i = 0; i < offset.size(); ++i) {
             offset[i] = joffset_arr[i].as_double();
         }
-        out = std::move(
-            edm::coord::Coordinate{jo.at("index").as_unsigned(), offset});
 
+        out.set_index(jindex.as_unsigned());
+        out.set_offset(offset);
+
+        return true;
+    }
+};
+
+template <> class jsonization<edm::coord::CoordinateManager> {
+public:
+    json::value to_json(const edm::coord::CoordinateManager &t) const {
+        json::object jo;
+
+        std::vector<edm::coord::coord_offset_t::value_type> global_offset_vec;
+        global_offset_vec.reserve(t.get_global_offset().size());
+        for (std::size_t i = 0; i < t.get_global_offset().size(); ++i) {
+            global_offset_vec.push_back(t.get_global_offset()[i]);
+        }
+
+        jo["global_offset"] = json::array{std::move(global_offset_vec)};
+
+        json::array c_arr{};
+
+        for (const auto &[_, c] : t.get_coordinates_map()) {
+            c_arr.push_back(c);
+        }
+
+        jo["coord_offsets"] = std::move(c_arr);
+
+        return jo;
+    }
+
+    bool check_json(const json::value &j) const {
+        if (!j.is_object()) {
+            return false;
+        }
+
+        if (!_check_json_has_vector(j, "global_offset", edm::coord::Coordinate::Size)) {
+            return false;
+        }
+
+        auto coord_offsets_find_ret = j.find("coord_offsets");
+        if (!coord_offsets_find_ret || !coord_offsets_find_ret->is_array()) {
+            return false;
+        }
+
+        const auto& coord_offsets_jarr = coord_offsets_find_ret->as_array();
+        for (std::size_t i = 0; i < coord_offsets_jarr.size(); ++i) {
+            if (!coord_offsets_jarr[i].is<edm::coord::Coordinate>()) {
+                return false;
+            }
+        } 
+
+        return true;
+    };
+
+    bool from_json(const json::value& j, edm::coord::CoordinateManager& t) const {
+        const auto& jo = j.as_object();
+        const auto& jglobal_offset_arr = jo.at("global_offset").as_array();
+        const auto& jcoord_offsets_arr = jo.at("coord_offsets").as_array();
+
+        edm::coord::coord_offset_t global_offset;
+        for (std::size_t i = 0; i < global_offset.size(); ++i) {
+            global_offset[i] = jglobal_offset_arr[i].as_double();
+        }
+
+        edm::coord::CoordinateManager::map_t coord_map;
+        for (std::size_t i = 0; i < jcoord_offsets_arr.size(); ++i) {
+            auto c = jcoord_offsets_arr.at(i).as<edm::coord::Coordinate>();
+            if (coord_map.find(c.index()) != coord_map.end()) {
+                return false;
+            }
+
+            coord_map.emplace(c.index(), c);
+        }
+
+        t.clear_coordinates_map();
+        t.set_global_offset(global_offset);
+        t.set_coordinates_map(std::move(coord_map));
+        
         return true;
     }
 };
 } // namespace json::ext
 
-static std::optional<std::string> _create_backup_file_for(const std::string ori_file) {
+static std::optional<std::string>
+_create_backup_file_for(const std::string ori_file) {
     auto bak_file = ori_file + ".bak";
     if (std::filesystem::exists(bak_file)) {
         int i = 1;
@@ -116,118 +204,55 @@ namespace edm {
 
 namespace coord {
 
-void CoordinateManager::save_as(const std::string & filename) const {
-    _save_to_file(filename);
+bool CoordinateManager::save_as(const std::string &filename) const {
+    return _save_to_file(filename);
 }
 
-void CoordinateManager::set_filename(const std::string &new_filename) {
-    filename_ = new_filename;
-
-    _save_to_file(filename_);
-}
-
-CoordinateManager::CoordinateManager(const std::string &filename) : filename_(filename) {
+std::optional<CoordinateManager> CoordinateManager::LoadFromJsonFile(const std::string& filename)
+{
     std::ifstream ifs(filename);
     if (!ifs.is_open()) {
-        s_logger->warn("CoordinateManager init file open failed: {}", filename);
-        _reset_and_generate_default_coord();
-        return;
+        return std::nullopt;
     }
 
     auto parse_ret = json::parse(ifs, false);
     if (!parse_ret) {
-        s_logger->warn(
-            "CoordinateManager init file parse failed, json syntax error: {}",
-            filename);
-        _reset_and_generate_default_coord();
         ifs.close();
-        _create_backup_file_for(filename);
-        return;
+        return std::nullopt;
     }
-
-    auto root = std::move(*parse_ret);
-    if (!_parse_json_to_map(root)) {
-        s_logger->warn(
-            "CoordinateManager init file parse failed, coord error: {}",
-            filename);
-        _reset_and_generate_default_coord();
-        ifs.close();
-        _create_backup_file_for(filename);
-        return;
-    }
-
-    s_logger->debug("CoordinateManager init success, size: {}",
-                    coordinates_map_.size());
 
     ifs.close();
-}
 
-bool CoordinateManager::_parse_json_to_map(const json::value &value) {
-    if (!value.is_array()) {
-        s_logger->error("{}, not array", __PRETTY_FUNCTION__);
-        return false;
+    auto root = std::move(*parse_ret);
+    if (!root.is<CoordinateManager>()) {
+        s_logger->error("not a CoordinateManager");
+        return std::nullopt;
     }
 
-    for (const auto &i : value.as_array()) {
-        try {
-            Coordinate c = (Coordinate)i;
-            if (coordinates_map_.find(c.index()) != coordinates_map_.end()) {
-                s_logger->error("{}, repeat index: {}", __PRETTY_FUNCTION__, c.index());
-                coordinates_map_.clear();
-                return false;
-            }
-            coordinates_map_.emplace(c.index(), c);
-        } catch (const std::exception &e) {
-            s_logger->error("{}, exception : {}", __PRETTY_FUNCTION__,
-                            e.what());
-            coordinates_map_.clear();
-            return false;
-        }
-    }
-
-    return true;
+    return root.as<CoordinateManager>();
 }
 
-void CoordinateManager::_reset_and_generate_default_coord() {
-    // reset
-    coordinates_map_.clear();
-
-    // generate default coordiates: g54 ~ g59 by default
-    coordinates_map_.reserve(59 - 54 + 1);
-    for (uint32_t i = 54; i <= 59; ++i) {
-        coordinates_map_.emplace(i, Coordinate{i, coord_offset_t{0.0}});
-    }
-}
-
-void CoordinateManager::_save_to_file(const std::string &filename) const {
+bool CoordinateManager::_save_to_file(const std::string &filename) const {
     if (filename.empty()) {
         s_logger->error("{}: can not save to empty file", __PRETTY_FUNCTION__);
-        return;
+        return false;
     }
 
     std::ofstream ofs(filename);
     if (!ofs.is_open()) {
         s_logger->error("{}: can not open file: {}", __PRETTY_FUNCTION__,
                         filename);
-        return;
+        return false;
     }
-    
-    auto value = _to_json();
+
+    json::value value = *this;
     ofs << value;
 
     s_logger->info("coord saved to file: {}", filename);
 
     ofs.close();
-}
 
-json::value CoordinateManager::_to_json() const {
-    json::array jo;
-    for (const auto& [_, c] : coordinates_map_) {
-        json::value v {c};
-        jo.push_back(std::move(v));
-    }
-
-    return std::move(jo);
+    return true;
 }
 
 } // namespace coord

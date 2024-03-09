@@ -5,8 +5,6 @@
 
 #include "config.h"
 
-#include <type_traits>
-
 #include "Motion/MoveDefines.h"
 
 namespace edm {
@@ -26,6 +24,7 @@ using coord_offset_t = move::axis_t;
 
 class Coordinate final {
 public:
+    static constexpr const std::size_t Size {coord_offset_t{}.size()}; 
     Coordinate() noexcept = default;
     Coordinate(uint32_t index, const coord_offset_t &offset) noexcept
         : index_(index), offset_(offset) {}
@@ -33,6 +32,8 @@ public:
 
     inline auto index() const { return index_; }
     inline const auto &offset() const { return offset_; }
+
+    inline void set_index(uint32_t index) { index_ = index; }
 
     // 对`set_offset` 输入当前该坐标系下的坐标, 即可将当前点置为当前坐标系的零点
     inline void set_offset(const coord_offset_t &offset) { offset_ = offset; }
@@ -46,7 +47,7 @@ public:
 
     // `get_machine_pos` 根据输入的当前坐标系下点的坐标值, 计算该点机床坐标值
     inline move::axis_t
-    get_machine_pos(const move::axis_t &curr_coord_axis_value) {
+    get_machine_pos(const move::axis_t &curr_coord_axis_value) const {
         move::axis_t ret;
         for (int i = 0; i < curr_coord_axis_value.size(); ++i) {
             // 机床坐标 = 坐标系下坐标值 +
@@ -65,3 +66,6 @@ private:
 } // namespace coord
 
 } // namespace edm
+
+
+

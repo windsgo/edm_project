@@ -4,6 +4,8 @@
 #include "Utils/Format/edm_format.h"
 #include "config.h"
 
+#include "SystemSettings/SystemSettings.h"
+
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -56,7 +58,8 @@ logger_ptr LogManager::get_root_logger() const {
 }
 
 void LogManager::_init() {
-    std::ifstream ifs(EDM_LOG_CONFIG_FILE);
+    auto logdefine_file = EDM_CONFIG_DIR + SystemSettings::instance().get_log_config_file();
+    std::ifstream ifs(logdefine_file);
     // std::stringstream ss;
     // ss << ifs.rdbuf();
     // std::string str = ss.str();
