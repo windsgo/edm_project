@@ -18,8 +18,10 @@ using coord_offset_t = move::axis_t;
  * 回零偏执(全局偏置) := 机床零点，在驱动器坐标系下的位置
  *
  * motor_pos(驱动器坐标) = coordn_pos(坐标系n下的坐标) +
- * coordn_offset(坐标系n的偏置) + global_offset(回零偏置) = machine_pos +
- * global_offset machine_pos(机床坐标) = coordn_pos + coordn_offset
+ * coordn_offset(坐标系n的偏置) + global_offset(回零偏置) 
+ * = machine_pos + global_offset 
+ * 
+ * machine_pos(机床坐标) = coordn_pos + coordn_offset
  */
 
 class Coordinate final {
@@ -56,6 +58,15 @@ public:
         }
 
         return ret; // NRVO
+    }
+
+    inline void
+    get_machine_pos(const move::axis_t &curr_coord_axis_value, move::axis_t& output) const {
+        for (int i = 0; i < curr_coord_axis_value.size(); ++i) {
+            // 机床坐标 = 坐标系下坐标值 +
+            // 坐标系零点相对机床零点的位置(坐标系偏置)
+            output[i] = curr_coord_axis_value[i] + offset_[i];
+        }
     }
 
 private:

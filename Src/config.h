@@ -4,7 +4,7 @@
 #define EDM_SYSTEM_SETTINGS_CONFIG_FILE           EDM_CONFIG_DIR "system.json"
 
 // 坐标轴(=驱动器)数目
-#define EDM_SERVO_NUM                             1
+#define EDM_SERVO_NUM                             3
 #define EDM_AXIS_NUM                              EDM_SERVO_NUM
 
 // 单位定义

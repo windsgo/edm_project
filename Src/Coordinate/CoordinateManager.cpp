@@ -7,6 +7,8 @@
 
 #include <json.hpp> // meo json
 
+#include <unordered_set>
+
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 static bool _check_json_has_int(const json::value &j,
@@ -127,7 +129,8 @@ public:
             return false;
         }
 
-        if (!_check_json_has_vector(j, "global_offset", edm::coord::Coordinate::Size)) {
+        if (!_check_json_has_vector(j, "global_offset",
+                                    edm::coord::Coordinate::Size)) {
             return false;
         }
 
@@ -136,20 +139,38 @@ public:
             return false;
         }
 
-        const auto& coord_offsets_jarr = coord_offsets_find_ret->as_array();
+        const auto &coord_offsets_jarr = coord_offsets_find_ret->as_array();
+        if (coord_offsets_jarr.empty()) {
+            return false;
+        }
+
+        // used to check if has the same index
+        std::unordered_set<uint32_t> index_set;
+
         for (std::size_t i = 0; i < coord_offsets_jarr.size(); ++i) {
             if (!coord_offsets_jarr[i].is<edm::coord::Coordinate>()) {
                 return false;
             }
-        } 
+
+            // convert the coordoffset here to fetch the index
+            auto index =
+                coord_offsets_jarr[i].as<edm::coord::Coordinate>().index();
+            if (index_set.find(index) != index_set.end()) {
+                s_logger->error("coord config has the same index: {}", index);
+                return false;
+            } else {
+                index_set.insert(index);
+            }
+        }
 
         return true;
     };
 
-    bool from_json(const json::value& j, edm::coord::CoordinateManager& t) const {
-        const auto& jo = j.as_object();
-        const auto& jglobal_offset_arr = jo.at("global_offset").as_array();
-        const auto& jcoord_offsets_arr = jo.at("coord_offsets").as_array();
+    bool from_json(const json::value &j,
+                   edm::coord::CoordinateManager &t) const {
+        const auto &jo = j.as_object();
+        const auto &jglobal_offset_arr = jo.at("global_offset").as_array();
+        const auto &jcoord_offsets_arr = jo.at("coord_offsets").as_array();
 
         edm::coord::coord_offset_t global_offset;
         for (std::size_t i = 0; i < global_offset.size(); ++i) {
@@ -169,7 +190,7 @@ public:
         t.clear_coordinates_map();
         t.set_global_offset(global_offset);
         t.set_coordinates_map(std::move(coord_map));
-        
+
         return true;
     }
 };
@@ -208,8 +229,8 @@ bool CoordinateManager::save_as(const std::string &filename) const {
     return _save_to_file(filename);
 }
 
-std::optional<CoordinateManager> CoordinateManager::LoadFromJsonFile(const std::string& filename)
-{
+std::optional<CoordinateManager>
+CoordinateManager::LoadFromJsonFile(const std::string &filename) {
     std::ifstream ifs(filename);
     if (!ifs.is_open()) {
         return std::nullopt;
@@ -229,7 +250,99 @@ std::optional<CoordinateManager> CoordinateManager::LoadFromJsonFile(const std::
         return std::nullopt;
     }
 
-    return root.as<CoordinateManager>();
+    try {
+        return root.as<CoordinateManager>();
+    } catch (const std::exception &e) {
+        s_logger->critical("not a CoordinateManager, ex: {}", e.what());
+        return std::nullopt;
+    }
+}
+
+std::vector<uint32_t> CoordinateManager::get_avaiable_coord_indexes() const {
+    std::vector<uint32_t> ret;
+
+    for (const auto &[i, _] : coordinates_map_) {
+        ret.push_back(i);
+    }
+
+    return ret;
+}
+
+std::optional<coord_offset_t>
+CoordinateManager::get_coord_offset(uint32_t index) const {
+    auto find_ret = coordinates_map_.find(index);
+
+    if (find_ret == coordinates_map_.end()) {
+        return std::nullopt;
+    }
+
+    return find_ret->second.offset();
+}
+
+bool CoordinateManager::set_coord_offset(uint32_t coord_index,
+                                         const coord_offset_t &offset) {
+    auto find_coord_ret = coordinates_map_.find(coord_index);
+    if (find_coord_ret == coordinates_map_.end()) {
+        return false;
+    }
+
+    find_coord_ret->second.set_offset(offset);
+
+    return true;
+}
+
+bool CoordinateManager::coord_to_machine(
+    uint32_t coord_index, const move::axis_t &curr_coord_axis_value,
+    move::axis_t &output) const {
+    auto find_coord_ret = coordinates_map_.find(coord_index);
+    if (find_coord_ret == coordinates_map_.end()) {
+        return false;
+    }
+
+    find_coord_ret->second.get_machine_pos(curr_coord_axis_value, output);
+
+    return true;
+}
+
+bool CoordinateManager::coord_to_motor(
+    uint32_t coord_index, const move::axis_t &curr_coord_axis_value,
+    move::axis_t &output) const {
+    auto find_coord_ret = coordinates_map_.find(coord_index);
+    if (find_coord_ret == coordinates_map_.end()) {
+        return false;
+    }
+
+    find_coord_ret->second.get_machine_pos(curr_coord_axis_value, output);
+    for (std::size_t i = 0; i < output.size(); ++i) {
+        output[i] += global_offset_[i];
+    }
+
+    return true;
+}
+
+bool CoordinateManager::motor_to_machine(const move::axis_t &motor_axis,
+                                         move::axis_t &output) const {
+    for (std::size_t i = 0; i < output.size(); ++i) {
+        output[i] = motor_axis[i] - global_offset_[i];
+    }
+
+    return true;
+}
+
+bool CoordinateManager::motor_to_coord(uint32_t coord_index,
+                                       const move::axis_t &motor_axis,
+                                       move::axis_t &output) const {
+    auto find_coord_ret = coordinates_map_.find(coord_index);
+    if (find_coord_ret == coordinates_map_.end()) {
+        return false;
+    }
+
+    for (std::size_t i = 0; i < output.size(); ++i) {
+        output[i] = motor_axis[i] - global_offset_[i] -
+                    find_coord_ret->second.offset()[i];
+    }
+
+    return true;
 }
 
 bool CoordinateManager::_save_to_file(const std::string &filename) const {
