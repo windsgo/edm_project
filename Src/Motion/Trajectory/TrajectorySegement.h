@@ -53,12 +53,14 @@ protected:
 // 线性路径段
 class TrajectoryLinearSegement : public TrajectorySegementBase {
 public:
+    using ptr = std::shared_ptr<TrajectoryLinearSegement>;
     // new segement ctor, set curr_pos to start_pos
     TrajectoryLinearSegement(const axis_t &start_pos, const axis_t &end_pos)
         : TrajectorySegementBase(TrajectorySegementType::Linear, start_pos,
                                  end_pos),
           total_length_(MotionUtils::CalcAxisLength(start_pos, end_pos)),
-          curr_length_(0.0) {}
+          curr_length_(0.0),
+          unit_vector_(MotionUtils::CalcAxisUnitVector(start_pos, end_pos)) {}
 
     // custom set curr_pos to user-set value (using curr_length)
     TrajectoryLinearSegement(const axis_t &start_pos, const axis_t &end_pos,
@@ -66,7 +68,8 @@ public:
         : TrajectorySegementBase(TrajectorySegementType::Linear, start_pos,
                                  end_pos),
           total_length_(MotionUtils::CalcAxisLength(start_pos, end_pos)),
-          curr_length_(curr_length) {
+          curr_length_(curr_length),
+          unit_vector_(MotionUtils::CalcAxisUnitVector(start_pos, end_pos)) {
         _validate_curr_length();
         curr_pos_ = CalcCurrPos(start_pos, end_pos, curr_length_);
     }
@@ -84,6 +87,11 @@ public:
     inline const unit_t curr_length() const { return curr_length_; }
     inline const unit_t total_length() const { return total_length_; }
 
+    const axis_t &get_unit_vector() const { return unit_vector_; }
+
+    // 设置当前轨迹的长度状态, 同时刷新轨迹位置 (用于单段G01抬刀(可跨过起点的)非当前点恢复)
+    void set_curr_length(unit_t length);
+
 private:
     void _add_inc(unit_t inc);
     void _validate_curr_length();
@@ -95,6 +103,8 @@ public:
 private:
     unit_t total_length_;
     unit_t curr_length_;
+
+    axis_t unit_vector_;
 };
 
 //

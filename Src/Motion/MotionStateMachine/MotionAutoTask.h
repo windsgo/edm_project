@@ -13,7 +13,9 @@ namespace move {
 enum class AutoTaskType {
     Unknow,
     G00,
-    G01,
+    G01, // 单段直线加工
+    G01LineGroup, // 多段G01连续组合加工, 轨迹抬刀 //! 不打算实现了, 没意义, 直接做Nurbs
+    G01Nurbs //! 后续实现
     // TODO
 };
 

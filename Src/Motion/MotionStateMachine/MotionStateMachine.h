@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 
+#include "Motion/JumpDefines.h"
 #include "Motion/MoveDefines.h"
 #include "Motion/MoveruntimeWrapper/MoveruntimeWrapper.h"
 #include "Motion/PointMoveHandler/PointMoveHandler.h"
@@ -59,7 +60,11 @@ public: // operate interfaces
 
     bool start_auto_g00(const MoveRuntimePlanSpeedInput &speed_param,
                         const axis_t &target_pos, bool enable_touch_detect);
-    bool start_auto_g01();
+
+    bool start_auto_g01(const axis_t &target_pos,
+                        const JumpParam &init_jump_param,
+                        unit_t max_jump_height_from_begin,
+                        const std::function<unit_t(void)> &cb_get_servo_cmd);
 
     bool pause_auto();
     bool resume_auto();
@@ -86,7 +91,7 @@ private:              // state data
 
     bool enabled_{
         false}; // 使能位 (防止reset后, 还未重新设置初始指令位置, 就进行运算)
-    MotionMainMode main_mode_{MotionMainMode::Idle};       // 主模式
+    MotionMainMode main_mode_{MotionMainMode::Idle}; // 主模式
     // MotionAutoState auto_state_{MotionAutoState::Stopped}; // Auto状态
 
     // TODO 各轴软限位参数 (普通直线抬刀判断)

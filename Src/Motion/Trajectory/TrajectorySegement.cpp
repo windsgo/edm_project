@@ -28,6 +28,13 @@ void TrajectoryLinearSegement::run_once(unit_t inc) {
     curr_pos_ = CalcCurrPos(start_pos_, end_pos_, curr_length_);
 }
 
+void TrajectoryLinearSegement::set_curr_length(unit_t length) {
+    curr_length_ = length;
+    _validate_curr_length();
+
+    curr_pos_ = CalcCurrPos(start_pos_, end_pos_, curr_length_);
+}
+
 void TrajectoryLinearSegement::_add_inc(unit_t inc) {
     curr_length_ = curr_length_ + inc;
 
