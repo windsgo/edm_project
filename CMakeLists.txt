@@ -48,7 +48,7 @@ set(Qt5_DIR $ENV{HOME}/Qt5.14.2/5.14.2/gcc_64/lib/cmake/Qt5)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-find_package(Qt5 COMPONENTS Core SerialBus REQUIRED)
+find_package(Qt5 COMPONENTS Core SerialBus Widgets REQUIRED)
 
 ## Project
 set(PROJECT_SOURCES
@@ -86,6 +86,7 @@ set(PROJECT_SOURCES
     Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
     Src/Coordinate/Coordinate.cpp
     Src/Coordinate/CoordinateManager.cpp
+    Src/Coordinate/CoordinateSystem.cpp
     Src/SystemSettings/SystemSettings.cpp
 )
 
@@ -106,4 +107,5 @@ target_link_libraries(edm PUBLIC
     pthread # <pthread.h>
 )
 
+add_subdirectory(App)
 add_subdirectory(tests)

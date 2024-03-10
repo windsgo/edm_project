@@ -14,14 +14,25 @@ namespace move {
 MotionStateMachine::MotionStateMachine(
     const std::function<bool(axis_t &)> &cb_get_act_axis,
     TouchDetectHandler::ptr touch_detect_handler,
-    SignalBuffer::ptr signal_buffer)
+    SignalBuffer::ptr signal_buffer,
+    const std::function<double(void)> &cb_get_servo_cmd,
+    const std::function<void(bool)> &cb_enable_votalge_gate)
     : cb_get_act_axis_(cb_get_act_axis),
       touch_detect_handler_(touch_detect_handler),
-      signal_buffer_(signal_buffer) {
+      signal_buffer_(signal_buffer), cb_get_servo_cmd_(cb_get_servo_cmd),
+      cb_enable_votalge_gate_(cb_enable_votalge_gate) {
 
     //! use assert more than exception is better
     if (!cb_get_act_axis_) {
         throw exception("no cb_get_act_axis_");
+    }
+
+    if (!cb_get_servo_cmd_) {
+        throw exception("no cb_get_servo_cmd_");
+    }
+
+    if (!cb_enable_votalge_gate_) {
+        throw exception("no cb_enable_votalge_gate_");
     }
 
     if (!touch_detect_handler_) {
@@ -31,6 +42,9 @@ MotionStateMachine::MotionStateMachine(
     if (!signal_buffer_) {
         throw exception("no signal_buffer_");
     }
+
+    cb_get_jump_param_ =
+        std::bind_front(&MotionStateMachine::_get_jump_param, this);
 
     auto_task_runner_ =
         std::make_shared<AutoTaskRunner>(touch_detect_handler_, signal_buffer_);
@@ -114,7 +128,8 @@ bool MotionStateMachine::start_manual_pointmove(
         return false;
     case MotionMainMode::Auto:
         s_logger->trace("{}: in auto mode", __PRETTY_FUNCTION__);
-        return auto_task_runner_->start_manual_pointmove(speed_param, cmd_axis_, target_pos);
+        return auto_task_runner_->start_manual_pointmove(speed_param, cmd_axis_,
+                                                         target_pos);
         // 处理暂停点动的启动.
         break;
     default:
@@ -128,8 +143,8 @@ bool MotionStateMachine::stop_manual_pointmove(bool immediate) {
         s_logger->warn("{}: idle mode.", __PRETTY_FUNCTION__);
         return false;
     case MotionMainMode::Manual:
-        s_logger->trace("{}: in manual mode, immediate = {}", __PRETTY_FUNCTION__,
-                        immediate);
+        s_logger->trace("{}: in manual mode, immediate = {}",
+                        __PRETTY_FUNCTION__, immediate);
         return pm_handler_.stop(immediate);
     case MotionMainMode::Auto:
         s_logger->trace("{}: in auto mode, immediate = {}", __PRETTY_FUNCTION__,
@@ -168,6 +183,35 @@ bool MotionStateMachine::start_auto_g00(
     return true;
 }
 
+bool MotionStateMachine::start_auto_g01(const axis_t &target_pos,
+                                        unit_t max_jump_height_from_begin) {
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
+
+    if (main_mode_ != MotionMainMode::Idle) {
+        return false;
+    }
+
+    auto g01_line_traj =
+        std::make_shared<TrajectoryLinearSegement>(cmd_axis_, target_pos);
+
+    auto new_g01_auto_task = std::make_shared<G01AutoTask>(
+        g01_line_traj, max_jump_height_from_begin, this->cb_get_act_axis_,
+        this->cb_get_servo_cmd_, this->cb_get_jump_param_,
+        this->cb_enable_votalge_gate_);
+
+    if (new_g01_auto_task->is_over()) {
+        return false;
+    }
+
+    auto ret = auto_task_runner_->restart_task(new_g01_auto_task);
+    if (!ret) {
+        return false;
+    }
+
+    signal_buffer_->set_signal(MotionSignal_AutoStarted);
+    _mainmode_switch_to(MotionMainMode::Auto);
+    return true;
+}
 bool MotionStateMachine::pause_auto() {
     s_logger->trace("{}", __PRETTY_FUNCTION__);
 

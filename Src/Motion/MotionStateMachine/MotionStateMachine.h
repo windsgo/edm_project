@@ -30,7 +30,9 @@ public:
     using ptr = std::shared_ptr<MotionStateMachine>;
     MotionStateMachine(const std::function<bool(axis_t &)> &cb_get_act_axis,
                        TouchDetectHandler::ptr touch_detect_handler,
-                       SignalBuffer::ptr signal_buffer);
+                       SignalBuffer::ptr signal_buffer,
+                       const std::function<double(void)> &cb_get_servo_cmd,
+                       const std::function<void(bool)> &cb_enable_votalge_gate);
     ~MotionStateMachine() = default;
 
     // run once
@@ -62,9 +64,7 @@ public: // operate interfaces
                         const axis_t &target_pos, bool enable_touch_detect);
 
     bool start_auto_g01(const axis_t &target_pos,
-                        const JumpParam &init_jump_param,
-                        unit_t max_jump_height_from_begin,
-                        const std::function<unit_t(void)> &cb_get_servo_cmd);
+                        unit_t max_jump_height_from_begin);
 
     bool pause_auto();
     bool resume_auto();
@@ -84,7 +84,11 @@ private: // inside functions: state process
     void _mainmode_auto();
 
     void _mainmode_switch_to(MotionMainMode new_main_mode);
-    // TODO automode
+
+private:
+    void _get_jump_param(JumpParam &jump_param) {
+        jump_param = jump_param_cache_;
+    }
 
 private:              // state data
     axis_t cmd_axis_; // 指令位值 (驱动器值, 单位blu)
@@ -114,6 +118,19 @@ private: // callbacks
 
     // get real axis
     std::function<bool(axis_t &)> cb_get_act_axis_;
+
+    // get servo cmd
+    std::function<double(void)> cb_get_servo_cmd_;
+
+    // 获取缓存抬刀参数回调(给G01用)
+    std::function<void(JumpParam &)> cb_get_jump_param_;
+
+    // 抬刀使能电源位
+    std::function<void(bool)> cb_enable_votalge_gate_;
+
+private:
+    // 缓存的抬刀参数
+    JumpParam jump_param_cache_;
 
 private: // signal dispatcher
     // 用于接收当前周期需要输出的信号,

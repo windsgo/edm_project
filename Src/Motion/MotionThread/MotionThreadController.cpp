@@ -25,15 +25,14 @@ MotionThreadController::MotionThreadController(
 
     signal_buffer_ = std::make_shared<SignalBuffer>();
 
+    //! 创建motion状态机
     auto get_act_pos_cb =
         std::bind_front(&MotionThreadController::_get_act_pos, this);
-    auto touch_detect_cb = [this]() -> bool {
-        return false; // TODO
-    };
     touch_detect_handler_ =
-        std::make_shared<TouchDetectHandler>(touch_detect_cb);
+        std::make_shared<TouchDetectHandler>(cb_get_touch_physical_detected_);
     motion_state_machine_ = std::make_shared<MotionStateMachine>(
-        get_act_pos_cb, touch_detect_handler_, signal_buffer_);
+        get_act_pos_cb, touch_detect_handler_, signal_buffer_,
+        cb_get_servo_cmd_, cb_enable_votalge_gate_);
     if (!motion_state_machine_) {
         s_logger->critical("MotionStateMachine create failed");
         throw exception("MotionStateMachine create failed");
@@ -79,7 +78,7 @@ bool MotionThreadController::_create_thread() {
     pthread_attr_t attr;
     int ret;
 
-#ifndef EDM_OFFLINE_RUN_NO_ECAT 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
     /* Lock memory */
     if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
         printf("mlockall failed: %m\n");
@@ -506,7 +505,8 @@ void MotionThreadController::_fetch_command_and_handle() {
     }
     case MotionCommandAuto_Stop: {
         s_logger->trace("Handle MotionCmd: Auto_Stop");
-        auto autostop_cmd = std::static_pointer_cast<MotionCommandAutoStop>(cmd);
+        auto autostop_cmd =
+            std::static_pointer_cast<MotionCommandAutoStop>(cmd);
         motion_state_machine_->stop_auto(autostop_cmd->immediate());
         break;
     }

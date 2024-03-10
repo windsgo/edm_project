@@ -88,8 +88,7 @@ private: // Thread
     void _handle_signal();
 
 private: // Command
-
-public: // State
+public:  // State
     // Ecat State
     enum class EcatState {
         Init,                       // Init State
@@ -108,8 +107,8 @@ public: // State
         CanExit,  // 线程可以退出
     } thread_state_{ThreadState::Init};
 
-    static const char* GetThreadStateStr(ThreadState s);
-    static const char* GetEcatStateStr(EcatState s);
+    static const char *GetThreadStateStr(ThreadState s);
+    static const char *GetEcatStateStr(EcatState s);
 
 private:
     void _switch_thread_state(ThreadState new_thread_state);
@@ -150,6 +149,17 @@ private: // 运动状态机
     MotionStateMachine::ptr motion_state_machine_;
 
     TouchDetectHandler::ptr touch_detect_handler_;
+
+private: // 外部的一些回调
+    // 抬刀使能电源位, 该函数应当创建一个操作PowerController的命令,
+    // 并push入全局命令列表执行
+    std::function<void(bool)> cb_enable_votalge_gate_; // TODO, 外部传入初始化
+
+    // 获取伺服指令, 该函数应当返回当前可用的伺服指令, 尽量避免锁, 使用原子量
+    std::function<double(void)> cb_get_servo_cmd_; // TODO, 外部传入初始化
+
+    // 获取接触感知状态, 该函数返回从伺服板收到的状态量, 指示是否发生了接触(电压低于阈值)
+    std::function<bool(void)> cb_get_touch_physical_detected_; // TODO, 外部传入初始化
 };
 
 } // namespace move

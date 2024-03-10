@@ -196,31 +196,6 @@ public:
 };
 } // namespace json::ext
 
-static std::optional<std::string>
-_create_backup_file_for(const std::string ori_file) {
-    auto bak_file = ori_file + ".bak";
-    if (std::filesystem::exists(bak_file)) {
-        int i = 1;
-        while (true || i > 20) {
-            auto bak_i_file = bak_file + "." + std::to_string(i);
-            if (!std::filesystem::exists(bak_i_file)) {
-                bak_file = std::move(bak_i_file);
-                break;
-            }
-            ++i;
-        }
-    }
-
-    auto ret = std::filesystem::copy_file(ori_file, bak_file);
-    if (ret) {
-        s_logger->info("successfully create coord backup file: {}", bak_file);
-        return std::move(bak_file);
-    } else {
-        s_logger->error("create coord backup file failed for: {}", ori_file);
-        return std::nullopt;
-    }
-}
-
 namespace edm {
 
 namespace coord {
