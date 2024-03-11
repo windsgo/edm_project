@@ -1,5 +1,9 @@
 {
     "coord_config_file": "coord.json",
     "log_config_file": "logdefine.json",
-    "qss_file": "gui.qss"
+    "qss_file": "gui.qss",
+    "can_device_name": "can0",
+    "can_device_bitrate": 500000,
+    "ecat_netif_name": "enx34298f700ae1",
+    "ecat_iomap_size": 4096
 }

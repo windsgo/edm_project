@@ -7,6 +7,7 @@ find_package(Qt5 COMPONENTS Core SerialBus Widgets REQUIRED)
 
 set(APP_SOURCES
     main.cpp
+    SharedCoreData/SharedCoreData.cpp
 )
 
 add_executable(app ${APP_SOURCES})

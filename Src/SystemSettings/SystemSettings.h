@@ -25,8 +25,14 @@ public: // settings
     std::string coord_config_file;
     std::string log_config_file;
     std::string qss_file;
+    std::string can_device_name;
+    uint32_t can_device_bitrate;
+    uint32_t ecat_iomap_size;
+    std::string ecat_netif_name;
 
-    MEO_JSONIZATION(coord_config_file, log_config_file, qss_file);
+    MEO_JSONIZATION(coord_config_file, log_config_file, qss_file,
+                    can_device_name, can_device_bitrate, ecat_iomap_size,
+                    ecat_netif_name);
 };
 
 class SystemSettings final {
@@ -36,7 +42,7 @@ public:
         return i;
     }
 
-    static const std::string &GetSysConfigDir() {
+    static const std::string &GetSysConfigPath() {
         static const std::string dir = EDM_SYSTEM_SETTINGS_CONFIG_FILE;
         return dir;
     }
@@ -50,26 +56,38 @@ public:
     }
     const std::string &get_qss_file() const { return data_.qss_file; }
 
+    const std::string &get_can_device_name() const {
+        return data_.can_device_name;
+    }
+
+    uint32_t get_can_device_bitrate() const { return data_.can_device_bitrate; }
+
+    uint32_t get_ecat_iomap_size() const { return data_.ecat_iomap_size; }
+
+    const std::string &get_ecat_netif_name() const {
+        return data_.ecat_netif_name;
+    }
+
 public:
     // TODO change settings and save to local file
 
 private:
-    bool _save_to_file(const std::string& filename) const;
+    bool _save_to_file(const std::string &filename) const;
 
 private:
     SystemSettings() {
-        std::ifstream ifs(GetSysConfigDir());
+        std::ifstream ifs(GetSysConfigPath());
         if (!ifs.is_open()) {
             throw exception(EDM_FMT::format(
                 "system settings init failed: config file open failed: {}",
-                GetSysConfigDir()));
+                GetSysConfigPath()));
         }
 
         auto parse_ret = json::parse(ifs, false);
         if (!parse_ret) {
             throw exception(
                 EDM_FMT::format("system settings init failed: parse failed: {}",
-                                GetSysConfigDir()));
+                                GetSysConfigPath()));
         }
 
         auto ret = std::move(*parse_ret);
@@ -79,7 +97,7 @@ private:
         } catch (const std::exception &e) {
             throw exception(EDM_FMT::format(
                 "system settings init failed: convert ex: {}: {}", e.what(),
-                GetSysConfigDir()));
+                GetSysConfigPath()));
         }
 
         ifs.close();

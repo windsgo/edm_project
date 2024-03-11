@@ -62,6 +62,7 @@ set(PROJECT_SOURCES
     Src/QtDependComponents/PowerController/PowerController.cpp
     Src/QtDependComponents/PowerController/EleparamDecoder.cpp
     Src/Utils/Netif/netif_utils.cpp
+    Src/Utils/UnitConverter/UnitConverter.cpp
     Src/Utils/DataQueueRecorder/DataQueueRecorder.cpp
     Src/Motion/Moveruntime/Moveruntime.cpp
     Src/Motion/MoveruntimeWrapper/MoveruntimeWrapper.cpp
@@ -88,6 +89,8 @@ set(PROJECT_SOURCES
     Src/Coordinate/CoordinateManager.cpp
     Src/Coordinate/CoordinateSystem.cpp
     Src/SystemSettings/SystemSettings.cpp
+    Src/CanReceiveBuffer/CanReceiveBuffer.cpp
+    Src/HandboxConverter/HandboxConverter.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/Src)
