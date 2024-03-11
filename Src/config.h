@@ -7,8 +7,9 @@
 #define EDM_SERVO_NUM                   3
 #define EDM_AXIS_NUM                    EDM_SERVO_NUM
 
-#if (EDM_AXIS_NUM > 6)
-#error "EDM_AXIS_NUM > 6"
+#define EDM_AXIS_MAX_NUM                6 // const, 最多6轴
+#if (EDM_AXIS_NUM > EDM_AXIS_MAX_NUM)
+#error "EDM_AXIS_NUM > EDM_AXIS_MAX_NUM"
 #endif
 
 // 单位定义, um分辨率

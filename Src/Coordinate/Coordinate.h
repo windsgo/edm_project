@@ -71,7 +71,7 @@ public:
 
 private:
     uint32_t index_{0}; // 在这里也存储 index
-    coord_offset_t offset_{0.0};
+    coord_offset_t offset_{0.0}; //! 类中计算单位都是blu, 文件中存储的是mm, 要转换
 };
 
 } // namespace coord

@@ -58,8 +58,10 @@ CoordinateSystem::CoordinateSystem(const std::string &filename)
     _update_coord_axis_cache();
 }
 
-void CoordinateSystem::update_motor_pos(const move::axis_t &new_motor_pos) {
+void CoordinateSystem::update_motor_pos(const move::axis_t &new_motor_pos,
+                                        const move::axis_t &new_motor_pos_act) {
     curr_motor_axis_ = new_motor_pos;
+    curr_motor_axis_act_ = new_motor_pos_act;
 
     _update_machine_axis_cache();
     _update_coord_axis_cache();
@@ -91,11 +93,14 @@ bool CoordinateSystem::get_coord_axis(uint32_t coord_index,
 
 void CoordinateSystem::_update_machine_axis_cache() {
     cm_.motor_to_machine(curr_motor_axis_, curr_machine_axis_cache_);
+    cm_.motor_to_machine(curr_motor_axis_act_, curr_machine_axis_cache_act_);
 }
 
 void CoordinateSystem::_update_coord_axis_cache() {
     cm_.motor_to_coord(curr_coord_index_, curr_motor_axis_,
                        curr_coord_axis_cache_);
+    cm_.motor_to_coord(curr_coord_index_, curr_motor_axis_act_,
+                       curr_coord_axis_cache_act_);
 }
 
 bool CoordinateSystem::_init_coordinate_manager(const std::string &filename) {

@@ -38,7 +38,7 @@ QWidget
 {
 background: qlineargradient(spread:reflect, x1:0, y1:1, x2:0, y2:-0.1,
                 stop:0 rgba(29,47,59, 255), stop:1 rgba(94, 98, 99, 255));
-font: 12pt "Ubuntu";
+font: 12pt "Monospace";
 }
 
 QPushButton:pressed
@@ -71,10 +71,34 @@ font: 12pt "Ubuntu";
 
 QLabel
 {
+background-color: transparent;
+
 color: rgb(127,255,0);
-/*color: rgb(230,230,230);*/
-font: 12pt "Ubuntu";
+font-family: "Monospace";
+font-size: 12pt;
+
+border-style: none;
+border-width: 0px;
+border-color: rgb(0,255,127);
+border-radius: 0px;
 }
+
+/* 未下拉时，QComboBox的样式 */
+QComboBox {
+    border-radius: 3px;
+    padding: 1px 18px 1px 3px;
+    background: transparent; 
+    border: 1px solid gray; 
+	color:rgb(127,255,0);
+    font-weight: bold;
+	border-color: #E5E5E5;
+	background-color: transparent;
+}
+QComboBox:on {
+    color: rgb(255,193,37);
+    background-color: rgb(127,255,212);
+}
+
 
 QLineEdit
 {

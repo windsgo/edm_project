@@ -1,48 +1,40 @@
-#include <QObject>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QFile>
+#include <QObject>
 #include <QWidget>
 
-#include "QtDependComponents/PowerController/EleparamDefine.h"
-
-#include <atomic>
-
-#include "SharedCoreData/SharedCoreData.h"
+#include "MainWindow/MainWindow.h"
 
 #include "Logger/LogMacro.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
-int main(int argc, char** argv) {
+static void init_sys_qss(void) {
+    QFile stylefile(QString::fromStdString(
+        EDM_CONFIG_DIR + edm::SystemSettings::instance().get_qss_file()));
+    stylefile.open(QFile::ReadOnly);
+    if (stylefile.isOpen()) {
+        qApp->setStyleSheet(stylefile.readAll());
+    } else {
+        s_logger->error("style sheet error");
+    }
+    stylefile.close();
+}
 
-    QApplication app(argc, argv);
+using namespace edm::app;
 
-    using T = edm::power::CanIOBoardCommonMessageStrc;
+int main(int argc, char **argv) {
 
-    std::atomic<T> at_s;
-    std::atomic<T> at_s2;
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
-    s_logger->debug("lock free: {}", at_s.is_lock_free());
+    QApplication a(argc, argv);
 
-    T s;
-    s.BZ_Once_flag = 1;
-    at_s2.store(s);
+    init_sys_qss();
 
-    s_logger->debug("at_s.load().BZ_Once_flag: {}, {}", at_s.load().BZ_Once_flag, (int)s.BZ_Once_flag);
+    MainWindow m;
+    m.show();
 
-    s = at_s.exchange(at_s2);
-
-    s_logger->debug("at_s.load().BZ_Once_flag: {}, {}", at_s.load().BZ_Once_flag, (int)s.BZ_Once_flag);
-
-    // s = at_s.load();
-
-    // at_s.store(s);
-
-    auto scd = std::make_shared<edm::app::SharedCoreData>();
-
-    auto v = scd->get_coord_system()->get_avaiable_coord_indexes();
-    s_logger->debug("v: {}", v.size());
-
-    return app.exec();
+    return a.exec();
 
     return 0;
 }

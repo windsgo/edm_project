@@ -1,5 +1,7 @@
 #include "CoordinateManager.h"
 
+#include "Utils/UnitConverter/UnitConverter.h"
+
 #include "Logger/LogMacro.h"
 
 #include <filesystem>
@@ -64,7 +66,7 @@ public:
         std::vector<edm::coord::coord_offset_t::value_type> vec;
         vec.reserve(t.offset().size());
         for (std::size_t i = 0; i < t.offset().size(); ++i) {
-            vec.push_back(t.offset()[i]);
+            vec.push_back( edm::util::UnitConverter::blu2mm(t.offset()[i]) );
         }
 
         return json::object{{"index", t.index()}, {"offset", std::move(vec)}};
@@ -90,7 +92,7 @@ public:
 
         edm::coord::coord_offset_t offset;
         for (std::size_t i = 0; i < offset.size(); ++i) {
-            offset[i] = joffset_arr[i].as_double();
+            offset[i] = edm::util::UnitConverter::mm2blu(joffset_arr[i].as_double());
         }
 
         out.set_index(jindex.as_unsigned());

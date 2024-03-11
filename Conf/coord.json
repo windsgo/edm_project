@@ -1,8 +1,8 @@
 {
     "global_offset": [
-        1,
-        2,
-        3
+        0,
+        0,
+        0
     ],
     "coord_offsets": [
         {
@@ -14,11 +14,23 @@
             ]
         },
         {
-            "index": 52,
+            "index": 55,
             "offset": [
                 -3,
                 -5,
                 -8
+            ]
+        },
+        {
+            "index": 56,
+            "offset": [
+                0,0,0
+            ]
+        },
+        {
+            "index": 57,
+            "offset": [
+                0,0,0
             ]
         }
     ]

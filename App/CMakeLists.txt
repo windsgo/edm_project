@@ -8,7 +8,11 @@ find_package(Qt5 COMPONENTS Core SerialBus Widgets REQUIRED)
 set(APP_SOURCES
     main.cpp
     SharedCoreData/SharedCoreData.cpp
+    CoordPanel/CoordPanel.cpp
+    MainWindow/MainWindow.cpp
 )
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(app ${APP_SOURCES})
 add_dependencies(app edm)
