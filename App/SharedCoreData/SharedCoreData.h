@@ -6,6 +6,7 @@
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"
 #include "Utils/Filters/SlidingFilter/SlidingFilter.h"
 #include "Utils/Format/edm_format.h"
+#include "Utils/UnitConverter/UnitConverter.h"
 
 #include "Coordinate/CoordinateSystem.h"
 #include "Exception/exception.h"
@@ -27,8 +28,8 @@
 
 #include "HandboxConverter/HandboxConverter.h"
 
-#include <QObject>
 #include <QEvent>
+#include <QObject>
 
 namespace edm {
 
@@ -67,12 +68,13 @@ signals:
     void sig_handbox_ack();
 
 protected:
-    void customEvent(QEvent* e) override;
+    void customEvent(QEvent *e) override;
 
 private:
     void _init_data();
-
     void _init_handbox_converter(uint32_t can_index);
+    void _init_motionthread_cb();
+
 
 private:
     SystemSettings &sys_settings_ = SystemSettings::instance();
@@ -83,15 +85,41 @@ private:
     io::IOController::ptr io_ctrler_;
     power::PowerController::ptr power_ctrler_;
 
+    CanReceiveBuffer::ptr can_recv_buffer_;
+    HandboxConverter::ptr handbox_converter_;
+
     move::MotionSignalQueue::ptr motion_signal_queue_;
     move::MotionCommandQueue::ptr motion_cmd_queue_;
     move::MotionThreadController::ptr motion_thread_ctrler_;
 
-    CanReceiveBuffer::ptr can_recv_buffer_;
-
     InfoDispatcher *info_dispatcher_;
 
-    HandboxConverter::ptr handbox_converter_;
+
+private:
+    std::function<bool(void)> cb_get_touch_physical_detected_;
+    std::function<double(void)> cb_get_servo_cmd_;
+    std::function<void(bool)> cb_enable_votalge_gate_;
+
+#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    bool manual_touch_detect_flag_{false};
+#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+    double manual_servo_cmd_um_{0.0};
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+
+public:
+#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    inline void set_manual_touch_detect_flag(bool detected) {
+        manual_touch_detect_flag_ = detected;
+    }
+#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+    inline void set_manual_servo_cmd_um(double cmd_um) {
+        manual_servo_cmd_um_ = cmd_um;
+    }
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
 };
 
 } // namespace app

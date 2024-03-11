@@ -31,11 +31,13 @@ namespace move {
 class MotionThreadController final {
 public:
     using ptr = std::shared_ptr<MotionThreadController>;
-    MotionThreadController(std::string_view ifname,
-                           MotionCommandQueue::ptr motion_cmd_queue,
-                           MotionSignalQueue::ptr motion_signal_queue,
-                           uint32_t iomap_size, uint32_t servo_num,
-                           uint32_t io_num = 0);
+    MotionThreadController(
+        std::string_view ifname, MotionCommandQueue::ptr motion_cmd_queue,
+        MotionSignalQueue::ptr motion_signal_queue,
+        const std::function<void(bool)> &cb_enable_voltage_gate,
+        const std::function<double(void)> &cb_get_servo_cmd,
+        const std::function<bool(void)> &cb_get_touch_physical_detected,
+        uint32_t iomap_size, uint32_t servo_num, uint32_t io_num = 0);
     ~MotionThreadController();
 
     MotionThreadController(const MotionThreadController &) = delete;
@@ -158,8 +160,10 @@ private: // 外部的一些回调
     // 获取伺服指令, 该函数应当返回当前可用的伺服指令, 尽量避免锁, 使用原子量
     std::function<double(void)> cb_get_servo_cmd_; // TODO, 外部传入初始化
 
-    // 获取接触感知状态, 该函数返回从伺服板收到的状态量, 指示是否发生了接触(电压低于阈值)
-    std::function<bool(void)> cb_get_touch_physical_detected_; // TODO, 外部传入初始化
+    // 获取接触感知状态, 该函数返回从伺服板收到的状态量,
+    // 指示是否发生了接触(电压低于阈值)
+    std::function<bool(void)>
+        cb_get_touch_physical_detected_; // TODO, 外部传入初始化
 };
 
 } // namespace move

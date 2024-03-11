@@ -184,24 +184,28 @@ void SharedCoreData::_init_data() {
     power_ctrler_ = std::make_shared<power::PowerController>(
         can_ctrler_, io_ctrler_, can_device_index);
 
-    // init move ...
-    motion_signal_queue_ = std::make_shared<move::MotionSignalQueue>();
-    motion_cmd_queue_ = std::make_shared<move::MotionCommandQueue>();
-
-    motion_thread_ctrler_ = std::make_shared<move::MotionThreadController>(
-        sys_settings_.get_ecat_netif_name(), motion_cmd_queue_,
-        motion_signal_queue_, sys_settings_.get_ecat_iomap_size(),
-        EDM_SERVO_NUM);
-
     // init servodata and adcinfo receive-holder
     can_recv_buffer_ =
         std::make_shared<CanReceiveBuffer>(can_ctrler_, can_device_index);
 
+    _init_handbox_converter(can_device_index);
+
+    // init move ...
+    motion_signal_queue_ = std::make_shared<move::MotionSignalQueue>();
+    motion_cmd_queue_ = std::make_shared<move::MotionCommandQueue>();
+
+    // init cb used to init motion thread ctrler
+    _init_motionthread_cb();
+
+    motion_thread_ctrler_ = std::make_shared<move::MotionThreadController>(
+        sys_settings_.get_ecat_netif_name(), motion_cmd_queue_,
+        motion_signal_queue_, cb_enable_votalge_gate_, cb_get_servo_cmd_,
+        cb_get_touch_physical_detected_, sys_settings_.get_ecat_iomap_size(),
+        EDM_SERVO_NUM);
+
     // init info dispatcher
     info_dispatcher_ = new InfoDispatcher(motion_signal_queue_,
                                           motion_thread_ctrler_, this, 20);
-
-    _init_handbox_converter(can_device_index);
 }
 
 void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
@@ -248,6 +252,52 @@ void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
     handbox_converter_ = std::make_shared<HandboxConverter>(
         can_ctrler_, can_index, cb_start_pm, cb_stop_pm, cb_pause_auto,
         cb_ent_auto, cb_stop_auto, cb_ack, cb_pump_on);
+}
+
+void SharedCoreData::_init_motionthread_cb() {
+    cb_get_touch_physical_detected_ = [this]() -> bool {
+#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+        return this->manual_touch_detect_flag_;
+#else // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+        Can1IOBoard407ServoData sd;
+        this->can_recv_buffer_->load_servo_data(sd);
+
+        return sd.touch_detected;
+
+#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    };
+
+    cb_get_servo_cmd_ = [this]() -> double {
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+        return util::UnitConverter::um2blu(this->manual_servo_cmd_um_);
+#else // EDM_OFFLINE_MANUAL_SERVO_CMD
+        Can1IOBoard407ServoData sd;
+        this->can_recv_buffer_->load_servo_data(sd);
+
+        double um_ret = 0.0;
+        if (sd.servo_direction > 0) {
+            um_ret = (double)sd.servo_distance_0_01um / 100.0;
+        } else {
+            um_ret = (-1.0) * (double)sd.servo_distance_0_01um / 100.0;
+        }
+
+        return util::UnitConverter::um2blu(um_ret);
+
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+    };
+
+    cb_enable_votalge_gate_ = [this](bool arg) -> void {
+        s_logger->debug("push voltage gate command: {}", arg);
+
+        auto run_cmd = global::CommandCommonFunctionFactory::bind(
+            [this](bool _enable) {
+                this->power_ctrler_->set_machbit_on(_enable);
+            },
+            arg);
+
+        // thread safe call
+        this->global_cmd_queue_->push_command(run_cmd);
+    };
 }
 
 } // namespace app
