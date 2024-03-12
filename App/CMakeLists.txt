@@ -10,6 +10,7 @@ set(APP_SOURCES
     SharedCoreData/SharedCoreData.cpp
     CoordPanel/CoordPanel.cpp
     MainWindow/MainWindow.cpp
+    InfoPanel/InfoPanel.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

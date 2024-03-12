@@ -4,6 +4,7 @@
 
 // Panels
 #include "CoordPanel/CoordPanel.h"
+#include "InfoPanel/InfoPanel.h"
 
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
@@ -28,6 +29,7 @@ private:
     SharedCoreData* shared_core_data_;
 
     CoordPanel* coord_panel_;
+    InfoPanel* info_panel_;
 };
 
 } // namespace app

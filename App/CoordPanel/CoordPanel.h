@@ -22,6 +22,7 @@ public:
     explicit CoordPanel(SharedCoreData* shared_core_data, QWidget *parent = nullptr);
     ~CoordPanel();
 
+private:
     void update_all_display();
 
     void update_axis_display(); // 刷新坐标显示区域

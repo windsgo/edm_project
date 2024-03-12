@@ -100,17 +100,20 @@ QComboBox {
     color: rgb(64,255,127);
     font-weight: bold;
 	border-color: #E5E5E5;
-	background-color: transparent;
 }
 QComboBox:on {
     color: rgb(64,255,127);
-    background-color: rgb(255,231,186);
+    background: rgb(255,231,186);
+}
+
+QGroupBox {
+    background: transparent; 
 }
 
 QGroupBox::title
 {
 subcontrol-origin:margin;
-subcontrol-position:top center;
+/*subcontrol-position:top center;*/
 padding:0 3px;
 color: rgb(255, 255, 10);
 font-weight: bold;
