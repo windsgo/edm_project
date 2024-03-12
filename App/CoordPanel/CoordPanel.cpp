@@ -16,15 +16,28 @@ CoordPanel::CoordPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
     _init_label_arr();
     _init_coord_indexes();
+
     _init_connection();
+    _init_offset_button_cb();
+
+    update_all_display();
 }
 
 CoordPanel::~CoordPanel() { delete ui; }
 
 void CoordPanel::update_all_display() {
+    update_axis_display();
+    update_offset_display();
+}
+
+static void _set_lineedit_coord_validator(QLineEdit *le, QObject *parent) {
+    QRegExp reg_exp{R"([+-]?[0-9]+\.?[0-9]{0,4})"}; // (+/-)123(.(1234))
+    le->setValidator(new QRegExpValidator(reg_exp, parent));
+}
+
+void CoordPanel::update_axis_display() {
     // 直接从 coord_sys_ 的缓存中取坐标数据
     const auto &cmd_coord_axis = coord_sys_->get_current_coord_axis();
-
     for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
         auto axis_mm = util::UnitConverter::blu2mm(cmd_coord_axis[i]);
         auto stdstr = EDM_FMT::format("{:+.4f}", axis_mm);
@@ -39,12 +52,52 @@ void CoordPanel::update_all_display() {
 
         act_axis_label_arr_[i]->setText(QString::fromStdString(stdstr));
     }
+
+    const auto &cmd_mach_axis = coord_sys_->get_current_machine_axis();
+    for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+        auto axis_mm = util::UnitConverter::blu2mm(cmd_mach_axis[i]);
+        auto stdstr = EDM_FMT::format("{:+.4f}", axis_mm);
+
+        mach_cmd_axis_label_arr_[i]->setText(QString::fromStdString(stdstr));
+    }
+
+    const auto &act_mach_axis = coord_sys_->get_current_machine_axis_act();
+    for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+        auto axis_mm = util::UnitConverter::blu2mm(act_mach_axis[i]);
+        auto stdstr = EDM_FMT::format("{:+.4f}", axis_mm);
+
+        mach_act_axis_label_arr_[i]->setText(QString::fromStdString(stdstr));
+    }
+}
+
+void CoordPanel::update_offset_display() {
+    auto coord_offset = coord_sys_->get_current_coord_offset();
+    if (coord_offset) {
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            auto axis_mm = util::UnitConverter::blu2mm((*coord_offset)[i]);
+            auto stdstr = EDM_FMT::format("{:+.4f}", axis_mm);
+
+            coord_offset_le_arr_[i]->setText(QString::fromStdString(stdstr));
+        }
+    } else {
+        s_logger->warn("{}: get_current_coord_offset failed",
+                       __PRETTY_FUNCTION__);
+    }
+
+    const auto &global_offset = coord_sys_->get_current_global_offset();
+    for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+        auto axis_mm = util::UnitConverter::blu2mm(global_offset[i]);
+        auto stdstr = EDM_FMT::format("{:+.4f}", axis_mm);
+
+        global_offset_le_arr_[i]->setText(QString::fromStdString(stdstr));
+    }
 }
 
 void CoordPanel::slot_change_display_coord_index(uint32_t new_coord_index) {
     auto find_ret = coord_index2combobox_index_map_.find(new_coord_index);
     if (find_ret == coord_index2combobox_index_map_.end()) {
-        s_logger->error("slot_change_display_coord_index: wrong index: {}", new_coord_index);
+        s_logger->error("slot_change_display_coord_index: wrong index: {}",
+                        new_coord_index);
         return;
     }
     ui->comboBox_select_coord_index->setCurrentIndex(find_ret->second);
@@ -67,9 +120,53 @@ void CoordPanel::_init_label_arr() {
     act_axis_label_arr_.at(4) = ui->lb_c_act_axis;
     act_axis_label_arr_.at(5) = ui->lb_a_act_axis;
 
-    for (std::size_t i = coord::Coordinate::Size; i < cmd_axis_label_arr_.size(); ++i) {
-        cmd_axis_label_arr_.at(i)->setText("NULL");
-        act_axis_label_arr_.at(i)->setText("NULL");
+    mach_cmd_axis_label_arr_.at(0) = ui->lb_x_mach_cmd_axis;
+    mach_cmd_axis_label_arr_.at(1) = ui->lb_y_mach_cmd_axis;
+    mach_cmd_axis_label_arr_.at(2) = ui->lb_z_mach_cmd_axis;
+    mach_cmd_axis_label_arr_.at(3) = ui->lb_b_mach_cmd_axis;
+    mach_cmd_axis_label_arr_.at(4) = ui->lb_c_mach_cmd_axis;
+    mach_cmd_axis_label_arr_.at(5) = ui->lb_a_mach_cmd_axis;
+
+    mach_act_axis_label_arr_.at(0) = ui->lb_x_mach_act_axis;
+    mach_act_axis_label_arr_.at(1) = ui->lb_y_mach_act_axis;
+    mach_act_axis_label_arr_.at(2) = ui->lb_z_mach_act_axis;
+    mach_act_axis_label_arr_.at(3) = ui->lb_b_mach_act_axis;
+    mach_act_axis_label_arr_.at(4) = ui->lb_c_mach_act_axis;
+    mach_act_axis_label_arr_.at(5) = ui->lb_a_mach_act_axis;
+
+    coord_offset_le_arr_.at(0) = ui->le_coord_offset_x;
+    coord_offset_le_arr_.at(1) = ui->le_coord_offset_y;
+    coord_offset_le_arr_.at(2) = ui->le_coord_offset_z;
+    coord_offset_le_arr_.at(3) = ui->le_coord_offset_b;
+    coord_offset_le_arr_.at(4) = ui->le_coord_offset_c;
+    coord_offset_le_arr_.at(5) = ui->le_coord_offset_a;
+
+    global_offset_le_arr_.at(0) = ui->le_global_offset_x;
+    global_offset_le_arr_.at(1) = ui->le_global_offset_y;
+    global_offset_le_arr_.at(2) = ui->le_global_offset_z;
+    global_offset_le_arr_.at(3) = ui->le_global_offset_b;
+    global_offset_le_arr_.at(4) = ui->le_global_offset_c;
+    global_offset_le_arr_.at(5) = ui->le_global_offset_a;
+
+    for (auto &le : coord_offset_le_arr_) {
+        _set_lineedit_coord_validator(le, this);
+    }
+
+    for (auto &le : global_offset_le_arr_) {
+        _set_lineedit_coord_validator(le, this);
+    }
+
+    for (std::size_t i = coord::Coordinate::Size;
+         i < cmd_axis_label_arr_.size(); ++i) {
+        cmd_axis_label_arr_.at(i)->setText("null");
+        act_axis_label_arr_.at(i)->setText("null");
+        mach_cmd_axis_label_arr_.at(i)->setText("null");
+        mach_act_axis_label_arr_.at(i)->setText("null");
+
+        coord_offset_le_arr_.at(i)->setEnabled(false);
+        coord_offset_le_arr_.at(i)->setText("null");
+        global_offset_le_arr_.at(i)->setEnabled(false);
+        global_offset_le_arr_.at(i)->setText("null");
     }
 }
 
@@ -107,11 +204,114 @@ void CoordPanel::_init_connection() {
         });
 }
 
+void CoordPanel::_init_offset_button_cb() {
+    ui->pb_coord_offset_clear->setToolTip(
+        QStringLiteral("Set Coordinate Offsets to ZERO"));
+
+    ui->pb_global_offset_clear->setToolTip(
+        QStringLiteral("Set Global Offsets to ZERO"));
+
+    ui->pb_coord_offset_set->setToolTip(
+        QStringLiteral("Set Coordinate Offsets by given value upside"));
+
+    ui->pb_global_offset_set->setToolTip(
+        QStringLiteral("Set Coordinate Offsets by given value upside"));
+
+    ui->pb_coord_offset_setorigin->setToolTip(
+        QStringLiteral("Set current point as the ORIGIN of the coordinate"));
+
+    ui->pb_global_offset_setorigin->setToolTip(QStringLiteral(
+        "Set current point as the ORIGIN of machine coord (global)"));
+
+    connect(ui->pb_coord_offset_clear, &QPushButton::clicked, this, [this]() {
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            this->coord_offset_le_arr_[i]->setText("0.0000");
+        }
+
+        this->coord_sys_->set_current_coord_offset(coord::coord_offset_t{0.0});
+
+        this->update_all_display();
+    });
+
+    connect(ui->pb_global_offset_clear, &QPushButton::clicked, this, [this]() {
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            this->global_offset_le_arr_[i]->setText("0.0000");
+        }
+
+        this->coord_sys_->set_global_offset(coord::coord_offset_t{0.0});
+
+        this->update_all_display();
+    });
+
+    connect(ui->pb_coord_offset_set, &QPushButton::clicked, this, [this]() {
+        coord::coord_offset_t offsets{0.0};
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            bool ok = false;
+            offsets[i] = util::UnitConverter::mm2blu(
+                this->coord_offset_le_arr_[i]->text().toDouble(&ok));
+            if (!ok) {
+                s_logger->error("pb_coord_offset_set: toDouble Failed, i = {}",
+                                i);
+                return;
+            }
+        }
+
+        this->coord_sys_->set_current_coord_offset(offsets);
+
+        this->update_all_display();
+    });
+
+    connect(ui->pb_global_offset_set, &QPushButton::clicked, this, [this]() {
+        coord::coord_offset_t offsets{0.0};
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            bool ok = false;
+            offsets[i] = util::UnitConverter::mm2blu(
+                this->global_offset_le_arr_[i]->text().toDouble(&ok));
+            if (!ok) {
+                s_logger->error("pb_global_offset_set: toDouble Failed, i = {}",
+                                i);
+                return;
+            }
+        }
+
+        this->coord_sys_->set_global_offset(offsets);
+
+        this->update_all_display();
+    });
+
+    connect(ui->pb_coord_offset_setorigin, &QPushButton::clicked, this, [this]() {
+        coord::coord_offset_t offsets{0.0};
+        const auto& curr_mach_cmd_axis = this->coord_sys_->get_current_machine_axis();
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            offsets[i] = curr_mach_cmd_axis[i];
+
+            auto stdstr = EDM_FMT::format("{:+.4f}", util::UnitConverter::blu2mm(offsets[i]));
+            this->coord_offset_le_arr_[i]->setText(QString::fromStdString(stdstr));
+        }
+
+        this->coord_sys_->set_current_coord_offset(offsets);
+
+        this->update_all_display();
+    });
+
+    connect(ui->pb_global_offset_setorigin, &QPushButton::clicked, this, [this]() {
+        coord::coord_offset_t offsets{0.0};
+        const auto& curr_motor_cmd_axis = this->coord_sys_->get_current_motor_axis();
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            offsets[i] = curr_motor_cmd_axis[i];
+        }
+
+        this->coord_sys_->set_global_offset(offsets);
+
+        this->update_all_display();
+    });
+}
+
 void CoordPanel::_update_info(const move::MotionInfo &info) {
     coord_sys_->update_motor_pos(info.curr_cmd_axis_blu,
                                  info.curr_act_axis_blu);
 
-    update_all_display();
+    update_axis_display();
 }
 
 void CoordPanel::_change_display_coord_index(uint32_t new_index) {

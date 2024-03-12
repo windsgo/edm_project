@@ -66,7 +66,7 @@ public:
         std::vector<edm::coord::coord_offset_t::value_type> vec;
         vec.reserve(t.offset().size());
         for (std::size_t i = 0; i < t.offset().size(); ++i) {
-            vec.push_back( edm::util::UnitConverter::blu2mm(t.offset()[i]) );
+            vec.push_back(edm::util::UnitConverter::blu2mm(t.offset()[i]));
         }
 
         return json::object{{"index", t.index()}, {"offset", std::move(vec)}};
@@ -92,7 +92,8 @@ public:
 
         edm::coord::coord_offset_t offset;
         for (std::size_t i = 0; i < offset.size(); ++i) {
-            offset[i] = edm::util::UnitConverter::mm2blu(joffset_arr[i].as_double());
+            offset[i] =
+                edm::util::UnitConverter::mm2blu(joffset_arr[i].as_double());
         }
 
         out.set_index(jindex.as_unsigned());
@@ -110,10 +111,11 @@ public:
         std::vector<edm::coord::coord_offset_t::value_type> global_offset_vec;
         global_offset_vec.reserve(t.get_global_offset().size());
         for (std::size_t i = 0; i < t.get_global_offset().size(); ++i) {
-            global_offset_vec.push_back(t.get_global_offset()[i]);
+            global_offset_vec.push_back(
+                edm::util::UnitConverter::blu2mm(t.get_global_offset()[i]));
         }
 
-        jo["global_offset"] = json::array{std::move(global_offset_vec)};
+        jo["global_offset"] = std::move(global_offset_vec);
 
         json::array c_arr{};
 
@@ -176,7 +178,8 @@ public:
 
         edm::coord::coord_offset_t global_offset;
         for (std::size_t i = 0; i < global_offset.size(); ++i) {
-            global_offset[i] = jglobal_offset_arr[i].as_double();
+            global_offset[i] = edm::util::UnitConverter::mm2blu(
+                jglobal_offset_arr[i].as_double());
         }
 
         edm::coord::CoordinateManager::map_t coord_map;

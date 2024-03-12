@@ -91,6 +91,32 @@ bool CoordinateSystem::get_coord_axis(uint32_t coord_index,
     return cm_.motor_to_coord(coord_index, curr_motor_axis_, output);
 }
 
+bool CoordinateSystem::set_current_coord_offset(const move::axis_t &offset) {
+    bool ret = cm_.set_coord_offset(curr_coord_index_, offset);
+    if (ret) {
+        cm_.save_as(filename_);
+    }
+
+    return ret;
+}
+
+bool CoordinateSystem::set_coord_offset(uint32_t index,
+                                        const move::axis_t &offset) {
+    bool ret = cm_.set_coord_offset(index, offset);
+    if (ret) {
+        cm_.save_as(filename_);
+    }
+
+    return ret;
+}
+
+void CoordinateSystem::set_global_offset(const move::axis_t &offset) {
+    cm_.set_global_offset(offset);
+    cm_.save_as(filename_);
+
+    _update_machine_axis_cache();
+}
+
 void CoordinateSystem::_update_machine_axis_cache() {
     cm_.motor_to_machine(curr_motor_axis_, curr_machine_axis_cache_);
     cm_.motor_to_machine(curr_motor_axis_act_, curr_machine_axis_cache_act_);

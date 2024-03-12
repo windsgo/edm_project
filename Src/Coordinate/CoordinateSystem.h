@@ -36,22 +36,35 @@ public:
     const auto &get_current_coord_axis() const {
         return curr_coord_axis_cache_;
     }
-    const auto& get_current_coord_axis_act() const {
+    const auto &get_current_coord_axis_act() const {
         return curr_coord_axis_cache_act_;
     }
     const auto &get_current_machine_axis() const {
         return curr_machine_axis_cache_;
     }
-    const auto& get_current_machine_axis_act() const {
+    const auto &get_current_machine_axis_act() const {
         return curr_machine_axis_cache_act_;
     }
     const auto &get_current_motor_axis() const { return curr_motor_axis_; }
+
+    auto get_current_coord_offset() const {
+        return cm_.get_coord_offset(curr_coord_index_);
+    }
+    const auto &get_current_global_offset() const {
+        return cm_.get_global_offset();
+    }
 
     bool get_coord_axis(uint32_t coord_index, move::axis_t &output) const;
 
     const auto &get_cm() const { return cm_; }
 
     // TODO 修改坐标系偏置, 并保存
+
+    // 设置当前坐标系 偏置
+    bool set_current_coord_offset(const move::axis_t& offset);
+    bool set_coord_offset(uint32_t index, const move::axis_t& offset);
+
+    void set_global_offset(const move::axis_t& offset);
 
 private:
     void _update_machine_axis_cache();
