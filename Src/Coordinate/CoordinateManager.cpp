@@ -392,6 +392,15 @@ bool CoordinateManager::motor_to_coord(uint32_t coord_index,
     return true;
 }
 
+bool CoordinateManager::machine_to_motor(const move::axis_t &machine_pos,
+                                         move::axis_t &output) const {
+    for (std::size_t i = 0; i < output.size(); ++i) {
+        output[i] = machine_pos[i] + global_offset_[i];
+    }
+
+    return true;
+}
+
 bool CoordinateManager::set_soft_limits(const CoordSoftLimit &soft_limits) {
     // check input soft limit
     for (std::size_t i = 0; i < soft_limits.pos.size(); ++i) {

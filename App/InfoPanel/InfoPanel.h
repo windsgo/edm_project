@@ -1,7 +1,8 @@
 #pragma once
 
 #include <QWidget>
-#include <SharedCoreData/SharedCoreData.h>
+
+#include "SharedCoreData/SharedCoreData.h"
 
 namespace Ui {
 class InfoPanel;

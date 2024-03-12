@@ -13,8 +13,8 @@ namespace edm {
 namespace coord {
 
 struct CoordSoftLimit {
-    coord_offset_t pos {1000.0};
-    coord_offset_t neg {-1000.0};
+    coord_offset_t pos{1000.0};
+    coord_offset_t neg{-1000.0};
 };
 
 // 负责维护坐标系列表及其偏置
@@ -94,10 +94,14 @@ public:
     bool motor_to_coord(uint32_t coord_index, const move::axis_t &motor_axis,
                         move::axis_t &output) const;
 
-    bool set_soft_limits(const CoordSoftLimit& soft_limits);
+    //! 机床坐标系值 -> 电机坐标值
+    bool machine_to_motor(const move::axis_t &machine_pos,
+                          move::axis_t &output) const;
 
-    const auto& get_pos_soft_limit() const { return soft_limits_.pos; }
-    const auto& get_neg_soft_limit() const { return soft_limits_.neg; }
+    bool set_soft_limits(const CoordSoftLimit &soft_limits);
+
+    const auto &get_pos_soft_limit() const { return soft_limits_.pos; }
+    const auto &get_neg_soft_limit() const { return soft_limits_.neg; }
     // TODO
 
 public:
