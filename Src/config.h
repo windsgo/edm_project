@@ -59,6 +59,9 @@
 // MotionSignalQueue 使用的queue类型
 #define EDM_MOTION_SIGNAL_QUEUE_USE_SPSC          // 使用spsc队列
 
+// 不合理的coord config 抛出异常, 而不是自动使用默认
+#define EDM_INVALID_COORD_CONFIG_THROW
+
 // OFFLINE DEFINE
 #define EDM_OFFLINE_RUN
 #ifdef EDM_OFFLINE_RUN

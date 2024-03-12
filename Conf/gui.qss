@@ -65,7 +65,9 @@ border-radius: 0px;
 #CoordPanel QLabel#lb_machcmd,
 #CoordPanel QLabel#lb_machact,
 #CoordPanel QLabel#lb_coord,
-#CoordPanel QLabel#lb_global{
+#CoordPanel QLabel#lb_global,
+#CoordPanel QLabel#lb_softlimit_pos,
+#CoordPanel QLabel#lb_softlimit_neg{
 color: rgb(255, 255, 10);
 font-weight: bold;
 }

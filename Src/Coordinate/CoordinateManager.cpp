@@ -64,8 +64,8 @@ template <> class jsonization<edm::coord::Coordinate> {
 public:
     json::value to_json(const edm::coord::Coordinate &t) const {
         std::vector<edm::coord::coord_offset_t::value_type> vec;
-        vec.reserve(t.offset().size());
-        for (std::size_t i = 0; i < t.offset().size(); ++i) {
+        vec.reserve(edm::coord::Coordinate::Size);
+        for (std::size_t i = 0; i < edm::coord::Coordinate::Size; ++i) {
             vec.push_back(edm::util::UnitConverter::blu2mm(t.offset()[i]));
         }
 
@@ -109,8 +109,8 @@ public:
         json::object jo;
 
         std::vector<edm::coord::coord_offset_t::value_type> global_offset_vec;
-        global_offset_vec.reserve(t.get_global_offset().size());
-        for (std::size_t i = 0; i < t.get_global_offset().size(); ++i) {
+        global_offset_vec.reserve(edm::coord::Coordinate::Size);
+        for (std::size_t i = 0; i < edm::coord::Coordinate::Size; ++i) {
             global_offset_vec.push_back(
                 edm::util::UnitConverter::blu2mm(t.get_global_offset()[i]));
         }
@@ -124,6 +124,21 @@ public:
         }
 
         jo["coord_offsets"] = std::move(c_arr);
+
+        std::vector<edm::coord::coord_offset_t::value_type> soft_limit_pos_vec;
+        std::vector<edm::coord::coord_offset_t::value_type> soft_limit_neg_vec;
+
+        soft_limit_pos_vec.reserve(edm::coord::Coordinate::Size);
+        soft_limit_neg_vec.reserve(edm::coord::Coordinate::Size);
+        for (std::size_t i = 0; i < edm::coord::Coordinate::Size; ++i) {
+            soft_limit_pos_vec.push_back(
+                edm::util::UnitConverter::blu2mm(t.get_pos_soft_limit()[i]));
+            soft_limit_neg_vec.push_back(
+                edm::util::UnitConverter::blu2mm(t.get_neg_soft_limit()[i]));
+        }
+
+        jo["soft_limit"] = json::object{{"pos", std::move(soft_limit_pos_vec)},
+                                        {"neg", std::move(soft_limit_neg_vec)}};
 
         return jo;
     }
@@ -167,14 +182,53 @@ public:
             }
         }
 
+        // check soft_limit:
+        auto find_soft_limit_ret = j.find("soft_limit");
+        if (!find_soft_limit_ret) {
+            return false;
+        }
+
+        auto soft_limit_jv = std::move(*find_soft_limit_ret);
+
+        if (!soft_limit_jv.is_object()) {
+            return false;
+        }
+
+        if (!_check_json_has_vector(soft_limit_jv, "pos",
+                                    edm::coord::Coordinate::Size)) {
+            return false;
+        }
+
+        if (!_check_json_has_vector(soft_limit_jv, "neg",
+                                    edm::coord::Coordinate::Size)) {
+            return false;
+        }
+
+        // check limit validation (pos >= neg)
+        auto pos_vec =
+            soft_limit_jv.as_object()["pos"].as<std::vector<double>>();
+        auto neg_vec =
+            soft_limit_jv.as_object()["neg"].as<std::vector<double>>();
+
+        for (std::size_t i = 0; i < edm::coord::Coordinate::Size; ++i) {
+            if (pos_vec[i] < neg_vec[i]) {
+                s_logger->error("pos_vec[{0:}] ({1:}) < neg_vec[{0:}] (2:)", i,
+                                pos_vec[i], neg_vec[i]);
+                return false;
+            }
+        }
+
         return true;
-    };
+    }
 
     bool from_json(const json::value &j,
                    edm::coord::CoordinateManager &t) const {
         const auto &jo = j.as_object();
         const auto &jglobal_offset_arr = jo.at("global_offset").as_array();
         const auto &jcoord_offsets_arr = jo.at("coord_offsets").as_array();
+        const auto &jsoft_limit_o = jo.at("soft_limit").as_object();
+        const auto &jsoft_limit_pos_arr = jsoft_limit_o.at("pos").as_array();
+        const auto &jsoft_limit_neg_arr = jsoft_limit_o.at("neg").as_array();
 
         edm::coord::coord_offset_t global_offset;
         for (std::size_t i = 0; i < global_offset.size(); ++i) {
@@ -192,9 +246,22 @@ public:
             coord_map.emplace(c.index(), c);
         }
 
+        edm::coord::CoordSoftLimit sl;
+        for (std::size_t i = 0; i < sl.pos.size(); ++i) {
+            sl.pos[i] = edm::util::UnitConverter::mm2blu(
+                jsoft_limit_pos_arr[i].as_double());
+            sl.neg[i] = edm::util::UnitConverter::mm2blu(
+                jsoft_limit_neg_arr[i].as_double());
+        }
+
         t.clear_coordinates_map();
         t.set_global_offset(global_offset);
         t.set_coordinates_map(std::move(coord_map));
+
+        auto set_sl_ret = t.set_soft_limits(sl);
+        if (!set_sl_ret) {
+            return false;
+        }
 
         return true;
     }
@@ -322,6 +389,18 @@ bool CoordinateManager::motor_to_coord(uint32_t coord_index,
                     find_coord_ret->second.offset()[i];
     }
 
+    return true;
+}
+
+bool CoordinateManager::set_soft_limits(const CoordSoftLimit &soft_limits) {
+    // check input soft limit
+    for (std::size_t i = 0; i < soft_limits.pos.size(); ++i) {
+        if (soft_limits.pos[i] < soft_limits.neg[i]) {
+            return false;
+        }
+    }
+
+    soft_limits_ = soft_limits;
     return true;
 }
 

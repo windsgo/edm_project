@@ -27,6 +27,7 @@ private:
 
     void update_axis_display(); // 刷新坐标显示区域
     void update_offset_display(); // 刷新偏置设定显示区域
+    void update_softlimit_display(); // 刷新软限位显示区域
 
 public: // slots
     // 供外部 (如G代码) 切换编程坐标系时调用, 以同时切换显示坐标系
@@ -38,6 +39,7 @@ private:
     void _init_connection();
 
     void _init_offset_button_cb();
+    void _init_softlimit_button_cb();
 
 private: // slots
     void _update_info(const move::MotionInfo& info);
@@ -57,6 +59,9 @@ private:
     
     std::array<QLineEdit*, EDM_AXIS_MAX_NUM> coord_offset_le_arr_;
     std::array<QLineEdit*, EDM_AXIS_MAX_NUM> global_offset_le_arr_;
+
+    std::array<QLineEdit*, EDM_AXIS_MAX_NUM> softlimit_pos_le_arr_;
+    std::array<QLineEdit*, EDM_AXIS_MAX_NUM> softlimit_neg_le_arr_; 
 
     std::unordered_map<uint32_t, uint32_t> coord_index2combobox_index_map_;
 };

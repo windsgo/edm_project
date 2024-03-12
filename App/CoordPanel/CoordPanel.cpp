@@ -1,6 +1,8 @@
 #include "CoordPanel.h"
 #include "ui_CoordPanel.h"
 
+#include <QMessageBox>
+
 #include "Logger/LogMacro.h"
 
 #include "InputHelper/InputHelper.h"
@@ -21,6 +23,7 @@ CoordPanel::CoordPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
     _init_connection();
     _init_offset_button_cb();
+    _init_softlimit_button_cb();
 
     update_all_display();
 }
@@ -30,6 +33,7 @@ CoordPanel::~CoordPanel() { delete ui; }
 void CoordPanel::update_all_display() {
     update_axis_display();
     update_offset_display();
+    update_softlimit_display();
 }
 
 void CoordPanel::update_axis_display() {
@@ -81,6 +85,20 @@ void CoordPanel::update_offset_display() {
         global_offset_le_arr_[i]->setText(
             InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
                 util::UnitConverter::blu2mm(global_offset[i])));
+    }
+}
+
+void CoordPanel::update_softlimit_display() {
+    const auto &sl_pos = coord_sys_->get_pos_soft_limit();
+    const auto &sl_neg = coord_sys_->get_neg_soft_limit();
+
+    for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+        softlimit_pos_le_arr_[i]->setText(
+            InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                util::UnitConverter::blu2mm(sl_pos[i])));
+        softlimit_neg_le_arr_[i]->setText(
+            InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                util::UnitConverter::blu2mm(sl_neg[i])));
     }
 }
 
@@ -147,6 +165,21 @@ void CoordPanel::_init_label_arr() {
         InputHelper::SetLineeditCoordValidator(le, this);
     }
 
+    softlimit_pos_le_arr_.at(0) = ui->le_sl_pos_x;
+    softlimit_pos_le_arr_.at(1) = ui->le_sl_pos_y;
+    softlimit_pos_le_arr_.at(2) = ui->le_sl_pos_z;
+    softlimit_pos_le_arr_.at(3) = ui->le_sl_pos_b;
+    softlimit_pos_le_arr_.at(4) = ui->le_sl_pos_c;
+    softlimit_pos_le_arr_.at(5) = ui->le_sl_pos_a;
+
+    softlimit_neg_le_arr_.at(0) = ui->le_sl_neg_x;
+    softlimit_neg_le_arr_.at(1) = ui->le_sl_neg_y;
+    softlimit_neg_le_arr_.at(2) = ui->le_sl_neg_z;
+    softlimit_neg_le_arr_.at(3) = ui->le_sl_neg_b;
+    softlimit_neg_le_arr_.at(4) = ui->le_sl_neg_c;
+    softlimit_neg_le_arr_.at(5) = ui->le_sl_neg_a;
+
+    // set some invalid
     for (std::size_t i = coord::Coordinate::Size;
          i < cmd_axis_label_arr_.size(); ++i) {
         cmd_axis_label_arr_.at(i)->setText("null");
@@ -158,6 +191,11 @@ void CoordPanel::_init_label_arr() {
         coord_offset_le_arr_.at(i)->setText("null");
         global_offset_le_arr_.at(i)->setEnabled(false);
         global_offset_le_arr_.at(i)->setText("null");
+
+        softlimit_pos_le_arr_.at(i)->setEnabled(false);
+        softlimit_pos_le_arr_.at(i)->setText("null");
+        softlimit_neg_le_arr_.at(i)->setEnabled(false);
+        softlimit_neg_le_arr_.at(i)->setText("null");
     }
 }
 
@@ -299,6 +337,47 @@ void CoordPanel::_init_offset_button_cb() {
 
                 this->update_all_display();
             });
+}
+
+void CoordPanel::_init_softlimit_button_cb() {
+    connect(ui->pb_sl_set, &QPushButton::clicked, this, [this]() {
+        coord::CoordSoftLimit csl;
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            auto vp = InputHelper::QStringToDouble(
+                this->softlimit_pos_le_arr_[i]->text());
+            if (!vp) {
+                s_logger->error("pb_sl_set: toDouble Failed, pos, i = {}", i);
+                return;
+            } else {
+                csl.pos[i] = util::UnitConverter::mm2blu(*vp);
+            }
+
+            auto vn = InputHelper::QStringToDouble(
+                this->softlimit_neg_le_arr_[i]->text());
+            if (!vn) {
+                s_logger->error("pb_sl_set: toDouble Failed, neg, i = {}", i);
+                return;
+            } else {
+                csl.neg[i] = util::UnitConverter::mm2blu(*vn);
+            }
+        }
+
+        auto set_csl_ret = this->coord_sys_->set_soft_limits(csl);
+        if (!set_csl_ret) {
+            s_logger->error("set_soft_limits failed");
+            auto msgbx_ret = QMessageBox::critical(
+                this, QStringLiteral("Set Softlimits Failed"),
+                QStringLiteral("Set Softlimits Failed.\n Do you need to reset "
+                               "softlimits?"),
+                QMessageBox::StandardButton::Yes,
+                QMessageBox::StandardButton::No);
+            if (msgbx_ret == QMessageBox::StandardButton::Yes) {
+                this->update_softlimit_display();
+            }
+        } else {
+            this->update_softlimit_display();
+        }
+    });
 }
 
 void CoordPanel::_update_info(const move::MotionInfo &info) {

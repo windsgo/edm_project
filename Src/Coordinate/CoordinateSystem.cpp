@@ -117,6 +117,15 @@ void CoordinateSystem::set_global_offset(const move::axis_t &offset) {
     _update_machine_axis_cache();
 }
 
+bool CoordinateSystem::set_soft_limits(const CoordSoftLimit &csl) {
+    if (!cm_.set_soft_limits(csl)) {
+        return false;
+    }
+
+    cm_.save_as(filename_);
+    return true;
+}
+
 void CoordinateSystem::_update_machine_axis_cache() {
     cm_.motor_to_machine(curr_motor_axis_, curr_machine_axis_cache_);
     cm_.motor_to_machine(curr_motor_axis_act_, curr_machine_axis_cache_act_);
@@ -137,6 +146,11 @@ bool CoordinateSystem::_init_coordinate_manager(const std::string &filename) {
     }
 
     s_logger->error("init coord from file [{}] failed.", filename);
+
+#ifdef EDM_INVALID_COORD_CONFIG_THROW
+    throw exception(EDM_FMT::format("init coord from file [{}] failed.", filename));
+    return false;
+#else // EDM_INVALID_COORD_CONFIG_THROW
 
     s_logger->info("creating default coord G54 ~ G59 ...");
 
@@ -171,6 +185,7 @@ bool CoordinateSystem::_init_coordinate_manager(const std::string &filename) {
     }
 
     return true;
+#endif // EDM_INVALID_COORD_CONFIG_THROW
 }
 
 void CoordinateSystem::_init_curr_index() {

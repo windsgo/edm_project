@@ -27,31 +27,40 @@ public:
     void update_motor_pos(const move::axis_t &new_motor_pos,
                           const move::axis_t &new_motor_pos_act);
 
-    auto get_avaiable_coord_indexes() const {
+    inline auto get_avaiable_coord_indexes() const {
         return cm_.get_avaiable_coord_indexes();
     }
     bool set_coord_index(uint32_t new_coord_index);
-    auto get_current_coord_index() const { return curr_coord_index_; }
+    inline auto get_current_coord_index() const { return curr_coord_index_; }
 
-    const auto &get_current_coord_axis() const {
+    inline const auto &get_current_coord_axis() const {
         return curr_coord_axis_cache_;
     }
-    const auto &get_current_coord_axis_act() const {
+    inline const auto &get_current_coord_axis_act() const {
         return curr_coord_axis_cache_act_;
     }
-    const auto &get_current_machine_axis() const {
+    inline const auto &get_current_machine_axis() const {
         return curr_machine_axis_cache_;
     }
-    const auto &get_current_machine_axis_act() const {
+    inline const auto &get_current_machine_axis_act() const {
         return curr_machine_axis_cache_act_;
     }
-    const auto &get_current_motor_axis() const { return curr_motor_axis_; }
+    inline const auto &get_current_motor_axis() const {
+        return curr_motor_axis_;
+    }
 
-    auto get_current_coord_offset() const {
+    inline auto get_current_coord_offset() const {
         return cm_.get_coord_offset(curr_coord_index_);
     }
-    const auto &get_current_global_offset() const {
+    inline const auto &get_current_global_offset() const {
         return cm_.get_global_offset();
+    }
+
+    inline const auto &get_pos_soft_limit() const {
+        return cm_.get_pos_soft_limit();
+    }
+    inline const auto &get_neg_soft_limit() const {
+        return cm_.get_neg_soft_limit();
     }
 
     bool get_coord_axis(uint32_t coord_index, move::axis_t &output) const;
@@ -61,10 +70,12 @@ public:
     // TODO 修改坐标系偏置, 并保存
 
     // 设置当前坐标系 偏置
-    bool set_current_coord_offset(const move::axis_t& offset);
-    bool set_coord_offset(uint32_t index, const move::axis_t& offset);
+    bool set_current_coord_offset(const move::axis_t &offset);
+    bool set_coord_offset(uint32_t index, const move::axis_t &offset);
 
-    void set_global_offset(const move::axis_t& offset);
+    void set_global_offset(const move::axis_t &offset);
+
+    bool set_soft_limits(const CoordSoftLimit& csl);
 
 private:
     void _update_machine_axis_cache();
