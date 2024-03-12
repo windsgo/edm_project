@@ -11,6 +11,7 @@ set(APP_SOURCES
     CoordPanel/CoordPanel.cpp
     MainWindow/MainWindow.cpp
     InfoPanel/InfoPanel.cpp
+    MovePanel/MovePanel.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

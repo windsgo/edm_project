@@ -28,6 +28,8 @@
 
 #include "HandboxConverter/HandboxConverter.h"
 
+#include "InputHelper/InputHelper.h"
+
 #include <QEvent>
 #include <QObject>
 

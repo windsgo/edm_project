@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     coord_panel_ = new CoordPanel(shared_core_data_, ui->frame_coordpanel);
     info_panel_ = new InfoPanel(shared_core_data_, ui->frame_info);
+    move_panel_ = new MovePanel(shared_core_data_, ui->frame_move);
 }
 
 MainWindow::~MainWindow()
