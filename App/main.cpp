@@ -21,9 +21,17 @@ static void init_sys_qss(void) {
     stylefile.close();
 }
 
+static void print_sys_start() {
+    s_logger->info("-----------------------------------------");
+    s_logger->info("------------ System Started -------------");
+    s_logger->info("-----------------------------------------");
+}
+
 using namespace edm::app;
 
 int main(int argc, char **argv) {
+
+    print_sys_start();
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 

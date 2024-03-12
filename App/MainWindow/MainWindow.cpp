@@ -1,6 +1,9 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include "Logger/LogMacro.h"
+
+EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 namespace edm {
 namespace app {
@@ -19,6 +22,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    s_logger->info("-----------------------------------------");
+    s_logger->info("------------ MainWindow Dtor ------------");
+    s_logger->info("-----------------------------------------");
+
     delete ui;
 }
 
