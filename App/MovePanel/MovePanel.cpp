@@ -96,15 +96,17 @@ void MovePanel::_start_pointmove_no_softlimit_check(
     const move::axis_t &target_pos) {
     const auto &start_pos =
         shared_core_data_->get_info_dispatcher()->get_info().curr_cmd_axis_blu;
-    
-    // TODO get speed param
+
     // create motion cmd
     edm::move::MoveRuntimePlanSpeedInput speed;
-    speed.nacc = 60;
+    speed.nacc = util::UnitConverter::ms2p(
+        shared_core_data_->get_system_settings().get_fmparam_nacc_ms());
     speed.entry_v = 0;
     speed.exit_v = 0;
-    speed.cruise_v = util::UnitConverter::um2blu(30000);
-    speed.acc0 = util::UnitConverter::um2blu(500000);
+    speed.cruise_v = util::UnitConverter::um2blu(
+        shared_core_data_->get_system_settings().get_fmparam_speed_0_um_s()); // TODO, MRF ?
+    speed.acc0 = util::UnitConverter::um2blu(
+        shared_core_data_->get_system_settings().get_fmparam_max_acc_um_s2());
     speed.dec0 = -speed.acc0;
 
     auto start_pointmove_cmd =
@@ -149,11 +151,12 @@ void MovePanel::_start_single_axis_pointmove_pos(uint32_t axis_index) {
 
     // get mach target axis pos by softlimit, other axis by start_pos
     move::axis_t mach_target_pos{mach_start_pos};
-    mach_target_pos[axis_index] =  coord_sys_->get_pos_soft_limit()[axis_index];
+    mach_target_pos[axis_index] = coord_sys_->get_pos_soft_limit()[axis_index];
 
     if (mach_start_pos[axis_index] > mach_target_pos[axis_index]) {
-        s_logger->warn("axis {} is already outof pos softlimit, limit mach value: {}", axis_index,
-                       mach_target_pos[axis_index]);
+        s_logger->warn(
+            "axis {} is already outof pos softlimit, limit mach value: {}",
+            axis_index, mach_target_pos[axis_index]);
         return;
     }
 
@@ -180,11 +183,12 @@ void MovePanel::_start_single_axis_pointmove_neg(uint32_t axis_index) {
 
     // get mach target axis pos by softlimit, other axis by start_pos
     move::axis_t mach_target_pos{mach_start_pos};
-    mach_target_pos[axis_index] =  coord_sys_->get_neg_soft_limit()[axis_index];
+    mach_target_pos[axis_index] = coord_sys_->get_neg_soft_limit()[axis_index];
 
     if (mach_start_pos[axis_index] < mach_target_pos[axis_index]) {
-        s_logger->warn("axis {} is already outof neg softlimit, limit mach value: {}", axis_index,
-                       mach_target_pos[axis_index]);
+        s_logger->warn(
+            "axis {} is already outof neg softlimit, limit mach value: {}",
+            axis_index, mach_target_pos[axis_index]);
         return;
     }
 

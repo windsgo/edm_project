@@ -4,6 +4,15 @@
     "qss_file": "gui.qss",
     "can_device_name": "can0",
     "can_device_bitrate": 500000,
-    "ecat_netif_name": "enx34298f700ae1",
-    "ecat_iomap_size": 4096
+    "ecat": {
+        "ecat_netif_name": "enx34298f700ae1",
+        "ecat_iomap_size": 4096
+    },
+    "fast_move_param": {
+        "max_acc_um_s2": 500000,
+        "nacc_ms": 60,
+        "speed_0_um_s": 33000,
+        "speed_1_um_s": 6600,
+        "speed_2_um_s": 330
+    }
 }

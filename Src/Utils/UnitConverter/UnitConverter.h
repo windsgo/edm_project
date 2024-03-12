@@ -29,9 +29,11 @@ private:
 
 public:
     static inline move::unit_t um2blu(move::unit_t um) { return um * um2blu_; }
-    static inline move::unit_t mm2blu(move::unit_t um) { return um * mm2blu_; }
+    static inline move::unit_t mm2blu(move::unit_t mm) { return mm * mm2blu_; }
     static inline move::unit_t blu2um(move::unit_t blu) { return blu * blu2um_; }
     static inline move::unit_t blu2mm(move::unit_t blu) { return blu * blu2mm_; }
+
+    static inline move::unit_t ms2p(move::unit_t ms) { return ms * ms2p_; }
 
     // TODO
 };

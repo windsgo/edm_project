@@ -44,19 +44,21 @@ public:
     ~SharedCoreData() noexcept = default;
 
 public:
-    auto get_coord_system() const { return coord_system_; }
-    auto get_global_cmd_queue() const { return global_cmd_queue_; }
-    auto get_can_ctrler() const { return can_ctrler_; }
-    auto get_io_ctrler() const { return io_ctrler_; }
-    auto get_power_ctrler() const { return power_ctrler_; }
+    inline const auto& get_system_settings() const { return sys_settings_; }
 
-    auto get_motion_signal_queue() const { return motion_signal_queue_; }
-    auto get_motion_cmd_queue() const { return motion_cmd_queue_; }
-    auto get_motion_thread_ctrler() const { return motion_thread_ctrler_; }
+    inline auto get_coord_system() const { return coord_system_; }
+    inline auto get_global_cmd_queue() const { return global_cmd_queue_; }
+    inline auto get_can_ctrler() const { return can_ctrler_; }
+    inline auto get_io_ctrler() const { return io_ctrler_; }
+    inline auto get_power_ctrler() const { return power_ctrler_; }
 
-    auto get_can_recv_buffer() const { return can_recv_buffer_; }
+    inline auto get_motion_signal_queue() const { return motion_signal_queue_; }
+    inline auto get_motion_cmd_queue() const { return motion_cmd_queue_; }
+    inline auto get_motion_thread_ctrler() const { return motion_thread_ctrler_; }
 
-    auto get_info_dispatcher() const { return info_dispatcher_; }
+    inline auto get_can_recv_buffer() const { return can_recv_buffer_; }
+
+    inline auto get_info_dispatcher() const { return info_dispatcher_; }
 
 signals:
     void sig_handbox_start_pointmove(const move::axis_t &dir,

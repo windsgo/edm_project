@@ -17,23 +17,48 @@
 
 namespace edm {
 
-class SystemSettingsData final {
+namespace _sys {
+
+struct _ecat_setting {
+    uint32_t ecat_iomap_size{4096};
+    std::string ecat_netif_name; // need to specify, based on different netif
+
+    MEO_JSONIZATION(MEO_OPT ecat_iomap_size, ecat_netif_name);
+};
+
+struct _fast_move_param {
+    double max_acc_um_s2{500000}; // um / s
+    uint32_t nacc_ms{60};         // nacc ms
+
+    double speed_0_um_s{33000}; // 0档速度
+    double speed_1_um_s{6600};  // 1档速度
+    double speed_2_um_s{330};   // 2档速度
+    // 3 档速度是um移动
+
+    MEO_JSONIZATION(MEO_OPT max_acc_um_s2, MEO_OPT nacc_ms,
+                    MEO_OPT speed_0_um_s, MEO_OPT speed_1_um_s,
+                    MEO_OPT speed_2_um_s);
+};
+
+class _SystemSettingsData final {
 public:
-    SystemSettingsData() noexcept = default;
+    _SystemSettingsData() noexcept = default;
 
 public: // settings
-    std::string coord_config_file;
-    std::string log_config_file;
-    std::string qss_file;
-    std::string can_device_name;
-    uint32_t can_device_bitrate;
-    uint32_t ecat_iomap_size;
-    std::string ecat_netif_name;
+    std::string coord_config_file{"coord.json"};
+    std::string log_config_file{"logdefine.json"};
+    std::string qss_file{"gui.qss"};
+    std::string can_device_name{"can0"};
+    uint32_t can_device_bitrate{500000};
+    _ecat_setting ecat;
+    _fast_move_param fast_move_param;
 
-    MEO_JSONIZATION(coord_config_file, log_config_file, qss_file,
-                    can_device_name, can_device_bitrate, ecat_iomap_size,
-                    ecat_netif_name);
+    MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
+                    MEO_OPT qss_file, MEO_OPT can_device_name,
+                    MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param);
 };
+
+}; // namespace _sys
 
 class SystemSettings final {
 public:
@@ -56,17 +81,24 @@ public:
     }
     const std::string &get_qss_file() const { return data_.qss_file; }
 
+    // can
     const std::string &get_can_device_name() const {
         return data_.can_device_name;
     }
-
     uint32_t get_can_device_bitrate() const { return data_.can_device_bitrate; }
 
-    uint32_t get_ecat_iomap_size() const { return data_.ecat_iomap_size; }
-
+    // ecat
+    uint32_t get_ecat_iomap_size() const { return data_.ecat.ecat_iomap_size; }
     const std::string &get_ecat_netif_name() const {
-        return data_.ecat_netif_name;
+        return data_.ecat.ecat_netif_name;
     }
+
+    // speed
+    double get_fmparam_max_acc_um_s2() const { return data_.fast_move_param.max_acc_um_s2; }
+    double get_fmparam_nacc_ms() const { return data_.fast_move_param.nacc_ms; }
+    double get_fmparam_speed_0_um_s() const { return data_.fast_move_param.speed_0_um_s; }
+    double get_fmparam_speed_1_um_s() const { return data_.fast_move_param.speed_1_um_s; }
+    double get_fmparam_speed_2_um_s() const { return data_.fast_move_param.speed_2_um_s; }
 
 public:
     // TODO change settings and save to local file
@@ -93,7 +125,7 @@ private:
         auto ret = std::move(*parse_ret);
 
         try {
-            data_ = (SystemSettingsData)ret;
+            data_ = (_sys::_SystemSettingsData)ret;
         } catch (const std::exception &e) {
             throw exception(EDM_FMT::format(
                 "system settings init failed: convert ex: {}: {}", e.what(),
@@ -104,7 +136,7 @@ private:
     }
 
 private:
-    SystemSettingsData data_;
+    _sys::_SystemSettingsData data_;
 };
 
 } // namespace edm
