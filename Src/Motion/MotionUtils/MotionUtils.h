@@ -91,6 +91,10 @@ public:
     static inline bool IsAxisTheSame(const axis_t& axis1, const axis_t& axis2) {
         return axis1 == axis2;
     }
+
+    static inline bool IsAxisAllZero(const axis_t& axis) {
+        return IsAxisTheSame(axis, axis_t{0.0});
+    }
 };
 
 } // namespace move

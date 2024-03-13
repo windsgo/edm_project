@@ -401,6 +401,22 @@ bool CoordinateManager::machine_to_motor(const move::axis_t &machine_pos,
     return true;
 }
 
+bool CoordinateManager::machine_to_coord(uint32_t coord_index,
+                                         const move::axis_t &machine_pos,
+                                         move::axis_t &output) const {
+    auto find_coord_ret = coordinates_map_.find(coord_index);
+    if (find_coord_ret == coordinates_map_.end()) {
+        return false;
+    }
+
+    const auto& coord_offset = find_coord_ret->second.offset();
+    for (std::size_t i = 0; i < output.size(); ++i) {
+        output[i] = machine_pos[i] - coord_offset[i];
+    }
+
+    return true;
+}
+
 bool CoordinateManager::set_soft_limits(const CoordSoftLimit &soft_limits) {
     // check input soft limit
     for (std::size_t i = 0; i < soft_limits.pos.size(); ++i) {

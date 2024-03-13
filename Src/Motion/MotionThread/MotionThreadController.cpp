@@ -291,8 +291,8 @@ void MotionThreadController::_threadstate_running() {
     default:
     case EcatState::Init:
         _switch_ecat_state(EcatState::EcatDisconnected);
-        ecat_connect_flag_ = true;
-        ecat_clear_fault_reenable_flag_ = true;
+        // ecat_connect_flag_ = true;
+        // ecat_clear_fault_reenable_flag_ = true;
         break;
     case EcatState::EcatDisconnected:
         if (ecat_connect_flag_) {

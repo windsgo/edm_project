@@ -89,15 +89,14 @@ color: rgb(255, 255, 10);
 font-weight: bold;
 }
 
-#MovePanel QCheckBox#checkbox_le_pm_x,
-#MovePanel QCheckBox#checkbox_le_pm_y,
-#MovePanel QCheckBox#checkbox_le_pm_z,
-#MovePanel QCheckBox#checkbox_le_pm_b,
-#MovePanel QCheckBox#checkbox_le_pm_c,
-#MovePanel QCheckBox#checkbox_le_pm_a {
-color: rgb(255, 255, 10);
-font-weight: bold;
-background: transparent;
+#MovePanel QPushButton#pb_check_le_pm_x,
+#MovePanel QPushButton#pb_check_le_pm_y,
+#MovePanel QPushButton#pb_check_le_pm_z,
+#MovePanel QPushButton#pb_check_le_pm_b,
+#MovePanel QPushButton#pb_check_le_pm_c,
+#MovePanel QPushButton#pb_check_le_pm_a {
+    color: rgb(255, 255, 10);
+    font-weight: bold;
 }
 
 #CoordPanel QPushButton {

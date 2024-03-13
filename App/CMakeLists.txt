@@ -12,6 +12,7 @@ set(APP_SOURCES
     MainWindow/MainWindow.cpp
     InfoPanel/InfoPanel.cpp
     MovePanel/MovePanel.cpp
+    Resource/app_resource.qrc # qt resource
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

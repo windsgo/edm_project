@@ -33,11 +33,12 @@ struct _fast_move_param {
     double speed_0_um_s{33000}; // 0档速度
     double speed_1_um_s{6600};  // 1档速度
     double speed_2_um_s{330};   // 2档速度
-    // 3 档速度是um移动
+    double speed_3_um_s{16};
+    // 3 档速度是um移动, 但是也给出, 用于非按钮点动时
 
     MEO_JSONIZATION(MEO_OPT max_acc_um_s2, MEO_OPT nacc_ms,
                     MEO_OPT speed_0_um_s, MEO_OPT speed_1_um_s,
-                    MEO_OPT speed_2_um_s);
+                    MEO_OPT speed_2_um_s, MEO_OPT speed_3_um_s);
 };
 
 class _SystemSettingsData final {
@@ -99,6 +100,7 @@ public:
     double get_fmparam_speed_0_um_s() const { return data_.fast_move_param.speed_0_um_s; }
     double get_fmparam_speed_1_um_s() const { return data_.fast_move_param.speed_1_um_s; }
     double get_fmparam_speed_2_um_s() const { return data_.fast_move_param.speed_2_um_s; }
+    double get_fmparam_speed_3_um_s() const { return data_.fast_move_param.speed_3_um_s; }
 
 public:
     // TODO change settings and save to local file
