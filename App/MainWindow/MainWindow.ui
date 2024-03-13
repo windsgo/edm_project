@@ -34,8 +34,8 @@
     <rect>
      <x>10</x>
      <y>360</y>
-     <width>541</width>
-     <height>701</height>
+     <width>471</width>
+     <height>621</height>
     </rect>
    </property>
    <property name="frameShape">
@@ -48,9 +48,9 @@
   <widget class="QFrame" name="frame_info">
    <property name="geometry">
     <rect>
-     <x>570</x>
-     <y>360</y>
-     <width>581</width>
+     <x>1500</x>
+     <y>10</y>
+     <width>411</width>
      <height>441</height>
     </rect>
    </property>
