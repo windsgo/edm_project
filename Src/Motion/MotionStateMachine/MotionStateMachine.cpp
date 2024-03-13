@@ -245,6 +245,13 @@ bool MotionStateMachine::stop_auto(bool immediate) {
 void MotionStateMachine::_mainmode_idle() {
     // TODO
     touch_detect_handler_->set_detect_enable(false);
+
+    // static util::SlidingFilter<double> sf {1000};
+
+    // double cmd = cb_get_servo_cmd_();
+    // sf.push_back(cmd);
+
+    // printf("%0.3f\t %0.3f\n", cmd, sf.average());
 }
 
 void MotionStateMachine::_mainmode_manual() {

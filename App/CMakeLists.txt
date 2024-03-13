@@ -12,6 +12,7 @@ set(APP_SOURCES
     MainWindow/MainWindow.cpp
     InfoPanel/InfoPanel.cpp
     MovePanel/MovePanel.cpp
+    IOPanel/IOPanel.cpp
     Resource/app_resource.qrc # qt resource
 )
 

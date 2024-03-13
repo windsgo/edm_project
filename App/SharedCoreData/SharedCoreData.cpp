@@ -2,6 +2,8 @@
 
 #include <QCoreApplication>
 
+#include <random>
+
 #include "Logger/LogMacro.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -102,7 +104,9 @@ struct eventtype_register__ {
 };
 static struct eventtype_register__ et_register;
 
-SharedCoreData::SharedCoreData(QObject *parent) : QObject(parent) {
+SharedCoreData::SharedCoreData(QObject *parent)
+    : QObject(parent), random_device_(), gen_(random_device_()),
+      uniform_real_distribution_(-1.0, 1.0) {
     _init_data();
 }
 
@@ -269,7 +273,18 @@ void SharedCoreData::_init_motionthread_cb() {
 
     cb_get_servo_cmd_ = [this]() -> double {
 #ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-        return util::UnitConverter::um2blu(this->manual_servo_cmd_um_);
+        double amplitude_um = this->manual_servo_cmd_feed_amplitude_um_;
+        double probability_offset =
+            (this->manual_servo_cmd_feed_probability_ - 0.50);
+        
+        double rd = uniform_real_distribution_(gen_); // rd 在 -1.0, 1.0之间正太分布
+        
+        // 根据 probability_offset 进行概率偏移
+        rd += probability_offset * 2;
+        if (rd > 1.0) rd = 1.0;
+        else if (rd < -1.0) rd = -1.0;
+
+        return util::UnitConverter::um2blu(rd * amplitude_um);
 #else // EDM_OFFLINE_MANUAL_SERVO_CMD
         Can1IOBoard407ServoData sd;
         this->can_recv_buffer_->load_servo_data(sd);

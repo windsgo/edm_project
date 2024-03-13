@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <random>
 
 #include "Utils/DataQueueRecorder/DataQueueRecorder.h"
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"
@@ -105,12 +106,18 @@ private:
     std::function<void(bool)> cb_enable_votalge_gate_;
 
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-    bool manual_touch_detect_flag_{false};
+    std::atomic_bool manual_touch_detect_flag_{false};
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 
 #ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-    double manual_servo_cmd_um_{0.0};
+    // 离线测试时, 给此类输入一个幅值和进给概率, 每次调用, 随机给出一个进给量
+    std::atomic<double> manual_servo_cmd_feed_probability_ {0.75}; // 进给概率
+    std::atomic<double> manual_servo_cmd_feed_amplitude_um_ {0.5}; // 幅值
 #endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+
+    std::random_device random_device_;
+    std::mt19937 gen_;
+    std::uniform_real_distribution<> uniform_real_distribution_;
 
 public:
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
@@ -120,8 +127,9 @@ public:
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 
 #ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-    inline void set_manual_servo_cmd_um(double cmd_um) {
-        manual_servo_cmd_um_ = cmd_um;
+    inline void set_manual_servo_cmd(double feed_probability, double feed_amplitude_um) {
+        manual_servo_cmd_feed_probability_ = feed_probability;
+        manual_servo_cmd_feed_amplitude_um_ = feed_amplitude_um;
     }
 #endif // EDM_OFFLINE_MANUAL_SERVO_CMD
 };
