@@ -6,6 +6,7 @@
 #include "CoordPanel/CoordPanel.h"
 #include "InfoPanel/InfoPanel.h"
 #include "MovePanel/MovePanel.h"
+#include "IOPanel/IOPanel.h"
 
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
@@ -32,6 +33,7 @@ private:
     CoordPanel* coord_panel_;
     InfoPanel* info_panel_;
     MovePanel* move_panel_;
+    IOPanel* io_panel_;
 };
 
 } // namespace app

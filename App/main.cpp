@@ -10,9 +10,9 @@
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 static void init_sys_qss(void) {
-//    QFile stylefile(QString::fromStdString(
-//        EDM_CONFIG_DIR + edm::SystemSettings::instance().get_qss_file()));
-    QFile stylefile(":/app/ui/qss/appgui.qss");
+    QFile stylefile(QString::fromStdString(
+        EDM_CONFIG_DIR + edm::SystemSettings::instance().get_qss_file()));
+    // QFile stylefile(":/app/ui/qss/appgui.qss");
     stylefile.open(QFile::ReadOnly);
     if (stylefile.isOpen()) {
         qApp->setStyleSheet(stylefile.readAll());
