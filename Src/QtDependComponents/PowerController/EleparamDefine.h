@@ -168,19 +168,19 @@ struct EleParam_dkd_t /* 前缀为__的变量表示尚未用到 */
 /* 对io板发送 伺服参数 定义 */
 struct CanIOBoardServoSettingStrc {
     // index 0:
-    uint8_t servo_voltage_1   : 8; // 伺服参考电压1
+    uint8_t servo_voltage_1   : 8; // 伺服参考电压1 //! 目前没用
 
     // index 1:
-    uint8_t servo_voltage_2   : 8; // 伺服参考电压2
+    uint8_t servo_voltage_2   : 8; // 伺服参考电压2 //! 目前没用
 
     // index 2:
-    uint8_t servo_sensitivity : 8; // 伺服灵敏度
+    uint8_t servo_sensitivity : 8; // 伺服灵敏度 //! 保持100
 
     // index 3:
-    uint8_t servo_speed       : 8; // 伺服速度
+    uint8_t servo_speed       : 8; // 伺服速度 //! 对应 S 0-9
 
     // index 4:
-    uint8_t servo_sv          : 8; // 参考电压
+    uint8_t servo_sv          : 8; // 参考电压 //! 对应 SV 0-9档位, >=10时为实际值
 
     // index 5:
     uint8_t touch_zigbee_warning_enable : 1; // 接触感知报警蜂鸣器使能, 1 为使能

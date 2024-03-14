@@ -115,6 +115,20 @@ void CoordPanel::slot_change_display_coord_index(uint32_t new_coord_index) {
 }
 
 void CoordPanel::_init_label_arr() {
+    axisname_label_arr_.at(0) = ui->lb_x;
+    axisname_label_arr_.at(1) = ui->lb_y;
+    axisname_label_arr_.at(2) = ui->lb_z;
+    axisname_label_arr_.at(3) = ui->lb_b;
+    axisname_label_arr_.at(4) = ui->lb_c;
+    axisname_label_arr_.at(5) = ui->lb_a;
+
+    offsetaxisname_label_arr_.at(0) = ui->lb_ofs_x;
+    offsetaxisname_label_arr_.at(1) = ui->lb_ofs_y;
+    offsetaxisname_label_arr_.at(2) = ui->lb_ofs_z;
+    offsetaxisname_label_arr_.at(3) = ui->lb_ofs_b;
+    offsetaxisname_label_arr_.at(4) = ui->lb_ofs_c;
+    offsetaxisname_label_arr_.at(5) = ui->lb_ofs_a;
+
     cmd_axis_label_arr_.at(0) = ui->lb_x_cmd_axis;
     cmd_axis_label_arr_.at(1) = ui->lb_y_cmd_axis;
     cmd_axis_label_arr_.at(2) = ui->lb_z_cmd_axis;
@@ -182,10 +196,17 @@ void CoordPanel::_init_label_arr() {
     // set some invalid
     for (std::size_t i = coord::Coordinate::Size;
          i < cmd_axis_label_arr_.size(); ++i) {
+        axisname_label_arr_.at(i)->setEnabled(false);
+        offsetaxisname_label_arr_.at(i)->setEnabled(false);
+
         cmd_axis_label_arr_.at(i)->setText("null");
+        cmd_axis_label_arr_.at(i)->setEnabled(false);
         act_axis_label_arr_.at(i)->setText("null");
+        act_axis_label_arr_.at(i)->setEnabled(false);
         mach_cmd_axis_label_arr_.at(i)->setText("null");
+        mach_cmd_axis_label_arr_.at(i)->setEnabled(false);
         mach_act_axis_label_arr_.at(i)->setText("null");
+        mach_act_axis_label_arr_.at(i)->setEnabled(false);
 
         coord_offset_le_arr_.at(i)->setEnabled(false);
         coord_offset_le_arr_.at(i)->setText("null");

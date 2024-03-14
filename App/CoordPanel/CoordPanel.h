@@ -52,6 +52,9 @@ private:
 
     edm::coord::CoordinateSystem::ptr coord_sys_;
 
+    std::array<QLabel*, EDM_AXIS_MAX_NUM> axisname_label_arr_;
+    std::array<QLabel*, EDM_AXIS_MAX_NUM> offsetaxisname_label_arr_;
+
     std::array<QLabel*, EDM_AXIS_MAX_NUM> cmd_axis_label_arr_;
     std::array<QLabel*, EDM_AXIS_MAX_NUM> act_axis_label_arr_;
     std::array<QLabel*, EDM_AXIS_MAX_NUM> mach_cmd_axis_label_arr_;

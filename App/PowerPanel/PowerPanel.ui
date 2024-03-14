@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>1257</width>
+    <height>717</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -102,6 +102,38 @@ BIT</string>
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QPushButton" name="pb_database">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>60</y>
+     <width>80</width>
+     <height>60</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>80</width>
+     <height>60</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>DataBase</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_2">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>200</y>
+     <width>1051</width>
+     <height>401</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Current Using Eleparam</string>
+   </property>
   </widget>
  </widget>
  <resources/>

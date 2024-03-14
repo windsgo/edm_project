@@ -9,6 +9,8 @@
 
 #include "SharedCoreData/SharedCoreData.h"
 
+#include "PowerDatabase.h"
+
 namespace Ui {
 class PowerPanel;
 }
@@ -33,11 +35,20 @@ signals:
     void sig_trigger_io_display_update();
 
 private:
+    void _init_button_slots();
+
+private:
     Ui::PowerPanel *ui;
 
     SharedCoreData *shared_core_data_;
 
     power::PowerController::ptr power_ctrler_;
+
+    // PowerPanel 来维护 PowerDatabase, 并向外部提供数据库接口:
+    // TODO 接口: 
+    // 1. 电参数索引是否存在; 
+    // 2. 设定当前电参数号; (外部只需要设定, 在PowerPanel内部去向数据库获取电参数, 并将控制量发送到CAN控制器)
+    PowerDatabase* power_database_;
 };
 
 } // namespace app

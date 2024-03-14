@@ -53,10 +53,12 @@ public: // settings
     uint32_t can_device_bitrate{500000};
     _ecat_setting ecat;
     _fast_move_param fast_move_param;
+    std::string power_database_file{"power.db"};
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
-                    MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param);
+                    MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param,
+                    MEO_OPT power_database_file);
 };
 
 }; // namespace _sys
@@ -95,12 +97,27 @@ public:
     }
 
     // speed
-    double get_fmparam_max_acc_um_s2() const { return data_.fast_move_param.max_acc_um_s2; }
+    double get_fmparam_max_acc_um_s2() const {
+        return data_.fast_move_param.max_acc_um_s2;
+    }
     double get_fmparam_nacc_ms() const { return data_.fast_move_param.nacc_ms; }
-    double get_fmparam_speed_0_um_s() const { return data_.fast_move_param.speed_0_um_s; }
-    double get_fmparam_speed_1_um_s() const { return data_.fast_move_param.speed_1_um_s; }
-    double get_fmparam_speed_2_um_s() const { return data_.fast_move_param.speed_2_um_s; }
-    double get_fmparam_speed_3_um_s() const { return data_.fast_move_param.speed_3_um_s; }
+    double get_fmparam_speed_0_um_s() const {
+        return data_.fast_move_param.speed_0_um_s;
+    }
+    double get_fmparam_speed_1_um_s() const {
+        return data_.fast_move_param.speed_1_um_s;
+    }
+    double get_fmparam_speed_2_um_s() const {
+        return data_.fast_move_param.speed_2_um_s;
+    }
+    double get_fmparam_speed_3_um_s() const {
+        return data_.fast_move_param.speed_3_um_s;
+    }
+
+    // power db
+    const std::string &get_power_database_file() const {
+        return data_.power_database_file;
+    }
 
 public:
     // TODO change settings and save to local file

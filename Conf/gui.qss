@@ -12,7 +12,12 @@ background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
                         stop:0 rgb(165, 165, 165), stop:1 rgb(66,78,105));
 border:0px groove rgb(59, 59, 59);
 border-radius:3px;
-font: 12pt "Monospace";
+font: bold 12pt "Monospace";
+}
+
+QPushButton:disabled
+{
+font-weight: normal;
 }
 
 QPushButton:hover
@@ -46,6 +51,10 @@ background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
 border:4px groove rgb(59, 59, 59);
 }
 
+#PowerDatabase QPushButton:disabled {
+background-color: gray;
+}
+
 QLabel
 {
 background-color: transparent;
@@ -72,31 +81,89 @@ color: rgb(255, 255, 10);
 font-weight: bold;
 }
 
-#CoordPanel QLabel#lb_x,
-#CoordPanel QLabel#lb_y,
-#CoordPanel QLabel#lb_z,
-#CoordPanel QLabel#lb_b,
-#CoordPanel QLabel#lb_c,
-#CoordPanel QLabel#lb_a,
-#CoordPanel QLabel#lb_ofs_x,
-#CoordPanel QLabel#lb_ofs_y,
-#CoordPanel QLabel#lb_ofs_z,
-#CoordPanel QLabel#lb_ofs_b,
-#CoordPanel QLabel#lb_ofs_c,
-#CoordPanel QLabel#lb_ofs_a,
+#CoordPanel QLabel#lb_x:enabled,
+#CoordPanel QLabel#lb_y:enabled,
+#CoordPanel QLabel#lb_z:enabled,
+#CoordPanel QLabel#lb_b:enabled,
+#CoordPanel QLabel#lb_c:enabled,
+#CoordPanel QLabel#lb_a:enabled,
+#CoordPanel QLabel#lb_ofs_x:enabled,
+#CoordPanel QLabel#lb_ofs_y:enabled,
+#CoordPanel QLabel#lb_ofs_z:enabled,
+#CoordPanel QLabel#lb_ofs_b:enabled,
+#CoordPanel QLabel#lb_ofs_c:enabled,
+#CoordPanel QLabel#lb_ofs_a:enabled,
 #CoordPanel QLabel#lb_select_coord {
 color: rgb(255, 255, 10);
 font-weight: bold;
 }
 
-#MovePanel QPushButton#pb_check_le_pm_x,
-#MovePanel QPushButton#pb_check_le_pm_y,
-#MovePanel QPushButton#pb_check_le_pm_z,
-#MovePanel QPushButton#pb_check_le_pm_b,
-#MovePanel QPushButton#pb_check_le_pm_c,
-#MovePanel QPushButton#pb_check_le_pm_a {
+#CoordPanel QLabel:disabled {
+color: gray;
+font-weight: normal;
+}
+
+#CoordPanel QLineEdit:disabled {
+color: gray;
+font-weight: normal;
+border-color: gray;
+}
+
+#MovePanel QPushButton#pb_check_le_pm_x:enabled,
+#MovePanel QPushButton#pb_check_le_pm_y:enabled,
+#MovePanel QPushButton#pb_check_le_pm_z:enabled,
+#MovePanel QPushButton#pb_check_le_pm_b:enabled,
+#MovePanel QPushButton#pb_check_le_pm_c:enabled,
+#MovePanel QPushButton#pb_check_le_pm_a:enabled,
+#MovePanel QPushButton#pb_neg_pm_x:enabled,
+#MovePanel QPushButton#pb_neg_pm_y:enabled,
+#MovePanel QPushButton#pb_neg_pm_z:enabled,
+#MovePanel QPushButton#pb_neg_pm_b:enabled,
+#MovePanel QPushButton#pb_neg_pm_c:enabled,
+#MovePanel QPushButton#pb_neg_pm_a:enabled,
+#MovePanel QPushButton#pb_pos_pm_x:enabled,
+#MovePanel QPushButton#pb_pos_pm_y:enabled,
+#MovePanel QPushButton#pb_pos_pm_z:enabled,
+#MovePanel QPushButton#pb_pos_pm_b:enabled,
+#MovePanel QPushButton#pb_pos_pm_c:enabled,
+#MovePanel QPushButton#pb_pos_pm_a:enabled {
     color: rgb(255, 255, 10);
     font-weight: bold;
+}
+
+#MovePanel QPushButton#pb_check_le_pm_x:disabled,
+#MovePanel QPushButton#pb_check_le_pm_y:disabled,
+#MovePanel QPushButton#pb_check_le_pm_z:disabled,
+#MovePanel QPushButton#pb_check_le_pm_b:disabled,
+#MovePanel QPushButton#pb_check_le_pm_c:disabled,
+#MovePanel QPushButton#pb_check_le_pm_a:disabled,
+#MovePanel QPushButton#pb_neg_pm_x:disabled,
+#MovePanel QPushButton#pb_neg_pm_y:disabled,
+#MovePanel QPushButton#pb_neg_pm_z:disabled,
+#MovePanel QPushButton#pb_neg_pm_b:disabled,
+#MovePanel QPushButton#pb_neg_pm_c:disabled,
+#MovePanel QPushButton#pb_neg_pm_a:disabled,
+#MovePanel QPushButton#pb_pos_pm_x:disabled,
+#MovePanel QPushButton#pb_pos_pm_y:disabled,
+#MovePanel QPushButton#pb_pos_pm_z:disabled,
+#MovePanel QPushButton#pb_pos_pm_b:disabled,
+#MovePanel QPushButton#pb_pos_pm_c:disabled,
+#MovePanel QPushButton#pb_pos_pm_a:disabled {
+    color:rgb(253,236,208);
+    font-weight: normal;
+    background-color: gray;
+}
+
+#MovePanel QLineEdit:disabled {
+color: gray;
+font-weight: normal;
+border-color: gray;
+}
+
+#IOPanel QPushButton:disabled {
+    color:rgb(253,236,208);
+    font-weight: normal;
+    background-color: gray;
 }
 
 /* tab widget */
@@ -205,5 +272,21 @@ margin: 0.5px;
                 stop:0 rgba(82,136,112, 255), stop:0.995 rgb(240,116,132),
                 stop:0.9951 rgba(253, 236, 208, 255), stop:1 rgba(253, 236, 208, 255));
  /*width:20px;*/
+}
+
+QTableView {
+    color: rgb(253,236,208);                                      /*表格内文字颜色*/
+    gridline-color: #76EEC6;                              /*表格内框颜色*/
+    alternate-background-color: transparent;
+    selection-color: black;                             /*选中区域的文字颜色*/
+    selection-background-color: #9AFF9A;        /*选中区域的背景色*/
+    border: 2px groove #76EEC6;
+    border-radius: 0px;
+}
+
+QHeaderView::section{
+    background-color: transparent;
+    color:rgb(255,255,10);
+    border:1px solid #76EEC6;
 }
 
