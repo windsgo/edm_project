@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     info_panel_ = new InfoPanel(shared_core_data_, ui->groupBox_info);
     move_panel_ = new MovePanel(shared_core_data_, ui->groupBox_pm);
     io_panel_ = new IOPanel(shared_core_data_, ui->tab_io);
+    power_panel_ = new PowerPanel(shared_core_data_, ui->tab_power);
 }
 
 MainWindow::~MainWindow()

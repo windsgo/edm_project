@@ -7,6 +7,7 @@
 #include "InfoPanel/InfoPanel.h"
 #include "MovePanel/MovePanel.h"
 #include "IOPanel/IOPanel.h"
+#include "PowerPanel/PowerPanel.h"
 
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
@@ -34,6 +35,7 @@ private:
     InfoPanel* info_panel_;
     MovePanel* move_panel_;
     IOPanel* io_panel_;
+    PowerPanel* power_panel_;
 };
 
 } // namespace app
