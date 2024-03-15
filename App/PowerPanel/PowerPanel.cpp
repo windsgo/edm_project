@@ -1,6 +1,11 @@
 #include "PowerPanel.h"
 #include "ui_PowerPanel.h"
 
+#include "Exception/exception.h"
+#include "Logger/LogMacro.h"
+
+EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
+
 namespace edm {
 namespace app {
 
@@ -16,6 +21,8 @@ PowerPanel::PowerPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
     _init_update_slots();
     _init_button_slots();
+
+    _update_eleparam_display(pm_->get_current_eleparam());
 }
 
 PowerPanel::~PowerPanel() { delete ui; }
@@ -38,7 +45,65 @@ void PowerPanel::_update_io_display() {
 
 void PowerPanel::_update_eleparam_display(
     const edm::power::EleParam_dkd_t &eleparam) {
-    // TODO
+
+#define XX_(sp_name__, ele_name__) \
+    ui->spinBox_ele_##sp_name__->setValue(eleparam.ele_name__);
+
+    XX_(on, pulse_on)
+    XX_(off, pulse_off)
+    XX_(up, up)
+    XX_(dn, dn)
+    XX_(ip, ip)
+    XX_(hp, hp)
+    XX_(ma, ma)
+    XX_(sv, sv)
+    XX_(al, al)
+    XX_(ld, ld)
+    XX_(oc, oc)
+    XX_(pp, pp)
+    XX_(s, servo_speed)
+    ui->comboBox_ele_pl->setCurrentIndex(eleparam.pl); // pl = 0 -> index = 0 -> "+"
+    XX_(c, c)
+    XX_(js, jump_js)
+    XX_(sensitivity, servo_sensitivity)
+    XX_(voltage1, UpperThreshold)
+    XX_(voltage2, LowerThreshold)
+    XX_(index, upper_index)
+
+#undef XX_    
+
+}
+
+void PowerPanel::_set_param_from_ui() {
+    edm::power::EleParam_dkd_t param;
+
+#define XX_(sp_name__, ele_name__) \
+    param.ele_name__ = ui->spinBox_ele_##sp_name__->value();
+
+    XX_(on, pulse_on)
+    XX_(off, pulse_off)
+    XX_(up, up)
+    XX_(dn, dn)
+    XX_(ip, ip)
+    XX_(hp, hp)
+    XX_(ma, ma)
+    XX_(sv, sv)
+    XX_(al, al)
+    XX_(ld, ld)
+    XX_(oc, oc)
+    XX_(pp, pp)
+    XX_(s, servo_speed)
+    param.pl = ui->comboBox_ele_pl->currentIndex(); // pl = 0 -> index = 0 -> "+"
+    XX_(c, c)
+    XX_(js, jump_js)
+    XX_(sensitivity, servo_sensitivity)
+    XX_(voltage1, UpperThreshold)
+    XX_(voltage2, LowerThreshold)
+    XX_(index, upper_index)
+
+#undef XX_
+
+    pm_->set_current_eleparam(param);
 }
 
 void PowerPanel::_init_update_slots() {
@@ -63,6 +128,7 @@ void PowerPanel::_init_button_slots() {
         pm_->set_power_on(checked);
     });
 
+    connect(ui->pb_set_param, &QPushButton::clicked, this, &PowerPanel::_set_param_from_ui);
     // TODO
 }
 

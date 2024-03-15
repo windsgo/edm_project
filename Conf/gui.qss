@@ -290,3 +290,77 @@ QHeaderView::section{
     border:1px solid #76EEC6;
 }
 
+QSpinBox {
+    padding-top: 2px;
+    padding-bottom: 2px;
+	padding-left: 4px;
+    padding-right: 15px;
+    border: 1px solid #76EEC6;
+    border-radius: 3px;
+	color:rgb(253,236,208);
+    background-color: transparent;
+}
+
+/* 向上按钮 */
+QSpinBox::up-button {
+    subcontrol-origin:border;
+    subcontrol-position:top right;
+    background-color: #76EEC6;
+	border: none;
+    border-top-right-radius: 3px;
+	width: 12px;
+}
+
+QSpinBox::down-button { /* 向下按钮 */
+	subcontrol-origin: border;
+	subcontrol-position: bottom right;
+	border: none;
+    border-bottom-right-radius: 3px;
+	width: 12px;
+    background-color: #76EEC6;
+}
+
+QSpinBox::down-button:hover {
+	border: none;
+}
+
+QSpinBox::up-arrow {
+    image:url(:/images/spinbox/images/spinbox/up_arrow.png);
+    width:12px;
+    height:12px;
+}
+
+QSpinBox::up-arrow:hover {
+    width:14px;
+    height:14px;
+}
+
+QSpinBox::up-arrow:hover:pressed {
+    width:16px;
+    height:16px;
+}
+
+QSpinBox::up-arrow:disabled, QSpinBox::up-arrow:off {
+	color: rgb(255, 255, 10);
+}
+
+QSpinBox::down-arrow {
+    image:url(:/images/spinbox/images/spinbox/dn_arrow.png);
+    width:12px;
+    height:12px;
+}
+
+QSpinBox::down-arrow:hover {
+    width:14px;
+    height:14px;
+}
+
+QSpinBox::down-arrow:hover:pressed {
+    width:16px;
+    height:16px;
+}
+
+QSpinBox::down-arrow:disabled, QSpinBox::down-arrow:off {
+	color: rgb(255, 255, 10);
+}
+

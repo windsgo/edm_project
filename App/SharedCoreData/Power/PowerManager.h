@@ -50,6 +50,8 @@ public:
     inline void set_power_on(bool on) { power_ctrler_->set_power_on(on); emit sig_power_flag_changed(); }
     inline bool is_power_on() const { return power_ctrler_->is_power_on(); }
 
+    inline const auto& get_current_eleparam() const { return power_ctrler_->get_current_param(); }
+
 signals:
     // 告知PowerPanel發生了改變, 让他显示最新的电参数
     void sig_ele_changed(const edm::power::EleParam_dkd_t &eleparam);

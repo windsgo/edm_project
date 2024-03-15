@@ -34,6 +34,8 @@ private:
     void _update_io_display();
     void _update_eleparam_display(const edm::power::EleParam_dkd_t& eleparam);
 
+    void _set_param_from_ui();
+
 private:
     void _init_update_slots();
     void _init_button_slots();

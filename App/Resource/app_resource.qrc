@@ -1,3 +1,6 @@
 <RCC>
-    <qresource prefix="/app/ui/qss"/>
+    <qresource prefix="/images/spinbox">
+        <file>images/spinbox/up_arrow.png</file>
+        <file>images/spinbox/dn_arrow.png</file>
+    </qresource>
 </RCC>
