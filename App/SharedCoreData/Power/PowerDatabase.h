@@ -14,7 +14,7 @@
 #include <QSqlResult>
 #include <QSqlTableModel>
 
-#include "SharedCoreData/SharedCoreData.h"
+#include "QtDependComponents/PowerController/EleparamDefine.h"
 
 #include <optional>
 
@@ -29,19 +29,18 @@ class PowerDatabase : public QWidget {
     Q_OBJECT
 
 public:
-    explicit PowerDatabase(SharedCoreData *shared_core_data,
-                           QWidget *parent = nullptr);
+    explicit PowerDatabase(QWidget *parent = nullptr);
     ~PowerDatabase();
 
 public: // 接口
-    // 根据电参数号, 获取电参数结构体, 该指针将移交所有权
-    // 如果index存在, 数据库会创建一个新的对应于index的电参数结构体并返回其指针,
-    // 且移交所有权 如果index不存在, 返回std::nullopt
-    std::optional<power::EleParam_dkd_t::ptr>
-    get_eleparam_from_index(uint32_t index);
+    // 根据电参数号, 获取电参数结构体
+    // 如果index存在, 数据库会创建一个新的对应于index的电参数结构体并返回true
+    // 如果index不存在, 返回false
+    bool get_eleparam_from_index(uint32_t index,
+                                 power::EleParam_dkd_t &output) const;
 
     // 获取是否存在某一个电参数号的信息, 每次调用都会触发数据库搜索
-    bool exist_index(uint32_t index);
+    bool exist_index(uint32_t index) const;
 
 signals:
     // 在数据库窗口中选定了一行电参数, 并按下了 Select Param 按钮,
@@ -76,13 +75,11 @@ private:
     void _update_tableview();
 
 private:
-    static power::EleParam_dkd_t::ptr
-    _get_eleparam_from_record(const QSqlRecord &record);
+    static void _get_eleparam_from_record(const QSqlRecord &record,
+                                          power::EleParam_dkd_t &output);
 
 private:
     Ui::PowerDatabase *ui;
-
-    SharedCoreData *shared_core_data_;
 
     QSqlDatabase database_;       // 数据库对象
     QSqlTableModel *table_model_; // 数据表模型

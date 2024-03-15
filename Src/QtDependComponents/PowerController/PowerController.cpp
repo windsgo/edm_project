@@ -187,10 +187,9 @@ PowerController::eleparam_to_string(EleParam_dkd_t::ptr e) {
 // }
 
 void PowerController::update_eleparam_and_send(
-    EleParam_dkd_t::ptr new_eleparam) {
+    const EleParam_dkd_t &new_eleparam) {
     // 存储当前结构体
-    //! 当前为浅拷贝
-    curr_eleparam_ = new_eleparam;
+    *curr_eleparam_ = new_eleparam;
 
     s_logger->trace("update_eleparam_and_send:");
     auto strs = eleparam_to_string(curr_eleparam_);
@@ -216,6 +215,11 @@ void PowerController::update_eleparam_and_send(
 
     // 检查伺服参数设定, 如果变化, 重新发送
     _handle_servo_settings();
+}
+
+void PowerController::update_eleparam_and_send(
+    EleParam_dkd_t::ptr new_eleparam) {
+    update_eleparam_and_send(*new_eleparam);
 }
 
 void PowerController::trigger_send_eleparam() {

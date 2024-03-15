@@ -5,6 +5,8 @@
 #include <QHeaderView>
 #include <QMessageBox>
 
+#include <SystemSettings/SystemSettings.h>
+
 #include "Exception/exception.h"
 #include "Logger/LogMacro.h"
 
@@ -13,9 +15,8 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 namespace edm {
 namespace app {
 
-PowerDatabase::PowerDatabase(SharedCoreData *shared_core_data, QWidget *parent)
-    : QWidget(parent), ui(new Ui::PowerDatabase),
-      shared_core_data_(shared_core_data) {
+PowerDatabase::PowerDatabase(QWidget *parent)
+    : QWidget(parent), ui(new Ui::PowerDatabase) {
     ui->setupUi(this);
 
     _init_database();
@@ -24,8 +25,8 @@ PowerDatabase::PowerDatabase(SharedCoreData *shared_core_data, QWidget *parent)
 
 PowerDatabase::~PowerDatabase() { delete ui; }
 
-std::optional<power::EleParam_dkd_t::ptr>
-PowerDatabase::get_eleparam_from_index(uint32_t index) {
+bool PowerDatabase::get_eleparam_from_index(
+    uint32_t index, power::EleParam_dkd_t &output) const {
     QString cmd = QString{"SELECT * FROM %0 WHERE E_INDEX = %1"}
                       .arg(EleTableName)
                       .arg(index);
@@ -33,15 +34,14 @@ PowerDatabase::get_eleparam_from_index(uint32_t index) {
     QSqlQuery q;
     q.exec(cmd);
     if (!q.next()) {
-        return std::nullopt;
+        return false;
     }
 
-    auto rec = q.record();
-
-    return _get_eleparam_from_record(rec);
+    _get_eleparam_from_record(q.record(), output);
+    return true;
 }
 
-bool PowerDatabase::exist_index(uint32_t index) {
+bool PowerDatabase::exist_index(uint32_t index) const {
     QString cmd = QString{"SELECT EXISTS(SELECT 1 FROM %0 WHERE E_INDEX = %1);"}
                       .arg(EleTableName)
                       .arg(index);
@@ -58,7 +58,7 @@ void PowerDatabase::_init_database() {
     QString database_path =
         EDM_CONFIG_DIR +
         QString::fromStdString(
-            shared_core_data_->get_system_settings().get_power_database_file());
+            edm::SystemSettings::instance().get_power_database_file());
     QFile database_file(database_path);
     if (!database_file.exists()) {
         s_logger->warn("power database file does not exists: {}",
@@ -196,7 +196,7 @@ bool PowerDatabase::_check_table_exist(const QString &table_name) const {
 }
 
 bool PowerDatabase::_create_table_with_default_params() {
-    const char* create_table_cmd = R"(CREATE TABLE "eleparam" (
+    const char *create_table_cmd = R"(CREATE TABLE "eleparam" (
                                    "E_INDEX"	INTEGER NOT NULL CHECK("E_INDEX" >= 0 AND "E_INDEX" < 1000) UNIQUE,
                                    "E_ON"	INTEGER NOT NULL DEFAULT 18 CHECK("E_ON" >= 0 AND "E_ON" < 256),
                                    "E_OFF"	INTEGER NOT NULL DEFAULT 48 CHECK("E_OFF" >= 0 AND "E_OFF" < 256),
@@ -224,7 +224,8 @@ bool PowerDatabase::_create_table_with_default_params() {
     QSqlQuery q;
     bool create_table_ret = q.exec(create_table_cmd);
     if (!create_table_ret) {
-        s_logger->critical("create default table failed, {}", q.lastError().text().toStdString());
+        s_logger->critical("create default table failed, {}",
+                           q.lastError().text().toStdString());
         throw exception{"create default table failed"};
         return false;
     }
@@ -301,8 +302,7 @@ void PowerDatabase::_slot_tableedit_delete() {
     ui->tableView->hideRow(row); // 显示隐藏
 }
 
-void PowerDatabase::_slot_choose_eleparam_index()
-{
+void PowerDatabase::_slot_choose_eleparam_index() {
     auto row = ui->tableView->currentIndex().row();
     if (row < 0) {
         QMessageBox::critical(this, tr("select param failed"),
@@ -325,12 +325,12 @@ void PowerDatabase::_slot_choose_eleparam_index()
         return;
     }
 
-//    qDebug() << "emit sig_select_param" << e_index_variant.toUInt();
+    //    qDebug() << "emit sig_select_param" << e_index_variant.toUInt();
     emit sig_select_param(e_index_variant.toUInt());
 }
 
-void PowerDatabase::_slot_table_refresh() { 
-    this->_update_tableview(); 
+void PowerDatabase::_slot_table_refresh() {
+    this->_update_tableview();
 
     // test
 
@@ -341,7 +341,7 @@ void PowerDatabase::_slot_table_refresh() {
     // qDebug() << (bool)this->get_eleparam_from_index(10);
 
     // if (auto ret = this->get_eleparam_from_index(4)) {
-    //     auto ele = *ret; 
+    //     auto ele = *ret;
     // }
 }
 
@@ -370,13 +370,10 @@ void PowerDatabase::_set_table_editable(bool editable) {
 
 void PowerDatabase::_update_tableview() { table_model_->select(); }
 
-power::EleParam_dkd_t::ptr
-PowerDatabase::_get_eleparam_from_record(const QSqlRecord &record) {
-
-    auto ele = std::make_shared<power::EleParam_dkd_t>();
+void PowerDatabase::_get_eleparam_from_record(const QSqlRecord &record, power::EleParam_dkd_t &output) {
 
 #define XX_(ele_name__, db_name__) \
-    ele->ele_name__ = record.value(#db_name__).toUInt();
+    output.ele_name__ = record.value(#db_name__).toUInt();
 
     XX_(pulse_on, E_ON)
     XX_(pulse_off, E_OFF)
@@ -402,8 +399,6 @@ PowerDatabase::_get_eleparam_from_record(const QSqlRecord &record) {
     XX_(upper_index, E_INDEX)
 
 #undef XX_
-
-    return ele;
 }
 
 } // namespace app

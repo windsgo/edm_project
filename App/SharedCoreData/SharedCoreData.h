@@ -31,6 +31,8 @@
 
 #include "InputHelper/InputHelper.h"
 
+#include "SharedCoreData/Power/PowerManager.h"
+
 #include <QEvent>
 #include <QObject>
 
@@ -60,6 +62,8 @@ public:
     inline auto get_can_recv_buffer() const { return can_recv_buffer_; }
 
     inline auto get_info_dispatcher() const { return info_dispatcher_; }
+
+    inline auto get_power_manager() const { return power_manager_; }
 
 signals:
     void sig_handbox_start_pointmove(const move::axis_t &dir,
@@ -99,6 +103,7 @@ private:
 
     InfoDispatcher *info_dispatcher_;
 
+    PowerManager* power_manager_;
 
 private:
     std::function<bool(void)> cb_get_touch_physical_detected_;

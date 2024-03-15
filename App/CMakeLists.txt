@@ -8,13 +8,14 @@ find_package(Qt5 COMPONENTS Core SerialBus Widgets Sql REQUIRED)
 set(APP_SOURCES
     main.cpp
     SharedCoreData/SharedCoreData.cpp
+    SharedCoreData/Power/PowerDatabase.cpp
+    SharedCoreData/Power/PowerManager.cpp
     CoordPanel/CoordPanel.cpp
     MainWindow/MainWindow.cpp
     InfoPanel/InfoPanel.cpp
     MovePanel/MovePanel.cpp
     IOPanel/IOPanel.cpp
     PowerPanel/PowerPanel.cpp
-    PowerPanel/PowerDatabase.cpp
     Resource/app_resource.qrc # qt resource
 )
 

@@ -35,6 +35,7 @@ public:
 
     // 更新电参数缓冲区, 设置标志位之后需要重新调用
     // 根据电参数结构体、高频等标志位，设定缓冲区报文、缓冲区io
+    void update_eleparam_and_send(const EleParam_dkd_t& new_eleparam);
     void update_eleparam_and_send(EleParam_dkd_t::ptr new_eleparam);
 
     // 将缓冲区can报文进行心跳与校验设置，并发送出去
@@ -64,6 +65,9 @@ public:
     // 精加工标志位设定
     void set_finishing_cut_flag(bool on);
     bool is_finishing_cut_flag_on() const;
+
+    // 以防外界错误使用引用, 这里返回值
+    auto get_current_param() const { return *curr_eleparam_; }
 
 private:
     void _trigger_send_canbuffer(); // 内部函数, 无锁, 不会操作心跳值

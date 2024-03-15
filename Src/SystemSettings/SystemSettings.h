@@ -54,11 +54,12 @@ public: // settings
     _ecat_setting ecat;
     _fast_move_param fast_move_param;
     std::string power_database_file{"power.db"};
+    std::string helper_can_device_name{"can1"};
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
                     MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param,
-                    MEO_OPT power_database_file);
+                    MEO_OPT power_database_file, MEO_OPT helper_can_device_name);
 };
 
 }; // namespace _sys
@@ -89,6 +90,10 @@ public:
         return data_.can_device_name;
     }
     uint32_t get_can_device_bitrate() const { return data_.can_device_bitrate; }
+
+    const std::string &get_helper_can_device_name() const {
+        return data_.helper_can_device_name;
+    }
 
     // ecat
     uint32_t get_ecat_iomap_size() const { return data_.ecat.ecat_iomap_size; }

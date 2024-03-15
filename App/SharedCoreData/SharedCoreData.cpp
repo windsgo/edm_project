@@ -87,6 +87,8 @@ public:
 struct metatype_register__ {
     metatype_register__() {
         qRegisterMetaType<edm::move::axis_t>("edm::move::axis_t");
+        qRegisterMetaType<edm::power::EleParam_dkd_t>(
+            "edm::power::EleParam_dkd_t");
     }
 };
 static struct metatype_register__ mt_register__;
@@ -182,6 +184,37 @@ void SharedCoreData::_init_data() {
             EDM_FMT::format("add can device failed: {}", can_device_name));
     }
 
+#ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+    const auto &helper_can_device_name =
+        sys_settings_.get_helper_can_device_name();
+    int helper_can_device_index =
+        can_ctrler_->add_device(QString::fromStdString(helper_can_device_name),
+                                sys_settings_.get_can_device_bitrate());
+
+    if (helper_can_device_index < 0) {
+        throw exception(EDM_FMT::format("add helper_can device failed: {}",
+                                        helper_can_device_name));
+    }
+#endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+
+    QEventLoop el;
+    QTimer t;
+    connect(&t, &QTimer::timeout, this, [&]() {
+        if (this->can_ctrler_->is_connected(can_device_index)
+#ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+            && this->can_ctrler_->is_connected(helper_can_device_index)
+#endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+        ) {
+            t.stop();
+            el.quit();
+            s_logger->info("** can all connected");
+        } else {
+            s_logger->debug("** can connecting...");
+        }
+    });
+    t.start(1000);
+    el.exec();
+
     io_ctrler_ =
         std::make_shared<io::IOController>(can_ctrler_, can_device_index);
 
@@ -210,6 +243,9 @@ void SharedCoreData::_init_data() {
     // init info dispatcher
     info_dispatcher_ = new InfoDispatcher(motion_signal_queue_,
                                           motion_thread_ctrler_, this, 20);
+
+    // init power manager
+    power_manager_ = new PowerManager(io_ctrler_, power_ctrler_, 1000, this);
 }
 
 void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
@@ -276,13 +312,16 @@ void SharedCoreData::_init_motionthread_cb() {
         double amplitude_um = this->manual_servo_cmd_feed_amplitude_um_;
         double probability_offset =
             (this->manual_servo_cmd_feed_probability_ - 0.50);
-        
-        double rd = uniform_real_distribution_(gen_); // rd 在 -1.0, 1.0之间正太分布
-        
+
+        double rd =
+            uniform_real_distribution_(gen_); // rd 在 -1.0, 1.0之间正太分布
+
         // 根据 probability_offset 进行概率偏移
         rd += probability_offset * 2;
-        if (rd > 1.0) rd = 1.0;
-        else if (rd < -1.0) rd = -1.0;
+        if (rd > 1.0)
+            rd = 1.0;
+        else if (rd < -1.0)
+            rd = -1.0;
 
         return util::UnitConverter::um2blu(rd * amplitude_um);
 #else // EDM_OFFLINE_MANUAL_SERVO_CMD

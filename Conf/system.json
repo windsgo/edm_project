@@ -16,5 +16,6 @@
         "speed_2_um_s": 330,
         "speed_3_um_s": 16
     },
-    "power_database_file": "power.db"
+    "power_database_file": "power.db",
+    "helper_can_device_name": "can1"
 }

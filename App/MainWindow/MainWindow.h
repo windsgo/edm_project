@@ -8,7 +8,6 @@
 #include "MovePanel/MovePanel.h"
 #include "IOPanel/IOPanel.h"
 #include "PowerPanel/PowerPanel.h"
-#include "PowerPanel/PowerDatabase.h"
 
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
