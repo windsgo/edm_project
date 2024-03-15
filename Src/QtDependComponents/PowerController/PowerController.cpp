@@ -27,13 +27,21 @@ PowerController::PowerController(can::CanController::ptr can_ctrler,
       can_device_index_(can_device_index) {
     memset(&servo_setting_, 0, sizeof(servo_setting_));
     memset(&ioboard_eleparam_, 0, sizeof(ioboard_eleparam_));
+
+    memset(&curr_eleparam_, 0, sizeof(curr_eleparam_));
 }
 
-void PowerController::set_highpower_on(bool on) { highpower_on_flag_ = on; }
+void PowerController::set_highpower_on(bool on) {
+    highpower_on_flag_ = on;
+    update_eleparam_and_send(); // 要把mach继电器开这个信息计算出来发到io, 以及machbit发到电源
+}
 
 bool PowerController::is_highpower_on() const { return highpower_on_flag_; }
 
-void PowerController::set_machbit_on(bool on) { machpower_flag_ = on; }
+void PowerController::set_machbit_on(bool on) {
+    machpower_flag_ = on;
+    update_eleparam_and_send(); // machbit发到电源
+}
 
 bool PowerController::is_machbit_on() const { return machpower_flag_; }
 
@@ -91,16 +99,17 @@ void PowerController::_trigger_send_io_value() {
 }
 
 void PowerController::_trigger_send_ioboard_eleparam() {
-    if (!curr_eleparam_)
+    if (!eleparam_inited_)
         return;
 
     // 赋值
-    ioboard_eleparam_.ip = static_cast<uint8_t>(curr_eleparam_->ip);
-    ioboard_eleparam_.on = curr_eleparam_->pulse_on;
-    ioboard_eleparam_.off = curr_eleparam_->pulse_off;
-    ioboard_eleparam_.pp = curr_eleparam_->pp;
+    ioboard_eleparam_.ip = static_cast<uint8_t>(curr_eleparam_.ip);
+    ioboard_eleparam_.on = curr_eleparam_.pulse_on;
+    ioboard_eleparam_.off = curr_eleparam_.pulse_off;
+    ioboard_eleparam_.pp = curr_eleparam_.pp;
     ioboard_eleparam_.is_finishing_cut =
-        finishing_cut_flag_; // TODO 精加工标志位
+        curr_eleparam_.upper_index == 901 ||
+        curr_eleparam_.upper_index == 902; // TODO 精加工标志位
 
     // 装载
     QByteArray ba{reinterpret_cast<char *>(&ioboard_eleparam_), 8};
@@ -110,34 +119,60 @@ void PowerController::_trigger_send_ioboard_eleparam() {
     can_ctrler_->send_frame(can_device_index_, frame);
 }
 
+void PowerController::_update_eleparam_and_send(const EleParam_dkd_t& eleparam) {
+    s_logger->trace("update_eleparam_and_send:");
+    auto strs = eleparam_to_string(eleparam);
+    for (const auto &s : strs) {
+        s_logger->trace(s);
+    }
+
+    // 心跳处理
+    ++canframe_pulse_value_;
+    // 构造输入
+    auto input = std::make_shared<EleparamDecodeInput>(
+        eleparam, highpower_on_flag_, machpower_flag_, canframe_pulse_value_);
+
+    // 获取decode输出
+    curr_result_ = EleparamDecoder::decode(input);
+
+    // 发送can buffer
+    _trigger_send_canbuffer();
+
+    // 触发设置io
+    _trigger_send_io_value();
+
+    // 检查伺服参数设定, 如果变化, 重新发送
+    _handle_servo_settings();
+}
+
 void PowerController::_handle_servo_settings() {
-    if (!curr_eleparam_)
+    if (!eleparam_inited_)
         return;
 
     uint8_t bz_enable = _is_bz_enable();
 
-    if (curr_eleparam_->servo_sensitivity != servo_setting_.servo_sensitivity ||
-        curr_eleparam_->servo_speed != servo_setting_.servo_speed ||
-        curr_eleparam_->UpperThreshold != servo_setting_.servo_voltage_1 ||
-        curr_eleparam_->LowerThreshold != servo_setting_.servo_voltage_2 ||
-        curr_eleparam_->sv != servo_setting_.servo_sv ||
+    if (curr_eleparam_.servo_sensitivity != servo_setting_.servo_sensitivity ||
+        curr_eleparam_.servo_speed != servo_setting_.servo_speed ||
+        curr_eleparam_.UpperThreshold != servo_setting_.servo_voltage_1 ||
+        curr_eleparam_.LowerThreshold != servo_setting_.servo_voltage_2 ||
+        curr_eleparam_.sv != servo_setting_.servo_sv ||
         bz_enable != servo_setting_.touch_zigbee_warning_enable) {
         // 有变化
 
         // 全部重新赋值
-        servo_setting_.servo_sensitivity = curr_eleparam_->servo_sensitivity;
-        servo_setting_.servo_speed = curr_eleparam_->servo_speed;
-        servo_setting_.servo_voltage_1 = curr_eleparam_->UpperThreshold;
-        servo_setting_.servo_voltage_2 = curr_eleparam_->LowerThreshold;
-        servo_setting_.servo_sv = curr_eleparam_->sv;
+        servo_setting_.servo_sensitivity = curr_eleparam_.servo_sensitivity;
+        servo_setting_.servo_speed = curr_eleparam_.servo_speed;
+        servo_setting_.servo_voltage_1 = curr_eleparam_.UpperThreshold;
+        servo_setting_.servo_voltage_2 = curr_eleparam_.LowerThreshold;
+        servo_setting_.servo_sv = curr_eleparam_.sv;
         servo_setting_.touch_zigbee_warning_enable = bz_enable;
 
         s_logger->trace(
             "send servo settings: ss: {}, s: {}, ut: {}, lt: {}, "
             "sv: {}, bz: {}",
-            curr_eleparam_->servo_sensitivity, curr_eleparam_->servo_speed,
-            curr_eleparam_->UpperThreshold, curr_eleparam_->LowerThreshold,
-            curr_eleparam_->sv, bz_enable);
+            curr_eleparam_.servo_sensitivity, curr_eleparam_.servo_speed,
+            curr_eleparam_.UpperThreshold, curr_eleparam_.LowerThreshold,
+            curr_eleparam_.sv, bz_enable);
 
         // 装载 frame
         QByteArray ba{reinterpret_cast<char *>(&servo_setting_), 8};
@@ -160,7 +195,7 @@ bool PowerController::_is_bz_enable() {
 // }
 
 std::array<std::string, 3>
-PowerController::eleparam_to_string(EleParam_dkd_t::ptr e) {
+PowerController::eleparam_to_string(const EleParam_dkd_t& e) {
     static constexpr const char *ele_fmt1 =
         "ON: {}, OF: {}, IP: {}, HP: {}, PP: {}, LV: {}, C : {}, JM: {}";
     static constexpr const char *ele_fmt2 =
@@ -171,13 +206,13 @@ PowerController::eleparam_to_string(EleParam_dkd_t::ptr e) {
     // 摇动参数不打印, 这个系统不做摇动
 
     return {
-        EDM_FMT::format(ele_fmt1, e->pulse_on, e->pulse_off, e->ip, e->hp,
-                        e->pp, e->lv, e->c, e->jump_jm),
-        EDM_FMT::format(ele_fmt2, e->ma, e->al, e->ld, e->oc, e->pl, e->up,
-                        e->dn, e->jump_js),
-        EDM_FMT::format(ele_fmt3, e->sv, e->servo_sensitivity,
-                        e->UpperThreshold, e->LowerThreshold, e->servo_speed,
-                        e->upper_index),
+        EDM_FMT::format(ele_fmt1, e.pulse_on, e.pulse_off, e.ip, e.hp,
+                        e.pp, e.lv, e.c, e.jump_jm),
+        EDM_FMT::format(ele_fmt2, e.ma, e.al, e.ld, e.oc, e.pl, e.up,
+                        e.dn, e.jump_js),
+        EDM_FMT::format(ele_fmt3, e.sv, e.servo_sensitivity,
+                        e.UpperThreshold, e.LowerThreshold, e.servo_speed,
+                        e.upper_index),
     };
 }
 
@@ -189,37 +224,26 @@ PowerController::eleparam_to_string(EleParam_dkd_t::ptr e) {
 void PowerController::update_eleparam_and_send(
     const EleParam_dkd_t &new_eleparam) {
     // 存储当前结构体
-    *curr_eleparam_ = new_eleparam;
+    curr_eleparam_ = new_eleparam;
+    if(!eleparam_inited_) eleparam_inited_ = true;
 
-    s_logger->trace("update_eleparam_and_send:");
-    auto strs = eleparam_to_string(curr_eleparam_);
-    for (const auto &s : strs) {
-        s_logger->trace(s);
-    }
-
-    // 心跳处理
-    ++canframe_pulse_value_;
-    // 构造输入
-    auto input = std::make_shared<EleparamDecodeInput>(
-        curr_eleparam_, highpower_on_flag_, machpower_flag_,
-        canframe_pulse_value_);
-
-    // 获取decode输出
-    curr_result_ = EleparamDecoder::decode(input);
-
-    // 发送can buffer
-    _trigger_send_canbuffer();
-
-    // 触发设置io
-    _trigger_send_io_value();
-
-    // 检查伺服参数设定, 如果变化, 重新发送
-    _handle_servo_settings();
+    _update_eleparam_and_send(curr_eleparam_);
 }
 
 void PowerController::update_eleparam_and_send(
     EleParam_dkd_t::ptr new_eleparam) {
-    update_eleparam_and_send(*new_eleparam);
+    curr_eleparam_ = *new_eleparam;
+    if(!eleparam_inited_) eleparam_inited_ = true;
+
+    _update_eleparam_and_send(curr_eleparam_);
+}
+
+void PowerController::update_eleparam_and_send() {
+    if (!eleparam_inited_) {
+        return;
+    }
+
+    _update_eleparam_and_send(curr_eleparam_);
 }
 
 void PowerController::trigger_send_eleparam() {

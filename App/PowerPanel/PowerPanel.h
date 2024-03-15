@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QString>
 #include <QWidget>
+#include <QTimer>
 
 #include <unordered_map>
 
@@ -24,15 +25,17 @@ public:
                         QWidget *parent = nullptr);
     ~PowerPanel();
 
-    // 主要是更新3个单独的开关按钮
+public:
+    void slot_update_eleparam_display(const edm::power::EleParam_dkd_t& eleparam);
     void slot_update_io_display();
 
-signals:
-    // 触发io显示信号, 表示这里的操作可能触发io变化, 需要io显示模块更新io显示
-    // 连接到: 界面中存在io显示的模块的更新槽 
-    void sig_trigger_io_display_update();
+private:
+    // 主要是更新3个单独的开关按钮
+    void _update_io_display();
+    void _update_eleparam_display(const edm::power::EleParam_dkd_t& eleparam);
 
 private:
+    void _init_update_slots();
     void _init_button_slots();
 
 private:
@@ -40,7 +43,9 @@ private:
 
     SharedCoreData *shared_core_data_;
 
-    power::PowerController::ptr power_ctrler_;
+    PowerManager *pm_;
+
+    QTimer* update_io_timer_; // 用于周期性地刷新面板上的3个io状态(尤其是)
 };
 
 } // namespace app

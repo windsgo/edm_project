@@ -17,6 +17,10 @@ IOPanel::IOPanel(SharedCoreData *shared_core_data, QWidget *parent)
       io_ctrler_(shared_core_data->get_io_ctrler()) {
     ui->setupUi(this);
 
+    update_io_timer_ = new QTimer(this);
+    connect(update_io_timer_, &QTimer::timeout, this, &IOPanel::_update_all_io_display);
+    update_io_timer_->start(350);
+
     _init_common_io_buttons();
 }
 

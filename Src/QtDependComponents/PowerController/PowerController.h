@@ -23,7 +23,7 @@ public:
     // static PowerController *instance();
 
     static std::array<std::string, 3>
-    eleparam_to_string(EleParam_dkd_t::ptr ele_param);
+    eleparam_to_string(const EleParam_dkd_t& ele_param);
 
 public:
     using ptr = std::shared_ptr<PowerController>;
@@ -36,7 +36,8 @@ public:
     // 更新电参数缓冲区, 设置标志位之后需要重新调用
     // 根据电参数结构体、高频等标志位，设定缓冲区报文、缓冲区io
     void update_eleparam_and_send(const EleParam_dkd_t& new_eleparam);
-    void update_eleparam_and_send(EleParam_dkd_t::ptr new_eleparam);
+    void update_eleparam_and_send(EleParam_dkd_t::ptr new_eleparam); // deprecated
+    void update_eleparam_and_send(); // no input, use current eleparam
 
     // 将缓冲区can报文进行心跳与校验设置，并发送出去
     void trigger_send_eleparam();
@@ -66,13 +67,14 @@ public:
     void set_finishing_cut_flag(bool on);
     bool is_finishing_cut_flag_on() const;
 
-    // 以防外界错误使用引用, 这里返回值
-    auto get_current_param() const { return *curr_eleparam_; }
+    const auto& get_current_param() const { return curr_eleparam_; }
 
 private:
     void _trigger_send_canbuffer(); // 内部函数, 无锁, 不会操作心跳值
     void _trigger_send_io_value();         // 内部函数, 无锁
     void _trigger_send_ioboard_eleparam(); // 内部函数, 无锁
+
+    void _update_eleparam_and_send(const EleParam_dkd_t& eleparam);
 
 private:
     // 向伺服IO板发送 伺服参数 (如果发生变化)
@@ -103,7 +105,8 @@ private:
 
     //! decode 缓存
     // 存储当前的电参数 参数结构体
-    EleParam_dkd_t::ptr curr_eleparam_{nullptr};
+    bool eleparam_inited_ {false};
+    EleParam_dkd_t curr_eleparam_;
 
     // 存储当前的 decode 结果缓存
     EleparamDecodeResult::ptr curr_result_{nullptr};

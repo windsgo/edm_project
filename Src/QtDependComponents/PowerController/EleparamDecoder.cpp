@@ -132,7 +132,7 @@ void EleparamDecoder::_canframe_fill_fixedbytes() {
 }
 
 void EleparamDecoder::_canframe_handle_on() {
-    uint8_t param_on = input_->ele_param()->pulse_on; // 参数值
+    uint8_t param_on = input_->ele_param().pulse_on; // 参数值
     uint8_t pulse_on = param_on;
 
     if ((pulse_on > 63 && pulse_on < 100) || pulse_on > 107) {
@@ -163,7 +163,7 @@ void EleparamDecoder::_canframe_handle_on() {
 }
 
 void EleparamDecoder::_canframe_handle_off() {
-    CAN_BUFFER[0][7] = input_->ele_param()->pulse_off;
+    CAN_BUFFER[0][7] = input_->ele_param().pulse_off;
 }
 
 void EleparamDecoder::_canframe_handle_up_and_on() {
@@ -172,7 +172,7 @@ void EleparamDecoder::_canframe_handle_up_and_on() {
 }
 
 void EleparamDecoder::_canframe_handle_ip() {
-    uint16_t param_ip = input_->ele_param()->ip;
+    uint16_t param_ip = input_->ele_param().ip;
     uint16_t ip = param_ip;
     uint8_t ip_decimal_part = ip % 10;                    // ip 的 小数部分
     uint8_t ip_real_part = static_cast<uint8_t>(ip / 10); // ip 的整数部分
@@ -222,7 +222,7 @@ void EleparamDecoder::_canframe_handle_ip() {
 }
 
 void EleparamDecoder::_canframe_handle_hp() {
-    uint8_t param_hp = input_->ele_param()->hp;
+    uint8_t param_hp = input_->ele_param().hp;
     uint8_t hp = param_hp;
     uint8_t hp_units = hp % 10;            // 个位
     uint8_t hp_tens = (hp / 10) % 10;      // 十位
@@ -241,7 +241,7 @@ void EleparamDecoder::_canframe_handle_hp() {
 
 void EleparamDecoder::_canframe_handle_ma() {
     AND_EQUAL(CAN_BUFFER[1][3], 0xF0);                   // 清空低4位
-    OR_EQUAL(CAN_BUFFER[1][3], (input_->ele_param()->ma) & 0x0F); // 低4位设定ma
+    OR_EQUAL(CAN_BUFFER[1][3], (input_->ele_param().ma) & 0x0F); // 低4位设定ma
 }
 
 void EleparamDecoder::_canframe_handle_sv() {
@@ -249,25 +249,25 @@ void EleparamDecoder::_canframe_handle_sv() {
     // TODO 外部要将sv值通过can发送给采样板
 
     // AND_EQUAL(CAN_BUFFER[1][3], 0x0F);                        // 清空高4位
-    // OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param()->sv << 4); // 高4位设定sv
+    // OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param().sv << 4); // 高4位设定sv
 }
 
 void EleparamDecoder::_canframe_handle_al() {
-    CAN_BUFFER[1][4] = input_->ele_param()->al;
+    CAN_BUFFER[1][4] = input_->ele_param().al;
 }
 
 void EleparamDecoder::_canframe_handle_ld() {
     AND_EQUAL(CAN_BUFFER[1][5], 0xF0);                   // 清空低4位
-    OR_EQUAL(CAN_BUFFER[1][5], (input_->ele_param()->ld) & 0x0F); // 低4位设定ld
+    OR_EQUAL(CAN_BUFFER[1][5], (input_->ele_param().ld) & 0x0F); // 低4位设定ld
 }
 
 void EleparamDecoder::_canframe_handle_oc() {
     AND_EQUAL(CAN_BUFFER[1][5], 0x0F);                        // 清空高4位
-    OR_EQUAL(CAN_BUFFER[1][5], input_->ele_param()->oc << 4); // 高4位设定oc
+    OR_EQUAL(CAN_BUFFER[1][5], input_->ele_param().oc << 4); // 高4位设定oc
 }
 
 void EleparamDecoder::_canframe_handle_pp() {
-    uint8_t pp = input_->ele_param()->pp;
+    uint8_t pp = input_->ele_param().pp;
     if (input_->highpower_flag() == 0) {
         pp = 0; // 高频未使能
     }
@@ -457,20 +457,20 @@ void EleparamDecoder::_set_contactor_io_Cx(uint32_t x, bool enable) {
 
 void EleparamDecoder::_iosettings_handle_NOW() {
     // 先处理特殊条件 C901 C902
-    auto upper_index =  input_->ele_param()->upper_index;
+    auto upper_index =  input_->ele_param().upper_index;
     if (upper_index == 901 || upper_index == 902) {
         _set_contactor_io_NOW(false); // 不吸合
         return;
     }
 
     // 处理特殊 IP > 7 
-    if (input_->ele_param()->ip > 70) {
+    if (input_->ele_param().ip > 70) {
         _set_contactor_io_NOW(true); // 吸合
         return;
     }
 
     // 处理普通 HP 控制
-    uint8_t hp_tens = (input_->ele_param()->hp / 10) % 10;
+    uint8_t hp_tens = (input_->ele_param().hp / 10) % 10;
     if (hp_tens < 4) {
         _set_contactor_io_NOW(true); // HP = 0x,1x,2x,3x 吸合
     } else {
@@ -479,8 +479,8 @@ void EleparamDecoder::_iosettings_handle_NOW() {
 }
 
 void EleparamDecoder::_iosettings_handle_MON_HON() {
-    uint8_t pp_tens = (input_->ele_param()->pp / 10) % 10;
-    uint8_t hp_tens = (input_->ele_param()->hp / 10) % 10;
+    uint8_t pp_tens = (input_->ele_param().pp / 10) % 10;
+    uint8_t hp_tens = (input_->ele_param().hp / 10) % 10;
 
     if (pp_tens != 1) {
         _set_contactor_io_MON(false);
@@ -502,8 +502,8 @@ void EleparamDecoder::_iosettings_handle_MON_HON() {
 }
 
 void EleparamDecoder::_iosettings_handle_IPx() {
-    auto ip = input_->ele_param()->ip;
-    auto upper_index = input_->ele_param()->upper_index;
+    auto ip = input_->ele_param().ip;
+    auto upper_index = input_->ele_param().upper_index;
     // 特殊情况 C901, C902, 全部关断S
 
     if (ip == 0 || upper_index == 901 || upper_index == 902) {
@@ -529,7 +529,7 @@ void EleparamDecoder::_iosettings_handle_IPx() {
 }
 
 void EleparamDecoder::_iosettings_handle_LVx() {
-    auto lv = input_->ele_param()->lv;
+    auto lv = input_->ele_param().lv;
 
     if (lv == 1) {
         _set_contactor_io_LV1(true);
@@ -544,7 +544,7 @@ void EleparamDecoder::_iosettings_handle_LVx() {
 }
 
 void EleparamDecoder::_iosettings_handle_PL() {
-    uint8_t pl = input_->ele_param()->pl;
+    uint8_t pl = input_->ele_param().pl;
 
     if (pl == 0) { /* pl = 0 (对应上位机发的是 (+), 正极性) */
         // 正极性, OUT39 = 0, RV继电器实际为吸合(反逻辑)
@@ -566,7 +566,7 @@ void EleparamDecoder::_iosettings_handle_MACH() {
 }
 
 void EleparamDecoder::_iosettings_handle_PK() {
-    auto upper_index =  input_->ele_param()->upper_index;
+    auto upper_index =  input_->ele_param().upper_index;
     if (upper_index == 901 || upper_index == 902) {
         _set_contactor_io_PK(false); // 不吸合 (只有901, 902吸合)
     } else {
@@ -575,7 +575,7 @@ void EleparamDecoder::_iosettings_handle_PK() {
 }
 
 void EleparamDecoder::_iosettings_handle_CAPx() {
-    uint8_t c = input_->ele_param()->c;
+    uint8_t c = input_->ele_param().c;
 
     // 先全部设置关闭
     for (uint32_t i = 0; i <= 9; ++i) {

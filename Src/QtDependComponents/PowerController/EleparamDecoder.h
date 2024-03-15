@@ -67,19 +67,19 @@ public:
     using ptr = std::shared_ptr<EleparamDecodeInput>;
 
 public:
-    EleparamDecodeInput(EleParam_dkd_t::ptr ele_param, uint8_t highpower_flag,
+    EleparamDecodeInput(const EleParam_dkd_t& ele_param, uint8_t highpower_flag,
                         uint8_t machpower_flag, uint16_t counter)
         : ele_param_(ele_param), highpower_flag_(highpower_flag),
           machpower_flag_(machpower_flag), counter_(counter) {}
     ~EleparamDecodeInput() = default;
 
-    auto ele_param() const { return ele_param_; }
+    const auto& ele_param() const { return ele_param_; }
     auto highpower_flag() const { return highpower_flag_; }
     auto machpower_flag() const { return machpower_flag_; }
     auto counter() const { return counter_; }
 
 private:
-    EleParam_dkd_t::ptr ele_param_;
+    EleParam_dkd_t ele_param_;
     uint8_t highpower_flag_;
     uint8_t machpower_flag_; // can 帧 mach 高频使能位
     uint16_t counter_;       // 计数器(用于填充心跳)

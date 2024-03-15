@@ -55,6 +55,8 @@ private:
 
     // io 按钮布局
     QGridLayout *io_button_layout_{nullptr};
+
+    QTimer* update_io_timer_;
 };
 
 } // namespace app

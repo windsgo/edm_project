@@ -53,6 +53,25 @@ bool PowerDatabase::exist_index(uint32_t index) const {
     return ret;
 }
 
+std::optional<power::EleParam_dkd_t>
+PowerDatabase::get_one_valid_eleparam() const {
+    std::optional<power::EleParam_dkd_t> ret{std::nullopt};
+
+    QString cmd = QString{"SELECT * FROM %0;"}.arg(EleTableName);
+
+    QSqlQuery q;
+    q.exec(cmd);
+    if (!q.next()) {
+        return ret;
+    }
+
+    power::EleParam_dkd_t p;
+    _get_eleparam_from_record(q.record(), p);
+    ret = p;
+
+    return ret;
+}
+
 void PowerDatabase::_init_database() {
     database_ = QSqlDatabase::addDatabase("QSQLITE");
     QString database_path =
@@ -326,7 +345,11 @@ void PowerDatabase::_slot_choose_eleparam_index() {
     }
 
     //    qDebug() << "emit sig_select_param" << e_index_variant.toUInt();
-    emit sig_select_param(e_index_variant.toUInt());
+    emit sig_select_param_index(e_index_variant.toUInt());
+
+    power::EleParam_dkd_t param;
+    _get_eleparam_from_record(rec, param);
+    emit sig_select_param(param);
 }
 
 void PowerDatabase::_slot_table_refresh() {
@@ -370,7 +393,8 @@ void PowerDatabase::_set_table_editable(bool editable) {
 
 void PowerDatabase::_update_tableview() { table_model_->select(); }
 
-void PowerDatabase::_get_eleparam_from_record(const QSqlRecord &record, power::EleParam_dkd_t &output) {
+void PowerDatabase::_get_eleparam_from_record(const QSqlRecord &record,
+                                              power::EleParam_dkd_t &output) {
 
 #define XX_(ele_name__, db_name__) \
     output.ele_name__ = record.value(#db_name__).toUInt();

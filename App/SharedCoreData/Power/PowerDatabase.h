@@ -42,10 +42,14 @@ public: // 接口
     // 获取是否存在某一个电参数号的信息, 每次调用都会触发数据库搜索
     bool exist_index(uint32_t index) const;
 
+    // 获取一条记录(用于初始化)
+    std::optional<power::EleParam_dkd_t> get_one_valid_eleparam() const;
+
 signals:
     // 在数据库窗口中选定了一行电参数, 并按下了 Select Param 按钮,
     // 触发此信号告诉 PowerPanel 需要更新 "当前电参数", 并发送到电源和io
-    void sig_select_param(uint32_t eleparam_index);
+    void sig_select_param_index(uint32_t eleparam_index);
+    void sig_select_param(const edm::power::EleParam_dkd_t &eleparam);
 
 private:
     void _init_database();
