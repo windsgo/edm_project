@@ -16,6 +16,8 @@ set(APP_SOURCES
     MovePanel/MovePanel.cpp
     IOPanel/IOPanel.cpp
     PowerPanel/PowerPanel.cpp
+    TaskManager/TaskManager.cpp  
+    TaskManager/GCodeTaskConverter.cpp
     Resource/app_resource.qrc # qt resource
 )
 

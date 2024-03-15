@@ -82,8 +82,6 @@ set(PROJECT_SOURCES
     Src/Motion/Trajectory/TrajectorySegement.cpp
     Src/Motion/Trajectory/TrajectoryList.cpp
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
-    Src/QtDependComponents/TaskManager/TaskManager.cpp 
-    Src/QtDependComponents/TaskManager/GCodeManager.cpp
     Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
     Src/Coordinate/Coordinate.cpp
     Src/Coordinate/CoordinateManager.cpp

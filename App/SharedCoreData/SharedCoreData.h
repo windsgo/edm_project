@@ -20,7 +20,7 @@
 #include "QtDependComponents/InfoDispatcher/InfoDispatcher.h"
 #include "QtDependComponents/PowerController/PowerController.h"
 
-// TODO TaskManager
+#include "Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.h"
 
 #include "Motion/MotionSignalQueue/MotionSignalQueue.h"
 #include "Motion/MotionThread/MotionThreadController.h"
@@ -28,6 +28,9 @@
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
 
 #include "HandboxConverter/HandboxConverter.h"
+
+//! above are in libedm.so
+//! below are in app
 
 #include "InputHelper/InputHelper.h"
 

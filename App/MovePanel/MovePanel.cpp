@@ -137,6 +137,10 @@ void MovePanel::_start_pointmove_no_softlimit_check(
         std::make_shared<edm::move::MotionCommandManualStartPointMove>(
             start_pos, target_pos, speed_param, enable_touch_detect);
 
+    this->shared_core_data_->get_motion_cmd_queue()->push_command(start_pointmove_cmd);
+
+    return; //! 完全不需要用global cmd queue 了
+
     // wrap and push to global command queue
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
         [this](edm::move::MotionCommandManualStartPointMove::ptr a) {

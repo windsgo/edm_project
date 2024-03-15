@@ -2,6 +2,8 @@ i = RS274Interpreter()
 
 i.g54()
 i.g90()
+i.g04(t=0.1)
+i.e(100)
 i.f(1000)
 i.g00(x=5)
 i.m02() # end of program

@@ -60,6 +60,9 @@ bool PowerManager::set_current_eleparam_index(uint32_t index) {
 bool PowerManager::set_current_eleparam(const power::EleParam_dkd_t &eleparam) {
     power_ctrler_->update_eleparam_and_send(eleparam);
 
+    // TODO 可以在这里对motion thread 更新 新的抬刀参数 (up, dn, js, ...)
+    //!!!!!!!!!!!!!!!!!!!!!!!!!
+
     emit sig_ele_changed(eleparam);
 
     return true;

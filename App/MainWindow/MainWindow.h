@@ -9,6 +9,10 @@
 #include "IOPanel/IOPanel.h"
 #include "PowerPanel/PowerPanel.h"
 
+#include "TaskManager/TaskManager.h"
+#include "TaskManager/GCodeTaskConverter.h"
+#include "TaskManager/GCodeTask.h"
+
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
 

@@ -83,6 +83,19 @@
     <string>Status Panel</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="pb_test">
+   <property name="geometry">
+    <rect>
+     <x>1570</x>
+     <y>600</y>
+     <width>89</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>test</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

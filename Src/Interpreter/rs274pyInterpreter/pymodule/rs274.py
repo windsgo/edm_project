@@ -44,6 +44,7 @@ class CommandDictKey(Enum):
     EleparamIndex = 6
     FeedSpeed = 7
     DelayTime = 8
+    M05IgnoreTouchDetect = 9
 
 def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
     output = ""
@@ -72,6 +73,7 @@ class Environment(object):
         self.__motion_mode = MotionMode.Undefined # 运动模式G00 G01等
         self.__coordinate_index = -1 # 当前使用的坐标系序号
         self.__program_end_flag = False # 程序结束标志, 有此标志后应当不再解释后续指令
+        self.__feed_speed = -1 # 当前设定的进给率
         
     def set_coordinate_mode(self, mode : CoordinateMode) -> None:
         assert(isinstance(mode, CoordinateMode))
@@ -95,6 +97,12 @@ class Environment(object):
         self.__program_end_flag = True
     def is_program_end(self) -> bool:
         return self.__program_end_flag
+    
+    def set_feed_speed(self, feed_speed : int) -> None:
+        assert(isinstance(feed_speed, int))
+        self.__feed_speed = feed_speed
+    def get_feed_speed(self) -> int:
+        return self.__feed_speed
     
 def _get_caller_linenumber(layer = 1) -> int:
     return stack()[1 + layer].lineno
@@ -129,6 +137,9 @@ class RS274Interpreter(object):
         elif (self.__g_environment.get_coordinate_index() < 0): # TODO 坐标系index检测合法
             raise InterpreterException(f"Coordinate Index ({self.__g_environment.get_coordinate_index()}) not valid " + _get_stackmessage(2))
     
+        if (self.__g_environment.get_feed_speed() < 0):
+            raise InterpreterException("Feed Speed Not Set" + _get_stackmessage(2))
+    
     # 设置绝对坐标模式
     def g90(self) -> RS274Interpreter:
         if (self.__g_environment.is_program_end()): 
@@ -160,11 +171,11 @@ class RS274Interpreter(object):
         return self
 
     # 延时
-    def g04(self, t : int) -> RS274Interpreter:
+    def g04(self, t : float) -> RS274Interpreter:
         if (self.__g_environment.is_program_end()): 
             return self
         
-        if (not isinstance(t, int)):
+        if (not isinstance(t, (int, float))):
             raise InterpreterException(f"Delay Time type invalid: {type(t)} " + _get_stackmessage())
         
         if (t < 0):
@@ -252,35 +263,67 @@ class RS274Interpreter(object):
         return self
 
     @staticmethod
-    def _get_coordinate_dict(x: float = None, y: float = None, z: float = None, a: float = None, b: float = None, c: float = None) -> dict:
-        coordinates = {}
+    def _get_coordinate_dict(x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> list:
+        # coordinates = {}
+        coordinates = []
         if (x is not None):
             if(not isinstance(x, (int, float))):
                 raise InterpreterException(f"Coordinate Value Type Not Valid: x, {type(x)} " + _get_stackmessage(2))
-            coordinates["x"] = x
+            # coordinates["x"] = x
+            coordinates.append(x)
         else:
-            coordinates["x"] = None
+            # coordinates["x"] = None
+            coordinates.append(None)
         
         if (y is not None):
             if(not isinstance(y, (int, float))):
                 raise InterpreterException(f"Coordinate Value Type Not Valid: y, {type(y)} " + _get_stackmessage(2))
-            coordinates["y"] = y
+            # coordinates["y"] = y
+            coordinates.append(y)
         else:
-            coordinates["y"] = None
+            # coordinates["y"] = None
+            coordinates.append(None)
             
         if (z is not None):
             if(not isinstance(z, (int, float))):
                 raise InterpreterException(f"Coordinate Value Type Not Valid: z, {type(z)} " + _get_stackmessage(2))
-            coordinates["z"] = z
+            # coordinates["z"] = z
+            coordinates.append(z)
         else:
-            coordinates["z"] = None
-            
-        # TODO a b c
+            # coordinates["z"] = None
+            coordinates.append(None)
+        
+        if (b is not None):
+            if(not isinstance(b, (int, float))):
+                raise InterpreterException(f"Coordinate Value Type Not Valid: b, {type(b)} " + _get_stackmessage(2))
+            # coordinates["b"] = b
+            coordinates.append(b)
+        else:
+            # coordinates["b"] = None
+            coordinates.append(None)
+        
+        if (c is not None):
+            if(not isinstance(c, (int, float))):
+                raise InterpreterException(f"Coordinate Value Type Not Valid: c, {type(c)} " + _get_stackmessage(2))
+            # coordinates["c"] = c
+            coordinates.append(c)
+        else:
+            # coordinates["c"] = None
+            coordinates.append(None)
+        
+        if (a is not None):
+            if(not isinstance(a, (int, float))):
+                raise InterpreterException(f"Coordinate Value Type Not Valid: a, {type(a)} " + _get_stackmessage(2))
+            # coordinates["a"] = a
+            coordinates.append(a)
+        else:
+            # coordinates["a"] = None
+            coordinates.append(None)
         
         return coordinates
 
     # G01普通直线加工指令
-    def g01(self, x: float = None, y: float = None, z: float = None, a: float = None, b: float = None, c: float = None) -> RS274Interpreter:
+    def g01(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> RS274Interpreter:
         if (self.__g_environment.is_program_end()): 
             return self
         
@@ -294,7 +337,7 @@ class RS274Interpreter(object):
             CommandDictKey.LineNumber.name: _get_caller_linenumber()
         }
         
-        coordinates = self._get_coordinate_dict(x, y, z, a, b, c)
+        coordinates = self._get_coordinate_dict(x, y, z, b, c, a)
         
         command[CommandDictKey.Coordinates.name] = coordinates
             
@@ -302,21 +345,28 @@ class RS274Interpreter(object):
         return self
     
     # G00快速直线运动
-    def g00(self, x: float = None, y: float = None, z: float = None, a: float = None, b: float = None, c: float = None) -> RS274Interpreter:
+    def g00(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None,
+            m05: bool = False) -> RS274Interpreter:
         if (self.__g_environment.is_program_end()): 
             return self
         
         self.__g_environment.set_motion_mode(MotionMode.G00)
         self._assert_environment_valid()
+        
+        if (not isinstance(m05, bool)):
+            raise InterpreterException(f"m05 Type Not Valid: {type(m05)} " + _get_stackmessage())
+        
         command = {
             CommandDictKey.CommandType.name: CommandType.G00MotionCommand.name,
             CommandDictKey.CoordinateMode.name: self.__g_environment.get_coordinate_mode().name,
             CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
             CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.M05IgnoreTouchDetect.name: m05,
+            CommandDictKey.FeedSpeed.name: self.__g_environment.get_feed_speed()
         }
         
-        coordinates = self._get_coordinate_dict(x, y, z, a, b, c)
+        coordinates = self._get_coordinate_dict(x, y, z, b, c, a)
         
         command[CommandDictKey.Coordinates.name] = coordinates
             
@@ -334,8 +384,10 @@ class RS274Interpreter(object):
         if (speed <= 0):
             raise InterpreterException(f"Feed Speed Value ({speed}) Out of Range " + _get_stackmessage())
         
+        self.__g_environment.set_feed_speed(speed)
+        
         command = {
-            CommandDictKey.CommandType.name: CommandType.EleparamSetCommand.name,
+            CommandDictKey.CommandType.name: CommandType.FeedSpeedSetCommand.name,
             CommandDictKey.FeedSpeed.name: speed,
             CommandDictKey.LineNumber.name: _get_caller_linenumber()
         }
