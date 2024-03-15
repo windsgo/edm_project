@@ -66,6 +66,8 @@ public:
           coord_index_(coord_index) {}
     ~GCodeTaskCoordinateIndex() noexcept override = default;
 
+    auto coord_index() const { return coord_index_; }
+
 private:
     int coord_index_; // 切换坐标系序号
 };
@@ -78,6 +80,8 @@ public:
                         node_index),
           eleparam_index_(eleparam_index) {}
     ~GCodeTaskEleparamSet() noexcept override = default;
+
+    auto eleparam_index() const { return eleparam_index_; }
 
 private:
     int eleparam_index_; // 要设定的电参数序号

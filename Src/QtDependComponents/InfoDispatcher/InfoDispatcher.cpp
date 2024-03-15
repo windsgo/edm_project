@@ -47,10 +47,22 @@ void InfoDispatcher::_handle_signal_callback(const move::MotionSignal &signal) {
 
     switch (signal.type) {
     case move::MotionSignalType::MotionSignal_ManualPointMoveStarted:
-        emit manual_pointmove_started();
+        emit sig_manual_pointmove_started();
         break;
     case move::MotionSignalType::MotionSignal_ManualPointMoveStopped:
-        emit manual_pointmove_stopped();
+        emit sig_manual_pointmove_stopped();
+        break;
+    case move::MotionSignalType::MotionSignal_AutoStarted:
+        emit sig_auto_started();
+        break;
+    case move::MotionSignalType::MotionSignal_AutoPaused:
+        emit sig_auto_paused();
+        break;
+    case move::MotionSignalType::MotionSignal_AutoResumed:
+        emit sig_auto_resumed();
+        break;
+    case move::MotionSignalType::MotionSignal_AutoStopped:
+        emit sig_auto_stopped();
         break;
     default:
         s_logger->warn("recv unknown signal: {}", (int)signal.type);

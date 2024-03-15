@@ -19,6 +19,11 @@ MainWindow::MainWindow(QWidget *parent)
     io_panel_ = new IOPanel(shared_core_data_, ui->tab_io);
     power_panel_ = new PowerPanel(shared_core_data_, ui->tab_power);
 
+    task_manager_ = new task::TaskManager(shared_core_data_, this);
+
+    connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
+            coord_panel_, &CoordPanel::slot_change_display_coord_index);
+
     connect(ui->pb_test, &QPushButton::clicked, this, [this]() {
         try {
             edm::interpreter::RS274InterpreterWrapper::instance()
@@ -34,8 +39,8 @@ MainWindow::MainWindow(QWidget *parent)
 
             std::cout << ret.dumps(2) << std::endl;
 
-
-            auto gcode_lists_opt = edm::task::GCodeTaskConverter::MakeGCodeTaskListFromJson(ret);
+            auto gcode_lists_opt =
+                edm::task::GCodeTaskConverter::MakeGCodeTaskListFromJson(ret);
 
             if (!gcode_lists_opt) {
                 s_logger->warn("MakeGCodeTaskListFromJson failed");
@@ -46,9 +51,11 @@ MainWindow::MainWindow(QWidget *parent)
 
                 s_logger->info("size: {}", vec.size());
 
-                for (const auto& g : vec) {
-                    if (!g) continue;
-                    s_logger->debug("type: {}, line: {}", (int)g->type(), g->line_number());
+                for (const auto &g : vec) {
+                    if (!g)
+                        continue;
+                    s_logger->debug("type: {}, line: {}", (int)g->type(),
+                                    g->line_number());
                 }
             }
 

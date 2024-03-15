@@ -33,9 +33,14 @@ signals: // info 获取完成信号, 用于那些需要自动刷新的界面
     void info_updated(const edm::move::MotionInfo &info);
 
 signals: // motion 信号
-    void manual_pointmove_started();
-    void manual_pointmove_stopped();
+    void sig_manual_pointmove_started();
+    void sig_manual_pointmove_stopped();
 
+    void sig_auto_started();
+    void sig_auto_paused();
+    void sig_auto_resumed();
+    void sig_auto_stopped();
+    
     // TODO other signals
 
 private:

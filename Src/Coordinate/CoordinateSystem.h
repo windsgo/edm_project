@@ -63,6 +63,9 @@ public:
         return cm_.get_neg_soft_limit();
     }
 
+    inline bool exist_coordinate_index(uint32_t coord_index) const
+    { return cm_.exist_coordinate_index(coord_index); }
+
     bool get_coord_axis(uint32_t coord_index, move::axis_t &output) const;
 
     const auto &get_cm() const { return cm_; }

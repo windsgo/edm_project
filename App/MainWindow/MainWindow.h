@@ -40,6 +40,8 @@ private:
     MovePanel* move_panel_;
     IOPanel* io_panel_;
     PowerPanel* power_panel_;
+
+    task::TaskManager* task_manager_;
 };
 
 } // namespace app
