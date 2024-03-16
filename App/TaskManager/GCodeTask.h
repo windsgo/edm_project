@@ -105,6 +105,8 @@ public:
           delay_s_(delay_s) {}
     ~GCodeTaskDeley() noexcept override = default;
 
+    auto delay_s() const { return delay_s_; }
+
 private:
     double delay_s_; // 要延时的秒数 (支持小数)
 };

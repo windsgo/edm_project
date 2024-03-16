@@ -142,17 +142,17 @@ void MovePanel::_start_pointmove_no_softlimit_check(
 
     return;
 
-    this->shared_core_data_->get_motion_cmd_queue()->push_command(
-        start_pointmove_cmd);
+    // this->shared_core_data_->get_motion_cmd_queue()->push_command(
+    //     start_pointmove_cmd);
 
-    // wrap and push to global command queue
-    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
-        [this](edm::move::MotionCommandManualStartPointMove::ptr a) {
-            this->shared_core_data_->get_motion_cmd_queue()->push_command(a);
-        },
-        start_pointmove_cmd);
+    // // wrap and push to global command queue
+    // auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+    //     [this](edm::move::MotionCommandManualStartPointMove::ptr a) {
+    //         this->shared_core_data_->get_motion_cmd_queue()->push_command(a);
+    //     },
+    //     start_pointmove_cmd);
 
-    shared_core_data_->get_global_cmd_queue()->push_command(gcmd);
+    // shared_core_data_->get_global_cmd_queue()->push_command(gcmd);
 }
 
 void MovePanel::_le_start_pointmove() const {
@@ -303,18 +303,18 @@ void MovePanel::_stop_pointmove() const {
 
     return;
 
-    // create motion cmd
-    auto stop_pointmove_command =
-        std::make_shared<edm::move::MotionCommandManualStopPointMove>(false);
+    // // create motion cmd
+    // auto stop_pointmove_command =
+    //     std::make_shared<edm::move::MotionCommandManualStopPointMove>(false);
 
-    // wrap and push to global command queue
-    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
-        [this](edm::move::MotionCommandManualStopPointMove::ptr a) {
-            this->shared_core_data_->get_motion_cmd_queue()->push_command(a);
-        },
-        stop_pointmove_command);
+    // // wrap and push to global command queue
+    // auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+    //     [this](edm::move::MotionCommandManualStopPointMove::ptr a) {
+    //         this->shared_core_data_->get_motion_cmd_queue()->push_command(a);
+    //     },
+    //     stop_pointmove_command);
 
-    shared_core_data_->get_global_cmd_queue()->push_command(gcmd);
+    // shared_core_data_->get_global_cmd_queue()->push_command(gcmd);
 }
 
 void MovePanel::_cmd_ecat_trigger_connect() const {
@@ -327,13 +327,13 @@ void MovePanel::_cmd_ecat_trigger_connect() const {
     return;
 
     // wrap and push to global command queue
-    auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
-        [this](edm::move::MotionCommandSettingTriggerEcatConnect::ptr a) {
-            this->shared_core_data_->get_motion_cmd_queue()->push_command(a);
-        },
-        ecat_connect_cmd);
+    // auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
+    //     [this](edm::move::MotionCommandSettingTriggerEcatConnect::ptr a) {
+    //         this->shared_core_data_->get_motion_cmd_queue()->push_command(a);
+    //     },
+    //     ecat_connect_cmd);
 
-    shared_core_data_->get_global_cmd_queue()->push_command(gcmd);
+    // shared_core_data_->get_global_cmd_queue()->push_command(gcmd);
 }
 
 move::unit_t MovePanel::_get_speed_blu_s_from_mfrx() const {

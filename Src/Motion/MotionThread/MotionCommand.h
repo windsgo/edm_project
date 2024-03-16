@@ -56,6 +56,12 @@ enum MotionCommandType {
     MotionCommandAuto_Resume,
     MotionCommandAuto_Stop,
 
+    // 这个命令实现M00暂停
+    MotionCommandAuto_M00FakePauseTask,
+
+    // 延时
+    MotionCommandAuto_G04Delay,
+
     /* Setting 命令 */
 
     // 设定/更改抬刀参数
@@ -107,6 +113,18 @@ public:
     MotionCommandManualEmergencyStopAllMove()
         : MotionCommandBase(MotionCommandManual_EmergencyStopAllMove) {}
     ~MotionCommandManualEmergencyStopAllMove() noexcept override = default;
+};
+
+class MotionCommandAutoG04Delay : public MotionCommandBase {
+public:
+    MotionCommandAutoG04Delay(double delay_s)
+        : MotionCommandBase(MotionCommandAuto_G04Delay), delay_s_(delay_s) {}
+    ~MotionCommandAutoG04Delay() noexcept override = default;
+
+    auto delay_s() const { return delay_s_; }
+
+private:
+    double delay_s_;
 };
 
 // Motion简单直线(广义长度)运动基类 (提供数据成员 起点, 终点,

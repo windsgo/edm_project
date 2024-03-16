@@ -27,7 +27,8 @@ bool TaskManager::operation_start_pointmove(
         return true;
     case State::AutoGCode: {
         if (!_is_info_mainmode_auto() || !_is_info_autostate_paused()) {
-            s_logger->error("TaskManager: start pm failed, auto and not paused");
+            s_logger->error(
+                "TaskManager: start pm failed, auto and not paused");
             return false;
         }
 
@@ -70,22 +71,23 @@ bool TaskManager::operation_gcode_start(
         curr_gcode_num_ = 0;
         gcodeauto_stop_flag_ = false;
 
-        s_logger->info("start gcode success.");
+        s_logger->info("start gcode.");
 
         // 这里assume gcodelist中都不为空指针, 都有效
 
         // 切换状态
         _state_switchto(State::AutoGCode);
 
+        emit sig_auto_started();
+
         // 初始化第一条GCode
         _autogcode_init_curr_gcode();
-
-        emit sig_auto_started();
         return true;
     }
 
     case State::AutoGCode: {
-        s_logger->error("operation_gcode_start failed, already AutoGCode state");
+        s_logger->error(
+            "operation_gcode_start failed, already AutoGCode state");
         return false;
     }
 
@@ -94,11 +96,33 @@ bool TaskManager::operation_gcode_start(
     }
 }
 
-bool TaskManager::operation_gcode_pause() { return _cmd_auto_pause(); }
+bool TaskManager::operation_gcode_pause() { 
+    if (state_ != State::AutoGCode) {
+        return false;
+    }
 
-bool TaskManager::operation_gcode_resume() { return _cmd_auto_resume(); }
+    return _cmd_auto_pause(); 
+}
+
+bool TaskManager::operation_gcode_resume() { 
+    if (state_ != State::AutoGCode) {
+        return false;
+    }
+
+    return _cmd_auto_resume(); 
+}
 
 bool TaskManager::operation_gcode_stop() {
+    if (state_ != State::AutoGCode) {
+        return false;
+    }
+
+    // 判断一下info state, 如果恰好motion是idle状态(即一段结束, 还没发下一段, 直接结束就好)
+    if (_is_info_mainmode_idle()) {
+        _autogcode_normal_end();
+        return true;
+    }
+
     auto ret = _cmd_auto_stop();
 
     if (ret) {
@@ -165,6 +189,7 @@ void TaskManager::_autogcode_abort(std::string_view error_str) {
     gcodeauto_stop_flag_ = false;
 
     last_error_message_ = error_str;
+    s_logger->error(error_str);
 
     // 发送全部gcode的结束信号, 指明aborted
     emit sig_auto_stopped(true);
@@ -210,6 +235,8 @@ bool TaskManager::_check_gcode_list_at_first() {
 void TaskManager::_autogcode_init_curr_gcode() {
     // 根据不同的type, 有些直接在原地处理, 有些发送给MotionThread
     auto task = gcode_list_[curr_gcode_num_];
+
+    emit sig_autogcode_switched_to_line(task->line_number());
 
     switch (task->type()) {
     case GCodeTaskType::ProgramEndCommand:
@@ -388,11 +415,23 @@ void TaskManager::_autogcode_init_curr_gcode() {
         _autogcode_check_to_next_gcode();
         break;
     }
-    case GCodeTaskType::DelayCommand:
-        // TODO
-        s_logger->warn("do not support DelayCommand yet");
-        _autogcode_check_to_next_gcode();
+    case GCodeTaskType::DelayCommand: {
+        auto g04_task = std::static_pointer_cast<GCodeTaskDeley>(task);
+
+        auto g04_cmd = std::make_shared<move::MotionCommandAutoG04Delay>(
+            g04_task->delay_s());
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(g04_cmd);
+
+        // 等待命令被接收
+        if (!_waitfor_cmd_tobe_accepted(g04_cmd, 100)) {
+            _autogcode_abort(
+                "abort: start g04 failed, cmd not accepted by motion or "
+                "timeout");
+            break;
+        }
         break;
+    }
     case GCodeTaskType::PauseCommand:
         // TODO
         s_logger->warn("do not support PauseCommand yet");
@@ -509,7 +548,8 @@ void TaskManager::_slot_auto_stopped() {
         if (gcodeauto_stop_flag_) {
             // 用户调用了停止加工 auto stop
             s_logger->info("user set auto stop, stopped");
-            _autogcode_abort("user set auto stop, stopped");
+            _autogcode_normal_end();
+
             break;
         }
 
@@ -517,7 +557,8 @@ void TaskManager::_slot_auto_stopped() {
         auto curr_task = gcode_list_[curr_gcode_num_];
         if (curr_task->type() == GCodeTaskType::G00MotionCommand) {
             if (info_dispatcher_->get_info().TouchWarning()) {
-                _autogcode_abort("g00 exit due to Touch Warning. Exit whole gcode.");
+                _autogcode_abort(
+                    "g00 exit due to Touch Warning. Exit whole gcode.");
                 break;
             }
         }
@@ -596,10 +637,10 @@ bool TaskManager::_cmd_auto_stop() {
 }
 
 bool TaskManager::_cmd_emergency_stop() {
-    auto estop_cmd = std::make_shared<edm::move::MotionCommandManualEmergencyStopAllMove>();
+    auto estop_cmd =
+        std::make_shared<edm::move::MotionCommandManualEmergencyStopAllMove>();
 
-    this->shared_core_data_->get_motion_cmd_queue()->push_command(
-        estop_cmd);
+    this->shared_core_data_->get_motion_cmd_queue()->push_command(estop_cmd);
 
     return _waitfor_cmd_tobe_accepted(estop_cmd, 100);
 }

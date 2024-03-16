@@ -13,6 +13,8 @@
 #include "TaskManager/GCodeTaskConverter.h"
 #include "TaskManager/GCodeTask.h"
 
+#include "codeeditor/codeeditor.h"
+
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
 
@@ -30,6 +32,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void _init_test_gcode_buttons();
+
 private:
     Ui::MainWindow *ui;
 
@@ -42,6 +46,8 @@ private:
     MovePanel* move_panel_;
     IOPanel* io_panel_;
     PowerPanel* power_panel_;
+
+    CodeEditor* test_codeeditor_;
 };
 
 } // namespace app

@@ -5,6 +5,8 @@
 #include "MotionAutoTask.h"
 #include "G00AutoTask.h"
 #include "G01AutoTask.h"
+#include "G04AutoTask.h"
+
 #include "Motion/SignalBuffer/SignalBuffer.h"
 
 #include "Motion/PauseMoveController/PauseMoveController.h"

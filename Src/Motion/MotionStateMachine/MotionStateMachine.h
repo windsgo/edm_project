@@ -68,6 +68,8 @@ public: // operate interfaces
     bool start_auto_g01(const axis_t &target_pos,
                         unit_t max_jump_height_from_begin);
 
+    bool start_auto_g04(double deley_s);
+
     bool pause_auto();
     bool resume_auto();
     bool stop_auto(bool immediate = false);

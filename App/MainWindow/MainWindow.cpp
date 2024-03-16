@@ -1,6 +1,9 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include <QFile>
+#include <QMessageBox>
+
 #include "Logger/LogMacro.h"
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -22,10 +25,29 @@ MainWindow::MainWindow(QWidget *parent)
     io_panel_ = new IOPanel(shared_core_data_, ui->tab_io);
     power_panel_ = new PowerPanel(shared_core_data_, ui->tab_power);
 
+    test_codeeditor_ = new CodeEditor(ui->test_codeeditor_widget);
+    test_codeeditor_->setFixedSize(ui->test_codeeditor_widget->size());
+
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
 
+    _init_test_gcode_buttons();
+
     connect(ui->pb_test, &QPushButton::clicked, this, [this]() {
+
+    });
+}
+
+MainWindow::~MainWindow() {
+    s_logger->info("-----------------------------------------");
+    s_logger->info("------------ MainWindow Dtor ------------");
+    s_logger->info("-----------------------------------------");
+
+    delete ui;
+}
+
+void MainWindow::_init_test_gcode_buttons() {
+    connect(ui->pb_test_start, &QPushButton::clicked, this, [this]() {
         try {
             edm::interpreter::RS274InterpreterWrapper::instance()
                 ->set_rs274_py_module_dir(
@@ -38,49 +60,112 @@ MainWindow::MainWindow(QWidget *parent)
                     ->parse_file_to_json(EDM_ROOT_DIR
                                          "tests/Interpreter/pytest/test1.py");
 
-            std::cout << ret.dumps(2) << std::endl;
+            QFile file(EDM_ROOT_DIR "tests/Interpreter/pytest/test1.py");
+            file.open(QIODevice::OpenModeFlag::ReadOnly);
+
+            test_codeeditor_->clear();
+            test_codeeditor_->setPlainText(file.readAll());
+
+            file.close();
 
             auto gcode_lists_opt =
                 edm::task::GCodeTaskConverter::MakeGCodeTaskListFromJson(ret);
 
             if (!gcode_lists_opt) {
                 s_logger->warn("MakeGCodeTaskListFromJson failed");
+                QMessageBox::critical(this, "error",
+                                      "MakeGCodeTaskListFromJson failed");
             } else {
                 s_logger->info("MakeGCodeTaskListFromJson ok");
 
                 auto vec = std::move(*gcode_lists_opt);
 
-                s_logger->info("size: {}", vec.size());
-
-                for (const auto &g : vec) {
-                    if (!g)
-                        continue;
-                    s_logger->debug("type: {}, line: {}", (int)g->type(),
-                                    g->line_number());
-                }
-
                 // give to task manager
-                this->task_manager_->operation_gcode_start(vec);
+                auto ret = this->task_manager_->operation_gcode_start(vec);
+
+                if (!ret) {
+                    QMessageBox::critical(this, "error",
+                                          "operation_gcode_start failed");
+                }
             }
 
-        } catch (const edm::interpreter::RS274InterpreterException &e) {
-            std::cout << "error1\n";
-
-            std::cout << e.what() << std::endl;
         } catch (const std::exception &e) {
-            std::cout << "error2\n";
+            std::cout << "error\n";
+
+            QMessageBox::critical(this, "error",
+                                  QString("start gcode exception:") + e.what());
 
             std::cout << e.what() << std::endl;
         }
     });
-}
 
-MainWindow::~MainWindow() {
-    s_logger->info("-----------------------------------------");
-    s_logger->info("------------ MainWindow Dtor ------------");
-    s_logger->info("-----------------------------------------");
+    connect(ui->pb_test_pause, &QPushButton::clicked, this, [this]() {
+        auto ret = task_manager_->operation_gcode_pause();
+        if (!ret) {
+            QMessageBox::critical(this, "error",
+                                  "operation_gcode_pause failed");
+        }
+    });
 
-    delete ui;
+    connect(ui->pb_test_resume, &QPushButton::clicked, this, [this]() {
+        auto ret = task_manager_->operation_gcode_resume();
+        if (!ret) {
+            QMessageBox::critical(this, "error",
+                                  "operation_gcode_resume failed");
+        }
+    });
+
+    connect(ui->pb_test_stop, &QPushButton::clicked, this, [this]() {
+        auto ret = task_manager_->operation_gcode_stop();
+        if (!ret) {
+            QMessageBox::critical(this, "error", "operation_gcode_stop failed");
+        }
+    });
+
+    connect(ui->pb_test_estop, &QPushButton::clicked, this, [this]() {
+        auto ret = task_manager_->operation_emergency_stop();
+        if (!ret) {
+            QMessageBox::critical(this, "error",
+                                  "operation_emergency_stop failed");
+        }
+    });
+
+    connect(
+        task_manager_, &task::TaskManager::sig_autogcode_switched_to_line, this,
+        [this](uint32_t line) {
+
+            qDebug() << "line: " << line;
+
+            test_codeeditor_->moveCursorToLine(line);
+        });
+
+    connect(
+        task_manager_, &task::TaskManager::sig_auto_started, this, [this]() {
+            QMessageBox::information(this, "info", "taskmanager: auto_started");
+        });
+
+    connect(task_manager_, &task::TaskManager::sig_auto_paused, this, [this]() {
+        QMessageBox::information(this, "info", "taskmanager: auto_paused");
+    });
+
+    connect(
+        task_manager_, &task::TaskManager::sig_auto_resumed, this, [this]() {
+            QMessageBox::information(this, "info", "taskmanager: auto_resumed");
+        });
+
+    connect(
+        task_manager_, &task::TaskManager::sig_auto_stopped, this,
+        [this](bool err_occured) {
+            if (err_occured) {
+                QMessageBox::critical(
+                    this, "error",
+                    QString("taskmanager: auto_stopped. **Error Occured:\n") +
+                        task_manager_->last_error_str().c_str());
+            } else {
+                QMessageBox::information(this, "info",
+                                         "taskmanager: auto_stopped");
+            }
+        });
 }
 
 } // namespace app

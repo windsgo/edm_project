@@ -1,13 +1,17 @@
 i = RS274Interpreter()
 
 i.g54()
-i.g91()
+i.g04(t=1)
+i.g90()
+i.g04(t=1)
 i.e(5)
-i.f(300)
-i.g00(x=5, z=10)
+i.g04(t=3)
+i.f(1000)
 for j in range(5):
-    i.g00(x=5)
-    i.g00(x=-5)
+    i.g04(t=0.5)
+    i.g00(x=10, y=10)
+    i.g04(t=0.5)
+    i.g00(x=0, y=0)
 i.m02() # end of program
 
 # following won't generate code

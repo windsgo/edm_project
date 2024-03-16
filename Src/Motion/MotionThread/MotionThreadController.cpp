@@ -511,6 +511,26 @@ void MotionThreadController::_fetch_command_and_handle() {
 
         break;
     }
+    case MotionCommandAuto_G04Delay: {
+        s_logger->trace("Handle MotionCmd: Auto_G04Delay");
+        if (ecat_state_ != EcatState::EcatReady ||
+            thread_state_ != ThreadState::Running) {
+            cmd->ignore();
+            break;
+        }
+
+        auto g04_cmd = std::static_pointer_cast<MotionCommandAutoG04Delay>(cmd);
+
+        auto ret = motion_state_machine_->start_auto_g04(g04_cmd->delay_s());
+
+        if (ret) {
+            cmd->accept();
+        } else {
+            cmd->ignore();
+        }
+
+        break;
+    };
     case MotionCommandAuto_Stop: {
         s_logger->trace("Handle MotionCmd: Auto_Stop");
         auto autostop_cmd =
