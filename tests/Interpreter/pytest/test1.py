@@ -5,6 +5,7 @@ i.g04(t=1)
 i.g90()
 i.g04(t=1)
 i.e(5)
+i.m00()
 i.g04(t=3)
 i.f(1000)
 for j in range(5):

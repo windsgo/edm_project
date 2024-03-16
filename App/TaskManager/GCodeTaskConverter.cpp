@@ -162,6 +162,14 @@ static std::optional<GCodeTaskBase::ptr> _make_m02(const json::object &jo) {
     return m02;
 }
 
+static std::optional<GCodeTaskBase::ptr> _make_m00(const json::object &jo) {
+    auto line_number = jo.at("LineNumber").as_integer();
+
+    auto m00 = std::make_shared<GCodeTaskPauseCommand>(line_number, -1);
+
+    return m00;
+}
+
 std::optional<GCodeTaskBase::ptr>
 GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
 
@@ -204,6 +212,10 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
 
     case GCodeTaskType::ProgramEndCommand: {
         return _make_m02(jo);
+    }
+
+    case GCodeTaskType::PauseCommand: {
+        return _make_m00(jo);
     }
 
     default:

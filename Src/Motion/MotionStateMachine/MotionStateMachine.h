@@ -62,6 +62,7 @@ public: // operate interfaces
 
     bool stop_manual_pointmove(bool immediate = false);
 
+//! auto task start
     bool start_auto_g00(const MoveRuntimePlanSpeedInput &speed_param,
                         const axis_t &target_pos, bool enable_touch_detect);
 
@@ -69,6 +70,9 @@ public: // operate interfaces
                         unit_t max_jump_height_from_begin);
 
     bool start_auto_g04(double deley_s);
+
+    bool start_auto_m00fake();
+//! auto task end
 
     bool pause_auto();
     bool resume_auto();

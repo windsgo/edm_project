@@ -111,15 +111,20 @@ private:
     double delay_s_; // 要延时的秒数 (支持小数)
 };
 
-// class GCodeTaskPause final //! 先忽略暂停命令, 后面在实现, 实现方式见
-// GCodeTaskBase.h 备注
-
 class GCodeTaskProgramEnd final : public GCodeTaskBase {
 public:
     GCodeTaskProgramEnd(int line_number, int node_index = -1)
         : GCodeTaskBase(GCodeTaskType::ProgramEndCommand, line_number,
                         node_index) {}
     ~GCodeTaskProgramEnd() noexcept override = default;
+};
+
+class GCodeTaskPauseCommand final : public GCodeTaskBase {
+public:
+    GCodeTaskPauseCommand(int line_number, int node_index = -1)
+        : GCodeTaskBase(GCodeTaskType::PauseCommand, line_number,
+                        node_index) {}
+    ~GCodeTaskPauseCommand() noexcept override = default;
 };
 
 } // namespace task

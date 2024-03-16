@@ -96,20 +96,20 @@ bool TaskManager::operation_gcode_start(
     }
 }
 
-bool TaskManager::operation_gcode_pause() { 
+bool TaskManager::operation_gcode_pause() {
     if (state_ != State::AutoGCode) {
         return false;
     }
 
-    return _cmd_auto_pause(); 
+    return _cmd_auto_pause();
 }
 
-bool TaskManager::operation_gcode_resume() { 
+bool TaskManager::operation_gcode_resume() {
     if (state_ != State::AutoGCode) {
         return false;
     }
 
-    return _cmd_auto_resume(); 
+    return _cmd_auto_resume();
 }
 
 bool TaskManager::operation_gcode_stop() {
@@ -117,7 +117,8 @@ bool TaskManager::operation_gcode_stop() {
         return false;
     }
 
-    // 判断一下info state, 如果恰好motion是idle状态(即一段结束, 还没发下一段, 直接结束就好)
+    // 判断一下info state, 如果恰好motion是idle状态(即一段结束, 还没发下一段,
+    // 直接结束就好)
     if (_is_info_mainmode_idle()) {
         _autogcode_normal_end();
         return true;
@@ -432,11 +433,21 @@ void TaskManager::_autogcode_init_curr_gcode() {
         }
         break;
     }
-    case GCodeTaskType::PauseCommand:
-        // TODO
-        s_logger->warn("do not support PauseCommand yet");
-        _autogcode_check_to_next_gcode();
+    case GCodeTaskType::PauseCommand: {
+        auto m00_cmd =
+            std::make_shared<move::MotionCommandAutoM00FakePauseTask>();
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(m00_cmd);
+
+        // 等待命令被接收
+        if (!_waitfor_cmd_tobe_accepted(m00_cmd, 100)) {
+            _autogcode_abort(
+                "abort: start m00 failed, cmd not accepted by motion or "
+                "timeout");
+            break;
+        }
         break;
+    }
     }
 }
 

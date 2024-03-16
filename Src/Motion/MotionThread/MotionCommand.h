@@ -114,6 +114,12 @@ public:
         : MotionCommandBase(MotionCommandManual_EmergencyStopAllMove) {}
     ~MotionCommandManualEmergencyStopAllMove() noexcept override = default;
 };
+class MotionCommandAutoM00FakePauseTask : public MotionCommandBase {
+public:
+    MotionCommandAutoM00FakePauseTask()
+        : MotionCommandBase(MotionCommandAuto_M00FakePauseTask) {}
+    ~MotionCommandAutoM00FakePauseTask() noexcept override = default;
+};
 
 class MotionCommandAutoG04Delay : public MotionCommandBase {
 public:
