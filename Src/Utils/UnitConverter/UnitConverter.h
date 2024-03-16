@@ -27,13 +27,26 @@ private:
                                         1000};        // 周期 -> ms
     constexpr static const double ms2p_{1.0 / p2ms_}; // ms -> 周期
 
+    // speed unit factors
+    constexpr static const double mm_min2um_s_{1000.0 / 60.0}; // mm/min -> um/s
+    constexpr static const double mm_min2blu_s_{1000.0 / 60.0 *
+                                                um2blu_}; // mm/min -> blu/s
+
 public:
     static inline move::unit_t um2blu(move::unit_t um) { return um * um2blu_; }
     static inline move::unit_t mm2blu(move::unit_t mm) { return mm * mm2blu_; }
-    static inline move::unit_t blu2um(move::unit_t blu) { return blu * blu2um_; }
-    static inline move::unit_t blu2mm(move::unit_t blu) { return blu * blu2mm_; }
+    static inline move::unit_t blu2um(move::unit_t blu) {
+        return blu * blu2um_;
+    }
+    static inline move::unit_t blu2mm(move::unit_t blu) {
+        return blu * blu2mm_;
+    }
 
     static inline move::unit_t ms2p(move::unit_t ms) { return ms * ms2p_; }
+
+    static inline move::unit_t mm_min2blu_s(move::unit_t mm_min) {
+        return mm_min * mm_min2blu_s_;
+    }
 
     // TODO
 };

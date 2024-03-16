@@ -83,8 +83,6 @@ void MotionStateMachine::run_once() {
 }
 
 void MotionStateMachine::reset() {
-    cmd_axis_.fill(0);
-
     enabled_ = false;
     main_mode_ = MotionMainMode::Idle;
     // auto_state_ = MotionAutoState::Stopped;

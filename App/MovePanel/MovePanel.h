@@ -6,6 +6,8 @@
 
 #include "SharedCoreData/SharedCoreData.h"
 
+#include "TaskManager/TaskManager.h"
+
 #include "array"
 
 namespace Ui {
@@ -20,6 +22,7 @@ class MovePanel : public QWidget {
 
 public:
     explicit MovePanel(SharedCoreData *shared_core_data,
+                        task::TaskManager* task_manager,
                        QWidget *parent = nullptr);
     ~MovePanel();
 
@@ -62,6 +65,7 @@ private:
     Ui::MovePanel *ui;
 
     SharedCoreData *shared_core_data_;
+    task::TaskManager* task_manager_;
 
     coord::CoordinateSystem::ptr coord_sys_;
 

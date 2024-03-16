@@ -28,13 +28,22 @@ public:
           cmd_values_(cmd_values) {}
     ~GCodeTaskG00Motion() noexcept override = default;
 
+    auto touch_detect_enable() const { return touch_detect_enable_; }
+
+    auto feed_speed() const { return feed_speed_; }
+    auto coord_index() const { return coord_index_; }
+
+    auto coord_mode() const { return coord_mode_; }
+
+    const auto& cmd_values() const { return cmd_values_; }
+
 private:
     bool touch_detect_enable_; // 接触感知使能 (m05忽略接触感知)
     int feed_speed_;           // 在此之前设定的feed speed
     int coord_index_;          // 使用的坐标系序号
     GCodeCoordinateMode coord_mode_; // g90, g91
     std::vector<std::optional<double>>
-        cmd_values_; // g00()后面带的坐标值, 没有的以std::nullopt记录
+        cmd_values_; // g00()后面带的坐标值, 没有的以std::nullopt记录 (单位mm, 无需转换)
 };
 
 class GCodeTaskG01Motion final : public GCodeTaskBase {

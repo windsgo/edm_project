@@ -14,9 +14,10 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 namespace edm {
 namespace app {
 
-MovePanel::MovePanel(SharedCoreData *shared_core_data, QWidget *parent)
+MovePanel::MovePanel(SharedCoreData *shared_core_data,
+                     task::TaskManager *task_manager, QWidget *parent)
     : QWidget(parent), ui(new Ui::MovePanel),
-      shared_core_data_(shared_core_data),
+      shared_core_data_(shared_core_data), task_manager_(task_manager),
       coord_sys_(shared_core_data->get_coord_system()) {
     ui->setupUi(this);
 
@@ -137,9 +138,12 @@ void MovePanel::_start_pointmove_no_softlimit_check(
         std::make_shared<edm::move::MotionCommandManualStartPointMove>(
             start_pos, target_pos, speed_param, enable_touch_detect);
 
-    this->shared_core_data_->get_motion_cmd_queue()->push_command(start_pointmove_cmd);
+    task_manager_->operation_start_pointmove(start_pointmove_cmd);
 
-    return; //! 完全不需要用global cmd queue 了
+    return;
+
+    this->shared_core_data_->get_motion_cmd_queue()->push_command(
+        start_pointmove_cmd);
 
     // wrap and push to global command queue
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
@@ -294,6 +298,11 @@ void MovePanel::_start_single_axis_pointmove_neg(uint32_t axis_index) const {
 }
 
 void MovePanel::_stop_pointmove() const {
+
+    task_manager_->operation_stop_pointmove();
+
+    return;
+
     // create motion cmd
     auto stop_pointmove_command =
         std::make_shared<edm::move::MotionCommandManualStopPointMove>(false);
@@ -312,6 +321,10 @@ void MovePanel::_cmd_ecat_trigger_connect() const {
     // create motion cmd
     auto ecat_connect_cmd =
         std::make_shared<edm::move::MotionCommandSettingTriggerEcatConnect>();
+
+    this->shared_core_data_->get_motion_cmd_queue()->push_command(ecat_connect_cmd);
+
+    return;
 
     // wrap and push to global command queue
     auto gcmd = edm::global::CommandCommonFunctionFactory::bind(
@@ -388,9 +401,11 @@ bool MovePanel::_get_target_pos_by_incabs_and_machcoord(
     const std::array<std::optional<double>, EDM_AXIS_NUM> &le_opt_value) const {
     if (ui->pb_check_pmmode_inc->isChecked()) {
         // inc, mach/coord the same
+        mach_target_pos = mach_start_pos;
         for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
             if (le_opt_value[i]) {
-                mach_target_pos[i] += *(le_opt_value[i]); // add inc to get target mach pos
+                mach_target_pos[i] +=
+                    *(le_opt_value[i]); // add inc to get target mach pos
             }
         }
     } else {
@@ -399,7 +414,8 @@ bool MovePanel::_get_target_pos_by_incabs_and_machcoord(
             // mach coord
             for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
                 if (le_opt_value[i]) {
-                    mach_target_pos[i] = *(le_opt_value[i]); // set to target mach pos
+                    mach_target_pos[i] =
+                        *(le_opt_value[i]); // set to target mach pos
                 } else {
                     mach_target_pos[i] = mach_start_pos[i];
                 }
@@ -407,10 +423,11 @@ bool MovePanel::_get_target_pos_by_incabs_and_machcoord(
         } else {
             // gxx coord
             uint32_t curr_coord_index = coord_sys_->get_current_coord_index();
-            
+
             // 先将输入的机床坐标起点转化为坐标系坐标起点
             move::axis_t coord_start_pos;
-            bool ret1 = coord_sys_->get_cm().machine_to_coord(curr_coord_index, mach_start_pos, coord_start_pos);
+            bool ret1 = coord_sys_->get_cm().machine_to_coord(
+                curr_coord_index, mach_start_pos, coord_start_pos);
             if (!ret1) {
                 s_logger->error("{}, machine_to_coord failed",
                                 __PRETTY_FUNCTION__);
@@ -428,7 +445,8 @@ bool MovePanel::_get_target_pos_by_incabs_and_machcoord(
             }
 
             // 再转化为 MachTargetPos
-            bool ret2 = coord_sys_->get_cm().coord_to_machine(curr_coord_index, coord_target_pos, mach_target_pos);
+            bool ret2 = coord_sys_->get_cm().coord_to_machine(
+                curr_coord_index, coord_target_pos, mach_target_pos);
             if (!ret2) {
                 s_logger->error("{}, coord_to_machine failed",
                                 __PRETTY_FUNCTION__);

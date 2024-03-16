@@ -35,13 +35,13 @@ private:
 
     SharedCoreData* shared_core_data_;
 
+    task::TaskManager* task_manager_;
+
     CoordPanel* coord_panel_;
     InfoPanel* info_panel_;
     MovePanel* move_panel_;
     IOPanel* io_panel_;
     PowerPanel* power_panel_;
-
-    task::TaskManager* task_manager_;
 };
 
 } // namespace app

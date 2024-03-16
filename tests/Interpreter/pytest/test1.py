@@ -1,26 +1,16 @@
 i = RS274Interpreter()
 
 i.g54()
-i.g90()
-i.g04(t=0.1)
-i.e(100)
-i.f(1000)
-i.g00(x=5)
+i.g91()
+i.e(5)
+i.f(300)
+i.g00(x=5, z=10)
+for j in range(5):
+    i.g00(x=5)
+    i.g00(x=-5)
 i.m02() # end of program
 
 # following won't generate code
-
-i.g54()
-i.g04(t=1)
-i.g90().g04(t=1)
-i.f(1000)
-for x in range(2):
-    i.g00(x=1, y=0, z=0).g04(t=1)
-    i.g04(t=1).g04(t=1)
-
-i.e(1).g04(t=1)
-i.g01(z=1).g04(t=1)
-i.m02().g04(t=1)
 
 # print(i.get_command_list())
 # print(i.get_command_list_jsonstr())

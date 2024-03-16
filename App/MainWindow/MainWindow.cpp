@@ -13,13 +13,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     shared_core_data_ = new SharedCoreData(this);
 
+    task_manager_ = new task::TaskManager(shared_core_data_, this);
+
     coord_panel_ = new CoordPanel(shared_core_data_, ui->frame_coordpanel);
     info_panel_ = new InfoPanel(shared_core_data_, ui->groupBox_info);
-    move_panel_ = new MovePanel(shared_core_data_, ui->groupBox_pm);
+    move_panel_ =
+        new MovePanel(shared_core_data_, task_manager_, ui->groupBox_pm);
     io_panel_ = new IOPanel(shared_core_data_, ui->tab_io);
     power_panel_ = new PowerPanel(shared_core_data_, ui->tab_power);
-
-    task_manager_ = new task::TaskManager(shared_core_data_, this);
 
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
@@ -57,6 +58,9 @@ MainWindow::MainWindow(QWidget *parent)
                     s_logger->debug("type: {}, line: {}", (int)g->type(),
                                     g->line_number());
                 }
+
+                // give to task manager
+                this->task_manager_->operation_gcode_start(vec);
             }
 
         } catch (const edm::interpreter::RS274InterpreterException &e) {

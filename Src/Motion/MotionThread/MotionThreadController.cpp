@@ -515,17 +515,42 @@ void MotionThreadController::_fetch_command_and_handle() {
         s_logger->trace("Handle MotionCmd: Auto_Stop");
         auto autostop_cmd =
             std::static_pointer_cast<MotionCommandAutoStop>(cmd);
-        motion_state_machine_->stop_auto(autostop_cmd->immediate());
+        auto ret = motion_state_machine_->stop_auto(autostop_cmd->immediate());
+
+        if (ret) {
+            cmd->accept();
+        } else {
+            cmd->ignore();
+        }
         break;
     }
     case MotionCommandAuto_Pause: {
         s_logger->trace("Handle MotionCmd: Auto_Pause");
-        motion_state_machine_->pause_auto();
+        auto ret = motion_state_machine_->pause_auto();
+
+        if (ret) {
+            cmd->accept();
+        } else {
+            cmd->ignore();
+        }
         break;
     }
     case MotionCommandAuto_Resume: {
         s_logger->trace("Handle MotionCmd: Auto_Resume");
-        motion_state_machine_->resume_auto();
+        auto ret = motion_state_machine_->resume_auto();
+
+        if (ret) {
+            cmd->accept();
+        } else {
+            cmd->ignore();
+        }
+        break;
+    }
+    case MotionCommandManual_EmergencyStopAllMove: {
+        s_logger->trace("Handle MotionCmd: EmergencyStopAllMove");
+        motion_state_machine_->reset();
+        motion_state_machine_->set_enable(true);
+        cmd->accept();
         break;
     }
     case MotionCommandSetting_TriggerEcatConnect: {

@@ -34,10 +34,10 @@ enum MotionCommandType {
 
     // 手动点动/暂停点动/火花碰边点动统一接口 命令
     MotionCommandManual_StartPointMove,
-    MotionCommandManual_StopPointMove, // TODO
+    MotionCommandManual_StopPointMove,
 
     // 紧急停止所有运动
-    MotionCommandManual_EmergencyStopAllMove, // TODO,
+    MotionCommandManual_EmergencyStopAllMove,
 
     /* Auto 命令 */
 
@@ -52,9 +52,9 @@ enum MotionCommandType {
 
     // Auto 运行模式下统一的暂停, 继续, 停止命令 (执行模块会根据不同状态执行)
     // 包括G00, G01, 火花碰边定位 的 暂停, 继续, 停止
-    MotionCommandAuto_Pause,  // TODO
-    MotionCommandAuto_Resume, // TODO
-    MotionCommandAuto_Stop,   // TODO
+    MotionCommandAuto_Pause,
+    MotionCommandAuto_Resume,
+    MotionCommandAuto_Stop,
 
     /* Setting 命令 */
 
@@ -62,7 +62,7 @@ enum MotionCommandType {
     MotionCommandSetting_SetJumpParam, // TODO
 
     // 触发Ecat连接尝试
-    MotionCommandSetting_TriggerEcatConnect, // TODO
+    MotionCommandSetting_TriggerEcatConnect,
 
     MotionCommand_Max
 };
@@ -100,6 +100,13 @@ private:
 
     // accepted_state_: 0: 初始化, 1: accepted, 2: ignored
     std::atomic_uint8_t accepted_state_{0};
+};
+
+class MotionCommandManualEmergencyStopAllMove : public MotionCommandBase {
+public:
+    MotionCommandManualEmergencyStopAllMove()
+        : MotionCommandBase(MotionCommandManual_EmergencyStopAllMove) {}
+    ~MotionCommandManualEmergencyStopAllMove() noexcept override = default;
 };
 
 // Motion简单直线(广义长度)运动基类 (提供数据成员 起点, 终点,

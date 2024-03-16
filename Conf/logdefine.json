@@ -36,7 +36,7 @@
             "sinks": [
                 {
                     "type": "file",
-                    "level": "trace",
+                    "level": "info",
                     "filename": "root.log",
                     "multi_thread": true,
                     "max_size": 10485760,
