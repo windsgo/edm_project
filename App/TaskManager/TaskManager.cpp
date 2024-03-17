@@ -481,7 +481,8 @@ bool TaskManager::_waitfor_cmd_tobe_accepted(move::MotionCommandBase::ptr cmd,
         }
 
         auto now = QDateTime::currentMSecsSinceEpoch();
-        if (now - start_t > timeout_ms) {
+        if (timeout_ms >= 0 && now - start_t > timeout_ms) {
+            // timeout_ms < 0 means wait forever
             break;
         }
 

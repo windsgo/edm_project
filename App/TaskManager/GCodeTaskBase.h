@@ -47,6 +47,8 @@ public:
 
     auto line_number() const { return line_number_; }
     auto node_index() const { return node_index_; }
+
+    virtual bool is_motion_task() const = 0;
     
 private:
     GCodeTaskType type_;

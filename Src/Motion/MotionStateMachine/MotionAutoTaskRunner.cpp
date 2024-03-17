@@ -87,9 +87,10 @@ bool AutoTaskRunner::pause() {
     }
 
     case MotionAutoState::Pausing:
+        return true;
     case MotionAutoState::Stopping:
     case MotionAutoState::Stopped:
-        return true;
+        return false;
     
     case MotionAutoState::Paused:
         return pausemove_controller_->pause_recover();

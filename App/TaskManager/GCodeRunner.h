@@ -3,7 +3,11 @@
 #include "GCodeTask.h"
 #include "GCodeTaskConverter.h"
 
+#include "TaskHelper.h"
+
 #include "SharedCoreData/SharedCoreData.h"
+
+#include "Utils/UnitConverter/UnitConverter.h"
 
 #include <QObject>
 #include <QTimer>
@@ -22,29 +26,56 @@ public:
 
     auto state() const { return state_; }
 
+    bool start(const std::vector<GCodeTaskBase::ptr> &gcode_list);
     bool pause();
     bool resume();
     bool stop();
 
-    void reset() { _reset_state(); }
+    void reset() { _reset_state(); last_error_str_.clear(); }
+
+signals:
+    void sig_auto_started();
+    void sig_auto_paused();
+    void sig_auto_resumed();
+    void sig_auto_stopped(bool err_occured);
+
+    void sig_autogcode_switched_to_line(uint32_t line_num);
+
+    void sig_switch_coordindex(uint32_t coord_index);
 
 private:
     bool _cmd_auto_pause();
     bool _cmd_auto_resume();
     bool _cmd_auto_stop();
 
+    bool _cmd_emergency_stop();
+
 private: 
     // 定时器触发, 或任意命令触发, 或任意信号到达也触发, 状态机完全由轮询状态完成, 不依赖信号
     void _run_once();
 
-    // 直接向motion controler获取实时的info信息
-    void _direct_update_info_from_motion_ctrler();
+    bool _check_gcode_list_at_first();
+
+    void _abort(std::string_view error_str);
+    void _end(); // 正常结束
+
+    void _check_to_next_gcode();
 
     // 重置状态
     void _reset_state();
 
+private:
+    void _state_current_node_initing();
+    void _state_running();
+    void _state_running_non_motion(GCodeTaskBase::ptr curr_gcode);
+    void _state_waiting_for_paused();
+    void _state_waiting_for_resumed();
+    void _state_waiting_for_stopped();
+
 public:
     enum State {
+        ReadyToStart,
+        CurrentNodeIniting, // 当前node启动前准备, 不支持在此状态下暂停
         Running,
         WaitingForPaused,
         Paused,
@@ -53,15 +84,26 @@ public:
         Stopped
     };
 
+    static const char* GetStateStr(State s);
+
+private:
+    void _switch_to_state(State new_state);
+
 private:
     State state_{State::Stopped};
 
-    move::MotionInfo info_;
+    app::SharedCoreData *shared_core_data_;
+
+    // 每次状态机运行一开始获取状态
+    move::MotionInfo local_info_cache_;
 
     QTimer* update_timer_;
+    const int update_timer_peroid_ms_ = 1000; // test, 实际可以短一些
 
     std::vector<GCodeTaskBase::ptr> gcode_list_;
     int curr_gcode_num_;
+
+    std::string last_error_str_;
 };
 
 } // namespace task

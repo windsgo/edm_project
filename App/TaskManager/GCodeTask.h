@@ -37,6 +37,8 @@ public:
 
     const auto& cmd_values() const { return cmd_values_; }
 
+    bool is_motion_task() const override { return true; }
+
 private:
     bool touch_detect_enable_; // 接触感知使能 (m05忽略接触感知)
     int feed_speed_;           // 在此之前设定的feed speed
@@ -56,6 +58,8 @@ public:
           coord_index_(coord_index), coord_mode_(coord_mode),
           cmd_values_(cmd_values) {}
     ~GCodeTaskG01Motion() noexcept override = default;
+
+    bool is_motion_task() const override { return true; }
 
 private:
     int coord_index_;                // 使用的坐标系序号
@@ -77,6 +81,8 @@ public:
 
     auto coord_index() const { return coord_index_; }
 
+    bool is_motion_task() const override { return false; }
+
 private:
     int coord_index_; // 切换坐标系序号
 };
@@ -91,6 +97,8 @@ public:
     ~GCodeTaskEleparamSet() noexcept override = default;
 
     auto eleparam_index() const { return eleparam_index_; }
+
+    bool is_motion_task() const override { return false; }
 
 private:
     int eleparam_index_; // 要设定的电参数序号
@@ -107,6 +115,8 @@ public:
 
     auto delay_s() const { return delay_s_; }
 
+    bool is_motion_task() const override { return true; }
+
 private:
     double delay_s_; // 要延时的秒数 (支持小数)
 };
@@ -117,6 +127,8 @@ public:
         : GCodeTaskBase(GCodeTaskType::ProgramEndCommand, line_number,
                         node_index) {}
     ~GCodeTaskProgramEnd() noexcept override = default;
+
+    bool is_motion_task() const override { return false; }
 };
 
 class GCodeTaskPauseCommand final : public GCodeTaskBase {
@@ -125,6 +137,8 @@ public:
         : GCodeTaskBase(GCodeTaskType::PauseCommand, line_number,
                         node_index) {}
     ~GCodeTaskPauseCommand() noexcept override = default;
+
+    bool is_motion_task() const override { return true; }
 };
 
 } // namespace task
