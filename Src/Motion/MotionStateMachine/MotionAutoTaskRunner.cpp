@@ -276,6 +276,7 @@ void AutoTaskRunner::_resuming() {
     }
 
     if (curr_task_->is_stopping() || curr_task_->is_stopped()) {
+        signal_buffer_->set_signal(MotionSignal_AutoResumed); // Fix M00 resumed signal
         _autostate_switch_to(MotionAutoState::Stopping);
         return;
     }
