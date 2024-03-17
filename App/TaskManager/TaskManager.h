@@ -117,6 +117,8 @@ private:
 
     InfoDispatcher *info_dispatcher_; // 用于获取缓存的info状态
 
+    move::MotionThreadController::ptr motion_ctrler_;
+
     std::vector<GCodeTaskBase::ptr> gcode_list_;
     int curr_gcode_num_; // 当前正在运行的gcode在gcode_list中的下标 (保证 >=0 且
                          // < size)

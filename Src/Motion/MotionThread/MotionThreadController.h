@@ -77,7 +77,7 @@ private: // Thread
     bool _create_thread();
 
     // Fetch Command And Handle
-    void _fetch_command_and_handle();
+    void _fetch_command_and_handle_and_copy_info_cache();
 
     // 处理DC时间同步
     void _dc_sync();

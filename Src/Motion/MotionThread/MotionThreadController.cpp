@@ -221,8 +221,6 @@ void *MotionThreadController::_run() {
         }
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
-        _fetch_command_and_handle();
-
         switch (thread_state_) {
         default:
         case ThreadState::Init:
@@ -248,7 +246,8 @@ void *MotionThreadController::_run() {
 
         //! 在最外层 返回info, 以及处理要返回的信号
 
-        _copy_info_cache();
+        // 周期的最后, 处理命令, 处理info cache
+        _fetch_command_and_handle_and_copy_info_cache();
 
         // handle signal and clear signal buffer
         _handle_signal();
@@ -427,10 +426,12 @@ bool MotionThreadController::_set_cpu_dma_latency() {
     }
 }
 
-void MotionThreadController::_fetch_command_and_handle() {
-    // TODO
+void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
     auto cmd_opt = motion_cmd_queue_->try_get_command();
     if (!cmd_opt) {
+        // 没有命令, 只是拷贝info cache
+        _copy_info_cache();
+
         return;
     }
 
@@ -438,13 +439,14 @@ void MotionThreadController::_fetch_command_and_handle() {
 
     // s_logger->debug("cmd type: {}", (int)cmd->type());
 
+    bool accept_cmd_flag = false;
+
     // TODO handle cmd
     switch (cmd->type()) {
     case MotionCommandManual_StartPointMove: {
         s_logger->trace("Handle MotionCmd: Manual_StartPointMove");
         if (ecat_state_ != EcatState::EcatReady ||
             thread_state_ != ThreadState::Running) {
-            cmd->ignore();
             break;
         }
 
@@ -460,18 +462,13 @@ void MotionThreadController::_fetch_command_and_handle() {
                 spm_cmd->touch_detect_enable());
         }
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
         break;
     }
     case MotionCommandManual_StopPointMove: {
         s_logger->trace("Handle MotionCmd: Manual_StopPointMove");
         if (ecat_state_ != EcatState::EcatReady ||
             thread_state_ != ThreadState::Running) {
-            cmd->ignore();
             break;
         }
 
@@ -481,18 +478,13 @@ void MotionThreadController::_fetch_command_and_handle() {
         auto ret =
             motion_state_machine_->stop_manual_pointmove(spm_cmd->immediate());
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
         break;
     }
     case MotionCommandAuto_StartG00FastMove: {
         s_logger->trace("Handle MotionCmd: Auto_StartG00FastMove");
         if (ecat_state_ != EcatState::EcatReady ||
             thread_state_ != ThreadState::Running) {
-            cmd->ignore();
             break;
         }
 
@@ -503,11 +495,7 @@ void MotionThreadController::_fetch_command_and_handle() {
             g00_cmd->speed_param(), g00_cmd->end_pos(),
             g00_cmd->touch_detect_enable());
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
 
         break;
     }
@@ -515,7 +503,6 @@ void MotionThreadController::_fetch_command_and_handle() {
         s_logger->trace("Handle MotionCmd: Auto_G04Delay");
         if (ecat_state_ != EcatState::EcatReady ||
             thread_state_ != ThreadState::Running) {
-            cmd->ignore();
             break;
         }
 
@@ -523,11 +510,7 @@ void MotionThreadController::_fetch_command_and_handle() {
 
         auto ret = motion_state_machine_->start_auto_g04(g04_cmd->delay_s());
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
 
         break;
     };
@@ -535,16 +518,11 @@ void MotionThreadController::_fetch_command_and_handle() {
         s_logger->trace("Handle MotionCmd: Auto_M00FakePauseTask");
         if (ecat_state_ != EcatState::EcatReady ||
             thread_state_ != ThreadState::Running) {
-            cmd->ignore();
             break;
         }
         auto ret = motion_state_machine_->start_auto_m00fake();
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
 
         break;
     }
@@ -554,53 +532,51 @@ void MotionThreadController::_fetch_command_and_handle() {
             std::static_pointer_cast<MotionCommandAutoStop>(cmd);
         auto ret = motion_state_machine_->stop_auto(autostop_cmd->immediate());
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
         break;
     }
     case MotionCommandAuto_Pause: {
         s_logger->trace("Handle MotionCmd: Auto_Pause");
         auto ret = motion_state_machine_->pause_auto();
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
         break;
     }
     case MotionCommandAuto_Resume: {
         s_logger->trace("Handle MotionCmd: Auto_Resume");
         auto ret = motion_state_machine_->resume_auto();
 
-        if (ret) {
-            cmd->accept();
-        } else {
-            cmd->ignore();
-        }
+        accept_cmd_flag = ret;
         break;
     }
     case MotionCommandManual_EmergencyStopAllMove: {
         s_logger->trace("Handle MotionCmd: EmergencyStopAllMove");
         motion_state_machine_->reset();
         motion_state_machine_->set_enable(true);
-        cmd->accept();
+        
+        accept_cmd_flag = true;
         break;
     }
     case MotionCommandSetting_TriggerEcatConnect: {
         s_logger->trace("Handle MotionCmd: Setting_TriggerEcatConnect");
-        cmd->accept();
         ecat_connect_flag_ = true;
         ecat_clear_fault_reenable_flag_ = true;
+
+        accept_cmd_flag = true;
         break;
     }
     default:
         s_logger->warn("Unsupported MotionCommandType: {}", (int)cmd->type());
         cmd->ignore();
         break;
+    }
+
+    _copy_info_cache(); // 在处理完命令之后, accept/ignore之前, 缓存info, 保证外界在发送并等待完指令被accept/ignore后, 直接查询的info一定是正确的
+
+    if (accept_cmd_flag) {
+        cmd->accept();
+    } else {
+        cmd->ignore();
     }
 }
 

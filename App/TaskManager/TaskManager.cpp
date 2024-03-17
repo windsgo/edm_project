@@ -13,7 +13,8 @@ namespace task {
 TaskManager::TaskManager(edm::app::SharedCoreData *shared_core_data,
                          QObject *parent)
     : QObject(parent), shared_core_data_(shared_core_data),
-      info_dispatcher_(shared_core_data->get_info_dispatcher()) {
+      info_dispatcher_(shared_core_data->get_info_dispatcher()),
+      motion_ctrler_(shared_core_data->get_motion_thread_ctrler()) {
 
     _init_state();
     _init_connections();

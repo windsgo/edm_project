@@ -18,6 +18,7 @@ set(APP_SOURCES
     PowerPanel/PowerPanel.cpp
     TaskManager/TaskManager.cpp  
     TaskManager/GCodeTaskConverter.cpp
+    TaskManager/GCodeRunner.cpp
     codeeditor/codeeditor.cpp
     codeeditor/highlighter.cpp
     Resource/app_resource.qrc # qt resource
