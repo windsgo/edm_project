@@ -200,6 +200,10 @@ void PauseMoveController::run_once() {
 
 void PauseMoveController::_manual_pointmoving() {
     if (pm_handler_.is_over()) {
+
+        //! fix touch detect enable show
+        touch_detect_handler_->set_detect_enable(false);
+
         // 当前点动已停止
         if (pm_handler_.get_start_pos() == pm_handler_.get_current_pos()) {
             // 起点终点相同
