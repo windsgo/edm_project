@@ -24,7 +24,7 @@ find_package(fmt REQUIRED)
 
 # json library
 add_subdirectory(third_party/meojson)
-include_directories(third_party/meojson/include)
+# include_directories(third_party/meojson/include)
 
 # python3
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)

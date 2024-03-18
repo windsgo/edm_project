@@ -31,21 +31,25 @@ private:
 
     void _init_button_cb();
 
+    void _init_motionsig_connection();
+
+    void _init_handbox_auto_signals();
+
 private:
     void _clear_pm_le_values();
 
 private:
-    void _start_pointmove_no_softlimit_check(
+    bool _start_pointmove_no_softlimit_check(
         const move::axis_t &target_pos,
         const move::MoveRuntimePlanSpeedInput &speed_param,
         bool enable_touch_detect) const;
 
-    void _start_single_axis_pointmove_pos(uint32_t axis_index) const;
-    void _start_single_axis_pointmove_neg(uint32_t axis_index) const;
+    void _start_single_axis_pointmove_pos(uint32_t axis_index, bool touch_detect_enable) const;
+    void _start_single_axis_pointmove_neg(uint32_t axis_index, bool touch_detect_enable) const;
 
     void _le_start_pointmove() const;
 
-    void _stop_pointmove() const;
+    bool _stop_pointmove() const;
 
     void _cmd_ecat_trigger_connect() const;
 

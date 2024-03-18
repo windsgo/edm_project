@@ -37,6 +37,8 @@ private:
 
     void _init_autogcode_connections();
 
+    void _init_handbox_auto_signals();
+
 private:
     void _slot_edit(bool checked);
     void _slot_save();

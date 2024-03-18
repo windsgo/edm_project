@@ -12,8 +12,10 @@ namespace edm {
 namespace move {
 
 PauseMoveController::PauseMoveController(
-    TouchDetectHandler::ptr touch_detect_handler)
-    : touch_detect_handler_(touch_detect_handler) {}
+    TouchDetectHandler::ptr touch_detect_handler,
+    SignalBuffer::ptr signal_buffer)
+    : touch_detect_handler_(touch_detect_handler),
+      signal_buffer_(signal_buffer) {}
 
 void PauseMoveController::init(const axis_t &init_axis) {
     pm_handler_.clear();
@@ -41,6 +43,7 @@ bool PauseMoveController::start_manual_pointmove(
         return false;
     }
 
+    signal_buffer_->set_signal(MotionSignal_ManualPointMoveStarted);
     state_ = State::ManualPointMoving;
     return true;
 
@@ -200,6 +203,7 @@ void PauseMoveController::run_once() {
 
 void PauseMoveController::_manual_pointmoving() {
     if (pm_handler_.is_over()) {
+        signal_buffer_->set_signal(MotionSignal_ManualPointMoveStopped);
 
         //! fix touch detect enable show
         touch_detect_handler_->set_detect_enable(false);

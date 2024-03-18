@@ -79,6 +79,11 @@ signals:
     void sig_handbox_stop_auto();
     void sig_handbox_ack();
 
+signals: // 发送信号, 连接到主窗口的status bar, 还可以连接到主窗口未来可以放置的信息log窗口
+    void sig_info_message(const QString& str, int timeout = 0);
+    void sig_warn_message(const QString& str, int timeout = 0);
+    void sig_error_message(const QString& str, int timeout = 0);
+
 protected:
     void customEvent(QEvent *e) override;
 

@@ -72,7 +72,7 @@ void HandboxConverter::_frame_start_pointmove(const QCanBusFrame &frame) {
         reinterpret_cast<uint8_t *>(frame.payload().data());
 
     uint8_t axis_num = p_uchar[0]; // 轴号
-    move::axis_t dir;
+    move::axis_t dir {0.0};
 
     if (axis_num > dir.size()) {
         s_logger->error("axis_num: {} > system axis num: {}", axis_num,

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QWidget>
+#include <QMainWindow>
+#include <QPalette>
 
 // Panels
 #include "CoordPanel/CoordPanel.h"
@@ -29,7 +31,7 @@ class MainWindow;
 namespace edm {
 namespace app {
 
-class MainWindow : public QWidget {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
@@ -37,6 +39,15 @@ public:
     ~MainWindow();
 
     void _init_test_gcode_buttons();
+
+    void _init_members();
+
+    void _init_status_bar_palette_and_connection();
+
+public:
+    void slot_info_message(const QString& str, int timeout = 0);
+    void slot_warn_message(const QString& str, int timeout = 0);
+    void slot_error_message(const QString& str, int timeout = 0);
 
 private:
     Ui::MainWindow *ui;
@@ -54,6 +65,11 @@ private:
     TestPanel* test_panel_;
 
     CodeEditor* test_codeeditor_;
+
+private: // default palette of status bar, for message show
+    QPalette status_bar_info_palette_;
+    QPalette status_bar_warn_palette_;
+    QPalette status_bar_error_palette_;
 };
 
 } // namespace app

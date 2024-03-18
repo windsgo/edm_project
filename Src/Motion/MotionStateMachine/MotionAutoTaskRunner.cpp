@@ -10,8 +10,8 @@ namespace move {
 AutoTaskRunner::AutoTaskRunner(TouchDetectHandler::ptr touch_detect_handler,
                                SignalBuffer::ptr signal_buffer)
     : signal_buffer_(signal_buffer) {
-    pausemove_controller_ =
-        std::make_shared<PauseMoveController>(touch_detect_handler);
+    pausemove_controller_ = std::make_shared<PauseMoveController>(
+        touch_detect_handler, signal_buffer);
 }
 
 void AutoTaskRunner::reset(const axis_t &init_axis) {
@@ -64,7 +64,8 @@ void AutoTaskRunner::run_once() {
         // Do nothing
         break;
     default:
-        s_logger->critical("{}: unknow state: {}", __PRETTY_FUNCTION__, (int)state_);
+        s_logger->critical("{}: unknow state: {}", __PRETTY_FUNCTION__,
+                           (int)state_);
         break;
     }
 }
@@ -91,10 +92,9 @@ bool AutoTaskRunner::pause() {
     case MotionAutoState::Stopping:
     case MotionAutoState::Stopped:
         return false;
-    
+
     case MotionAutoState::Paused:
         return pausemove_controller_->pause_recover();
-
     }
 
     s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
@@ -112,7 +112,7 @@ bool AutoTaskRunner::resume() {
     case MotionAutoState::Stopping:
     case MotionAutoState::Stopped:
         return false;
-    
+
     case MotionAutoState::Paused: {
 
         if (pausemove_controller_->is_recover_activated()) {
@@ -126,7 +126,6 @@ bool AutoTaskRunner::resume() {
 
     case MotionAutoState::Resuming:
         return true;
-
     }
 
     s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
@@ -153,11 +152,10 @@ bool AutoTaskRunner::stop(bool immediate) {
     case MotionAutoState::Stopping:
     case MotionAutoState::Stopped:
         return true;
-    
+
     case MotionAutoState::Paused:
         // 暂停点动停止完后会自动切换到Stopped
         return pausemove_controller_->stop(immediate);
-
     }
 
     s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
@@ -256,7 +254,8 @@ void AutoTaskRunner::_paused() {
         if (ret) {
             _autostate_switch_to(MotionAutoState::Resuming);
         } else {
-            s_logger->critical("{}: resume auto task failed", __PRETTY_FUNCTION__);
+            s_logger->critical("{}: resume auto task failed",
+                               __PRETTY_FUNCTION__);
         }
     }
 }
@@ -276,7 +275,8 @@ void AutoTaskRunner::_resuming() {
     }
 
     if (curr_task_->is_stopping() || curr_task_->is_stopped()) {
-        signal_buffer_->set_signal(MotionSignal_AutoResumed); // Fix M00 resumed signal
+        signal_buffer_->set_signal(
+            MotionSignal_AutoResumed); // Fix M00 resumed signal
         _autostate_switch_to(MotionAutoState::Stopping);
         return;
     }

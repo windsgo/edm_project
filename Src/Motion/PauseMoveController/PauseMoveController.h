@@ -3,6 +3,7 @@
 #include "AxisRecorder.h"
 #include "Motion/MoveDefines.h"
 #include "Motion/PointMoveHandler/PointMoveHandler.h"
+#include "Motion/SignalBuffer/SignalBuffer.h"
 #include "Motion/TouchDetectHandler/TouchDetectHandler.h"
 
 namespace edm {
@@ -26,7 +27,8 @@ public:
 
 public:
     using ptr = std::shared_ptr<PauseMoveController>;
-    PauseMoveController(TouchDetectHandler::ptr touch_detect_handler);
+    PauseMoveController(TouchDetectHandler::ptr touch_detect_handler,
+                        SignalBuffer::ptr signal_buffer);
     ~PauseMoveController() noexcept = default;
 
     void init(const axis_t &init_axis);
@@ -79,6 +81,8 @@ private:
     axis_t curr_cmd_axis_;
 
     State state_{State::NotInited};
+
+    SignalBuffer::ptr signal_buffer_;
 };
 
 } // namespace move

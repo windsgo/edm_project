@@ -11,6 +11,8 @@
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
+constexpr static const int s_statusbar_timeout = 5000;
+
 namespace edm {
 namespace app {
 
@@ -24,6 +26,10 @@ MovePanel::MovePanel(SharedCoreData *shared_core_data,
     _init_array();
 
     _init_button_cb();
+
+    _init_motionsig_connection();
+
+    _init_handbox_auto_signals();
 }
 
 MovePanel::~MovePanel() { delete ui; }
@@ -77,7 +83,10 @@ void MovePanel::_init_button_cb() {
     //! x+ x- ...
 #define CONNECT_PB_SINGLEPM_POS_SLOT(i__)                                    \
     connect(arr_pb_singlepm_posdir_.at((i__)), &QPushButton::pressed, this,  \
-            [this]() { this->_start_single_axis_pointmove_pos((i__)); });    \
+            [this]() {                                                       \
+                this->_start_single_axis_pointmove_pos(                      \
+                    (i__), !ui->pb_check_st->isChecked());                   \
+            });                                                              \
     connect(arr_pb_singlepm_posdir_.at((i__)), &QPushButton::released, this, \
             [this]() { this->_stop_pointmove(); });
 
@@ -92,7 +101,10 @@ void MovePanel::_init_button_cb() {
 
 #define CONNECT_PB_SINGLEPM_NEG_SLOT(i__)                                    \
     connect(arr_pb_singlepm_negdir_.at((i__)), &QPushButton::pressed, this,  \
-            [this]() { this->_start_single_axis_pointmove_neg((i__)); });    \
+            [this]() {                                                       \
+                this->_start_single_axis_pointmove_neg(                      \
+                    (i__), !ui->pb_check_st->isChecked());                   \
+            });                                                              \
     connect(arr_pb_singlepm_negdir_.at((i__)), &QPushButton::released, this, \
             [this]() { this->_stop_pointmove(); });
 
@@ -120,6 +132,79 @@ void MovePanel::_init_button_cb() {
             &MovePanel::_stop_pointmove);
 }
 
+void MovePanel::_init_motionsig_connection() {
+    connect(task_manager_, &task::TaskManager::sig_manual_pointmove_started,
+            this, [this]() {
+                emit shared_core_data_->sig_info_message("pointmove started",
+                                                         s_statusbar_timeout);
+            });
+
+    connect(task_manager_, &task::TaskManager::sig_manual_pointmove_stopped,
+            this, [this]() {
+                if (shared_core_data_->get_info_dispatcher()
+                        ->get_info()
+                        .TouchWarning()) {
+                    emit shared_core_data_->sig_warn_message(
+                        "pointmove stopped: Touch Warning",
+                        s_statusbar_timeout);
+                } else {
+                    emit shared_core_data_->sig_info_message(
+                        "pointmove stopped", s_statusbar_timeout);
+                }
+            });
+}
+
+void MovePanel::_init_handbox_auto_signals() {
+    // 手控盒信号处理
+    auto s = this->shared_core_data_;
+
+    connect(s, &SharedCoreData::sig_handbox_stop_pointmove, this,
+            [this]() { this->_stop_pointmove(); });
+
+    connect(s, &SharedCoreData::sig_handbox_start_pointmove, this,
+            [this](const move::axis_t &dir, uint32_t speed_level,
+                   bool touch_detect_enable) {
+                // 默认只支持单轴运动 // TODO 多轴以后再改吧
+                int axis = -1;
+                int d = 0;
+                for (int i = 0; i < dir.size(); ++i) {
+                    if (dir[i] > 0.5) {
+                        d = 1;
+                        axis = i;
+                        break;
+                    } else if (dir[i] < -0.5) {
+                        d = -1;
+                        axis = i;
+                        break;
+                    }
+                }
+
+                if (axis < 0) {
+                    s_logger->error(
+                        "handbox start pm failed, dir parse failed");
+                    return;
+                }
+
+                if (speed_level >= 3) {
+                    ui->pb_check_mfr3->setChecked(true);
+                } else if (speed_level == 2) {
+                    ui->pb_check_mfr2->setChecked(true);
+                } else if (speed_level == 1) {
+                    ui->pb_check_mfr1->setChecked(true);
+                } else {
+                    ui->pb_check_mfr0->setChecked(true);
+                }
+
+                if (d > 0) {
+                    this->_start_single_axis_pointmove_pos(axis,
+                                                           touch_detect_enable);
+                } else {
+                    this->_start_single_axis_pointmove_neg(axis,
+                                                           touch_detect_enable);
+                }
+            });
+}
+
 void MovePanel::_clear_pm_le_values() {
     for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
         arr_le_pm_value_[i]->clear();
@@ -127,7 +212,7 @@ void MovePanel::_clear_pm_le_values() {
     }
 }
 
-void MovePanel::_start_pointmove_no_softlimit_check(
+bool MovePanel::_start_pointmove_no_softlimit_check(
     const move::axis_t &target_pos,
     const move::MoveRuntimePlanSpeedInput &speed_param,
     bool enable_touch_detect) const {
@@ -138,9 +223,7 @@ void MovePanel::_start_pointmove_no_softlimit_check(
         std::make_shared<edm::move::MotionCommandManualStartPointMove>(
             start_pos, target_pos, speed_param, enable_touch_detect);
 
-    task_manager_->operation_start_pointmove(start_pointmove_cmd);
-
-    return;
+    return task_manager_->operation_start_pointmove(start_pointmove_cmd);
 
     // this->shared_core_data_->get_motion_cmd_queue()->push_command(
     //     start_pointmove_cmd);
@@ -170,6 +253,8 @@ void MovePanel::_le_start_pointmove() const {
     auto input_valid = _get_levalues_blu_from_ui(le_opt_value);
     if (!input_valid) {
         s_logger->error("start pointmove failed : input invalid");
+        emit shared_core_data_->sig_error_message(
+            "start pointmove failed : input invalid", s_statusbar_timeout);
         return;
     }
 
@@ -185,17 +270,22 @@ void MovePanel::_le_start_pointmove() const {
         for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
             ss << mach_target_pos[i] << ", ";
         }
-        s_logger->debug("mach_target_pos: {}", ss.str());
+        // s_logger->debug("mach_target_pos: {}", ss.str());
     }
 
     if (move::MotionUtils::IsAxisTheSame(mach_start_pos, mach_target_pos)) {
         s_logger->error("start pointmove failed : start and target the same");
+        emit shared_core_data_->sig_error_message(
+            "start pointmove failed : start and target the same",
+            s_statusbar_timeout);
         return;
     }
 
     // check softlimit, 只要超过软限位, 这里正反都不让走, 不区分方向, 简化逻辑
     if (!_check_posandneg_soft_limit(mach_target_pos)) {
         s_logger->error("start pointmove failed : out of soft limit");
+        emit shared_core_data_->sig_error_message(
+            "start pointmove failed: out of soft limit", s_statusbar_timeout);
         return;
     }
 
@@ -205,11 +295,17 @@ void MovePanel::_le_start_pointmove() const {
     // get speed param
     auto speed = _get_default_speed_param();
 
-    _start_pointmove_no_softlimit_check(motor_target_pos, speed,
-                                        !ui->pb_check_st->isChecked());
+    auto ret = _start_pointmove_no_softlimit_check(
+        motor_target_pos, speed, !ui->pb_check_st->isChecked());
+
+    if (!ret) {
+        emit shared_core_data_->sig_error_message(
+            "start pointmove failed: send cmd error", s_statusbar_timeout);
+    }
 }
 
-void MovePanel::_start_single_axis_pointmove_pos(uint32_t axis_index) const {
+void MovePanel::_start_single_axis_pointmove_pos(
+    uint32_t axis_index, bool touch_detect_enable) const {
     if (axis_index >= coord::Coordinate::Size) {
         s_logger->error("{}, index error: {}", __PRETTY_FUNCTION__, axis_index);
         return;
@@ -231,6 +327,9 @@ void MovePanel::_start_single_axis_pointmove_pos(uint32_t axis_index) const {
         s_logger->warn(
             "axis {} is already outof pos softlimit, limit mach value: {}",
             axis_index, mach_target_pos[axis_index]);
+        emit shared_core_data_->sig_warn_message(
+            "start pointmove failed: already outof pos softlimit",
+            s_statusbar_timeout);
         return;
     }
 
@@ -249,11 +348,17 @@ void MovePanel::_start_single_axis_pointmove_pos(uint32_t axis_index) const {
             motor_start_pos[axis_index] + util::UnitConverter::um2blu(1.0);
     }
 
-    _start_pointmove_no_softlimit_check(motor_target_pos, speed,
-                                        !ui->pb_check_st->isChecked());
+    auto ret = _start_pointmove_no_softlimit_check(motor_target_pos, speed,
+                                                   touch_detect_enable);
+
+    if (!ret) {
+        emit shared_core_data_->sig_error_message(
+            "start pointmove failed: send cmd error", s_statusbar_timeout);
+    }
 }
 
-void MovePanel::_start_single_axis_pointmove_neg(uint32_t axis_index) const {
+void MovePanel::_start_single_axis_pointmove_neg(
+    uint32_t axis_index, bool touch_detect_enable) const {
     if (axis_index >= coord::Coordinate::Size) {
         s_logger->error("{}, index error: {}", __PRETTY_FUNCTION__, axis_index);
         return;
@@ -293,15 +398,18 @@ void MovePanel::_start_single_axis_pointmove_neg(uint32_t axis_index) const {
             motor_start_pos[axis_index] - util::UnitConverter::um2blu(1.0);
     }
 
-    _start_pointmove_no_softlimit_check(motor_target_pos, speed,
-                                        !ui->pb_check_st->isChecked());
+    auto ret = _start_pointmove_no_softlimit_check(motor_target_pos, speed,
+                                                   touch_detect_enable);
+
+    if (!ret) {
+        emit shared_core_data_->sig_error_message(
+            "start pointmove failed: send cmd error", s_statusbar_timeout);
+    }
 }
 
-void MovePanel::_stop_pointmove() const {
+bool MovePanel::_stop_pointmove() const {
 
-    task_manager_->operation_stop_pointmove();
-
-    return;
+    return task_manager_->operation_stop_pointmove();
 
     // // create motion cmd
     // auto stop_pointmove_command =
@@ -322,7 +430,8 @@ void MovePanel::_cmd_ecat_trigger_connect() const {
     auto ecat_connect_cmd =
         std::make_shared<edm::move::MotionCommandSettingTriggerEcatConnect>();
 
-    this->shared_core_data_->get_motion_cmd_queue()->push_command(ecat_connect_cmd);
+    this->shared_core_data_->get_motion_cmd_queue()->push_command(
+        ecat_connect_cmd);
 
     return;
 
