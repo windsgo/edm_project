@@ -68,7 +68,7 @@ Highlighter::Highlighter(QTextDocument *parent)
     highlightingRules.append(rule);
 
     // 运算符, = + - > <
-    operatorFormat.setForeground(Qt::darkMagenta);
+    operatorFormat.setForeground(QColor("#1E90FF"));
     rule.pattern = QRegularExpression(QStringLiteral(R"([=\-\+><\*\/])"));
     rule.format = operatorFormat;
     highlightingRules.append(rule);

@@ -179,14 +179,27 @@
   <widget class="QPushButton" name="pb_test">
    <property name="geometry">
     <rect>
-     <x>1570</x>
-     <y>600</y>
+     <x>1810</x>
+     <y>950</y>
      <width>89</width>
      <height>25</height>
     </rect>
    </property>
    <property name="text">
     <string>test</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_test">
+   <property name="geometry">
+    <rect>
+     <x>1500</x>
+     <y>470</y>
+     <width>401</width>
+     <height>421</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>TestPanel</string>
    </property>
   </widget>
  </widget>

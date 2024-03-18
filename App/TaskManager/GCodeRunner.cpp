@@ -540,10 +540,6 @@ void GCodeRunner::_state_running() {
             _switch_to_state(State::Paused);
             emit sig_auto_paused();
             break;
-        case move::MotionAutoState::Stopped:
-            // 表明当前gcode执行完毕, 与Idle都可
-            _check_to_next_gcode();
-            break;
         default:
             break;
         }
@@ -551,6 +547,15 @@ void GCodeRunner::_state_running() {
     }
     case move::MotionMainMode::Idle: {
         // 表明当前gcode执行完毕, 与AutoStopped都可
+
+        //! 检查G00接触感知报警
+        if (curr_gcode->type() == GCodeTaskType::G00MotionCommand) {
+            if (local_info_cache_.TouchWarning()) {
+                _abort("***Touch Warning !!");
+                break;
+            }
+        }
+
         _check_to_next_gcode();
         break;
     }

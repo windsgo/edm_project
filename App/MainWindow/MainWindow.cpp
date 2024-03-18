@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     io_panel_ = new IOPanel(shared_core_data_, ui->tab_io);
     power_panel_ = new PowerPanel(shared_core_data_, ui->tab_power);
     gcode_panel_ = new GCodePanel(shared_core_data_, task_manager_, ui->groupBox_gcode);
-
+    test_panel_ = new TestPanel(shared_core_data_, ui->groupBox_test);
 
     test_codeeditor_ = new CodeEditor(ui->test_codeeditor_widget);
     test_codeeditor_->setFixedSize(ui->test_codeeditor_widget->size());
@@ -35,9 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // _init_test_gcode_buttons();
 
-    connect(ui->pb_test, &QPushButton::clicked, this, [this]() {
+//    connect(ui->pb_test, &QPushButton::clicked, this, [this]() {
 
-    });
+//    });
 }
 
 MainWindow::~MainWindow() {

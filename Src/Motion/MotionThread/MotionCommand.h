@@ -70,6 +70,9 @@ enum MotionCommandType {
     // 触发Ecat连接尝试
     MotionCommandSetting_TriggerEcatConnect,
 
+    // 清除报警
+    MotionCommandSetting_ClearWarning,
+
     MotionCommand_Max
 };
 
@@ -198,6 +201,13 @@ public:
     MotionCommandSettingTriggerEcatConnect()
         : MotionCommandBase(MotionCommandSetting_TriggerEcatConnect) {}
     ~MotionCommandSettingTriggerEcatConnect() noexcept override = default;
+};
+
+class MotionCommandSettingClearWarning final : public MotionCommandBase {
+public:
+    MotionCommandSettingClearWarning(int flag [[maybe_unused]])
+        : MotionCommandBase(MotionCommandSetting_ClearWarning) {}
+    ~MotionCommandSettingClearWarning() noexcept override = default;
 };
 
 // 启动Auto G00快速移动

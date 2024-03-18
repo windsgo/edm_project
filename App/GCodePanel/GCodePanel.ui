@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>730</width>
-    <height>524</height>
+    <height>548</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -259,6 +259,31 @@
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="pb_ack">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>80</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>ACK</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pb_estop">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -303,7 +328,14 @@
     <widget class="QLineEdit" name="le_current_file"/>
    </item>
    <item row="2" column="0" colspan="2">
-    <widget class="QWidget" name="widget_editor" native="true"/>
+    <widget class="QWidget" name="widget_editor" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>470</height>
+      </size>
+     </property>
+    </widget>
    </item>
    <item row="0" column="0">
     <spacer name="verticalSpacer_3">

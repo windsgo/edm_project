@@ -56,6 +56,7 @@ void GCodePanel::_init_button_slots() {
     connect(ui->pb_stop, &QPushButton::clicked, this, &GCodePanel::_slot_stop);
     connect(ui->pb_estop, &QPushButton::clicked, this,
             &GCodePanel::_slot_estop);
+    connect(ui->pb_ack, &QPushButton::clicked, this, &GCodePanel::_slot_ack);
 }
 
 void GCodePanel::_init_autogcode_connections() {
@@ -325,6 +326,20 @@ void GCodePanel::_slot_estop() {
     _set_ui_edit_enable(false);
     _set_editbutton_enable(true);
     _set_machining_ui_stopped();
+}
+
+void GCodePanel::_slot_ack() {
+    auto ack_cmd =
+        std::make_shared<edm::move::MotionCommandSettingClearWarning>(0);
+
+    shared_core_data_->get_motion_cmd_queue()->push_command(ack_cmd);
+
+    bool ret = task::TaskHelper::WaitforCmdTobeAccepted(ack_cmd, 200);
+
+    if (!ret) {
+        QMessageBox::critical(this, "ACK Failed",
+                              QString("Send ACK Failed"));
+    }
 }
 
 bool GCodePanel::_load_from_file(const QString &filename) {

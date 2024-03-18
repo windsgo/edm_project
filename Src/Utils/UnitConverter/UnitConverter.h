@@ -48,6 +48,10 @@ public:
         return mm_min * mm_min2blu_s_;
     }
 
+    static inline move::unit_t um_ms2blu_p(move::unit_t um_ms) {
+        return um_ms * um2blu_ / ms2p_;
+    }
+
     // TODO
 };
 

@@ -553,7 +553,7 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         s_logger->trace("Handle MotionCmd: EmergencyStopAllMove");
         motion_state_machine_->reset();
         motion_state_machine_->set_enable(true);
-        
+
         accept_cmd_flag = true;
         break;
     }
@@ -565,13 +565,24 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         accept_cmd_flag = true;
         break;
     }
+    case MotionCommandSetting_ClearWarning: {
+        s_logger->trace("Handle MotionCmd: Setting_ClearWarning");
+
+        // 目前只有接触感知报警
+        touch_detect_handler_->clear_warning();
+
+        accept_cmd_flag = true;
+        break;
+    }
     default:
         s_logger->warn("Unsupported MotionCommandType: {}", (int)cmd->type());
         cmd->ignore();
         break;
     }
 
-    _copy_info_cache(); // 在处理完命令之后, accept/ignore之前, 缓存info, 保证外界在发送并等待完指令被accept/ignore后, 直接查询的info一定是正确的
+    _copy_info_cache(); // 在处理完命令之后, accept/ignore之前, 缓存info,
+                        // 保证外界在发送并等待完指令被accept/ignore后,
+                        // 直接查询的info一定是正确的
 
     if (accept_cmd_flag) {
         cmd->accept();

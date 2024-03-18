@@ -49,6 +49,7 @@ MotionStateMachine::MotionStateMachine(
     auto_task_runner_ =
         std::make_shared<AutoTaskRunner>(touch_detect_handler_, signal_buffer_);
 
+    touch_detect_handler_->reset();
     reset();
     // 初始化计算坐标
     // 先清0 (离线调试模式时实际坐标会直接返回当前值)
@@ -89,7 +90,7 @@ void MotionStateMachine::reset() {
 
     pm_handler_.clear();
 
-    touch_detect_handler_->reset();
+//    touch_detect_handler_->reset();
 
     auto_task_runner_->reset(cmd_axis_);
 }

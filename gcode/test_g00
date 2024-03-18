@@ -1,0 +1,8 @@
+i = RS274Interpreter()
+
+i.g54()
+i.g90()
+i.f(200)
+i.g00(x=100)
+
+i.m02()

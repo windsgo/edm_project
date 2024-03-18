@@ -9,6 +9,7 @@
 #include "IOPanel/IOPanel.h"
 #include "PowerPanel/PowerPanel.h"
 #include "GCodePanel/GCodePanel.h"
+#include "TestPanel/TestPanel.h"
 
 #include "TaskManager/TaskManager.h"
 #include "TaskManager/GCodeTaskConverter.h"
@@ -50,6 +51,7 @@ private:
     IOPanel* io_panel_;
     PowerPanel* power_panel_;
     GCodePanel* gcode_panel_;
+    TestPanel* test_panel_;
 
     CodeEditor* test_codeeditor_;
 };

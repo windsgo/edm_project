@@ -50,6 +50,8 @@ private:
     void _slot_stop();
     void _slot_estop();
 
+    void _slot_ack();
+
     bool _load_from_file(const QString& filename);
     bool _save_to_file(const QString& filename);
 
