@@ -326,9 +326,9 @@ void GCodePanel::_slot_stop() {
 void GCodePanel::_slot_estop() {
     task_manager_->operation_emergency_stop();
 
-    _set_ui_edit_enable(false);
-    _set_editbutton_enable(true);
-    _set_machining_ui_stopped();
+    // _set_ui_edit_enable(false);
+    // _set_editbutton_enable(true);
+    // _set_machining_ui_stopped();
 }
 
 void GCodePanel::_slot_ack() {
