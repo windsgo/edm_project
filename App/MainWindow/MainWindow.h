@@ -13,6 +13,8 @@
 #include "TaskManager/GCodeTaskConverter.h"
 #include "TaskManager/GCodeTask.h"
 
+#include "TaskManager/GCodeRunner.h"
+
 #include "codeeditor/codeeditor.h"
 
 // SharedData
@@ -40,6 +42,7 @@ private:
     SharedCoreData* shared_core_data_;
 
     task::TaskManager* task_manager_;
+    task::GCodeRunner* test_gcode_runner_;
 
     CoordPanel* coord_panel_;
     InfoPanel* info_panel_;

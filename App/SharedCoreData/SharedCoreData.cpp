@@ -173,6 +173,7 @@ void SharedCoreData::_init_data() {
     // init can ...
     can_ctrler_ = std::make_shared<can::CanController>();
 
+#ifndef EDM_OFFLINE_RUN_NO_CAN
     // add can device
     const auto &can_device_name = sys_settings_.get_can_device_name();
     int can_device_index =
@@ -214,6 +215,9 @@ void SharedCoreData::_init_data() {
     });
     t.start(1000);
     el.exec();
+#else // EDM_OFFLINE_RUN_NO_CAN
+    int can_device_index = -1;
+#endif // EDM_OFFLINE_RUN_NO_CAN
 
     io_ctrler_ =
         std::make_shared<io::IOController>(can_ctrler_, can_device_index);

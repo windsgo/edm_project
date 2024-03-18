@@ -26,12 +26,18 @@ public:
 
     auto state() const { return state_; }
 
+    bool is_over() const { return state_ == State::Stopped; }
+
     bool start(const std::vector<GCodeTaskBase::ptr> &gcode_list);
     bool pause();
     bool resume();
     bool stop();
 
+    bool estop();
+
     void reset() { _reset_state(); last_error_str_.clear(); }
+
+    const auto& last_error_str() const { return last_error_str_; }
 
 signals:
     void sig_auto_started();
@@ -98,7 +104,7 @@ private:
     move::MotionInfo local_info_cache_;
 
     QTimer* update_timer_;
-    const int update_timer_peroid_ms_ = 1000; // test, 实际可以短一些
+    const int update_timer_peroid_ms_ = 100; // test, 实际可以短一些
 
     std::vector<GCodeTaskBase::ptr> gcode_list_;
     int curr_gcode_num_;

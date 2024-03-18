@@ -12,7 +12,10 @@ namespace edm {
 namespace task {
 
 GCodeRunner::GCodeRunner(app::SharedCoreData *shared_core_data, QObject *parent)
-    : shared_core_data_(shared_core_data) {}
+    : shared_core_data_(shared_core_data) {
+    update_timer_ = new QTimer(this);
+    connect(update_timer_, &QTimer::timeout, this, &GCodeRunner::_run_once);
+}
 
 bool GCodeRunner::start(const std::vector<GCodeTaskBase::ptr> &gcode_list) {
     if (state_ != State::Stopped) {
@@ -20,23 +23,33 @@ bool GCodeRunner::start(const std::vector<GCodeTaskBase::ptr> &gcode_list) {
         return false;
     }
 
+    if (!this->is_over()) {
+        s_logger->error("GCodeRunner start failed: not over");
+        return false;
+    }
+
     gcode_list_ = gcode_list;
     curr_gcode_num_ = 0;
 
     if (!_check_gcode_list_at_first()) {
-        return false;
+        return false; //! set abort inside _check_xxx()
     }
 
     update_timer_->start(update_timer_peroid_ms_);
     _switch_to_state(State::ReadyToStart);
-    // emit sig_auto_started(); //! 在状态机ReadyToStart中emit
     return true;
 }
 
 bool GCodeRunner::pause() {
+    if (this->is_over()) {
+        return false;
+    }
+
+    auto curr_gcode = gcode_list_[curr_gcode_num_];
+
     switch (state_) {
     case State::Running: {
-        if (!gcode_list_[curr_gcode_num_]->is_motion_task()) {
+        if (!curr_gcode->is_motion_task()) {
             // 本地运行的task, 直接暂停在本地
             _switch_to_state(State::Paused);
             emit sig_auto_paused();
@@ -64,13 +77,99 @@ bool GCodeRunner::pause() {
 }
 
 bool GCodeRunner::resume() {
-    // TODO
+    if (this->is_over()) {
+        return false;
+    }
+
+    auto curr_gcode = gcode_list_[curr_gcode_num_];
+
+    switch (state_) {
+    case State::Paused: {
+        if (!curr_gcode->is_motion_task()) {
+            // 本地运行的task, 直接继续运行
+            _switch_to_state(State::Running);
+            emit sig_auto_resumed();
+            return true;
+        } else {
+            bool ret = _cmd_auto_resume();
+            if (!ret) {
+                return false;
+            }
+
+            _switch_to_state(WaitingForResumed);
+            return true;
+        }
+    }
+    case State::CurrentNodeIniting:
+    case State::Running:
+    case State::WaitingForPaused:
+    case State::WaitingForStopped:
+    case State::Stopped:
+    default:
+        return false;
+    }
     return false;
 }
 
 bool GCodeRunner::stop() {
-    // TODO
+    if (this->is_over()) {
+        return false;
+    }
+
+    auto curr_gcode = gcode_list_[curr_gcode_num_];
+
+    switch (state_) {
+    case State::Paused:
+    case State::Running: {
+        if (!curr_gcode->is_motion_task()) {
+            // 本地运行的task, 直接停止
+            _end();
+            return true;
+        } else {
+            bool ret = _cmd_auto_stop();
+            if (!ret) {
+                return false;
+            }
+
+            _switch_to_state(WaitingForStopped);
+            return true;
+        }
+    }
+    case State::CurrentNodeIniting: {
+        _end(); // 直接停止 // TODO 要注意NURBS初始化时如果停止,
+                // 对应的future是否需要释放, 资源释放问题
+        return true;
+    }
+    case State::WaitingForStopped:
+    case State::Stopped:
+        return true;
+    case State::WaitingForPaused: {
+        bool ret = _cmd_auto_stop();
+        if (!ret) {
+            return false;
+        }
+
+        _switch_to_state(WaitingForStopped);
+        return true;
+    }
+    default:
+        return false;
+    }
     return false;
+}
+
+bool GCodeRunner::estop() {
+    auto ret = _cmd_emergency_stop();
+
+    if (ret) {
+        if (this->is_over()) {
+            _reset_state();
+        } else {
+            _abort("ESTOP");
+        }
+    }
+
+    return ret;
 }
 
 bool GCodeRunner::_cmd_auto_pause() {
@@ -227,7 +326,7 @@ void GCodeRunner::_check_to_next_gcode() {
 
 void GCodeRunner::_reset_state() {
     state_ = State::Stopped;
-    curr_gcode_num_ = -1;
+    curr_gcode_num_ = -1; //! reset to -1, means the state is un-inited
     update_timer_->stop();
     gcode_list_.clear();
 }
@@ -359,6 +458,8 @@ void GCodeRunner::_state_current_node_initing() {
             break;
         }
 
+        _switch_to_state(State::Running);
+
         break;
     }
     case GCodeTaskType::G01MotionCommand: {
@@ -380,6 +481,8 @@ void GCodeRunner::_state_current_node_initing() {
                    "timeout");
             break;
         }
+
+        _switch_to_state(State::Running);
         break;
     }
     case GCodeTaskType::PauseCommand: {
@@ -394,6 +497,8 @@ void GCodeRunner::_state_current_node_initing() {
                    "timeout");
             break;
         }
+
+        _switch_to_state(State::Running);
         break;
     }
 
@@ -552,6 +657,12 @@ void GCodeRunner::_state_waiting_for_resumed() {
                 State::Running); // still goto Running State, and check to next
                                  // gcode in the running state
             emit sig_auto_resumed();
+            break;
+        case move::MotionAutoState::Paused:
+            // May be paused move recovering
+            s_logger->debug("_state_waiting_for_resumed, still paused"); 
+            break;
+        case move::MotionAutoState::Resuming:
             break;
         default:
             _abort(EDM_FMT::format(

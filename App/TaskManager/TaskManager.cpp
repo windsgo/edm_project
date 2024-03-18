@@ -155,23 +155,23 @@ void TaskManager::_init_state() {
 }
 
 void TaskManager::_init_connections() {
-    connect(info_dispatcher_, &InfoDispatcher::sig_auto_stopped, this,
-            &TaskManager::_slot_auto_stopped);
+    // connect(info_dispatcher_, &InfoDispatcher::sig_auto_stopped, this,
+    //         &TaskManager::_slot_auto_stopped);
 
-    connect(info_dispatcher_, &InfoDispatcher::sig_auto_paused, this,
-            &TaskManager::_slot_auto_paused);
+    // connect(info_dispatcher_, &InfoDispatcher::sig_auto_paused, this,
+    //         &TaskManager::_slot_auto_paused);
 
-    connect(info_dispatcher_, &InfoDispatcher::sig_auto_started, this,
-            &TaskManager::_slot_auto_started);
+    // connect(info_dispatcher_, &InfoDispatcher::sig_auto_started, this,
+    //         &TaskManager::_slot_auto_started);
 
-    connect(info_dispatcher_, &InfoDispatcher::sig_auto_resumed, this,
-            &TaskManager::_slot_auto_resumed);
+    // connect(info_dispatcher_, &InfoDispatcher::sig_auto_resumed, this,
+    //         &TaskManager::_slot_auto_resumed);
 
-    // 转发点动开始停止信号
-    connect(info_dispatcher_, &InfoDispatcher::sig_manual_pointmove_started,
-            this, &TaskManager::sig_manual_pointmove_started);
-    connect(info_dispatcher_, &InfoDispatcher::sig_manual_pointmove_stopped,
-            this, &TaskManager::sig_manual_pointmove_stopped);
+    // // 转发点动开始停止信号
+    // connect(info_dispatcher_, &InfoDispatcher::sig_manual_pointmove_started,
+    //         this, &TaskManager::sig_manual_pointmove_started);
+    // connect(info_dispatcher_, &InfoDispatcher::sig_manual_pointmove_stopped,
+    //         this, &TaskManager::sig_manual_pointmove_stopped);
 }
 
 void TaskManager::_autogcode_normal_end() {

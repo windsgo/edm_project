@@ -65,13 +65,14 @@
 // OFFLINE DEFINE
 #define EDM_OFFLINE_RUN
 
-#ifdef EDM_OFFLINE_RUN
+#ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
 #define EDM_OFFLINE_RUN_NO_ECAT // 离线不连接ecat, 不发送ecat指令
 #endif // EDM_OFFLINE_RUN_NO_ECAT
-// #ifndef EDM_OFFLINE_RUN_NO_CAN
-// #define EDM_OFFLINE_RUN_NO_CAN // TODO
-// #endif                         // EDM_OFFLINE_RUN_NO_CAN
+
+#ifndef EDM_OFFLINE_RUN_NO_CAN
+#define EDM_OFFLINE_RUN_NO_CAN // 离线不连接CAN设备
+#endif                         // EDM_OFFLINE_RUN_NO_CAN
 
 // 离线测试时, 连接两个CAN设备, 用于保持正常的can通信链路
 #define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
@@ -79,10 +80,12 @@
 #ifndef EDM_OFFLINE_MANUAL_TOUCH_DETECT
 #define EDM_OFFLINE_MANUAL_TOUCH_DETECT // 离线手动按钮标志接触感知
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+
 #ifndef EDM_OFFLINE_MANUAL_SERVO_CMD
 #define EDM_OFFLINE_MANUAL_SERVO_CMD // 离线手动按钮/滑动条标志伺服速度
 #endif // EDM_OFFLINE_MANUAL_SERVO_CMD
-#endif // EDM_OFFLINE_RUN
+
+#endif // EDM_OFFLINE_RUN //! OFFLINE DEFINE END
 
 #if __GNUC__ < 13      // gcc1 13.0之后支持 std::format
 #define EDM_USE_FMTLIB // 使用fmtlib, 如果gcc不支持std::format
