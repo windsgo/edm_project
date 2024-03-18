@@ -6,202 +6,261 @@
    <rect>
     <x>0</x>
     <y>0</y>
+    <width>1600</width>
+    <height>922</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1600</width>
+    <height>900</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
     <width>1920</width>
     <height>1080</height>
-   </rect>
+   </size>
   </property>
   <property name="windowTitle">
    <string>电火花成形机床数控系统——动态特性验证系统</string>
   </property>
-  <widget class="QFrame" name="frame_coordpanel">
-   <property name="geometry">
-    <rect>
-     <x>9</x>
-     <y>9</y>
-     <width>1481</width>
-     <height>341</height>
-    </rect>
-   </property>
-   <property name="frameShape">
-    <enum>QFrame::StyledPanel</enum>
-   </property>
-   <property name="frameShadow">
-    <enum>QFrame::Raised</enum>
-   </property>
-  </widget>
-  <widget class="QTabWidget" name="tabWidget_main">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>350</y>
-     <width>1481</width>
-     <height>711</height>
-    </rect>
-   </property>
-   <property name="currentIndex">
-    <number>0</number>
-   </property>
-   <widget class="QWidget" name="tab_move">
-    <attribute name="title">
-     <string>Move</string>
-    </attribute>
-    <widget class="QGroupBox" name="groupBox_pm">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>541</width>
-       <height>631</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>PointMove</string>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_gcode">
-     <property name="geometry">
-      <rect>
-       <x>610</x>
-       <y>20</y>
-       <width>851</width>
-       <height>571</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>GCode</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="tab_io">
-    <attribute name="title">
-     <string>IO</string>
-    </attribute>
-   </widget>
-   <widget class="QWidget" name="tab_power">
-    <attribute name="title">
-     <string>Power</string>
-    </attribute>
-   </widget>
-   <widget class="QWidget" name="tab_test">
-    <attribute name="title">
-     <string>Test</string>
-    </attribute>
-    <widget class="QPushButton" name="pb_test_stop">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>360</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_stop</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_pause">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>240</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_pause</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_estop">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>410</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_estop</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_resume">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>300</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_resume</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_start">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>190</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_start</string>
-     </property>
-    </widget>
-    <widget class="QWidget" name="test_codeeditor_widget" native="true">
-     <property name="geometry">
-      <rect>
-       <x>570</x>
-       <y>70</y>
-       <width>481</width>
-       <height>521</height>
-      </rect>
-     </property>
-    </widget>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="groupBox_info">
-   <property name="geometry">
-    <rect>
-     <x>1500</x>
-     <y>10</y>
-     <width>411</width>
-     <height>451</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Status Panel</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pb_test">
-   <property name="geometry">
-    <rect>
-     <x>1810</x>
-     <y>950</y>
-     <width>89</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>test</string>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="groupBox_test">
-   <property name="geometry">
-    <rect>
-     <x>1500</x>
-     <y>470</y>
-     <width>401</width>
-     <height>421</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>TestPanel</string>
-   </property>
-  </widget>
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QFrame" name="frame_coordpanel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>1200</width>
+         <height>330</height>
+        </size>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTabWidget" name="tabWidget_main">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="tab_move">
+        <attribute name="title">
+         <string>Move</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QGroupBox" name="groupBox_pm">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>PointMove</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_gcode">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>GCode</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_io">
+        <attribute name="title">
+         <string>IO</string>
+        </attribute>
+       </widget>
+       <widget class="QWidget" name="tab_power">
+        <attribute name="title">
+         <string>Power</string>
+        </attribute>
+       </widget>
+       <widget class="QWidget" name="tab_test">
+        <attribute name="title">
+         <string>Test</string>
+        </attribute>
+        <widget class="QPushButton" name="pb_test_stop">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>360</y>
+           <width>89</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>test_stop</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pb_test_pause">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>240</y>
+           <width>89</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>test_pause</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pb_test_estop">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>410</y>
+           <width>89</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>test_estop</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pb_test_resume">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>300</y>
+           <width>89</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>test_resume</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pb_test_start">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>190</y>
+           <width>89</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>test_start</string>
+         </property>
+        </widget>
+        <widget class="QWidget" name="test_codeeditor_widget" native="true">
+         <property name="geometry">
+          <rect>
+           <x>570</x>
+           <y>70</y>
+           <width>481</width>
+           <height>521</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QGroupBox" name="groupBox_info">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>370</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Status Panel</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_test">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>370</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>TestPanel</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

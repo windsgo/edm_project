@@ -104,6 +104,9 @@ void GCodePanel::_slot_edit(bool checked) {
 
 void GCodePanel::_slot_save() {
     if (!gcode_editor_->document()->isModified()) {
+
+        // 退出编辑
+        _set_ui_edit_enable(false);
         return;
     }
 
@@ -337,8 +340,7 @@ void GCodePanel::_slot_ack() {
     bool ret = task::TaskHelper::WaitforCmdTobeAccepted(ack_cmd, 200);
 
     if (!ret) {
-        QMessageBox::critical(this, "ACK Failed",
-                              QString("Send ACK Failed"));
+        QMessageBox::critical(this, "ACK Failed", QString("Send ACK Failed"));
     }
 }
 

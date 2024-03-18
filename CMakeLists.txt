@@ -23,6 +23,7 @@ set(fmt_DIR ${PROJECT_SOURCE_DIR}/third_party/fmt/lib/cmake/fmt)
 find_package(fmt REQUIRED)
 
 # json library
+add_subdirectory(third_party/meojson)
 include_directories(third_party/meojson/include)
 
 # python3
@@ -91,12 +92,14 @@ set(PROJECT_SOURCES
     Src/HandboxConverter/HandboxConverter.cpp
 )
 
-include_directories(${PROJECT_SOURCE_DIR}/Src)
-include_directories(${SOEM_INCLUDE_DIRS})
+# include_directories(${PROJECT_SOURCE_DIR}/Src)
+# include_directories(${SOEM_INCLUDE_DIRS})
 
 add_library(edm SHARED ${PROJECT_SOURCES})
+target_include_directories(edm PUBLIC ${PROJECT_SOURCE_DIR}/Src ${SOEM_INCLUDE_DIRS})
 target_compile_options(edm PUBLIC -fPIC -Wno-error=stringop-overflow -Wno-stringop-overflow) # gcc bug with fmtlib
 target_link_libraries(edm PUBLIC 
+    meojson
     spdlog::spdlog
     fmt::fmt # fmtlib, use if libstdc++ does not support <format>
     Boost::python 

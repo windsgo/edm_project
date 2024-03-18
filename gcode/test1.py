@@ -1,6 +1,8 @@
 i = RS274Interpreter()
 i.g54()
+i.g04(t=0.5)
 i.g55()
+i.g04(t=0.5)
 i.g54()
 i.g04(t=1)
 i.g90()

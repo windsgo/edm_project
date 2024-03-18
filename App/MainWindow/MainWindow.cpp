@@ -18,20 +18,42 @@ MainWindow::MainWindow(QWidget *parent)
 
     task_manager_ = new task::TaskManager(shared_core_data_, this);
 
-    coord_panel_ = new CoordPanel(shared_core_data_, ui->frame_coordpanel);
-    info_panel_ = new InfoPanel(shared_core_data_, ui->groupBox_info);
+    auto coord_layout = new QGridLayout(ui->frame_coordpanel);
+    coord_panel_ = new CoordPanel(shared_core_data_);
+    coord_layout->addWidget(coord_panel_);
+
+    auto info_layout = new QGridLayout(ui->groupBox_info);
+    info_panel_ = new InfoPanel(shared_core_data_);
+    info_layout->addWidget(info_panel_);
+
+
+    auto move_layout = new QGridLayout(ui->groupBox_pm);
     move_panel_ =
-        new MovePanel(shared_core_data_, task_manager_, ui->groupBox_pm);
-    io_panel_ = new IOPanel(shared_core_data_, ui->tab_io);
-    power_panel_ = new PowerPanel(shared_core_data_, ui->tab_power);
-    gcode_panel_ = new GCodePanel(shared_core_data_, task_manager_, ui->groupBox_gcode);
-    test_panel_ = new TestPanel(shared_core_data_, ui->groupBox_test);
+        new MovePanel(shared_core_data_, task_manager_);
+    move_layout->addWidget(move_panel_);
+
+    auto io_layout = new QGridLayout(ui->tab_io);
+    io_panel_ = new IOPanel(shared_core_data_);
+    io_layout->addWidget(io_panel_);
+
+    auto power_layout = new QGridLayout(ui->tab_power);
+    power_panel_ = new PowerPanel(shared_core_data_);
+    power_layout->addWidget(power_panel_);
+
+
+    auto gcode_layout = new QGridLayout(ui->groupBox_gcode);
+    gcode_panel_ = new GCodePanel(shared_core_data_, task_manager_);
+    gcode_layout->addWidget(gcode_panel_);
+
+    auto testpanel_layout = new QGridLayout(ui->groupBox_test);
+    test_panel_ = new TestPanel(shared_core_data_);
+    testpanel_layout->addWidget(test_panel_);
 
     test_codeeditor_ = new CodeEditor(ui->test_codeeditor_widget);
     test_codeeditor_->setFixedSize(ui->test_codeeditor_widget->size());
 
-    // connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
-    //         coord_panel_, &CoordPanel::slot_change_display_coord_index);
+    connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
+            coord_panel_, &CoordPanel::slot_change_display_coord_index);
 
     // _init_test_gcode_buttons();
 
