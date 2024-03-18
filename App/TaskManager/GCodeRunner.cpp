@@ -15,6 +15,9 @@ GCodeRunner::GCodeRunner(app::SharedCoreData *shared_core_data, QObject *parent)
     : shared_core_data_(shared_core_data) {
     update_timer_ = new QTimer(this);
     connect(update_timer_, &QTimer::timeout, this, &GCodeRunner::_run_once);
+
+    _reset_state();
+    _init_help_connections();
 }
 
 bool GCodeRunner::start(const std::vector<GCodeTaskBase::ptr> &gcode_list) {
@@ -35,7 +38,7 @@ bool GCodeRunner::start(const std::vector<GCodeTaskBase::ptr> &gcode_list) {
         return false; //! set abort inside _check_xxx()
     }
 
-    update_timer_->start(update_timer_peroid_ms_);
+    update_timer_->start(update_timer_regular_peroid_ms_);
     _switch_to_state(State::ReadyToStart);
     return true;
 }
@@ -331,6 +334,18 @@ void GCodeRunner::_reset_state() {
     gcode_list_.clear();
 }
 
+void GCodeRunner::_init_help_connections() {
+    auto info_dispatcher = shared_core_data_->get_info_dispatcher();
+
+    // 不连接started信号
+    connect(info_dispatcher, &InfoDispatcher::sig_auto_resumed, this,
+            &GCodeRunner::_run_once);
+    connect(info_dispatcher, &InfoDispatcher::sig_auto_paused, this,
+            &GCodeRunner::_run_once);
+    connect(info_dispatcher, &InfoDispatcher::sig_auto_stopped, this,
+            &GCodeRunner::_run_once);
+}
+
 void GCodeRunner::_state_current_node_initing() {
     assert(curr_gcode_num_ < gcode_list_.size());
     auto curr_gcode = gcode_list_[curr_gcode_num_];
@@ -597,6 +612,12 @@ void GCodeRunner::_state_running_non_motion(GCodeTaskBase::ptr curr_gcode) {
         _check_to_next_gcode();
         break;
     }
+    case GCodeTaskType::CoordinateModeCommand:
+    case GCodeTaskType::FeedSpeedSetCommand: {
+        // 无作用的GCodeNode
+        _check_to_next_gcode();
+        break;
+    }
 
     default:
         assert(false);
@@ -660,7 +681,7 @@ void GCodeRunner::_state_waiting_for_resumed() {
             break;
         case move::MotionAutoState::Paused:
             // May be paused move recovering
-            s_logger->debug("_state_waiting_for_resumed, still paused"); 
+            s_logger->debug("_state_waiting_for_resumed, still paused");
             break;
         case move::MotionAutoState::Resuming:
             break;
@@ -748,6 +769,31 @@ const char *GCodeRunner::GetStateStr(State s) {
 void GCodeRunner::_switch_to_state(State new_state) {
     s_logger->trace("GCodeRunner State: {} -> {}", GetStateStr(state_),
                     GetStateStr(new_state));
+
+    // test
+    // 根据 state_ 和 new_state 来动态调整定时器周期, 更快速响应
+
+    auto f_should_fast_peroid = [&]() -> bool {
+        if (new_state == State::CurrentNodeIniting ||
+            new_state == State::ReadyToStart) {
+            return true;
+        }
+
+        if (new_state == State::Running) {
+            if (curr_gcode_num_ >= 0 && curr_gcode_num_ < gcode_list_.size() &&
+                gcode_list_[curr_gcode_num_]) {
+                return !gcode_list_[curr_gcode_num_]->is_motion_task();
+            }
+        }
+
+        return false;
+    };
+
+    if (f_should_fast_peroid()) {
+        update_timer_->setInterval(update_timer_fast_peroid_ms_);
+    } else {
+        update_timer_->setInterval(update_timer_regular_peroid_ms_);
+    }
 
     state_ = new_state;
 }

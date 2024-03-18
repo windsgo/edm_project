@@ -152,16 +152,16 @@ void MainWindow::_init_test_gcode_buttons() {
 
     connect(
         test_gcode_runner_, &task::GCodeRunner::sig_auto_started, this, [this]() {
-            QMessageBox::information(this, "info", "taskmanager: auto_started");
+            // QMessageBox::information(this, "info", "taskmanager: auto_started");
         });
 
     connect(test_gcode_runner_, &task::GCodeRunner::sig_auto_paused, this, [this]() {
-        QMessageBox::information(this, "info", "taskmanager: auto_paused");
+        // QMessageBox::information(this, "info", "taskmanager: auto_paused");
     });
 
     connect(
         test_gcode_runner_, &task::GCodeRunner::sig_auto_resumed, this, [this]() {
-            QMessageBox::information(this, "info", "taskmanager: auto_resumed");
+            // QMessageBox::information(this, "info", "taskmanager: auto_resumed");
         });
 
     connect(

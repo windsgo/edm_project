@@ -70,6 +70,8 @@ private:
     // 重置状态
     void _reset_state();
 
+    void _init_help_connections();
+
 private:
     void _state_current_node_initing();
     void _state_running();
@@ -104,7 +106,8 @@ private:
     move::MotionInfo local_info_cache_;
 
     QTimer* update_timer_;
-    const int update_timer_peroid_ms_ = 100; // test, 实际可以短一些
+    const int update_timer_fast_peroid_ms_ = 100; // 快速周期
+    const int update_timer_regular_peroid_ms_ = 1000; // 普通周期 
 
     std::vector<GCodeTaskBase::ptr> gcode_list_;
     int curr_gcode_num_;

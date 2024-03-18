@@ -68,7 +68,15 @@ private:
         cmd_values_; // g00()后面带的坐标值, 没有的以std::nullopt记录
 };
 
-// class GCodeTaskCoordinateMode final
+class GCodeTaskCoordinateMode final : public GCodeTaskBase {
+public:
+    GCodeTaskCoordinateMode(int line_number, int node_index = -1)
+        : GCodeTaskBase(GCodeTaskType::CoordinateModeCommand, line_number,
+                        node_index) {}
+    ~GCodeTaskCoordinateMode() noexcept override = default;
+
+    bool is_motion_task() const override { return false; }
+};
 
 class GCodeTaskCoordinateIndex final : public GCodeTaskBase {
 public:
@@ -104,7 +112,15 @@ private:
     int eleparam_index_; // 要设定的电参数序号
 };
 
-// class GCodeTaskFeedSpeedSet final
+class GCodeTaskFeedSpeedSet final : public GCodeTaskBase {
+public:
+    GCodeTaskFeedSpeedSet(int line_number, int node_index = -1)
+        : GCodeTaskBase(GCodeTaskType::FeedSpeedSetCommand, line_number,
+                        node_index) {}
+    ~GCodeTaskFeedSpeedSet() noexcept override = default;
+
+    bool is_motion_task() const override { return false; }
+};
 
 class GCodeTaskDeley final : public GCodeTaskBase {
 public:

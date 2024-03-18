@@ -170,6 +170,22 @@ static std::optional<GCodeTaskBase::ptr> _make_m00(const json::object &jo) {
     return m00;
 }
 
+static std::optional<GCodeTaskBase::ptr> _make_coord_mode(const json::object &jo) {
+    auto line_number = jo.at("LineNumber").as_integer();
+
+    auto coord_mode = std::make_shared<GCodeTaskCoordinateMode>(line_number, -1);
+
+    return coord_mode;
+}
+
+static std::optional<GCodeTaskBase::ptr> _make_feed_set(const json::object &jo) {
+    auto line_number = jo.at("LineNumber").as_integer();
+
+    auto feed_set = std::make_shared<GCodeTaskFeedSpeedSet>(line_number, -1);
+
+    return feed_set;
+}
+
 std::optional<GCodeTaskBase::ptr>
 GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
 
@@ -218,6 +234,16 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
         return _make_m00(jo);
     }
 
+    //! 以下命令虽然构造, 但是实际无操作
+    // G90G91的设置记录在G00node中
+    // F值的设置也记录在G00node中 
+    case GCodeTaskType::CoordinateModeCommand: {
+        return _make_coord_mode(jo);
+    }
+    case GCodeTaskType::FeedSpeedSetCommand: {
+        return _make_feed_set(jo);
+    }
+    
     default:
         s_logger->info("Ignore task: {}", type_str);
         return nullptr; // ignored
