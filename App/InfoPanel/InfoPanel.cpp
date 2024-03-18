@@ -3,6 +3,7 @@
 
 namespace edm {
 namespace app {
+
 InfoPanel::InfoPanel(SharedCoreData *shared_core_data, QWidget *parent)
     : QWidget(parent), ui(new Ui::InfoPanel),
       shared_core_data_(shared_core_data) {

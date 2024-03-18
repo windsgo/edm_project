@@ -8,6 +8,7 @@
 #include "MovePanel/MovePanel.h"
 #include "IOPanel/IOPanel.h"
 #include "PowerPanel/PowerPanel.h"
+#include "GCodePanel/GCodePanel.h"
 
 #include "TaskManager/TaskManager.h"
 #include "TaskManager/GCodeTaskConverter.h"
@@ -42,13 +43,13 @@ private:
     SharedCoreData* shared_core_data_;
 
     task::TaskManager* task_manager_;
-    task::GCodeRunner* test_gcode_runner_;
 
     CoordPanel* coord_panel_;
     InfoPanel* info_panel_;
     MovePanel* move_panel_;
     IOPanel* io_panel_;
     PowerPanel* power_panel_;
+    GCodePanel* gcode_panel_;
 
     CodeEditor* test_codeeditor_;
 };

@@ -19,6 +19,7 @@ set(APP_SOURCES
     TaskManager/TaskManager.cpp  
     TaskManager/GCodeTaskConverter.cpp
     TaskManager/GCodeRunner.cpp
+    GCodePanel/GCodePanel.cpp
     codeeditor/codeeditor.cpp
     codeeditor/highlighter.cpp
     Resource/app_resource.qrc # qt resource

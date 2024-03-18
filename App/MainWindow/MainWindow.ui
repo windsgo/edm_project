@@ -50,7 +50,7 @@
       <rect>
        <x>20</x>
        <y>20</y>
-       <width>501</width>
+       <width>541</width>
        <height>631</height>
       </rect>
      </property>
@@ -58,79 +58,17 @@
       <string>PointMove</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pb_test_start">
+    <widget class="QGroupBox" name="groupBox_gcode">
      <property name="geometry">
       <rect>
-       <x>710</x>
-       <y>120</y>
-       <width>89</width>
-       <height>25</height>
+       <x>610</x>
+       <y>20</y>
+       <width>851</width>
+       <height>571</height>
       </rect>
      </property>
-     <property name="text">
-      <string>test_start</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_pause">
-     <property name="geometry">
-      <rect>
-       <x>710</x>
-       <y>170</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_pause</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_resume">
-     <property name="geometry">
-      <rect>
-       <x>710</x>
-       <y>230</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_resume</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_stop">
-     <property name="geometry">
-      <rect>
-       <x>710</x>
-       <y>290</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_stop</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pb_test_estop">
-     <property name="geometry">
-      <rect>
-       <x>710</x>
-       <y>340</y>
-       <width>89</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>test_estop</string>
-     </property>
-    </widget>
-    <widget class="QWidget" name="test_codeeditor_widget" native="true">
-     <property name="geometry">
-      <rect>
-       <x>870</x>
-       <y>80</y>
-       <width>481</width>
-       <height>521</height>
-      </rect>
+     <property name="title">
+      <string>GCode</string>
      </property>
     </widget>
    </widget>
@@ -143,6 +81,86 @@
     <attribute name="title">
      <string>Power</string>
     </attribute>
+   </widget>
+   <widget class="QWidget" name="tab_test">
+    <attribute name="title">
+     <string>Test</string>
+    </attribute>
+    <widget class="QPushButton" name="pb_test_stop">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>360</y>
+       <width>89</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>test_stop</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pb_test_pause">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>240</y>
+       <width>89</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>test_pause</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pb_test_estop">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>410</y>
+       <width>89</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>test_estop</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pb_test_resume">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>300</y>
+       <width>89</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>test_resume</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pb_test_start">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>190</y>
+       <width>89</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>test_start</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="test_codeeditor_widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>570</x>
+       <y>70</y>
+       <width>481</width>
+       <height>521</height>
+      </rect>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox_info">

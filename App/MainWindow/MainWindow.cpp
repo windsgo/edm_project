@@ -18,22 +18,19 @@ MainWindow::MainWindow(QWidget *parent)
 
     task_manager_ = new task::TaskManager(shared_core_data_, this);
 
-    test_gcode_runner_ = new task::GCodeRunner(shared_core_data_, this);
-
     coord_panel_ = new CoordPanel(shared_core_data_, ui->frame_coordpanel);
     info_panel_ = new InfoPanel(shared_core_data_, ui->groupBox_info);
     move_panel_ =
         new MovePanel(shared_core_data_, task_manager_, ui->groupBox_pm);
     io_panel_ = new IOPanel(shared_core_data_, ui->tab_io);
     power_panel_ = new PowerPanel(shared_core_data_, ui->tab_power);
+    gcode_panel_ = new GCodePanel(shared_core_data_, task_manager_, ui->groupBox_gcode);
+
 
     test_codeeditor_ = new CodeEditor(ui->test_codeeditor_widget);
     test_codeeditor_->setFixedSize(ui->test_codeeditor_widget->size());
 
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
-            coord_panel_, &CoordPanel::slot_change_display_coord_index);
-
-    connect(test_gcode_runner_, &task::GCodeRunner::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
 
     _init_test_gcode_buttons();
@@ -86,9 +83,7 @@ void MainWindow::_init_test_gcode_buttons() {
                 auto vec = std::move(*gcode_lists_opt);
 
                 // give to task manager
-                // auto ret = this->task_manager_->operation_gcode_start(vec);
-                auto ret = this->test_gcode_runner_->start(vec);
-                
+                auto ret = this->task_manager_->operation_gcode_start(vec);
 
                 if (!ret) {
                     QMessageBox::critical(this, "error",
@@ -107,8 +102,8 @@ void MainWindow::_init_test_gcode_buttons() {
     });
 
     connect(ui->pb_test_pause, &QPushButton::clicked, this, [this]() {
-        // auto ret = task_manager_->operation_gcode_pause();
-        auto ret = test_gcode_runner_->pause();
+        auto ret = task_manager_->operation_gcode_pause();
+        // auto ret = test_gcode_runner_->pause();
         if (!ret) {
             QMessageBox::critical(this, "error",
                                   "operation_gcode_pause failed");
@@ -116,8 +111,8 @@ void MainWindow::_init_test_gcode_buttons() {
     });
 
     connect(ui->pb_test_resume, &QPushButton::clicked, this, [this]() {
-        // auto ret = task_manager_->operation_gcode_resume();
-        auto ret = test_gcode_runner_->resume();
+        auto ret = task_manager_->operation_gcode_resume();
+        // auto ret = test_gcode_runner_->resume();
         if (!ret) {
             QMessageBox::critical(this, "error",
                                   "operation_gcode_resume failed");
@@ -125,53 +120,53 @@ void MainWindow::_init_test_gcode_buttons() {
     });
 
     connect(ui->pb_test_stop, &QPushButton::clicked, this, [this]() {
-        // auto ret = task_manager_->operation_gcode_stop();
-        auto ret = test_gcode_runner_->stop();
+        auto ret = task_manager_->operation_gcode_stop();
+        // auto ret = test_gcode_runner_->stop();
         if (!ret) {
             QMessageBox::critical(this, "error", "operation_gcode_stop failed");
         }
     });
 
     connect(ui->pb_test_estop, &QPushButton::clicked, this, [this]() {
-        // auto ret = task_manager_->operation_emergency_stop();
-        auto ret = test_gcode_runner_->estop();
+        auto ret = task_manager_->operation_emergency_stop();
+        // auto ret = test_gcode_runner_->estop();
         if (!ret) {
             QMessageBox::critical(this, "error",
                                   "operation_emergency_stop failed");
         }
     });
 
-    connect(
-        test_gcode_runner_, &task::GCodeRunner::sig_autogcode_switched_to_line, this,
-        [this](uint32_t line) {
+    connect(task_manager_, &task::TaskManager::sig_autogcode_switched_to_line,
+            this, [this](uint32_t line) {
+                qDebug() << "line: " << line;
 
-            qDebug() << "line: " << line;
+                test_codeeditor_->moveCursorToLine(line);
+            });
 
-            test_codeeditor_->moveCursorToLine(line);
-        });
+    connect(task_manager_, &task::TaskManager::sig_auto_started, this,
+            [this]() {
+                // QMessageBox::information(this, "info", "taskmanager:
+                // auto_started");
+            });
 
-    connect(
-        test_gcode_runner_, &task::GCodeRunner::sig_auto_started, this, [this]() {
-            // QMessageBox::information(this, "info", "taskmanager: auto_started");
-        });
-
-    connect(test_gcode_runner_, &task::GCodeRunner::sig_auto_paused, this, [this]() {
+    connect(task_manager_, &task::TaskManager::sig_auto_paused, this, [this]() {
         // QMessageBox::information(this, "info", "taskmanager: auto_paused");
     });
 
-    connect(
-        test_gcode_runner_, &task::GCodeRunner::sig_auto_resumed, this, [this]() {
-            // QMessageBox::information(this, "info", "taskmanager: auto_resumed");
-        });
+    connect(task_manager_, &task::TaskManager::sig_auto_resumed, this,
+            [this]() {
+                // QMessageBox::information(this, "info", "taskmanager:
+                // auto_resumed");
+            });
 
     connect(
-        test_gcode_runner_, &task::GCodeRunner::sig_auto_stopped, this,
+        task_manager_, &task::TaskManager::sig_auto_stopped, this,
         [this](bool err_occured) {
             if (err_occured) {
                 QMessageBox::critical(
                     this, "error",
                     QString("taskmanager: auto_stopped. **Error Occured:\n") +
-                        test_gcode_runner_->last_error_str().c_str());
+                        task_manager_->autogcode_last_error_str().c_str());
             } else {
                 QMessageBox::information(this, "info",
                                          "taskmanager: auto_stopped");
