@@ -84,6 +84,10 @@ void GCodePanel::_init_autogcode_connections() {
                                              "GCode Normally Exit.");
                 }
             });
+
+    connect(
+        task_manager_, &task::TaskManager::sig_autogcode_switched_to_line, this,
+        [this](uint32_t line) { this->gcode_editor_->moveCursorToLine(line); });
 }
 
 void GCodePanel::_slot_edit(bool checked) {
@@ -165,6 +169,7 @@ void GCodePanel::_slot_cancel() {
             _slot_save();
         } else if (ret == QMessageBox::No) {
             _load_from_file(ui->le_current_file->text());
+            _set_ui_edit_enable(false);
         } else {
             // Cancel or other ...
             return;
@@ -189,6 +194,11 @@ void GCodePanel::_slot_loadfile() {
                                   .arg(load_filename));
         return;
     }
+
+    // 将文件名改为另存为的名字 (相对路径)
+    QDir gcode_root(gcode_root_dir_);
+    auto save_filename_relative = gcode_root.relativeFilePath(load_filename);
+    ui->le_current_file->setText(save_filename_relative);
 }
 
 void GCodePanel::_slot_start() {
@@ -199,17 +209,24 @@ void GCodePanel::_slot_start() {
         return;
     }
 
-    if (!_load_from_file(gcode_root_dir_ + filename)) {
+    auto whole_filename = gcode_root_dir_ + filename;
+
+    if (!_load_from_file(whole_filename)) {
         QMessageBox::critical(
             this, "start error",
             QString("Start Gcode Failed, File Open Failed: \n%0")
-                .arg(gcode_root_dir_ + filename));
+                .arg(whole_filename));
         return;
     }
 
-    std::string filename_stdstr = ui->le_current_file->text().toStdString();
+    std::string filename_stdstr = whole_filename.toUtf8().toStdString();
 
     try {
+        edm::interpreter::RS274InterpreterWrapper::instance()
+            ->set_rs274_py_module_dir(
+                EDM_ROOT_DIR + this->shared_core_data_->get_system_settings()
+                                   .get_interp_module_path_relative_to_root());
+
         auto parse_json_ret =
             edm::interpreter::RS274InterpreterWrapper::instance()
                 ->parse_file_to_json(filename_stdstr);
@@ -337,7 +354,13 @@ bool GCodePanel::_save_to_file(const QString &filename) {
     }
 
     QTextStream out(&savefile);
-    out << gcode_editor_->toPlainText();
+
+    QString text = gcode_editor_->toPlainText();
+
+    // 将锁进替换为空格
+    text.replace('\t', "    ");
+
+    out << text.toUtf8();
 
     out.flush();
 
@@ -348,8 +371,9 @@ bool GCodePanel::_save_to_file(const QString &filename) {
 
 void GCodePanel::_set_ui_edit_enable(bool enable) {
     gcode_editor_->setReadOnly(!enable);
-    ui->pb_edit->setChecked(true);
+    ui->pb_edit->setChecked(enable);
     ui->pb_save->setEnabled(enable);
+    ui->pb_save_as->setEnabled(enable);
     ui->pb_cancel->setEnabled(enable);
     ui->pb_loadfile->setEnabled(!enable);
 

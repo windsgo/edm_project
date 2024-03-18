@@ -72,6 +72,8 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     // font.setPointSize(20);
     this->setFont(font);
 
+    this->setTabStopDistance(4 * fontMetrics().horizontalAdvance(' '));
+
     highlighter = new Highlighter(this->document());
 }
 
@@ -156,7 +158,7 @@ void CodeEditor::highlightCurrentLine()
 {
     QList<QTextEdit::ExtraSelection> extraSelections;
 
-    if (!isReadOnly()) {
+    if (true || !isReadOnly()) {
         QTextEdit::ExtraSelection selection;
 
         QColor lineColor = QColor(Qt::yellow).lighter(160);

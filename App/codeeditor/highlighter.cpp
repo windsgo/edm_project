@@ -58,17 +58,17 @@ Highlighter::Highlighter(QTextDocument *parent)
 
     // 数字, 放在最上面
     intnumberFormat.setForeground(QColor("#FF8C00"));
-    rule.pattern = QRegularExpression(QStringLiteral(R"(\d+)"));
+    rule.pattern = QRegularExpression(QStringLiteral(R"(\b\d+\b)"));
     rule.format = intnumberFormat;
     highlightingRules.append(rule);
 
     doublenumberFormat.setForeground(QColor("#FF8C00"));
-    rule.pattern = QRegularExpression(QStringLiteral(R"(\d+\.\d*|^\d*\.\d+)"));
+    rule.pattern = QRegularExpression(QStringLiteral(R"(\b\d+\.\d*|^\d*\.\d+\b)"));
     rule.format = doublenumberFormat;
     highlightingRules.append(rule);
 
     // 运算符, = + - > <
-    operatorFormat.setForeground(QColor("#54FF9F"));
+    operatorFormat.setForeground(Qt::darkMagenta);
     rule.pattern = QRegularExpression(QStringLiteral(R"([=\-\+><\*\/])"));
     rule.format = operatorFormat;
     highlightingRules.append(rule);

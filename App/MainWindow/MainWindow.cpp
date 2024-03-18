@@ -30,10 +30,10 @@ MainWindow::MainWindow(QWidget *parent)
     test_codeeditor_ = new CodeEditor(ui->test_codeeditor_widget);
     test_codeeditor_->setFixedSize(ui->test_codeeditor_widget->size());
 
-    connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
-            coord_panel_, &CoordPanel::slot_change_display_coord_index);
+    // connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
+    //         coord_panel_, &CoordPanel::slot_change_display_coord_index);
 
-    _init_test_gcode_buttons();
+    // _init_test_gcode_buttons();
 
     connect(ui->pb_test, &QPushButton::clicked, this, [this]() {
 
