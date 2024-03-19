@@ -290,7 +290,7 @@ void GCodePanel::_slot_start() {
         return;
     }
 
-    std::string filename_stdstr = whole_filename.toUtf8().toStdString();
+    std::string filename_stdstr = whole_filename.toStdString();
 
     try {
         edm::interpreter::RS274InterpreterWrapper::instance()
@@ -451,7 +451,7 @@ bool GCodePanel::_load_from_file(const QString &filename) {
         return false;
     }
 
-    if (!file.open(QIODevice::ReadOnly)) {
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return false;
     }
 
@@ -465,7 +465,7 @@ bool GCodePanel::_load_from_file(const QString &filename) {
 
 bool GCodePanel::_save_to_file(const QString &filename) {
     QFile savefile(filename);
-    if (!savefile.open(QIODevice::ReadWrite | QIODevice::Text)) {
+    if (!savefile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
         return false;
     }
 
@@ -476,7 +476,7 @@ bool GCodePanel::_save_to_file(const QString &filename) {
     // 将锁进替换为空格
     text.replace('\t', "    ");
 
-    out << text.toUtf8();
+    out << text;
 
     out.flush();
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cassert>
 #include <condition_variable>
 #include <fstream>
 #include <iostream>
@@ -11,7 +12,6 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <cassert>
 
 #include "Exception/exception.h"
 #include "Utils/Format/edm_format.h"
@@ -47,7 +47,7 @@ public:
         filename_ = filename;
 
         // init file ostream
-        ofs.open(filename_, std::ios::binary);
+        ofs.open(filename_, std::ios::binary | std::ios::trunc | std::ios::out);
         if (!ofs.is_open()) {
             return false;
         }

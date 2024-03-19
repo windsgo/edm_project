@@ -198,7 +198,7 @@ class RS274Interpreter(object):
         if (not isinstance(index, int)):
             raise InterpreterException(f"Eleparam Index type invalid: {type(index)} " + _get_stackmessage())
         
-        if (index < 0):
+        if (index < 0 or index >= 1000):
             raise InterpreterException(f"Eleparam Index ({index}) Out of Range " + _get_stackmessage())
         
         command = {
@@ -214,6 +214,12 @@ class RS274Interpreter(object):
     def _command_set_coordinate_index(self, index : int) -> RS274Interpreter:
         if (self.__g_environment.is_program_end()): 
             return self
+        
+        if (not isinstance(index, int)):
+            raise InterpreterException(f"Coordinate Index Type invalid: {type(index)} " + _get_stackmessage(2))
+        
+        if (index < 0):
+            raise InterpreterException(f"Coordinate Index ({index}) < 0 " + _get_stackmessage(2))
         
         self.__g_environment.set_coordinate_index(index)
         command = {
