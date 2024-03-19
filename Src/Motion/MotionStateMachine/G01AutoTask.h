@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/PointMoveHandler/PointMoveHandler.h"
 #include "MotionAutoTask.h"
@@ -25,8 +27,14 @@ public:
           max_jump_height_from_begin_(max_jump_height_from_begin),
           cb_get_real_axis_(cb_get_real_axis),
           cb_get_servo_cmd_(cb_get_servo_cmd),
-          cb_get_jump_param(cb_get_jump_param),
-          cb_enable_votalge_gate_(cb_enable_votalge_gate) {}
+          cb_get_jump_param_(cb_get_jump_param),
+          cb_enable_votalge_gate_(cb_enable_votalge_gate) {
+        // 开始时获取一次抬刀参数
+        cb_get_jump_param_(jumping_param_);
+
+        // 使能电压gate
+        cb_enable_votalge_gate_(true);
+    }
 
     bool pause() override;
     bool resume() override;
@@ -78,11 +86,11 @@ public:
     enum class ResumeSubState {
         RecoveringToLastMachingPos, // if is backed to begin
     };
-    
-    static const char* GetStateStr(State s);
-    static const char* GetServoSubStateStr(ServoSubState s);
-    static const char* GetPauseOrStopSubStateStr(PauseOrStopSubState s);
-    static const char* GetResumeSubStateStr(ResumeSubState s);
+
+    static const char *GetStateStr(State s);
+    static const char *GetServoSubStateStr(ServoSubState s);
+    static const char *GetPauseOrStopSubStateStr(PauseOrStopSubState s);
+    static const char *GetResumeSubStateStr(ResumeSubState s);
 
 private:
     void _state_changeto(State new_s);
@@ -98,11 +106,20 @@ private:
     void _state_stopping();
     void _state_stopped();
 
+    void _state_pausing_or_stopping(State target_state /* Paused or Stopped */);
+
+    void _servo_substate_servoing();
+    void _servo_substate_jumpuping();
+    void _servo_substate_jumpdowning();
+    void _servo_substate_jumpdowningbuffer();
+
 private:
     State state_{State::NormalRunning};
     ServoSubState servo_sub_state_{ServoSubState::Servoing};
-    PauseOrStopSubState pause_or_stop_sub_state_{PauseOrStopSubState::WaitingForJumpEnd};
-    ResumeSubState resume_sub_state_{ResumeSubState::RecoveringToLastMachingPos};
+    PauseOrStopSubState pause_or_stop_sub_state_{
+        PauseOrStopSubState::WaitingForJumpEnd};
+    ResumeSubState resume_sub_state_{
+        ResumeSubState::RecoveringToLastMachingPos};
 
     JumpParam jumping_param_;
 
@@ -119,6 +136,10 @@ private:
     PointMoveHandler jump_pm_handler_;
 
 private:
+    bool back_to_begin_when_pause_ {false};
+    bool back_to_begin_when_stop_ {false};
+
+private:
     // 获取实际驱动器坐标的回调函数, 用于闭环控制
     std::function<bool(axis_t &)> cb_get_real_axis_;
 
@@ -126,7 +147,7 @@ private:
     std::function<unit_t(void)> cb_get_servo_cmd_;
 
     // 获取状态机缓存的抬刀参数
-    std::function<void(JumpParam &)> cb_get_jump_param;
+    std::function<void(JumpParam &)> cb_get_jump_param_;
 
     // 抬刀操作电压位回调
     std::function<void(bool)> cb_enable_votalge_gate_;
