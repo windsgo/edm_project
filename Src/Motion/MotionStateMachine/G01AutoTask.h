@@ -55,6 +55,7 @@ public:
         Stopped
     };
 
+    // 用于正常执行动作的SubState
     enum class ServoSubState {
         // 伺服中, 在暂停中和停止中时, 要等待返回伺服中的子状态
         Servoing,
@@ -67,9 +68,41 @@ public:
         JumpDowningBuffer,
     };
 
+    // 用于暂停Pausing, 停止Stopping过程的SubState
+    enum class PauseOrStopSubState {
+        WaitingForJumpEnd,
+        BackingToBegin, // if needed or set
+        // Other Pause Sub State
+    };
+
+    enum class ResumeSubState {
+        RecoveringToLastMachingPos, // if is backed to begin
+    };
+    
+    static const char* GetStateStr(State s);
+    static const char* GetServoSubStateStr(ServoSubState s);
+    static const char* GetPauseOrStopSubStateStr(PauseOrStopSubState s);
+    static const char* GetResumeSubStateStr(ResumeSubState s);
+
+private:
+    void _state_changeto(State new_s);
+    void _servo_substate_changeto(ServoSubState new_s);
+    void _pauseorstop_substate_changeto(PauseOrStopSubState new_s);
+    void _resume_substate_changeto(ResumeSubState new_s);
+
+private:
+    void _state_normal_running();
+    void _state_pausing();
+    void _state_paused();
+    void _state_resuming();
+    void _state_stopping();
+    void _state_stopped();
+
 private:
     State state_{State::NormalRunning};
-    ServoSubState sub_state_{ServoSubState::Servoing};
+    ServoSubState servo_sub_state_{ServoSubState::Servoing};
+    PauseOrStopSubState pause_or_stop_sub_state_{PauseOrStopSubState::WaitingForJumpEnd};
+    ResumeSubState resume_sub_state_{ResumeSubState::RecoveringToLastMachingPos};
 
     JumpParam jumping_param_;
 
