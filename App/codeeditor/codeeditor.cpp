@@ -79,21 +79,27 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 
 void CodeEditor::moveCursorToLine(uint32_t line)
 {
-    QList<QTextEdit::ExtraSelection> extraSelections;
+    // QList<QTextEdit::ExtraSelection> extraSelections;
 
-    QTextEdit::ExtraSelection s;
-    s.format.setBackground(QColor("yellow"));
-    s.format.setProperty(QTextFormat::FullWidthSelection, true);
+    // QTextEdit::ExtraSelection s;
+    // s.format.setBackground(Qt::yellow);
+    // s.format.setProperty(QTextFormat::FullWidthSelection, true);
 
-    s.cursor = this->textCursor();
-    s.cursor.movePosition(
+    // s.cursor = this->textCursor();
+    // s.cursor.movePosition(
+    //             QTextCursor::Start, QTextCursor::MoveAnchor, 1);
+    // s.cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, line - 1);
+    // extraSelections.append(s);
+
+    // this->setExtraSelections(extraSelections);
+
+    // this->setTextCursor(s.cursor);
+
+    auto c = this->textCursor();
+    c.movePosition(
                 QTextCursor::Start, QTextCursor::MoveAnchor, 1);
-    s.cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, line - 1);
-    extraSelections.append(s);
-
-    this->setExtraSelections(extraSelections);
-
-    this->setTextCursor(s.cursor);
+    c.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, line - 1);
+    this->setTextCursor(c);
 }
 
 //![constructor]
