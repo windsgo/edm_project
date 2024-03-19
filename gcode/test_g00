@@ -2,10 +2,10 @@ i = RS274Interpreter()
 
 i.g55()
 i.g90()
-
 i.f(3000)
 i.g00(x=0,y=.0,z=0)
 i.f(200)
+# i.set_coord(60)
 for j in range(10):
     i.g00(x=3)
     i.g04(0.1)
