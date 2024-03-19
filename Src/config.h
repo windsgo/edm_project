@@ -40,6 +40,8 @@
 #define EDM_CUSTOM_QTEVENT_TYPE_HandboxStopAuto   1008
 #define EDM_CUSTOM_QTEVENT_TYPE_HandboxAck        1009
 
+#define EDM_CUSTOM_QTEVENT_TYPE_MotionVoltageEnable 1010
+
 // CAN TxID 集合
 #define EDM_CAN_TXID_POWER                        0x0010
 #define EDM_CAN_TXID_CANIO_1                      0x0356

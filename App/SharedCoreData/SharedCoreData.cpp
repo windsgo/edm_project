@@ -11,6 +11,20 @@ namespace edm {
 
 namespace app {
 
+// 用于在G01抬刀时的电压关断, 向主线程发送一个事件, 让主线程来执行电源操作,
+// 因为PowerController不是线程安全的
+class MotionEventVoltageEnable : public QEvent {
+public:
+    MotionEventVoltageEnable(bool voltage_enable) : QEvent(type) {}
+    constexpr static const QEvent::Type type =
+        QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_MotionVoltageEnable);
+
+    auto voltage_enable() const { return voltage_enable_; }
+
+private:
+    bool voltage_enable_;
+};
+
 class HandBoxEventStartPointMove : public QEvent {
 public:
     HandBoxEventStartPointMove(const move::axis_t &dir, uint32_t speed_level,
@@ -157,6 +171,14 @@ void SharedCoreData::customEvent(QEvent *e) {
         break;
     }
 
+    case MotionEventVoltageEnable::type: {
+        auto vol_enable_event = static_cast<MotionEventVoltageEnable *>(e);
+        this->power_manager_->set_machbit_on(
+            vol_enable_event->voltage_enable());
+        e->accept();
+        break;
+    };
+
     default:
         break;
     }
@@ -215,7 +237,7 @@ void SharedCoreData::_init_data() {
     });
     t.start(1000);
     el.exec();
-#else // EDM_OFFLINE_RUN_NO_CAN
+#else  // EDM_OFFLINE_RUN_NO_CAN
     int can_device_index = -1;
 #endif // EDM_OFFLINE_RUN_NO_CAN
 
@@ -347,9 +369,13 @@ void SharedCoreData::_init_motionthread_cb() {
     cb_enable_votalge_gate_ = [this](bool arg) -> void {
         s_logger->debug("push voltage gate command: {}", arg);
 
+        // postevent本身可能会耗时较多但是线程安全,
+        // 而global_cmd_queue_这个队列是相当空闲的 操作电压的操作无须特别实时,
+        // 所以优先保证motion操作电压的函数可以快速返回
         auto run_cmd = global::CommandCommonFunctionFactory::bind(
             [this](bool _enable) {
-                this->power_ctrler_->set_machbit_on(_enable);
+                QCoreApplication::postEvent(
+                    this, new MotionEventVoltageEnable(_enable));
             },
             arg);
 
