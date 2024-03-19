@@ -10,6 +10,10 @@
 
 #include "Motion/JumpDefines.h"
 
+#include "Utils/UnitConverter/UnitConverter.h"
+
+#include <cassert>
+
 namespace edm {
 
 namespace move {
@@ -29,8 +33,15 @@ public:
           cb_get_servo_cmd_(cb_get_servo_cmd),
           cb_get_jump_param_(cb_get_jump_param),
           cb_enable_votalge_gate_(cb_enable_votalge_gate) {
+
+        assert(line_traj_->at_start());
+
         // 开始时获取一次抬刀参数
         cb_get_jump_param_(jumping_param_);
+
+        // 设定一个"上一次抬刀结束时间" = "上一次开始放电的时间"
+        // 用于根据DN值, 开始下一次抬刀
+        last_jump_end_time_ms_ = GetCurrentTimeMs();
 
         // 使能电压gate
         cb_enable_votalge_gate_(true);
@@ -93,6 +104,13 @@ public:
     static const char *GetResumeSubStateStr(ResumeSubState s);
 
 private:
+    static inline int64_t GetCurrentTimeMs() {
+        return std::chrono::duration_cast<std::chrono::microseconds>(
+                   std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    }
+
+private:
     void _state_changeto(State new_s);
     void _servo_substate_changeto(ServoSubState new_s);
     void _pauseorstop_substate_changeto(PauseOrStopSubState new_s);
@@ -113,6 +131,14 @@ private:
     void _servo_substate_jumpdowning();
     void _servo_substate_jumpdowningbuffer();
 
+    bool _servoing_check_and_plan_jump();
+    bool _servoing_do_servothings(); // 计算伺服, 返回是否可以结束G01
+
+private:
+    bool _plan_jump_up();
+
+    bool _check_and_validate_jump_height();
+
 private:
     State state_{State::NormalRunning};
     ServoSubState servo_sub_state_{ServoSubState::Servoing};
@@ -121,23 +147,32 @@ private:
     ResumeSubState resume_sub_state_{
         ResumeSubState::RecoveringToLastMachingPos};
 
+    // 抬刀变量
     JumpParam jumping_param_;
+    int64_t last_jump_end_time_ms_{0}; // 上一次抬刀结束时间
+    unit_t servoing_length_before_jump_{
+        0.0}; // 抬刀前的伺服位置 (加工方向上的长度), 用于计算down目标点,
+              // 以及抬刀缓冲段控制
+    axis_t jump_up_target_pos_;
 
-    // G01的轨迹 (直线描述)
+    // TODO 高抬刀
+
+    // G01的轨迹 (直线描述) // 直线的可过原点抬刀目前先不依赖此轨迹描述对象,
+    // 后面可能还要给一个可跨过起点回退的属性或轨迹描述方法
     TrajectoryLinearSegement::ptr line_traj_;
 
     // 当前坐标在 Base 类中
 
     // 从起始点起的最大抬刀高度, 外层计算好以后传入
     // 用于计算抬刀目标点
-    unit_t max_jump_height_from_begin_;
+    unit_t max_jump_height_from_begin_; //! unit: blu
 
     // 抬刀加减速控制
     PointMoveHandler jump_pm_handler_;
 
 private:
-    bool back_to_begin_when_pause_ {false};
-    bool back_to_begin_when_stop_ {false};
+    bool back_to_begin_when_pause_{false};
+    bool back_to_begin_when_stop_{false};
 
 private:
     // 获取实际驱动器坐标的回调函数, 用于闭环控制

@@ -202,7 +202,7 @@ void G01AutoTask::_resume_substate_changeto(ResumeSubState new_s) {
 void G01AutoTask::_state_normal_running() {
     switch (servo_sub_state_) {
     case ServoSubState::Servoing: {
-        _servo_substate_servoing();
+        _servo_substate_servoing(); //! include jump start inside
         break;
     }
     case ServoSubState::JumpUping:
@@ -302,13 +302,206 @@ void G01AutoTask::_state_pausing_or_stopping(State target_state) {
     }
 }
 
-void G01AutoTask::_servo_substate_servoing() {}
+void G01AutoTask::_servo_substate_servoing() {
+    if (_servoing_check_and_plan_jump()) {
+        // 抬刀规划成功, 已经转换抬刀状态, 不走伺服
+        return;
+    }
 
-void G01AutoTask::_servo_substate_jumpuping() {}
+    // 抬刀规划失败, 继续正常走伺服
+    auto servo_can_end = _servoing_do_servothings();
+    if (servo_can_end) {
+        _state_changeto(State::Stopped);
+        return;
+    }
+}
 
-void G01AutoTask::_servo_substate_jumpdowning() {}
+void G01AutoTask::_servo_substate_jumpuping() {
+    this->jump_pm_handler_.run_once();
+    this->curr_cmd_axis_ = this->jump_pm_handler_.get_current_pos();
 
-void G01AutoTask::_servo_substate_jumpdowningbuffer() {}
+    if (this->jump_pm_handler_.is_over()) {
+        // UP走完
+        // 计算dn的目标位置
+        const auto &curr_maching_dir = this->line_traj_->get_unit_vector();
+        const auto &down_start_pos = this->jump_up_target_pos_;
+        axis_t down_target_pos{};
+        unit_t down_length =
+            (jumping_param_.up_blu - jumping_param_.buffer_blu);
+        assert(down_length > 0);
+        for (std::size_t i = 0; i < this->jump_up_target_pos_.size(); ++i) {
+            down_target_pos[i] =
+                (down_start_pos[i] + curr_maching_dir[i] * down_length);
+        }
+
+        //! assume this `start` will success ...
+        this->jump_pm_handler_.start(jumping_param_.speed_param, down_start_pos,
+                                     down_target_pos);
+
+        // 置状态, 操作电压
+        _servo_substate_changeto(ServoSubState::JumpDowning);
+        cb_enable_votalge_gate_(true);
+    }
+}
+
+void G01AutoTask::_servo_substate_jumpdowning() {
+    this->jump_pm_handler_.run_once();
+    this->curr_cmd_axis_ = this->jump_pm_handler_.get_current_pos();
+
+
+    if (this->jump_pm_handler_.is_over()) {
+        // Down 走完, Buffer段要走伺服, 这里恢复line traj的长度
+
+        line_traj_->set_curr_length(servoing_length_before_jump_ - jumping_param_.buffer_blu);
+
+        _servo_substate_changeto(ServoSubState::JumpDowningBuffer);
+    }
+}
+
+void G01AutoTask::_servo_substate_jumpdowningbuffer() {
+    bool buffer_over = false;
+    bool buffer_interrupted = false;
+
+    // 获取一次伺服指令
+    auto servo_cmd = cb_get_servo_cmd_();
+
+    // 计算缓冲段剩余长度
+    unit_t buffer_remaining_length = servoing_length_before_jump_ - line_traj_->curr_length();
+
+    if (servo_cmd > 0.0) {
+        if (servo_cmd >= buffer_remaining_length || buffer_remaining_length <= 0) {
+            // 缓冲段最后一次运动
+            servo_cmd = buffer_remaining_length;
+
+            buffer_over = true;
+        }
+
+        line_traj_->run_once(servo_cmd);
+        this->curr_cmd_axis_ = this->line_traj_->curr_pos();
+        
+    } else if (servo_cmd < 0.0) {
+        buffer_interrupted = true; // 缓冲段有回退, 直接退出走正常伺服回退
+    }
+
+    if (buffer_over || buffer_interrupted) {
+        last_jump_end_time_ms_ = GetCurrentTimeMs(); // 更新变量: 上一次抬刀结束时间
+        _servo_substate_changeto(ServoSubState::Servoing); // 抬刀全部结束
+        return;
+    }
+}
+
+bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
+    // 更新抬刀参数
+    cb_get_jump_param_(jumping_param_);
+
+    // 检查抬刀间隔, 如果到了就尝试规划一次抬刀
+    auto now_ms = GetCurrentTimeMs();
+    assert(now_ms > last_jump_end_time_ms_);
+    if (now_ms - last_jump_end_time_ms_ <= (int64_t)jumping_param_.dn_ms) {
+        return false; // 间隔未到
+    }
+
+    // 设定的抬刀高度小于10um, 基本上就是设定了 UP=0
+    if (jumping_param_.up_blu < util::UnitConverter::um2blu(10)) {
+        return false;
+    }
+
+    // 规划抬刀
+    if (!_plan_jump_up()) {
+        // 规划失败
+        last_jump_end_time_ms_ = now_ms; // 更新一下上一次抬刀结束时间
+        return false;
+    }
+
+    // 抬刀规划成功
+    // 置状态, 操作电压
+    _servo_substate_changeto(ServoSubState::JumpUping);
+    cb_enable_votalge_gate_(false);
+
+    return true;
+}
+
+bool G01AutoTask::_servoing_do_servothings() {
+    double servo_cmd = cb_get_servo_cmd_(); // return value's unit is blu
+
+    if (servo_cmd > 0.0) {
+        line_traj_->run_once(servo_cmd);
+        if (line_traj_->at_end()) {
+            // TODO Do Some Ending Check, like length filters ...
+
+            // if satisfy all check, set stopped
+            if (true) {
+                return true;
+            }
+        }
+    } else if (servo_cmd < 0.0) {
+        line_traj_->run_once(servo_cmd);
+        if (line_traj_->at_start()) {
+            // TODO Maybe Trigger Warning After continuous `at start`
+            //! 不需要支持回退到上一段, 那个以后放到多段加工
+            // TODO 是否可以根据抬刀最大安全长度的值, 略微多回退一点,
+            // 但这个要改输入的类型
+
+            // Currently Do Nothing Here
+        }
+    }
+
+    // 更新目前的计算位置
+    this->curr_cmd_axis_ = line_traj_->curr_pos();
+
+    return false;
+}
+
+bool G01AutoTask::_plan_jump_up() {
+    servoing_length_before_jump_ = this->line_traj_->curr_length();
+
+    if (!_check_and_validate_jump_height()) {
+        s_logger->warn("plan jump failed: check jump height failed.");
+        return false;
+    }
+
+    // 计算抬刀目标点
+    const auto &curr_maching_dir = this->line_traj_->get_unit_vector();
+    const auto &up_start_pos = this->line_traj_->curr_pos();
+    for (std::size_t i = 0; i < this->jump_up_target_pos_.size(); ++i) {
+        this->jump_up_target_pos_[i] =
+            (up_start_pos[i] - curr_maching_dir[i] * jumping_param_.up_blu);
+    }
+
+    return this->jump_pm_handler_.start(
+        jumping_param_.speed_param, up_start_pos, this->jump_up_target_pos_);
+}
+
+bool G01AutoTask::_check_and_validate_jump_height() {
+    unit_t max_jump_height =
+        this->line_traj_->curr_length() + max_jump_height_from_begin_;
+
+    // 预留100um间隙
+    if (jumping_param_.up_blu >
+        max_jump_height - util::UnitConverter::um2blu(100)) {
+        jumping_param_.up_blu =
+            max_jump_height - util::UnitConverter::um2blu(100);
+    }
+
+    // 如果处理过的抬刀高度小于10um, 不给抬刀
+    if (jumping_param_.up_blu < util::UnitConverter::um2blu(10)) {
+        return false;
+    }
+
+    // 缓冲距离判定, 缓冲距离不能超过当前段已走的长度
+    if (jumping_param_.buffer_blu >
+        this->line_traj_->curr_length() - util::UnitConverter::um2blu(10)) {
+        return false;
+    }
+
+    // 缓冲量太大, 接近抬刀长度了
+    if (jumping_param_.buffer_blu >
+        jumping_param_.up_blu - util::UnitConverter::um2blu(10)) {
+        return false;
+    }
+
+    return true;
+}
 
 } // namespace move
 
