@@ -73,14 +73,14 @@
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
 #ifndef EDM_OFFLINE_RUN_NO_CAN
-// #define EDM_OFFLINE_RUN_NO_CAN // 离线不连接CAN设备
+#define EDM_OFFLINE_RUN_NO_CAN // 离线不连接CAN设备
 #endif                         // EDM_OFFLINE_RUN_NO_CAN
 
 // 离线测试时, 连接两个CAN设备, 用于保持正常的can通信链路
-// #define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+#define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
 
 #ifndef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-// #define EDM_OFFLINE_MANUAL_TOUCH_DETECT // 离线手动按钮标志接触感知
+#define EDM_OFFLINE_MANUAL_TOUCH_DETECT // 离线手动按钮标志接触感知
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 
 #ifndef EDM_OFFLINE_MANUAL_SERVO_CMD
