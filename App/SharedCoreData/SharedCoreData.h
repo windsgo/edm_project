@@ -68,6 +68,10 @@ public:
 
     inline auto get_power_manager() const { return power_manager_; }
 
+// slots
+    // io板蜂鸣器响一下协议
+    void send_ioboard_bz_once() const;
+
 signals:
     void sig_handbox_start_pointmove(const move::axis_t &dir,
                                      uint32_t speed_level,
@@ -95,6 +99,8 @@ private:
 
 private:
     SystemSettings &sys_settings_ = SystemSettings::instance();
+
+    int can_device_index_ = -1;
 
     coord::CoordinateSystem::ptr coord_system_;
     global::GlobalCommandQueue::ptr global_cmd_queue_;

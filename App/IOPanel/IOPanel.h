@@ -37,6 +37,8 @@ private:
 
     void _layout_button_columes_priority(uint32_t col_nums);
 
+    void _init_handbox_pump_signal();
+
 private:
     void _update_all_io_display();
 

@@ -120,23 +120,27 @@ void GCodePanel::_init_handbox_auto_signals() {
         // 只处理resume的情况
         if (ui->pb_resume->isEnabled()) {
             this->_slot_resume();
+            this->shared_core_data_->send_ioboard_bz_once();
         }
     });
 
     connect(s, &SharedCoreData::sig_handbox_pause_auto, this, [this]() {
         if (ui->pb_pause->isEnabled()) {
             this->_slot_pause();
+            this->shared_core_data_->send_ioboard_bz_once();
         }
     });
 
     connect(s, &SharedCoreData::sig_handbox_stop_auto, this, [this]() {
         if (ui->pb_stop->isEnabled()) {
             this->_slot_stop();
+            this->shared_core_data_->send_ioboard_bz_once();
         }
     });
 
     connect(s, &SharedCoreData::sig_handbox_ack, this, [this]() {
         this->_slot_ack();
+        this->shared_core_data_->send_ioboard_bz_once();
     });
 }
 

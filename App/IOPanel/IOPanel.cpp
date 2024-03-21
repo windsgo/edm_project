@@ -22,6 +22,7 @@ IOPanel::IOPanel(SharedCoreData *shared_core_data, QWidget *parent)
     update_io_timer_->start(350);
 
     _init_common_io_buttons();
+    _init_handbox_pump_signal();
 }
 
 IOPanel::~IOPanel() { delete ui; }
@@ -116,6 +117,14 @@ void IOPanel::_layout_button_columes_priority(uint32_t col_nums) {
 
         _add_button_to_gridlayout(button_name, io, row, col);
     }
+}
+
+void IOPanel::_init_handbox_pump_signal() {
+    connect(this->shared_core_data_, &SharedCoreData::sig_handbox_pump, this, [this](bool pump_on) {
+        auto btn = this->map_io_to_button_[power::EleContactorOut_FULD_JF7];
+        btn->setChecked(pump_on);
+        emit btn->clicked(pump_on);
+    });
 }
 
 void IOPanel::_update_all_io_display() {

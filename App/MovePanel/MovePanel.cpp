@@ -161,6 +161,11 @@ void MovePanel::_init_handbox_auto_signals() {
     connect(s, &SharedCoreData::sig_handbox_stop_pointmove, this,
             [this]() { this->_stop_pointmove(); });
 
+    connect(s, &SharedCoreData::sig_handbox_stop_auto, this, [this]() {
+        this->_stop_pointmove();
+        this->shared_core_data_->send_ioboard_bz_once();
+    });
+
     connect(s, &SharedCoreData::sig_handbox_start_pointmove, this,
             [this](const move::axis_t &dir, uint32_t speed_level,
                    bool touch_detect_enable) {

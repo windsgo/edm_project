@@ -1,5 +1,9 @@
 #include "CanReceiveBuffer.h"
 
+#include "Logger/LogMacro.h"
+
+EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
+
 namespace edm {
 
 CanReceiveBuffer::CanReceiveBuffer(can::CanController::ptr can_ctrler,
@@ -13,22 +17,40 @@ CanReceiveBuffer::CanReceiveBuffer(can::CanController::ptr can_ctrler,
 void CanReceiveBuffer::load_servo_data(Can1IOBoard407ServoData &servo_data) {
     // auto temp = at_servo_data_.load();
     // servo_data = *reinterpret_cast<Can1IOBoard407ServoData *>(&temp);
-    *reinterpret_cast<dummy_8bytes*>(&servo_data) = at_servo_data_.load();
+    *reinterpret_cast<dummy_8bytes *>(&servo_data) = at_servo_data_.load();
 }
 
 void CanReceiveBuffer::load_adc_info(Can1IOBoard407ADCInfo &adc_info) {
     // auto temp = at_adc_info_.load();
     // adc_info = *reinterpret_cast<Can1IOBoard407ADCInfo *>(&temp);
-    *reinterpret_cast<dummy_8bytes*>(&adc_info) = at_adc_info_.load();
+    *reinterpret_cast<dummy_8bytes *>(&adc_info) = at_adc_info_.load();
 }
 
 void CanReceiveBuffer::_listen_cb(const QCanBusFrame &frame) {
     if (frame.frameId() == servodata_rxid_) {
+        at_servo_data_is_new_ = true;
+
         at_servo_data_.store(
             *reinterpret_cast<dummy_8bytes *>(frame.payload().data()));
+
+        // test
+        Can1IOBoard407ServoData temp =
+            *reinterpret_cast<Can1IOBoard407ServoData *>(
+                frame.payload().data());
+        EDM_CYCLIC_LOG(s_logger->debug, 500,
+                       "touchdetected: {}, sdir: {}, sdis: {}",
+                       (int)temp.touch_detected, (int)temp.servo_direction,
+                       (int)temp.servo_distance_0_01um);
+
     } else if (frame.frameId() == adcinfo_rxid_) {
         at_adc_info_.store(
             *reinterpret_cast<dummy_8bytes *>(frame.payload().data()));
+
+        // test
+        Can1IOBoard407ADCInfo temp =
+            *reinterpret_cast<Can1IOBoard407ADCInfo *>(frame.payload().data());
+        EDM_CYCLIC_LOG(s_logger->debug, 500, "v: {}, i: {}",
+                       (int)temp.new_voltage, (int)temp.new_current);
     }
 }
 

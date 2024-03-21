@@ -82,6 +82,9 @@ public:
     void load_servo_data(Can1IOBoard407ServoData& servo_data);
     void load_adc_info(Can1IOBoard407ADCInfo& adc_info);
 
+    inline bool is_servo_data_new() const { return at_servo_data_is_new_; }
+    inline void clear_servo_data_new_flag() { at_servo_data_is_new_ = false; }
+
 private:
     void _listen_cb(const QCanBusFrame& frame);
 
@@ -89,6 +92,8 @@ private:
     // 用8字节长度的一块内存来存储, 读取时先load拷贝出, 再强制转换
     std::atomic<dummy_8bytes> at_servo_data_;
     std::atomic<dummy_8bytes> at_adc_info_;
+
+    std::atomic_bool at_servo_data_is_new_ {false};
 
 private:
     constexpr static const uint32_t servodata_rxid_ {EDM_CAN_RXID_IOBOARD_SERVODATA};

@@ -126,6 +126,18 @@ SharedCoreData::SharedCoreData(QObject *parent)
     _init_data();
 }
 
+void SharedCoreData::send_ioboard_bz_once() const {
+    power::CanIOBoardCommonMessageStrc ms;
+    ms.message_type =
+        power::CommonMessageType_t::CommomMessageType_BZOnceNotify;
+
+#ifndef EDM_OFFLINE_RUN_NO_CAN
+    QCanBusFrame frame(EDM_CAN_TXID_IOBOARD_COMMONMESSAGE,
+                       QByteArray((const char *)(&ms), 8));
+    can_ctrler_->send_frame(can_device_index_, frame);
+#endif // EDM_OFFLINE_RUN_NO_CAN
+}
+
 void SharedCoreData::customEvent(QEvent *e) {
     auto type = e->type();
 
@@ -198,11 +210,11 @@ void SharedCoreData::_init_data() {
 #ifndef EDM_OFFLINE_RUN_NO_CAN
     // add can device
     const auto &can_device_name = sys_settings_.get_can_device_name();
-    int can_device_index =
+    can_device_index_ =
         can_ctrler_->add_device(QString::fromStdString(can_device_name),
                                 sys_settings_.get_can_device_bitrate());
 
-    if (can_device_index < 0) {
+    if (can_device_index_ < 0) {
         throw exception(
             EDM_FMT::format("add can device failed: {}", can_device_name));
     }
@@ -223,7 +235,7 @@ void SharedCoreData::_init_data() {
     QEventLoop el;
     QTimer t;
     connect(&t, &QTimer::timeout, this, [&]() {
-        if (this->can_ctrler_->is_connected(can_device_index)
+        if (this->can_ctrler_->is_connected(can_device_index_)
 #ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
             && this->can_ctrler_->is_connected(helper_can_device_index)
 #endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
@@ -242,16 +254,16 @@ void SharedCoreData::_init_data() {
 #endif // EDM_OFFLINE_RUN_NO_CAN
 
     io_ctrler_ =
-        std::make_shared<io::IOController>(can_ctrler_, can_device_index);
+        std::make_shared<io::IOController>(can_ctrler_, can_device_index_);
 
     power_ctrler_ = std::make_shared<power::PowerController>(
-        can_ctrler_, io_ctrler_, can_device_index);
+        can_ctrler_, io_ctrler_, can_device_index_);
 
     // init servodata and adcinfo receive-holder
     can_recv_buffer_ =
-        std::make_shared<CanReceiveBuffer>(can_ctrler_, can_device_index);
+        std::make_shared<CanReceiveBuffer>(can_ctrler_, can_device_index_);
 
-    _init_handbox_converter(can_device_index);
+    _init_handbox_converter(can_device_index_);
 
     // init move ...
     motion_signal_queue_ = std::make_shared<move::MotionSignalQueue>();
