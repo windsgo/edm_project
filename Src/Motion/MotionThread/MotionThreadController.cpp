@@ -44,6 +44,9 @@ MotionThreadController::MotionThreadController(
         throw exception("MotionStateMachine create failed");
     }
 
+    latency_averager_ = std::make_shared<util::LongPeroidAverager<int32_t>>(
+        [](int max) { s_logger->warn("latency_averager_ max: {}", max); });
+
     //! 线程最后创建, 在成员变量都初始化完毕后再创建
     if (!_create_thread()) {
         s_logger->critical("Motion Thread Create Failed");
@@ -71,6 +74,110 @@ void *MotionThreadController::_ThreadEntry(void *mtc) {
     s_logger->trace("MotionThreadController _ThreadEntry exit.");
 
     return ret;
+}
+
+#define NSEC_PER_SEC 1000000000
+
+/* add ns to timespec */
+static void add_timespec(struct timespec *ts, int64_t addtime) {
+    int64_t sec, nsec;
+
+    nsec = addtime % NSEC_PER_SEC;
+    sec = (addtime - nsec) / NSEC_PER_SEC;
+    ts->tv_sec += sec;
+    ts->tv_nsec += nsec;
+    if (ts->tv_nsec >= NSEC_PER_SEC) {
+        nsec = ts->tv_nsec % NSEC_PER_SEC;
+        ts->tv_sec += (ts->tv_nsec - nsec) / NSEC_PER_SEC;
+        ts->tv_nsec = nsec;
+    }
+}
+
+/* PI calculation to get linux time synced to DC time */
+static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
+    static int64_t integral = 0;
+    int64_t delta;
+    /* set linux sync point 50us later than DC sync, just as example */
+    delta = (reftime - 50000) % cycletime;
+    if (delta > (cycletime / 2)) {
+        delta = delta - cycletime;
+    }
+    if (delta > 0) {
+        integral++;
+    }
+    if (delta < 0) {
+        integral--;
+    }
+    *offsettime = -(delta / 100) - (integral / 20);
+    //    gl_delta = delta;
+}
+
+static inline int64_t calcdiff_ns(const timespec &t1, const timespec &t2) {
+    int64_t diff = NSEC_PER_SEC * (int64_t)((int)t1.tv_sec - (int)t2.tv_sec);
+    diff += ((int)t1.tv_nsec - (int)t2.tv_nsec);
+    return diff;
+}
+
+void MotionThreadController::_thread_cycle_work() {
+    //! 下一个周期开始的位置
+    // 这一周期理论的周期开始时间: ts
+    // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
+    if (thread_state_ == ThreadState::Running &&
+        ecat_state_ == EcatState::EcatReady) {
+        // 统计时防止上一周期因为在连接而导致时长超时
+        static int i = 0;
+        if (i < 1000) {
+            ++i;
+        } else {
+            struct timespec temp_curr_ts;
+            clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
+            auto t = calcdiff_ns(temp_curr_ts, this->next_);
+            if (t > 0)
+                latency_averager_->push(t);
+        }
+    }
+
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
+    if (ecat_manager_->is_ecat_connected()) {
+        TIMEUSESTAT(ecat_time_statistic_, ecat_manager_->ecat_sync(),
+                    thread_state_ == ThreadState::Running &&
+                        ecat_state_ == EcatState::EcatReady);
+    }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
+
+    switch (thread_state_) {
+    default:
+    case ThreadState::Init:
+        _switch_thread_state(ThreadState::Running);
+        break;
+    case ThreadState::Running: {
+        _threadstate_running();
+
+        if (thread_stop_flag_) {
+            _switch_thread_state(ThreadState::Stopping); //! 准备退出线程
+        }
+        break;
+    }
+    case ThreadState::Stopping: {
+        _threadstate_stopping();
+        break;
+    }
+    case ThreadState::CanExit: {
+        thread_exit_ = true; // 退出循环
+        break;
+    }
+    }
+
+    //! 在最外层 返回info, 以及处理要返回的信号
+
+    // 周期的最后, 处理命令, 处理info cache
+    TIMEUSESTAT(info_time_statistic_,
+                _fetch_command_and_handle_and_copy_info_cache(),
+                thread_state_ == ThreadState::Running &&
+                    ecat_state_ == EcatState::EcatReady)
+
+    // handle signal and clear signal buffer
+    _handle_signal();
 }
 
 bool MotionThreadController::_create_thread() {
@@ -155,59 +262,14 @@ bool MotionThreadController::_create_thread() {
     return true;
 }
 
-#define NSEC_PER_SEC 1000000000
-
-/* add ns to timespec */
-static void add_timespec(struct timespec *ts, int64_t addtime) {
-    int64_t sec, nsec;
-
-    nsec = addtime % NSEC_PER_SEC;
-    sec = (addtime - nsec) / NSEC_PER_SEC;
-    ts->tv_sec += sec;
-    ts->tv_nsec += nsec;
-    if (ts->tv_nsec > NSEC_PER_SEC) {
-        nsec = ts->tv_nsec % NSEC_PER_SEC;
-        ts->tv_sec += (ts->tv_nsec - nsec) / NSEC_PER_SEC;
-        ts->tv_nsec = nsec;
-    }
-}
-
-/* PI calculation to get linux time synced to DC time */
-static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
-    static int64_t integral = 0;
-    int64_t delta;
-    /* set linux sync point 50us later than DC sync, just as example */
-    delta = (reftime - 50000) % cycletime;
-    if (delta > (cycletime / 2)) {
-        delta = delta - cycletime;
-    }
-    if (delta > 0) {
-        integral++;
-    }
-    if (delta < 0) {
-        integral--;
-    }
-    *offsettime = -(delta / 100) - (integral / 20);
-    //    gl_delta = delta;
-}
-
-static inline int64_t calcdiff_ns(const timespec &t1, const timespec &t2) {
-    int64_t diff;
-    diff = NSEC_PER_SEC * (int64_t)((int)t1.tv_sec - (int)t2.tv_sec);
-    diff += ((int)t1.tv_nsec - (int)t2.tv_nsec);
-    return diff;
-}
-
 void *MotionThreadController::_run() {
 
-    struct timespec ts, tleft;
+    clock_gettime(CLOCK_MONOTONIC, &next_);
+    int ht = (next_.tv_nsec / 1000000) + 1; /* round to nearest ms */
+    next_.tv_nsec = ht * 1000000;
 
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    int ht = (ts.tv_nsec / 1000000) + 1; /* round to nearest ms */
-    ts.tv_nsec = ht * 1000000;
+    while (!thread_exit_) {
 
-    bool thread_exit = false;
-    while (!thread_exit) {
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
         if (!ecat_manager_->is_ecat_connected()) {
             toff_ = 0; // 未连接, toff是不对的值
@@ -215,75 +277,14 @@ void *MotionThreadController::_run() {
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
         /* calculate next cycle start */
-        add_timespec(&ts, cycletime_ns_ + toff_);
+        add_timespec(&next_, cycletime_ns_ + toff_);
 
         /* wait to cycle start */
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &tleft);
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_, &tleft_);
 
-        //! 下一个周期开始的位置
-        // 这一周期理论的周期开始时间: ts
-        // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
-        if (thread_state_ == ThreadState::Running && ecat_state_ == EcatState::EcatReady) {
-            struct timespec temp_curr_ts;
-            clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
-            current_cycle_starttime_latency_ns_ = calcdiff_ns(temp_curr_ts, ts);
-            if (current_cycle_starttime_latency_ns_ < 0)
-                current_cycle_starttime_latency_ns_ =
-                    0 - current_cycle_starttime_latency_ns_;
-            if (current_cycle_starttime_latency_ns_ > max_latency_ns_) {
-                max_latency_ns_ = current_cycle_starttime_latency_ns_;
-                s_logger->warn("max latency: {}", max_latency_ns_);
-            }
-            if (min_latency_ns_ < 0) {
-                min_latency_ns_ = current_cycle_starttime_latency_ns_;
-            } else [[likely]] {
-                if (current_cycle_starttime_latency_ns_ < min_latency_ns_) {
-                    min_latency_ns_ = current_cycle_starttime_latency_ns_;
-                }
-            }
-            ++cycle_count_; // 当前的latency数据个数
-            avg_latency_ns_ = (double)(cycle_count_ - 1) /
-                                  ((double)cycle_count_) * avg_latency_ns_ +
-                              (double)current_cycle_starttime_latency_ns_ /
-                                  ((double)cycle_count_);
-        }
-
-#ifndef EDM_OFFLINE_RUN_NO_ECAT
-        if (ecat_manager_->is_ecat_connected()) {
-            ecat_manager_->ecat_sync();
-        }
-#endif // EDM_OFFLINE_RUN_NO_ECAT
-
-        switch (thread_state_) {
-        default:
-        case ThreadState::Init:
-            _switch_thread_state(ThreadState::Running);
-            break;
-        case ThreadState::Running: {
-            _threadstate_running();
-
-            if (thread_stop_flag_) {
-                _switch_thread_state(ThreadState::Stopping); //! 准备退出线程
-            }
-            break;
-        }
-        case ThreadState::Stopping: {
-            _threadstate_stopping();
-            break;
-        }
-        case ThreadState::CanExit: {
-            thread_exit = true; // 退出循环
-            break;
-        }
-        }
-
-        //! 在最外层 返回info, 以及处理要返回的信号
-
-        // 周期的最后, 处理命令, 处理info cache
-        _fetch_command_and_handle_and_copy_info_cache();
-
-        // handle signal and clear signal buffer
-        _handle_signal();
+        TIMEUSESTAT(total_time_statistic_, _thread_cycle_work(),
+                    thread_state_ == ThreadState::Running &&
+                        ecat_state_ == EcatState::EcatReady);
     }
 
     return NULL;
@@ -403,7 +404,8 @@ void MotionThreadController::_threadstate_running() {
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
         // StateMachine Operate Cycle
-        motion_state_machine_->run_once();
+        TIMEUSESTAT(statemachine_time_statistic_,
+                    motion_state_machine_->run_once(), true);
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
         // set to motor axis
@@ -656,10 +658,24 @@ void MotionThreadController::_copy_info_cache() {
     info_cache_.main_mode = motion_state_machine_->main_mode();
     info_cache_.auto_state = motion_state_machine_->auto_state();
 
-    info_cache_.latency_data.curr_latency = current_cycle_starttime_latency_ns_;
-    info_cache_.latency_data.avg_latency = avg_latency_ns_;
-    info_cache_.latency_data.max_latency = max_latency_ns_;
-    info_cache_.latency_data.min_latency = min_latency_ns_;
+    // info_cache_.latency_data.curr_latency =
+    // current_cycle_starttime_latency_ns_; info_cache_.latency_data.avg_latency
+    // = avg_latency_ns_; info_cache_.latency_data.max_latency =
+    // max_latency_ns_; info_cache_.latency_data.min_latency = min_latency_ns_;
+
+    info_cache_.latency_data.curr_latency = latency_averager_->latest();
+    info_cache_.latency_data.avg_latency = latency_averager_->average();
+    info_cache_.latency_data.max_latency = latency_averager_->max();
+    info_cache_.latency_data.min_latency = latency_averager_->min();
+
+    info_cache_.time_use_data.total_time_use_avg =
+        TIMEUSESTAT_AVG(total_time_statistic_);
+    info_cache_.time_use_data.info_time_use_avg =
+        TIMEUSESTAT_AVG(info_time_statistic_);
+    info_cache_.time_use_data.ecat_time_use_avg =
+        TIMEUSESTAT_AVG(ecat_time_statistic_);
+    info_cache_.time_use_data.statemachine_time_use_avg =
+        TIMEUSESTAT_AVG(statemachine_time_statistic_);
 
     // bit_state1
     info_cache_.bit_state1 = 0;

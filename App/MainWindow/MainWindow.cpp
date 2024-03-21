@@ -18,12 +18,26 @@ MainWindow::MainWindow(QWidget *parent)
 
     test_latency_timer_ = new QTimer(this);
     connect(test_latency_timer_, &QTimer::timeout, this, [this]() {
-        const auto& i = this->shared_core_data_->get_info_dispatcher()->get_info();
+        const auto &i =
+            this->shared_core_data_->get_info_dispatcher()->get_info();
 
-        ui->le_test_latency_curr->setText(QString::number(i.latency_data.curr_latency));
-        ui->le_test_latency_min->setText(QString::number(i.latency_data.min_latency));
-        ui->le_test_latency_avg->setText(QString::number(i.latency_data.avg_latency));
-        ui->le_test_latency_max->setText(QString::number(i.latency_data.max_latency));
+        ui->le_test_latency_curr->setText(
+            QString::number(i.latency_data.curr_latency));
+        ui->le_test_latency_min->setText(
+            QString::number(i.latency_data.min_latency));
+        ui->le_test_latency_avg->setText(
+            QString::number(i.latency_data.avg_latency));
+        ui->le_test_latency_max->setText(
+            QString::number(i.latency_data.max_latency));
+
+        ui->le_timeuse_ecatavg->setText(
+            QString::number(i.time_use_data.ecat_time_use_avg));
+        ui->le_timeuse_infoavg->setText(
+            QString::number(i.time_use_data.info_time_use_avg));
+        ui->le_timeuse_smavg->setText(
+            QString::number(i.time_use_data.statemachine_time_use_avg));
+        ui->le_timeuse_totalavg->setText(
+            QString::number(i.time_use_data.total_time_use_avg));
     });
     test_latency_timer_->start(200);
 }

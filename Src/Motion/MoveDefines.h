@@ -69,6 +69,13 @@ struct MotionInfo {
         int avg_latency{};
     } latency_data;
 
+    struct TimeUseData {
+        int total_time_use_avg{};
+        int info_time_use_avg{};
+        int ecat_time_use_avg{};
+        int statemachine_time_use_avg{};
+    } time_use_data;
+
     //! see `enum MotionInfoBitState1`
     uint32_t bit_state1{0};
 

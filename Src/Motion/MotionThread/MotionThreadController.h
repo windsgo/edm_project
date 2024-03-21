@@ -9,6 +9,9 @@
 
 #include "Motion/TouchDetectHandler/TouchDetectHandler.h"
 
+#include "Utils/Filters/LongPeroidAverager/LongPeroidAverager.h"
+#include "Utils/Time/TimeUseStatistic.h"
+
 // C Headers
 #include <fcntl.h>
 #include <limits.h>
@@ -61,6 +64,8 @@ private: // Thread
     // pass this function ptr to thread controller
     // mtc is `MotionThreadController*` type
     static void *_ThreadEntry(void *mtc);
+
+    void _thread_cycle_work();
 
     // the actual thread entry of `MotionThreadController`
     void *_run();
@@ -141,20 +146,23 @@ private: // Data
 
     // Thread 相关
     pthread_t thread_;
+    bool thread_exit_ = false;
     std::atomic_bool thread_stop_flag_{false}; // 用于指示线程退出
     const int64_t cycletime_ns_{EDM_SERVO_PEROID_NS}; // 周期(ns)
     int64_t toff_{0}; // 每周期cycletime的修正量(ns) (基于DC同步)
+
+    struct timespec next_, tleft_;
 
     const int32_t latency_target_value_{0}; // 消除系统时钟偏移(禁止电源休眠)
 
 private:
     // Thread周期相关测试数据
-    // 启动线程后记录每次周期开始时的ns数
-    int32_t current_cycle_starttime_latency_ns_ {0}; // 当前周期的latency(开始时间), 缓存记录下来
-    int32_t min_latency_ns_ {-1}; // 目前为止最小的latency
-    int32_t max_latency_ns_ {0}; // 目前为止最大的latency
-    int32_t avg_latency_ns_ {0}; // 目前为止的平均latency
-    int64_t cycle_count_ {0}; // 用于计数, 并迭代计算平均latency用
+    util::LongPeroidAverager<int32_t>::ptr latency_averager_;
+
+    util::TimeUseStatistic total_time_statistic_;
+    util::TimeUseStatistic ecat_time_statistic_;
+    util::TimeUseStatistic info_time_statistic_;
+    util::TimeUseStatistic statemachine_time_statistic_;
 
 private: // 运动状态机
     MotionStateMachine::ptr motion_state_machine_;

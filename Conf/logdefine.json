@@ -14,7 +14,7 @@
             "sinks": [
                 {
                     "type": "file",
-                    "level": "trace",
+                    "level": "info",
                     "filename": "motion.log",
                     "multi_thread": false,
                     "max_size": 10485760,
@@ -58,7 +58,7 @@
             "sinks": [
                 {
                     "type": "file",
-                    "level": "debug",
+                    "level": "info",
                     "filename": "interp.log",
                     "multi_thread": false,
                     "max_size": 10485760,
@@ -67,7 +67,7 @@
                 },
                 {
                     "type": "stdout",
-                    "level": "trace",
+                    "level": "info",
                     "multi_thread": false
                 }
             ]

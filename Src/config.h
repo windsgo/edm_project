@@ -16,7 +16,7 @@
 #define EDM_BLU_PER_UM                            10 // blu定义, 1blu为0.1um, 1um为10个blu
 
 // 运动周期
-#define EDM_SERVO_PEROID_US                       2000 // 1000 us 周期
+#define EDM_SERVO_PEROID_US                       1000 // 1000 us 周期
 #define EDM_SERVO_PEROID_NS                       (EDM_SERVO_PEROID_US * 1000) // 1000,000 ns 周期
 #define EDM_SERVO_PEROID_MS                       ((double)EDM_SERVO_PEROID_US / 1000.0)
 #define EDM_SERVO_PEROID_MS_PER_PEROID            (EDM_SERVO_PEROID_MS)
@@ -63,6 +63,9 @@
 
 // 不合理的coord config 抛出异常, 而不是自动使用默认
 #define EDM_INVALID_COORD_CONFIG_THROW
+
+// 使能时间统计
+#define EDM_ENABLE_TIMEUSE_STAT
 
 // OFFLINE DEFINE
 #define EDM_OFFLINE_RUN
