@@ -1,15 +1,16 @@
 i = RS274Interpreter()
 
-i.g55()
-i.g90()
-i.f(3000)
-i.g00(x=0,y=.0,z=0)
+i.g54()
+i.g91()
 i.f(200)
 # i.set_coord(60)
 for j in range(10):
-    i.g00(x=3).g04(0.3).g00(x=0).g04(0.3)
+    i.g00(x=1)
+    i.g04(0.1)
+    i.g00(x=-1)
+    i.g04(0.1)
 
 i.m00()
 
-i.g00(x=100, z=100, m05=False)
+i.g00(x=100, z=100, m05=True)
 i.m02()

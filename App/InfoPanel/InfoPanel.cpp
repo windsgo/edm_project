@@ -27,7 +27,7 @@ void InfoPanel::_update_info(const move::MotionInfo &info) {
 
 void InfoPanel::_do_update_ui_by_info(const move::MotionInfo &info) {
     ui->pb_display_ecat_connected->setChecked(info.EcatConnected());
-    ui->pb_display_ecat_enabled->setChecked(info.EcatConnected());
+    ui->pb_display_ecat_enabled->setChecked(info.EcatAllEnabled());
 
     ui->pb_display_touch_enabled->setChecked(info.TouchDetectEnabled());
     ui->pb_display_touch_detected->setChecked(info.TouchDetected());

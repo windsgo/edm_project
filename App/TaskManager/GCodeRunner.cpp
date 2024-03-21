@@ -51,6 +51,7 @@ bool GCodeRunner::pause() {
     auto curr_gcode = gcode_list_[curr_gcode_num_];
 
     switch (state_) {
+    case State::WaitingForResumed:
     case State::Running: {
         if (!curr_gcode->is_motion_task()) {
             // 本地运行的task, 直接暂停在本地
@@ -67,6 +68,7 @@ bool GCodeRunner::pause() {
             return true;
         }
     }
+
     case State::WaitingForPaused:
     case State::Paused:
         return true;
@@ -103,6 +105,8 @@ bool GCodeRunner::resume() {
             return true;
         }
     }
+    case State::WaitingForResumed:
+        return true;
     case State::CurrentNodeIniting:
     case State::Running:
     case State::WaitingForPaused:
@@ -122,6 +126,7 @@ bool GCodeRunner::stop() {
     auto curr_gcode = gcode_list_[curr_gcode_num_];
 
     switch (state_) {
+    case State::WaitingForResumed:
     case State::Paused:
     case State::Running: {
         if (!curr_gcode->is_motion_task()) {
@@ -780,7 +785,10 @@ void GCodeRunner::_switch_to_state(State new_state) {
 
     auto f_should_fast_peroid = [&]() -> bool {
         if (new_state == State::CurrentNodeIniting ||
-            new_state == State::ReadyToStart) {
+            new_state == State::ReadyToStart ||
+            new_state == State::WaitingForPaused ||
+            new_state == State::WaitingForResumed ||
+            new_state == State::WaitingForStopped) {
             return true;
         }
 

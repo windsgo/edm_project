@@ -11,7 +11,7 @@
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
-constexpr static const int s_statusbar_timeout = 5000;
+constexpr static const int s_statusbar_timeout = 10000;
 
 namespace edm {
 namespace app {

@@ -15,6 +15,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     _init_members();
     _init_status_bar_palette_and_connection();
+
+    test_latency_timer_ = new QTimer(this);
+    connect(test_latency_timer_, &QTimer::timeout, this, [this]() {
+        const auto& i = this->shared_core_data_->get_info_dispatcher()->get_info();
+
+        ui->le_test_latency_curr->setText(QString::number(i.latency_data.curr_latency));
+        ui->le_test_latency_min->setText(QString::number(i.latency_data.min_latency));
+        ui->le_test_latency_avg->setText(QString::number(i.latency_data.avg_latency));
+        ui->le_test_latency_max->setText(QString::number(i.latency_data.max_latency));
+    });
+    test_latency_timer_->start(200);
 }
 
 MainWindow::~MainWindow() {

@@ -280,7 +280,7 @@ void SharedCoreData::_init_data() {
 
     // init info dispatcher
     info_dispatcher_ = new InfoDispatcher(motion_signal_queue_,
-                                          motion_thread_ctrler_, this, 20);
+                                          motion_thread_ctrler_, this, 25);
 
     // init power manager
     power_manager_ = new PowerManager(io_ctrler_, power_ctrler_, 1000, this);

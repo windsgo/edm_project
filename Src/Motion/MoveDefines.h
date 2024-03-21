@@ -62,6 +62,13 @@ struct MotionInfo {
     MotionMainMode main_mode{MotionMainMode::Idle};       // 当前主模式
     MotionAutoState auto_state{MotionAutoState::Stopped}; // auto模式下的state
 
+    struct LatencyData {
+        int curr_latency{};
+        int min_latency{};
+        int max_latency{};
+        int avg_latency{};
+    } latency_data;
+
     //! see `enum MotionInfoBitState1`
     uint32_t bit_state1{0};
 

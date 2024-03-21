@@ -191,6 +191,13 @@ static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
     //    gl_delta = delta;
 }
 
+static inline int64_t calcdiff_ns(const timespec &t1, const timespec &t2) {
+    int64_t diff;
+    diff = NSEC_PER_SEC * (int64_t)((int)t1.tv_sec - (int)t2.tv_sec);
+    diff += ((int)t1.tv_nsec - (int)t2.tv_nsec);
+    return diff;
+}
+
 void *MotionThreadController::_run() {
 
     struct timespec ts, tleft;
@@ -214,6 +221,32 @@ void *MotionThreadController::_run() {
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &tleft);
 
         //! 下一个周期开始的位置
+        // 这一周期理论的周期开始时间: ts
+        // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
+        if (thread_state_ == ThreadState::Running && ecat_state_ == EcatState::EcatReady) {
+            struct timespec temp_curr_ts;
+            clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
+            current_cycle_starttime_latency_ns_ = calcdiff_ns(temp_curr_ts, ts);
+            if (current_cycle_starttime_latency_ns_ < 0)
+                current_cycle_starttime_latency_ns_ =
+                    0 - current_cycle_starttime_latency_ns_;
+            if (current_cycle_starttime_latency_ns_ > max_latency_ns_) {
+                max_latency_ns_ = current_cycle_starttime_latency_ns_;
+                s_logger->warn("max latency: {}", max_latency_ns_);
+            }
+            if (min_latency_ns_ < 0) {
+                min_latency_ns_ = current_cycle_starttime_latency_ns_;
+            } else [[likely]] {
+                if (current_cycle_starttime_latency_ns_ < min_latency_ns_) {
+                    min_latency_ns_ = current_cycle_starttime_latency_ns_;
+                }
+            }
+            ++cycle_count_; // 当前的latency数据个数
+            avg_latency_ns_ = (double)(cycle_count_ - 1) /
+                                  ((double)cycle_count_) * avg_latency_ns_ +
+                              (double)current_cycle_starttime_latency_ns_ /
+                                  ((double)cycle_count_);
+        }
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
         if (ecat_manager_->is_ecat_connected()) {
@@ -268,7 +301,7 @@ void MotionThreadController::_threadstate_stopping() {
     }
 
     if (!ecat_manager_->is_ecat_connected()) {
-        ecat_manager_->disconnect_ecat();
+        // ecat_manager_->disconnect_ecat();
         _switch_thread_state(ThreadState::CanExit);
         return;
     }
@@ -622,6 +655,11 @@ void MotionThreadController::_copy_info_cache() {
 
     info_cache_.main_mode = motion_state_machine_->main_mode();
     info_cache_.auto_state = motion_state_machine_->auto_state();
+
+    info_cache_.latency_data.curr_latency = current_cycle_starttime_latency_ns_;
+    info_cache_.latency_data.avg_latency = avg_latency_ns_;
+    info_cache_.latency_data.max_latency = max_latency_ns_;
+    info_cache_.latency_data.min_latency = min_latency_ns_;
 
     // bit_state1
     info_cache_.bit_state1 = 0;

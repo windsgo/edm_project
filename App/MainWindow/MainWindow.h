@@ -64,7 +64,10 @@ private:
     GCodePanel* gcode_panel_;
     TestPanel* test_panel_;
 
+private:
     CodeEditor* test_codeeditor_;
+
+    QTimer* test_latency_timer_;
 
 private: // default palette of status bar, for message show
     QPalette status_bar_info_palette_;

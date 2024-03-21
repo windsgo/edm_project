@@ -7,7 +7,7 @@
 
 #include "Logger/LogMacro.h"
 
-constexpr static const int s_statusbar_timeout = 5000;
+constexpr static const int s_statusbar_timeout = 10000;
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -390,6 +390,10 @@ void GCodePanel::_slot_pause() {
 
 void GCodePanel::_slot_resume() {
     auto ret = task_manager_->operation_gcode_resume();
+
+    if (ret) {
+        _set_machining_ui_resumed();
+    }
 
     if (!ret) {
         QMessageBox::critical(this, "Resume Failed",

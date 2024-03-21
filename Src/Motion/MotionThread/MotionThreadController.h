@@ -147,9 +147,14 @@ private: // Data
 
     const int32_t latency_target_value_{0}; // 消除系统时钟偏移(禁止电源休眠)
 
-private: 
-    // TODO 将伺服指令获取方式改为获取本地暂存值, 方便判断是否是最新值,
-    // 相应的设置伺服指令方式改为外部设置进来
+private:
+    // Thread周期相关测试数据
+    // 启动线程后记录每次周期开始时的ns数
+    int32_t current_cycle_starttime_latency_ns_ {0}; // 当前周期的latency(开始时间), 缓存记录下来
+    int32_t min_latency_ns_ {-1}; // 目前为止最小的latency
+    int32_t max_latency_ns_ {0}; // 目前为止最大的latency
+    int32_t avg_latency_ns_ {0}; // 目前为止的平均latency
+    int64_t cycle_count_ {0}; // 用于计数, 并迭代计算平均latency用
 
 private: // 运动状态机
     MotionStateMachine::ptr motion_state_machine_;

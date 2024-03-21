@@ -9,10 +9,10 @@
         "ecat_iomap_size": 4096
     },
     "fast_move_param": {
-        "max_acc_um_s2": 500000,
-        "nacc_ms": 60,
-        "speed_0_um_s": 33000,
-        "speed_1_um_s": 6600,
+        "max_acc_um_s2": 300000,
+        "nacc_ms": 100,
+        "speed_0_um_s": 3000,
+        "speed_1_um_s": 1000,
         "speed_2_um_s": 330,
         "speed_3_um_s": 16
     },
