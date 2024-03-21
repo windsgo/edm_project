@@ -4,7 +4,7 @@
 #define EDM_SYSTEM_SETTINGS_CONFIG_FILE EDM_CONFIG_DIR "system.json"
 
 // 坐标轴(=驱动器)数目
-#define EDM_SERVO_NUM                   1
+#define EDM_SERVO_NUM                   3
 #define EDM_AXIS_NUM                    EDM_SERVO_NUM
 
 #define EDM_AXIS_MAX_NUM                6 // const, 最多6轴
@@ -72,7 +72,7 @@
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
-// #define EDM_OFFLINE_RUN_NO_ECAT // 离线不连接ecat, 不发送ecat指令
+#define EDM_OFFLINE_RUN_NO_ECAT // 离线不连接ecat, 不发送ecat指令
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
 #ifndef EDM_OFFLINE_RUN_NO_CAN
@@ -80,7 +80,7 @@
 #endif                         // EDM_OFFLINE_RUN_NO_CAN
 
 // 离线测试时, 连接两个CAN设备, 用于保持正常的can通信链路
-#define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+// #define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
 
 #ifndef EDM_OFFLINE_MANUAL_TOUCH_DETECT
 #define EDM_OFFLINE_MANUAL_TOUCH_DETECT // 离线手动按钮标志接触感知

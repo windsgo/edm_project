@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
             QString::number(i.time_use_data.statemachine_time_use_avg));
         ui->le_timeuse_totalavg->setText(
             QString::number(i.time_use_data.total_time_use_avg));
+            
     });
     test_latency_timer_->start(200);
 }
