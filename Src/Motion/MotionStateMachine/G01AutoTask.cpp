@@ -566,9 +566,12 @@ bool G01AutoTask::_check_and_validate_jump_height() {
     }
 
     // 缓冲距离判定, 缓冲距离不能超过当前段已走的长度
-    if (jumping_param_.buffer_blu >
-        this->line_traj_->curr_length() - util::UnitConverter::um2blu(10)) {
-        return false;
+    // if (jumping_param_.buffer_blu >
+    //     this->line_traj_->curr_length() - util::UnitConverter::um2blu(10)) {
+    //     return false;
+    // }
+    if (jumping_param_.buffer_blu > this->line_traj_->curr_length()) {
+        jumping_param_.buffer_blu = this->line_traj_->curr_length();
     }
 
     // 缓冲量太大, 接近抬刀长度了
