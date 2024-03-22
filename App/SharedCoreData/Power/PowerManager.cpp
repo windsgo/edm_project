@@ -93,7 +93,7 @@ bool PowerManager::set_current_eleparam(const power::EleParam_dkd_t &eleparam) {
     jp.speed_param.entry_v = 0;
     jp.speed_param.exit_v = 0;
     jp.speed_param.nacc = util::UnitConverter::ms2p(sys_conf_jp.nacc_ms);
-    jp.speed_param.entry_v = _get_speed_blu_s_from_js(eleparam.jump_js);
+    jp.speed_param.cruise_v = _get_speed_blu_s_from_js(eleparam.jump_js);
 
     auto cmd = std::make_shared<move::MotionCommandSettingSetJumpParam>(jp);
     motion_cmd_queue_->push_command(cmd);
