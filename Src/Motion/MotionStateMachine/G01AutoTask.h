@@ -25,7 +25,8 @@ public:
                 const std::function<bool(axis_t &)> &cb_get_real_axis,
                 const std::function<unit_t(void)> &cb_get_servo_cmd,
                 const std::function<void(JumpParam &)> &cb_get_jump_param,
-                const std::function<void(bool)> &cb_enable_votalge_gate);
+                const std::function<void(bool)> &cb_enable_votalge_gate,
+                const std::function<void(bool)> &cb_mach_on);
 
     bool pause() override;
     bool resume() override;
@@ -166,6 +167,9 @@ private:
 
     // 抬刀操作电压位回调
     std::function<void(bool)> cb_enable_votalge_gate_;
+
+    // 高频使能回调 (做在Motion内部更方便, 更好是做在外面, 但是判断复杂)
+    std::function<void(bool)> cb_mach_on_;
 };
 
 } // namespace move

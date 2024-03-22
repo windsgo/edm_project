@@ -41,6 +41,7 @@ public:
         const std::function<void(bool)> &cb_enable_voltage_gate,
         const std::function<double(void)> &cb_get_servo_cmd,
         const std::function<bool(void)> &cb_get_touch_physical_detected,
+        const std::function<void(bool)> &cb_mach_on,
         uint32_t iomap_size, uint32_t servo_num, uint32_t io_num = 0);
     ~MotionThreadController();
 
@@ -185,6 +186,9 @@ private: // 外部的一些回调
     // 抬刀使能电源位, 该函数应当创建一个操作PowerController的命令,
     // 并push入全局命令列表执行
     std::function<void(bool)> cb_enable_votalge_gate_; // TODO, 外部传入初始化
+
+    // 高频操作回调
+    std::function<void(bool)> cb_mach_on_;
 
     // 获取伺服指令, 该函数应当返回当前可用的伺服指令, 尽量避免锁, 使用原子量
     std::function<double(void)> cb_get_servo_cmd_; // TODO, 外部传入初始化

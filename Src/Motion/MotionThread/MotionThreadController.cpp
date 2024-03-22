@@ -15,13 +15,15 @@ MotionThreadController::MotionThreadController(
     const std::function<void(bool)> &cb_enable_voltage_gate,
     const std::function<double(void)> &cb_get_servo_cmd,
     const std::function<bool(void)> &cb_get_touch_physical_detected,
-    uint32_t iomap_size, uint32_t servo_num, uint32_t io_num)
+    const std::function<void(bool)> &cb_mach_on, uint32_t iomap_size,
+    uint32_t servo_num, uint32_t io_num)
     : motion_cmd_queue_(motion_cmd_queue),
       motion_signal_queue_(motion_signal_queue),
       cb_enable_votalge_gate_(cb_enable_voltage_gate),
       cb_get_servo_cmd_(cb_get_servo_cmd),
-      cb_get_touch_physical_detected_(cb_get_touch_physical_detected) {
-    //! 需要注意的是, 构造函数中的代码允许在Caller线程, 不运行在新的线程
+      cb_get_touch_physical_detected_(cb_get_touch_physical_detected),
+      cb_mach_on_(cb_mach_on) {
+    //! 需要注意的是, 构造函数中的代码运行在Caller线程, 不运行在新的线程
     //! 所以线程要最后创建, 防止数据竞争, 和使用未初始化成员变量的问题
 
     ecat_manager_ = std::make_shared<ecat::EcatManager>(ifname, iomap_size,
@@ -40,7 +42,7 @@ MotionThreadController::MotionThreadController(
         std::make_shared<TouchDetectHandler>(cb_get_touch_physical_detected_);
     motion_state_machine_ = std::make_shared<MotionStateMachine>(
         get_act_pos_cb, touch_detect_handler_, signal_buffer_,
-        cb_get_servo_cmd_, cb_enable_votalge_gate_);
+        cb_get_servo_cmd_, cb_enable_votalge_gate_, cb_mach_on_);
     if (!motion_state_machine_) {
         s_logger->critical("MotionStateMachine create failed");
         throw exception("MotionStateMachine create failed");

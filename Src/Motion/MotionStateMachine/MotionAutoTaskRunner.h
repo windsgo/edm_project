@@ -55,6 +55,9 @@ public:
     // 当前状态机状态
     auto state() const { return state_; }
 
+    // 用于判断当前是否是暂停点动的各状态还是正常AutoTask的各状态
+    auto domin_state() const { return domin_state_; }
+
     const auto& get_curr_cmd_axis() const { return curr_cmd_axis_; }
 
 private:
@@ -71,7 +74,7 @@ private:
 
     void _dominated_state_pmrecovering_run_once();
 
-private:
+public:
     // 主导状态, 描述当前的Auto状态描述的行为
     enum class DominatedState {
         //! 暂停点动的手动点动部分描述为 AutoTaskRunning中的 Paused状态
@@ -85,7 +88,9 @@ private:
         // 5. Stopping: 恢复中被停止, 停止中, 停止完成后转移至AutoTaskRunning的Stopped
     };
 
+private:
     void _dominated_state_switch_to(DominatedState new_domin_state);
+
 public:
     static const char* GetAutoStateStr(MotionAutoState state);
     static const char* GetDominStateStr(DominatedState domin_state);

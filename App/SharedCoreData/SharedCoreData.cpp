@@ -26,6 +26,19 @@ private:
     bool voltage_enable_;
 };
 
+class MotionEventMachOn : public QEvent {
+public:
+    MotionEventMachOn(bool mach_on)
+        : QEvent(type), mach_on_(mach_on) {}
+    constexpr static const QEvent::Type type =
+        QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_MotionMachOn);
+
+    auto mach_on() const { return mach_on_; }
+
+private:
+    bool mach_on_;
+};
+
 class HandBoxEventStartPointMove : public QEvent {
 public:
     HandBoxEventStartPointMove(const move::axis_t &dir, uint32_t speed_level,
@@ -192,6 +205,15 @@ void SharedCoreData::customEvent(QEvent *e) {
         break;
     };
 
+    case MotionEventMachOn::type: {
+        auto mach_on_event = static_cast<MotionEventMachOn *>(e);
+        this->power_manager_->set_highpower_on(
+            mach_on_event->mach_on());
+        this->power_ctrler_->update_eleparam_and_send();
+        e->accept();
+        break;
+    }
+
     default:
         break;
     }
@@ -276,8 +298,8 @@ void SharedCoreData::_init_data() {
     motion_thread_ctrler_ = std::make_shared<move::MotionThreadController>(
         sys_settings_.get_ecat_netif_name(), motion_cmd_queue_,
         motion_signal_queue_, cb_enable_votalge_gate_, cb_get_servo_cmd_,
-        cb_get_touch_physical_detected_, sys_settings_.get_ecat_iomap_size(),
-        EDM_SERVO_NUM);
+        cb_get_touch_physical_detected_, cb_mach_on_,
+        sys_settings_.get_ecat_iomap_size(), EDM_SERVO_NUM);
 
     // init info dispatcher
     info_dispatcher_ =
@@ -391,6 +413,18 @@ void SharedCoreData::_init_motionthread_cb() {
             [this](bool _enable) {
                 QCoreApplication::postEvent(
                     this, new MotionEventVoltageEnable(_enable));
+            },
+            arg);
+
+        // thread safe call
+        this->global_cmd_queue_->push_command(run_cmd);
+    };
+
+    cb_mach_on_ = [this](bool arg) -> void {
+        auto run_cmd = global::CommandCommonFunctionFactory::bind(
+            [this](bool _mach_on) {
+                QCoreApplication::postEvent(
+                    this, new MotionEventMachOn(_mach_on));
             },
             arg);
 

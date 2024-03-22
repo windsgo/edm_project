@@ -123,6 +123,7 @@ private:
     std::function<bool(void)> cb_get_touch_physical_detected_;
     std::function<double(void)> cb_get_servo_cmd_;
     std::function<void(bool)> cb_enable_votalge_gate_;
+    std::function<void(bool)> cb_mach_on_;
 
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
     std::atomic_bool manual_touch_detect_flag_{false};

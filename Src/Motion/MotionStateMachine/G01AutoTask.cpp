@@ -13,13 +13,14 @@ G01AutoTask::G01AutoTask(
     const std::function<bool(axis_t &)> &cb_get_real_axis,
     const std::function<unit_t(void)> &cb_get_servo_cmd,
     const std::function<void(JumpParam &)> &cb_get_jump_param,
-    const std::function<void(bool)> &cb_enable_votalge_gate)
+    const std::function<void(bool)> &cb_enable_votalge_gate,
+    const std::function<void(bool)> &cb_mach_on)
     : AutoTask(AutoTaskType::G01, line_traj->start_pos()),
       line_traj_(line_traj),
       max_jump_height_from_begin_(max_jump_height_from_begin),
       cb_get_real_axis_(cb_get_real_axis), cb_get_servo_cmd_(cb_get_servo_cmd),
       cb_get_jump_param_(cb_get_jump_param),
-      cb_enable_votalge_gate_(cb_enable_votalge_gate) {
+      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on) {
 
     assert(line_traj_->at_start());
 
@@ -35,6 +36,7 @@ G01AutoTask::G01AutoTask(
 
     // 使能电压gate
     cb_enable_votalge_gate_(true);
+    cb_mach_on_(true);
 }
 
 bool G01AutoTask::pause() {
@@ -263,6 +265,8 @@ void G01AutoTask::_state_resuming() {
         if (!back_to_begin_when_pause_) {
             // 重置抬刀计时
             last_jump_end_time_ms_ = GetCurrentTimeMs();
+            cb_enable_votalge_gate_(true);
+            cb_mach_on_(true);
             _state_changeto(State::NormalRunning);
             assert(servo_sub_state_ == ServoSubState::Servoing);
             break;
@@ -272,6 +276,8 @@ void G01AutoTask::_state_resuming() {
         // Currently direct change to paused, do nothing
         assert(false); // should not be here
         last_jump_end_time_ms_ = GetCurrentTimeMs();
+        cb_enable_votalge_gate_(true);
+        cb_mach_on_(true);
         _state_changeto(State::NormalRunning);
         break;
     default:
@@ -298,6 +304,8 @@ void G01AutoTask::_state_pausing_or_stopping(State target_state) {
         case ServoSubState::Servoing: {
             // if is servoing, then go to next pause and stop state
             _pauseorstop_substate_changeto(PauseOrStopSubState::BackingToBegin);
+
+            cb_mach_on_(false);
             break;
         }
         case ServoSubState::JumpUping:
@@ -380,7 +388,8 @@ void G01AutoTask::_servo_substate_jumpuping() {
         s_logger->debug("jump up over: ltcurr-z: "
                         "{}, curr-z: {}, curr-length: {}, _tmp: {}",
                         this->line_traj_->curr_pos()[2],
-                        this->curr_cmd_axis_[2], line_traj_->curr_length(), _tmp);
+                        this->curr_cmd_axis_[2], line_traj_->curr_length(),
+                        _tmp);
         _tmp = 0;
     }
 }

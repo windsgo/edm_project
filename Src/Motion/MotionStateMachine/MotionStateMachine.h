@@ -34,7 +34,8 @@ public:
                        TouchDetectHandler::ptr touch_detect_handler,
                        SignalBuffer::ptr signal_buffer,
                        const std::function<double(void)> &cb_get_servo_cmd,
-                       const std::function<void(bool)> &cb_enable_votalge_gate);
+                       const std::function<void(bool)> &cb_enable_votalge_gate,
+                       const std::function<void(bool)> &cb_mach_on);
     ~MotionStateMachine() = default;
 
     // run once
@@ -134,6 +135,9 @@ private: // callbacks
 
     // 抬刀使能电源位
     std::function<void(bool)> cb_enable_votalge_gate_;
+    
+    // 高频使能位
+    std::function<void(bool)> cb_mach_on_;
 
 private: // signal dispatcher
     // 用于接收当前周期需要输出的信号,
