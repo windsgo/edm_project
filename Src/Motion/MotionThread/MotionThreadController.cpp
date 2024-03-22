@@ -397,7 +397,8 @@ void MotionThreadController::_threadstate_running() {
         ecat_clear_fault_reenable_flag_ = false;
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
-        ecat_manager_->ecat_sync([this]() {
+
+        TIMEUSESTAT(ecat_time_statistic_, ecat_manager_->ecat_sync([this]() {
             // set to motor axis
             const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
 
@@ -410,7 +411,8 @@ void MotionThreadController::_threadstate_running() {
             }
 
             _dc_sync(); //! 只在正常的情况下进行DC同步
-        });
+        }),
+                    true);
 
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {
