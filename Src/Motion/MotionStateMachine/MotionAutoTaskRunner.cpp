@@ -17,6 +17,7 @@ AutoTaskRunner::AutoTaskRunner(TouchDetectHandler::ptr touch_detect_handler,
 void AutoTaskRunner::reset(const axis_t &init_axis) {
     curr_task_ = nullptr;
     _autostate_switch_to(MotionAutoState::Stopped);
+
     pausemove_controller_->init(init_axis);
     curr_cmd_axis_ = init_axis;
 }
@@ -36,6 +37,7 @@ bool AutoTaskRunner::restart_task(AutoTask::ptr task) {
     curr_task_ = task;
     curr_cmd_axis_ = task->get_curr_cmd_axis();
     _autostate_switch_to(MotionAutoState::NormalMoving);
+    _dominated_state_switch_to(DominatedState::AutoTaskRunning);
     return true;
 }
 
@@ -43,6 +45,14 @@ void AutoTaskRunner::run_once() {
     if (!curr_task_) {
         return;
     }
+
+    // 暂停恢复中的状态
+    if (domin_state_ == DominatedState::PauseMoveRecoverRunning) {
+        _dominated_state_pmrecovering_run_once();
+        return;
+    }
+
+    // domin_state_ == DominatedState::AutoTaskRunning
 
     switch (state_) {
     case MotionAutoState::NormalMoving:
@@ -75,6 +85,28 @@ bool AutoTaskRunner::pause() {
         return false;
     }
 
+    if (domin_state_ == DominatedState::PauseMoveRecoverRunning) {
+        switch (state_) {
+        case MotionAutoState::Paused:
+        case MotionAutoState::Pausing:
+            return true;
+        case MotionAutoState::Stopping:
+            return false;
+        case MotionAutoState::NormalMoving: {
+            auto ret = pausemove_controller_->pause_recover();
+            if (ret) {
+                _autostate_switch_to(MotionAutoState::Pausing);
+            }
+
+            return ret;
+        }
+
+        default:
+            assert(false);
+            return false;
+        }
+    }
+
     switch (state_) {
     case MotionAutoState::NormalMoving:
     case MotionAutoState::Resuming: {
@@ -88,13 +120,11 @@ bool AutoTaskRunner::pause() {
     }
 
     case MotionAutoState::Pausing:
+    case MotionAutoState::Paused:
         return true;
     case MotionAutoState::Stopping:
     case MotionAutoState::Stopped:
         return false;
-
-    case MotionAutoState::Paused:
-        return pausemove_controller_->pause_recover();
     }
 
     s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
@@ -106,6 +136,29 @@ bool AutoTaskRunner::resume() {
         return false;
     }
 
+    if (domin_state_ == DominatedState::PauseMoveRecoverRunning) {
+        switch (state_) {
+        case MotionAutoState::NormalMoving:
+            return true;
+        case MotionAutoState::Pausing:
+        case MotionAutoState::Stopping:
+            return false;
+        case MotionAutoState::Paused: {
+            auto ret = pausemove_controller_->resume_recover();
+            if (ret) {
+                _autostate_switch_to(MotionAutoState::NormalMoving);
+                signal_buffer_->set_signal(MotionSignal_AutoResumed);
+            }
+
+            return ret;
+        }
+
+        default:
+            assert(false);
+            return false;
+        }
+    }
+
     switch (state_) {
     case MotionAutoState::NormalMoving:
     case MotionAutoState::Pausing:
@@ -114,14 +167,14 @@ bool AutoTaskRunner::resume() {
         return false;
 
     case MotionAutoState::Paused: {
-
-        if (pausemove_controller_->is_recover_activated()) {
-            return pausemove_controller_->resume_recover();
-        } else {
-            return pausemove_controller_->activate_recover();
+        auto ret = pausemove_controller_->activate_recover();
+        if (ret) {
+            _dominated_state_switch_to(DominatedState::PauseMoveRecoverRunning);
+            _autostate_switch_to(MotionAutoState::NormalMoving);
+            signal_buffer_->set_signal(MotionSignal_AutoResumed);
         }
 
-        // 暂停点动恢复完后会自动恢复curr task
+        return ret;
     }
 
     case MotionAutoState::Resuming:
@@ -135,6 +188,27 @@ bool AutoTaskRunner::resume() {
 bool AutoTaskRunner::stop(bool immediate) {
     if (!curr_task_) {
         return false;
+    }
+
+    if (domin_state_ == DominatedState::PauseMoveRecoverRunning) {
+        switch (state_) {
+        case MotionAutoState::Stopping:
+            return true;
+        case MotionAutoState::NormalMoving:
+        case MotionAutoState::Pausing:
+        case MotionAutoState::Paused: {
+            auto ret = pausemove_controller_->stop(immediate);
+            if (ret) {
+                _autostate_switch_to(MotionAutoState::Stopping);
+            }
+
+            return ret;
+        }
+
+        default:
+            assert(false);
+            return false;
+        }
     }
 
     switch (state_) {
@@ -154,8 +228,8 @@ bool AutoTaskRunner::stop(bool immediate) {
         return true;
 
     case MotionAutoState::Paused:
-        // 暂停点动停止完后会自动切换到Stopped
-        return pausemove_controller_->stop(immediate);
+        _autostate_switch_to(MotionAutoState::Stopping);
+        return true;
     }
 
     s_logger->warn("{}: should not here", __PRETTY_FUNCTION__);
@@ -165,7 +239,8 @@ bool AutoTaskRunner::stop(bool immediate) {
 bool AutoTaskRunner::start_manual_pointmove(
     const MoveRuntimePlanSpeedInput &speed_param, const axis_t &start_pos,
     const axis_t &target_pos) {
-    if (state_ != MotionAutoState::Paused) {
+    if (state_ != MotionAutoState::Paused ||
+        domin_state_ != DominatedState::AutoTaskRunning) {
         return false;
     }
 
@@ -174,7 +249,8 @@ bool AutoTaskRunner::start_manual_pointmove(
 }
 
 bool AutoTaskRunner::stop_manual_pointmove(bool immediate) {
-    if (state_ != MotionAutoState::Paused) {
+    if (state_ != MotionAutoState::Paused ||
+        domin_state_ != DominatedState::AutoTaskRunning) {
         return false;
     }
 
@@ -239,25 +315,26 @@ void AutoTaskRunner::_pausing() {
 }
 
 void AutoTaskRunner::_paused() {
+    // 这里run_once是运行手动点动
     pausemove_controller_->run_once();
     curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
 
-    // 在这个状态处理 pausemove 的状态变化
-    if (pausemove_controller_->is_stopped()) {
-        signal_buffer_->set_signal(MotionSignal_AutoStopped);
-        _autostate_switch_to(MotionAutoState::Stopped);
-        return;
-    }
+    // // 在这个状态处理 pausemove 的状态变化
+    // if (pausemove_controller_->is_stopped()) {
+    //     signal_buffer_->set_signal(MotionSignal_AutoStopped);
+    //     _autostate_switch_to(MotionAutoState::Stopped);
+    //     return;
+    // }
 
-    if (pausemove_controller_->is_recover_over()) {
-        auto ret = curr_task_->resume();
-        if (ret) {
-            _autostate_switch_to(MotionAutoState::Resuming);
-        } else {
-            s_logger->critical("{}: resume auto task failed",
-                               __PRETTY_FUNCTION__);
-        }
-    }
+    // if (pausemove_controller_->is_recover_over()) {
+    //     auto ret = curr_task_->resume();
+    //     if (ret) {
+    //         _autostate_switch_to(MotionAutoState::Resuming);
+    //     } else {
+    //         s_logger->critical("{}: resume auto task failed",
+    //                            __PRETTY_FUNCTION__);
+    //     }
+    // }
 }
 
 void AutoTaskRunner::_resuming() {
@@ -297,6 +374,86 @@ void AutoTaskRunner::_stopping() {
     }
 }
 
+void AutoTaskRunner::_dominated_state_pmrecovering_run_once() {
+    switch (state_) {
+    case MotionAutoState::NormalMoving: {
+        // 恢复中正常的状态
+
+        // 运行一次恢复过程
+        pausemove_controller_->run_once();
+        curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
+
+        // 处理 pausemove 的状态变化
+
+        // 停止(不是正常的恢复完成)
+        if (pausemove_controller_->is_stopped()) {
+            signal_buffer_->set_signal(MotionSignal_AutoStopped);
+            _autostate_switch_to(MotionAutoState::Stopped);
+            return;
+        }
+
+        // 恢复完成
+        if (pausemove_controller_->is_recover_over()) {
+            auto ret = curr_task_->resume();
+            if (ret) {
+                _dominated_state_switch_to(DominatedState::AutoTaskRunning);
+                _autostate_switch_to(MotionAutoState::Resuming);
+            } else {
+                s_logger->critical("{}: resume auto task failed",
+                                   __PRETTY_FUNCTION__);
+                return;
+            }
+        }
+        break;
+    }
+
+    case MotionAutoState::Pausing: {
+        // 运行一次恢复过程
+        pausemove_controller_->run_once();
+        curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
+
+        if (pausemove_controller_->is_recover_paused()) {
+            signal_buffer_->set_signal(MotionSignal_AutoPaused);
+            _autostate_switch_to(MotionAutoState::Paused);
+        }
+
+        break;
+    }
+
+    case MotionAutoState::Paused: {
+        break;
+    }
+
+    case MotionAutoState::Stopping: {
+        // 运行一次恢复过程
+        pausemove_controller_->run_once();
+        curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
+        
+        if (pausemove_controller_->is_stopped()) {
+            signal_buffer_->set_signal(MotionSignal_AutoStopped);
+            _autostate_switch_to(MotionAutoState::Stopped);
+            _dominated_state_switch_to(DominatedState::AutoTaskRunning);
+        }
+
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
+    }
+
+    return;
+}
+
+void AutoTaskRunner::_dominated_state_switch_to(
+    DominatedState new_domin_state) {
+    s_logger->trace("dominated state: {} -> {}", GetDominStateStr(domin_state_),
+                    GetDominStateStr(new_domin_state));
+
+    domin_state_ = new_domin_state;
+}
+
 const char *AutoTaskRunner::GetAutoStateStr(MotionAutoState state) {
     switch (state) {
 #define XX_(m)               \
@@ -308,6 +465,19 @@ const char *AutoTaskRunner::GetAutoStateStr(MotionAutoState state) {
         XX_(Resuming)
         XX_(Stopping)
         XX_(Stopped)
+#undef XX_
+    default:
+        return "Unknow";
+    }
+}
+
+const char *AutoTaskRunner::GetDominStateStr(DominatedState domin_state) {
+    switch (domin_state) {
+#define XX_(m)              \
+    case DominatedState::m: \
+        return #m;
+        XX_(AutoTaskRunning)
+        XX_(PauseMoveRecoverRunning)
 #undef XX_
     default:
         return "Unknow";

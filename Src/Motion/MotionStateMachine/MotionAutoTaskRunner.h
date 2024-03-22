@@ -69,15 +69,32 @@ private:
     void _resuming();
     void _stopping();
 
-public:
-    static const char* GetAutoStateStr(MotionAutoState state);
+    void _dominated_state_pmrecovering_run_once();
 
 private:
+    // 主导状态, 描述当前的Auto状态描述的行为
+    enum class DominatedState {
+        //! 暂停点动的手动点动部分描述为 AutoTaskRunning中的 Paused状态
+        //! PauseMoveRecoverRunning的Paused状态特指暂停恢复中
+        AutoTaskRunning, // 正常AutoTask的执行
+        PauseMoveRecoverRunning // 暂停点动(恢复过程)进行中 
+        // PauseMoveRecoverRunning 中只应该存在的AutoState
+        // 1. NormalRunning: 激活后(或被暂停后继续恢复), 正常恢复中 
+        // 2. Pausing: 恢复中, 被暂停, 处于暂停中
+        // 3. Paused: 恢复中被暂停, 已暂停
+        // 5. Stopping: 恢复中被停止, 停止中, 停止完成后转移至AutoTaskRunning的Stopped
+    };
+
+    void _dominated_state_switch_to(DominatedState new_domin_state);
+public:
+    static const char* GetAutoStateStr(MotionAutoState state);
+    static const char* GetDominStateStr(DominatedState domin_state);
 
 private:
     AutoTask::ptr curr_task_ {nullptr};
 
     MotionAutoState state_ {MotionAutoState::Stopped};
+    DominatedState domin_state_ {DominatedState::AutoTaskRunning};
 
     PauseMoveController::ptr pausemove_controller_;
     SignalBuffer::ptr signal_buffer_;

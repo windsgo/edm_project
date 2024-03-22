@@ -391,9 +391,9 @@ void GCodePanel::_slot_pause() {
 void GCodePanel::_slot_resume() {
     auto ret = task_manager_->operation_gcode_resume();
 
-    if (ret) {
-        _set_machining_ui_resumed();
-    }
+    // if (ret) {
+    //     _set_machining_ui_resumed();
+    // }
 
     if (!ret) {
         QMessageBox::critical(this, "Resume Failed",
