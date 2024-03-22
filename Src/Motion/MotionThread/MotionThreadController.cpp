@@ -173,10 +173,11 @@ void MotionThreadController::_thread_cycle_work() {
     //! 在最外层 返回info, 以及处理要返回的信号
 
     // 周期的最后, 处理命令, 处理info cache
-    TIMEUSESTAT(info_time_statistic_,
-                _fetch_command_and_handle_and_copy_info_cache(),
-                thread_state_ == ThreadState::Running &&
-                    ecat_state_ == EcatState::EcatReady)
+    // TIMEUSESTAT(info_time_statistic_,
+    //             _fetch_command_and_handle_and_copy_info_cache(),
+    //             thread_state_ == ThreadState::Running &&
+    //                 ecat_state_ == EcatState::EcatReady)
+    _fetch_command_and_handle_and_copy_info_cache();
 
     // handle signal and clear signal buffer
     _handle_signal();
@@ -193,7 +194,7 @@ bool MotionThreadController::_create_thread() {
     pthread_attr_t attr;
     int ret;
 
-#ifndef EDM_OFFLINE_RUN_NO_ECAT
+#ifndef EDM_OFFLINE_NO_REALTIME_THREAD
     /* Lock memory */
     if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
         printf("mlockall failed: %m\n");
@@ -202,7 +203,7 @@ bool MotionThreadController::_create_thread() {
         // exit(-2);
         return false;
     }
-#endif // EDM_OFFLINE_RUN_NO_ECAT
+#endif // EDM_OFFLINE_NO_REALTIME_THREAD
 
     /* Initialize pthread attributes (default values) */
     ret = pthread_attr_init(&attr);
@@ -218,7 +219,7 @@ bool MotionThreadController::_create_thread() {
         return false;
     }
 
-#ifndef EDM_OFFLINE_RUN_NO_ECAT
+#ifndef EDM_OFFLINE_NO_REALTIME_THREAD
     /* Set scheduler policy and priority of pthread */
     ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
     if (ret) {
@@ -250,7 +251,7 @@ bool MotionThreadController::_create_thread() {
         s_logger->critical("pthread_attr_setaffinity_np failed: {}", ret);
         return false;
     }
-#endif // EDM_OFFLINE_RUN_NO_ECAT
+#endif // EDM_OFFLINE_NO_REALTIME_THREAD
 
     /* Create a pthread with specified attributes */
     ret = pthread_create(&this->thread_, &attr,
@@ -483,7 +484,7 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
     auto cmd_opt = motion_cmd_queue_->try_get_command();
     if (!cmd_opt) {
         // 没有命令, 只是拷贝info cache
-        _copy_info_cache();
+        TIMEUSESTAT(info_time_statistic_, _copy_info_cache(), true);
 
         return;
     }
@@ -633,9 +634,10 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         break;
     }
 
-    _copy_info_cache(); // 在处理完命令之后, accept/ignore之前, 缓存info,
-                        // 保证外界在发送并等待完指令被accept/ignore后,
-                        // 直接查询的info一定是正确的
+    TIMEUSESTAT(info_time_statistic_, _copy_info_cache(),
+                true); // 在处理完命令之后, accept/ignore之前, 缓存info,
+                       // 保证外界在发送并等待完指令被accept/ignore后,
+                       // 直接查询的info一定是正确的
 
     if (accept_cmd_flag) {
         cmd->accept();
@@ -668,7 +670,9 @@ bool MotionThreadController::_get_act_pos(axis_t &axis) {
 }
 
 void MotionThreadController::_copy_info_cache() {
+#ifndef EDM_MOTION_INFO_GET_USE_ATOMIC
     std::lock_guard guard(info_cache_mutex_);
+#endif // EDM_MOTION_INFO_GET_USE_ATOMIC
 
     info_cache_.curr_cmd_axis_blu = motion_state_machine_->get_cmd_axis();
     _get_act_pos(info_cache_.curr_act_axis_blu);
@@ -708,6 +712,11 @@ void MotionThreadController::_copy_info_cache() {
         touch_detect_handler_->is_detect_enable());
     info_cache_.setTouchDetected(touch_detect_handler_->physical_detected());
     info_cache_.setTouchWarning(touch_detect_handler_->has_warning());
+
+#ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
+    // Store To Atomic
+    at_info_cache_.store(info_cache_);
+#endif // EDM_MOTION_INFO_GET_USE_ATOMIC
 }
 
 void MotionThreadController::_handle_signal() {

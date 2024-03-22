@@ -55,13 +55,16 @@ public: // settings
     _fast_move_param fast_move_param;
     std::string power_database_file{"power.db"};
     std::string helper_can_device_name{"can1"};
-    std::string interp_module_path_relative_to_root{"Src/Interpreter/rs274pyInterpreter/pymodule/"};
+    std::string interp_module_path_relative_to_root{
+        "Src/Interpreter/rs274pyInterpreter/pymodule/"};
+    uint32_t info_dispatcher_peroid_ms{20};
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
                     MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param,
                     MEO_OPT power_database_file, MEO_OPT helper_can_device_name,
-                    MEO_OPT interp_module_path_relative_to_root);
+                    MEO_OPT interp_module_path_relative_to_root,
+                    MEO_OPT info_dispatcher_peroid_ms);
 };
 
 }; // namespace _sys
@@ -127,8 +130,12 @@ public:
     }
 
     // interp module
-    const std::string& get_interp_module_path_relative_to_root() const {
+    const std::string &get_interp_module_path_relative_to_root() const {
         return data_.interp_module_path_relative_to_root;
+    }
+
+    uint32_t get_info_dispatcher_peroid_ms() const {
+        return data_.info_dispatcher_peroid_ms;
     }
 
 public:

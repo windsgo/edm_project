@@ -67,28 +67,40 @@
 // 使能时间统计
 #define EDM_ENABLE_TIMEUSE_STAT
 
+// 使用原子操作获取info
+#define EDM_MOTION_INFO_GET_USE_ATOMIC
+
 // OFFLINE DEFINE
 #define EDM_OFFLINE_RUN
 
+#define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
+#define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程 
+#define EDM_OFFLINE_RUN_TYPE_3 3 // 调试ECAT, 不连接CAN, 启动实时线程 
+#define EDM_OFFLINE_RUN_TYPE_4 4 // 本地调试CAN, 不连接ECAT, 启动实时线程, 要求2个CAN设备互联
+#define EDM_OFFLINE_RUN_TYPE_5 5 // 调试CAN, 不连接ECAT, 启动实时线程, 但使用CAN返回的接触感知(连接IO板) 
+
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_3 //! Choose an OFFLINE type
+
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
-#ifndef EDM_OFFLINE_RUN_NO_ECAT
-// #define EDM_OFFLINE_RUN_NO_ECAT // 离线不连接ecat, 不发送ecat指令
-#endif // EDM_OFFLINE_RUN_NO_ECAT
 
-#ifndef EDM_OFFLINE_RUN_NO_CAN
+#define EDM_OFFLINE_RUN_NO_ECAT // 离线不连接ecat, 不发送ecat指令
 #define EDM_OFFLINE_RUN_NO_CAN // 离线不连接CAN设备
-#endif                         // EDM_OFFLINE_RUN_NO_CAN
-
-// 离线测试时, 连接两个CAN设备, 用于保持正常的can通信链路
-// #define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
-
-#ifndef EDM_OFFLINE_MANUAL_TOUCH_DETECT
 #define EDM_OFFLINE_MANUAL_TOUCH_DETECT // 离线手动按钮标志接触感知
-#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
-
-#ifndef EDM_OFFLINE_MANUAL_SERVO_CMD
 #define EDM_OFFLINE_MANUAL_SERVO_CMD // 离线手动按钮/滑动条标志伺服速度
-#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+
+#if (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_1)
+#define EDM_OFFLINE_NO_REALTIME_THREAD // 离线不启动实时线程
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_2)
+// Do Nothing
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_3)
+#undef EDM_OFFLINE_RUN_NO_ECAT // 取消此定义, 并连接ECAT
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_4)
+#define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE // 离线测试时, 连接两个CAN设备, 用于保持正常的can通信链路
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_5)
+#undef EDM_OFFLINE_MANUAL_TOUCH_DETECT // 取消此定义, 采用CAN返回的接触感知信号
+#else
+#error "No EDM_OFFLINE_RUN_TYPE defined"
+#endif // EDM_OFFLINE_RUN_TYPE value
 
 #endif // EDM_OFFLINE_RUN //! OFFLINE DEFINE END
 

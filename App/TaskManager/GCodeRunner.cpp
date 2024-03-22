@@ -136,7 +136,12 @@ bool GCodeRunner::stop() {
         } else {
             bool ret = _cmd_auto_stop();
             if (!ret) {
-                return false;
+                
+                // 可能存在一段已经走完, 但本地还没更新为Stopped, 这里强制停止, 防止停不下来
+                _cmd_emergency_stop();
+                _end();
+
+                return true;
             }
 
             _switch_to_state(WaitingForStopped);
@@ -221,9 +226,12 @@ bool GCodeRunner::_cmd_emergency_stop() {
 
 void GCodeRunner::_run_once() {
     // 直接获取最新的info
+#ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
+    shared_core_data_->get_motion_thread_ctrler()->load_at_info_cache(local_info_cache_);
+#else // EDM_MOTION_INFO_GET_USE_ATOMIC
     local_info_cache_ =
         shared_core_data_->get_motion_thread_ctrler()->get_info_cache();
-
+#endif // EDM_MOTION_INFO_GET_USE_ATOMIC
     switch (state_) {
     case State::ReadyToStart: {
         _switch_to_state(State::CurrentNodeIniting);

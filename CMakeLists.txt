@@ -109,6 +109,7 @@ target_link_libraries(edm PUBLIC
     Qt5::Core Qt5::SerialBus
     m # <math.h> or <cmath>
     pthread # <pthread.h>
+    atomic
 )
 
 add_subdirectory(App)

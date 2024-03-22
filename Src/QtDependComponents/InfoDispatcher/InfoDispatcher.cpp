@@ -31,7 +31,11 @@ void InfoDispatcher::_info_get_timer_slot() {
 
     // signal 会携带一份info, 所以如果处理了 signal 就不再拷贝info
     if (!signal_handled) {
+#ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
+        motion_controller_->load_at_info_cache(info_cache_);
+#else // EDM_MOTION_INFO_GET_USE_ATOMIC
         info_cache_ = motion_controller_->get_info_cache();
+#endif // EDM_MOTION_INFO_GET_USE_ATOMIC
     }
 
     emit info_updated(info_cache_);

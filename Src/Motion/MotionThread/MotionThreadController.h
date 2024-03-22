@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <atomic>
 
 #include "EcatManager/EcatManager.h"
 #include "Motion/MotionSignalQueue/MotionSignalQueue.h"
@@ -52,6 +53,12 @@ public:
     // 停止线程
     // void stop_thread() { thread_stop_flag_ = true; }
 
+#ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
+    // Try to use atomic 
+    void load_at_info_cache(MotionInfo& output) const {
+        output = at_info_cache_.load();
+    }
+#else // EDM_MOTION_INFO_GET_USE_ATOMIC
     // 获取info状态的线程安全接口
     // 利用RVO/NRVO的优化, 这里可以直接返回值 (返回引用是不安全的)
     auto get_info_cache() const {
@@ -59,6 +66,7 @@ public:
 
         return info_cache_;
     }
+#endif // EDM_MOTION_INFO_GET_USE_ATOMIC
 
 private: // Thread
     // pass this function ptr to thread controller
@@ -142,7 +150,11 @@ private: // Data
 
     // 每周期结束获取状态机的状态, 并缓存到:
     MotionInfo info_cache_;
+#ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
+    std::atomic<MotionInfo> at_info_cache_;
+#else // EDM_MOTION_INFO_GET_USE_ATOMIC
     mutable std::mutex info_cache_mutex_;
+#endif // EDM_MOTION_INFO_GET_USE_ATOMIC
 
     // Thread 相关
     pthread_t thread_;
