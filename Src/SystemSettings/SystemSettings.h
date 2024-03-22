@@ -27,8 +27,8 @@ struct _ecat_setting {
 };
 
 struct _fast_move_param {
-    double max_acc_um_s2{500000}; // um / s
-    uint32_t nacc_ms{60};         // nacc ms
+    double max_acc_um_s2{300000}; // um / s
+    uint32_t nacc_ms{100};        // nacc ms
 
     double speed_0_um_s{33000}; // 0档速度
     double speed_1_um_s{6600};  // 1档速度
@@ -39,6 +39,14 @@ struct _fast_move_param {
     MEO_JSONIZATION(MEO_OPT max_acc_um_s2, MEO_OPT nacc_ms,
                     MEO_OPT speed_0_um_s, MEO_OPT speed_1_um_s,
                     MEO_OPT speed_2_um_s, MEO_OPT speed_3_um_s);
+};
+
+struct _jump_param {
+    double max_acc_um_s2{1440000}; // um / s
+    uint32_t nacc_ms{60};          // nacc ms
+    uint32_t buffer_um{30};        // um
+
+    MEO_JSONIZATION(MEO_OPT max_acc_um_s2, MEO_OPT nacc_ms, MEO_OPT buffer_um);
 };
 
 class _SystemSettingsData final {
@@ -58,13 +66,14 @@ public: // settings
     std::string interp_module_path_relative_to_root{
         "Src/Interpreter/rs274pyInterpreter/pymodule/"};
     uint32_t info_dispatcher_peroid_ms{20};
+    _jump_param jump_param;
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
                     MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param,
                     MEO_OPT power_database_file, MEO_OPT helper_can_device_name,
                     MEO_OPT interp_module_path_relative_to_root,
-                    MEO_OPT info_dispatcher_peroid_ms);
+                    MEO_OPT info_dispatcher_peroid_ms, MEO_OPT jump_param);
 };
 
 }; // namespace _sys
@@ -137,6 +146,8 @@ public:
     uint32_t get_info_dispatcher_peroid_ms() const {
         return data_.info_dispatcher_peroid_ms;
     }
+
+    const auto &get_jump_param() const { return data_.jump_param; }
 
 public:
     // TODO change settings and save to local file

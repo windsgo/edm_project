@@ -13,8 +13,8 @@ namespace edm {
 namespace coord {
 
 struct CoordSoftLimit {
-    coord_offset_t pos{1000.0};
-    coord_offset_t neg{-1000.0};
+    coord_offset_t pos{1000000.0};
+    coord_offset_t neg{-1000000.0};
 };
 
 // 负责维护坐标系列表及其偏置

@@ -8,7 +8,6 @@
 #include "SystemSettings/SystemSettings.h"
 #include "Utils/UnitConverter/UnitConverter.h"
 
-
 namespace edm {
 
 namespace task {
@@ -64,6 +63,46 @@ public:
             1000; // default, modify outside according to feed speed
 
         return speed;
+    }
+
+    // 计算给定目标方向，从reference_pos计算，可以运动的最大距离
+    // dir 需要是一个单位向量
+    static move::unit_t
+    GetMaxLengthOnCurrentDir(coord::CoordinateSystem::ptr coord_sys,
+                              const move::axis_t &dir,
+                              const move::axis_t &reference_pos) {
+        const auto &pos_sl = coord_sys->get_pos_soft_limit();
+        const auto &neg_sl = coord_sys->get_neg_soft_limit();
+
+        double scale{0.0}; // 倍率
+
+        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+            double left_length;
+            double curr_axes_left_scale;
+            if (dir[i] > 0) {
+                left_length = pos_sl[i] - reference_pos[i]; // 正方向剩余距离
+                if (left_length <= 0) {
+                    return 0; // 有运动轴已经在正限位
+                }
+            } else if (dir[i] < 0) {
+                left_length = neg_sl[i] - reference_pos[i]; // 正方向剩余距离
+                if (left_length >= 0) {
+                    return 0; // 有运动轴已经在负限位
+                }
+            } else {
+                // 该方向无运动, 不计算
+                continue;
+            }
+
+            // 该方向剩余的倍率
+            curr_axes_left_scale = left_length / dir[i];
+            if (scale == 0 || curr_axes_left_scale < scale) {
+                scale = curr_axes_left_scale; // scale取更小的那一个
+            }
+            continue;
+        }
+
+        return scale * move::MotionUtils::CalcAxisLength(dir);
     }
 };
 

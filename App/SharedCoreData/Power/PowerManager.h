@@ -9,6 +9,8 @@
 #include "QtDependComponents/IOController/IOController.h"
 #include "QtDependComponents/PowerController/PowerController.h"
 
+#include "Motion/MotionThread/MotionCommandQueue.h"
+
 #include "PowerDatabase.h"
 
 namespace edm {
@@ -19,6 +21,7 @@ class PowerManager final : public QObject {
 public:
     explicit PowerManager(io::IOController::ptr io_ctrler,
                           power::PowerController::ptr power_ctrler,
+                          move::MotionCommandQueue::ptr motion_cmd_queue,
                           uint32_t cycle_ms = 1000, QObject *parent = nullptr);
     ~PowerManager();
 
@@ -41,16 +44,29 @@ public:
     }
 
     // 转发操作设置 machon, poweron, machbit 的接口, 并触发相应signal
-    inline void set_highpower_on(bool on) { power_ctrler_->set_highpower_on(on); emit sig_power_flag_changed(); }
-    inline bool is_highpower_on() const { return power_ctrler_->is_highpower_on(); }
+    inline void set_highpower_on(bool on) {
+        power_ctrler_->set_highpower_on(on);
+        emit sig_power_flag_changed();
+    }
+    inline bool is_highpower_on() const {
+        return power_ctrler_->is_highpower_on();
+    }
 
-    inline void set_machbit_on(bool on) { power_ctrler_->set_machbit_on(on); emit sig_power_flag_changed(); }
+    inline void set_machbit_on(bool on) {
+        power_ctrler_->set_machbit_on(on);
+        emit sig_power_flag_changed();
+    }
     inline bool is_machbit_on() const { return power_ctrler_->is_machbit_on(); }
- 
-    inline void set_power_on(bool on) { power_ctrler_->set_power_on(on); emit sig_power_flag_changed(); }
+
+    inline void set_power_on(bool on) {
+        power_ctrler_->set_power_on(on);
+        emit sig_power_flag_changed();
+    }
     inline bool is_power_on() const { return power_ctrler_->is_power_on(); }
 
-    inline const auto& get_current_eleparam() const { return power_ctrler_->get_current_param(); }
+    inline const auto &get_current_eleparam() const {
+        return power_ctrler_->get_current_param();
+    }
 
 signals:
     // 告知PowerPanel發生了改變, 让他显示最新的电参数
@@ -65,6 +81,7 @@ private:
 private:
     io::IOController::ptr io_ctrler_;
     power::PowerController::ptr power_ctrler_;
+    move::MotionCommandQueue::ptr motion_cmd_queue_;
 
     PowerDatabase *power_db_;
 

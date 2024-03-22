@@ -19,5 +19,10 @@
     "power_database_file": "power.db",
     "helper_can_device_name": "can1",
     "interp_module_path_relative_to_root": "Src/Interpreter/rs274pyInterpreter/pymodule/",
-    "info_dispatcher_peroid_ms": 20
+    "info_dispatcher_peroid_ms": 20,
+    "jump_param": {
+        "max_acc_um_s2": 1440000,
+        "nacc_ms": 60,
+        "buffer_um": 30
+    }
 }

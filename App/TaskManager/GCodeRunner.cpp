@@ -136,8 +136,9 @@ bool GCodeRunner::stop() {
         } else {
             bool ret = _cmd_auto_stop();
             if (!ret) {
-                
-                // 可能存在一段已经走完, 但本地还没更新为Stopped, 这里强制停止, 防止停不下来
+
+                // 可能存在一段已经走完, 但本地还没更新为Stopped, 这里强制停止,
+                // 防止停不下来
                 _cmd_emergency_stop();
                 _end();
 
@@ -227,8 +228,9 @@ bool GCodeRunner::_cmd_emergency_stop() {
 void GCodeRunner::_run_once() {
     // 直接获取最新的info
 #ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
-    shared_core_data_->get_motion_thread_ctrler()->load_at_info_cache(local_info_cache_);
-#else // EDM_MOTION_INFO_GET_USE_ATOMIC
+    shared_core_data_->get_motion_thread_ctrler()->load_at_info_cache(
+        local_info_cache_);
+#else  // EDM_MOTION_INFO_GET_USE_ATOMIC
     local_info_cache_ =
         shared_core_data_->get_motion_thread_ctrler()->get_info_cache();
 #endif // EDM_MOTION_INFO_GET_USE_ATOMIC
@@ -491,8 +493,117 @@ void GCodeRunner::_state_current_node_initing() {
         break;
     }
     case GCodeTaskType::G01MotionCommand: {
-        // TODO
-        assert(false);
+        auto g01_gcode =
+            std::static_pointer_cast<GCodeTaskG01Motion>(curr_gcode);
+
+        // check coord index
+        if (!shared_core_data_->get_coord_system()->exist_coordinate_index(
+                g01_gcode->coord_index())) {
+            _abort(EDM_FMT::format("abort: g01 coord index not exist: {}",
+                                   g01_gcode->coord_index()));
+            break;
+        }
+
+        // motor start pos
+        const auto &motor_start_pos = shared_core_data_->get_info_dispatcher()
+                                          ->get_info()
+                                          .curr_cmd_axis_blu;
+
+        // mach start pos
+        move::axis_t mach_start_pos;
+        shared_core_data_->get_coord_system()->get_cm().motor_to_machine(
+            motor_start_pos, mach_start_pos);
+
+        assert(g01_gcode->cmd_values().size() == 6);
+
+        // 根据增量/绝对模式给出 机床坐标系目标位置
+        move::axis_t mach_target_pos{0.0};
+        const auto &cmd_values = g01_gcode->cmd_values();
+        if (g01_gcode->coord_mode() == GCodeCoordinateMode::IncrementMode) {
+            // inc
+            mach_target_pos = mach_start_pos;
+            for (std::size_t i = 0; i < EDM_AXIS_NUM; ++i) {
+                if (cmd_values[i]) {
+                    mach_target_pos[i] +=
+                        util::UnitConverter::mm2blu(*(cmd_values[i]));
+                }
+            }
+        } else {
+            // abs, 目前只有工件坐标系模式, 没有机床坐标系模式
+            uint32_t coord_index = g01_gcode->coord_index();
+
+            // 先将输入的机床坐标起点转化为坐标系坐标起点
+            move::axis_t coord_start_pos;
+            bool ret1 = shared_core_data_->get_coord_system()
+                            ->get_cm()
+                            .machine_to_coord(coord_index, mach_start_pos,
+                                              coord_start_pos);
+            if (!ret1) {
+                _abort(EDM_FMT::format("abort: g01 machine_to_coord failed: {}",
+                                       coord_index));
+                break;
+            }
+
+            // 根据cmd_values设定coord_target_pos
+            move::axis_t coord_target_pos;
+            for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+                if (cmd_values[i]) {
+                    coord_target_pos[i] =
+                        util::UnitConverter::mm2blu(*(cmd_values[i]));
+                } else {
+                    coord_target_pos[i] = coord_start_pos[i];
+                }
+            }
+
+            // 再转化为 MachTargetPos
+            bool ret2 = shared_core_data_->get_coord_system()
+                            ->get_cm()
+                            .coord_to_machine(coord_index, coord_target_pos,
+                                              mach_target_pos);
+            if (!ret2) {
+                _abort(EDM_FMT::format("abort: g01 coord_to_machine failed: {}",
+                                       coord_index));
+                break;
+            }
+        }
+
+        if (move::MotionUtils::IsAxisTheSame(mach_start_pos, mach_target_pos)) {
+            s_logger->warn("g10 failed, next node : start and target the same");
+            _check_to_next_gcode();
+            break;
+        }
+
+        move::axis_t motor_target_pos;
+        shared_core_data_->get_coord_system()->get_cm().machine_to_motor(
+            mach_target_pos, motor_target_pos);
+
+        // 根据mach_target_pos, 判断软限位
+        auto sl_check_ret = TaskHelper::CheckPosandnegSoftLimit(
+            shared_core_data_->get_coord_system(), mach_target_pos);
+
+        // 计算从开始点的最大抬刀距离
+        move::axis_t jump_dir = move::MotionUtils::CalcAxisUnitVector(
+            mach_target_pos, mach_start_pos);
+        auto max_length_from_start = TaskHelper::GetMaxLengthOnCurrentDir(
+            shared_core_data_->get_coord_system(), jump_dir, mach_start_pos);
+        s_logger->debug("** max jump length: {}", max_length_from_start);
+
+        // send g01 cmd
+        auto g01_cmd =
+            std::make_shared<move::MotionCommandAutoStartG01ServoMove>(
+                motor_start_pos, motor_target_pos, max_length_from_start);
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(g01_cmd);
+
+        // 等待命令被接收
+        if (!TaskHelper::WaitforCmdTobeAccepted(g01_cmd, 1000)) {
+            _abort("abort: start g01 failed, cmd not accepted by motion or "
+                   "timeout");
+            break;
+        }
+
+        _switch_to_state(State::Running);
+
         break;
     }
     case GCodeTaskType::DelayCommand: {

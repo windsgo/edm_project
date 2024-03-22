@@ -4,7 +4,7 @@
 #define EDM_SYSTEM_SETTINGS_CONFIG_FILE EDM_CONFIG_DIR "system.json"
 
 // 坐标轴(=驱动器)数目
-#define EDM_SERVO_NUM                   1
+#define EDM_SERVO_NUM                   3
 #define EDM_AXIS_NUM                    EDM_SERVO_NUM
 
 #define EDM_AXIS_MAX_NUM                6 // const, 最多6轴
@@ -62,7 +62,7 @@
 #define EDM_MOTION_SIGNAL_QUEUE_USE_SPSC          // 使用spsc队列
 
 // 不合理的coord config 抛出异常, 而不是自动使用默认
-#define EDM_INVALID_COORD_CONFIG_THROW
+// #define EDM_INVALID_COORD_CONFIG_THROW
 
 // 使能时间统计
 #define EDM_ENABLE_TIMEUSE_STAT
@@ -79,7 +79,7 @@
 #define EDM_OFFLINE_RUN_TYPE_4 4 // 本地调试CAN, 不连接ECAT, 启动实时线程, 要求2个CAN设备互联
 #define EDM_OFFLINE_RUN_TYPE_5 5 // 调试CAN, 不连接ECAT, 启动实时线程, 但使用CAN返回的接触感知(连接IO板) 
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_3 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_1 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 

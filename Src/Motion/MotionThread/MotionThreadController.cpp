@@ -553,6 +553,22 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         break;
     }
+    case MotionCommandAuto_StartG01ServoMove: {
+        s_logger->trace("Handle MotionCmd: Auto_StartG01ServoMove");
+        if (ecat_state_ != EcatState::EcatReady ||
+            thread_state_ != ThreadState::Running) {
+            break;
+        }
+
+        auto g01_cmd =
+            std::static_pointer_cast<MotionCommandAutoStartG01ServoMove>(cmd);
+
+        auto ret = motion_state_machine_->start_auto_g01(
+            g01_cmd->end_pos(), g01_cmd->max_jump_height_from_begin());
+
+        accept_cmd_flag = ret;
+        break;
+    }
     case MotionCommandAuto_G04Delay: {
         s_logger->trace("Handle MotionCmd: Auto_G04Delay");
         if (ecat_state_ != EcatState::EcatReady ||
@@ -624,6 +640,19 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         // 目前只有接触感知报警
         touch_detect_handler_->clear_warning();
+
+        accept_cmd_flag = true;
+        break;
+    }
+    case MotionCommandSetting_SetJumpParam: {
+        s_logger->trace("Handle MotionCmd: Setting_SetJumpParam");
+
+        auto set_jump_param_cmd =
+            std::static_pointer_cast<MotionCommandSettingSetJumpParam>(cmd);
+
+        motion_state_machine_->set_jump_param(set_jump_param_cmd->jump_param());
+
+        s_logger->debug("***** JumpParam Received");
 
         accept_cmd_flag = true;
         break;

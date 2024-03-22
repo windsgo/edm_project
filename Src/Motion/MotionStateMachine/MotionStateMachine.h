@@ -86,6 +86,8 @@ public: // state interfaces
 
     MotionAutoState auto_state() const { return auto_task_runner_->state(); }
 
+    void set_jump_param(const JumpParam& jp) { cached_jump_param_ = jp; }
+
 private: // inside functions: state process
     void _mainmode_idle();
     void _mainmode_manual();
@@ -95,7 +97,7 @@ private: // inside functions: state process
 
 private:
     void _get_jump_param(JumpParam &jump_param) {
-        jump_param = jump_param_cache_;
+        jump_param = cached_jump_param_;
     }
 
 private:              // state data
@@ -106,10 +108,7 @@ private:              // state data
     MotionMainMode main_mode_{MotionMainMode::Idle}; // 主模式
     // MotionAutoState auto_state_{MotionAutoState::Stopped}; // Auto状态
 
-    // TODO 各轴软限位参数 (普通直线抬刀判断)
-
-    // TODO 抬刀参数 (抬刀高度, 放电时间, 缓冲距离, 抬刀速度, 抬刀加速度,
-    // 抬刀Nacc)
+    JumpParam cached_jump_param_; // 外层最后一次设置进来的抬刀参数, 缓存在这里, g01靠回调获取
 
 private: // motion runtime data
     // mainmode manual:
@@ -135,10 +134,6 @@ private: // callbacks
 
     // 抬刀使能电源位
     std::function<void(bool)> cb_enable_votalge_gate_;
-
-private:
-    // 缓存的抬刀参数
-    JumpParam jump_param_cache_;
 
 private: // signal dispatcher
     // 用于接收当前周期需要输出的信号,

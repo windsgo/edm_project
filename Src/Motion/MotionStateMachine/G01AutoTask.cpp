@@ -7,6 +7,36 @@ EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 namespace edm {
 
 namespace move {
+
+G01AutoTask::G01AutoTask(
+    TrajectoryLinearSegement::ptr line_traj, unit_t max_jump_height_from_begin,
+    const std::function<bool(axis_t &)> &cb_get_real_axis,
+    const std::function<unit_t(void)> &cb_get_servo_cmd,
+    const std::function<void(JumpParam &)> &cb_get_jump_param,
+    const std::function<void(bool)> &cb_enable_votalge_gate)
+    : AutoTask(AutoTaskType::G01, line_traj->start_pos()),
+      line_traj_(line_traj),
+      max_jump_height_from_begin_(max_jump_height_from_begin),
+      cb_get_real_axis_(cb_get_real_axis), cb_get_servo_cmd_(cb_get_servo_cmd),
+      cb_get_jump_param_(cb_get_jump_param),
+      cb_enable_votalge_gate_(cb_enable_votalge_gate) {
+
+    assert(line_traj_->at_start());
+
+    // 开始时获取一次抬刀参数
+    cb_get_jump_param_(jumping_param_);
+
+    s_logger->debug("dn ms: {}, buffer_blu: {}", jumping_param_.dn_ms,
+                    jumping_param_.buffer_blu);
+
+    // 设定一个"上一次抬刀结束时间" = "上一次开始放电的时间"
+    // 用于根据DN值, 开始下一次抬刀
+    last_jump_end_time_ms_ = GetCurrentTimeMs();
+
+    // 使能电压gate
+    cb_enable_votalge_gate_(true);
+}
+
 bool G01AutoTask::pause() {
     switch (state_) {
     case State::Stopping:
@@ -231,6 +261,8 @@ void G01AutoTask::_state_resuming() {
     switch (resume_sub_state_) {
     case ResumeSubState::RecoveringToLastMachingPos:
         if (!back_to_begin_when_pause_) {
+            // 重置抬刀计时
+            last_jump_end_time_ms_ = GetCurrentTimeMs();
             _state_changeto(State::NormalRunning);
             assert(servo_sub_state_ == ServoSubState::Servoing);
             break;
@@ -239,6 +271,7 @@ void G01AutoTask::_state_resuming() {
         // TODO Back To Begin Related Resume
         // Currently direct change to paused, do nothing
         assert(false); // should not be here
+        last_jump_end_time_ms_ = GetCurrentTimeMs();
         _state_changeto(State::NormalRunning);
         break;
     default:
@@ -317,6 +350,8 @@ void G01AutoTask::_servo_substate_servoing() {
 }
 
 void G01AutoTask::_servo_substate_jumpuping() {
+    static int _tmp = 0;
+    ++_tmp;
     this->jump_pm_handler_.run_once();
     this->curr_cmd_axis_ = this->jump_pm_handler_.get_current_pos();
 
@@ -341,6 +376,12 @@ void G01AutoTask::_servo_substate_jumpuping() {
         // 置状态, 操作电压
         _servo_substate_changeto(ServoSubState::JumpDowning);
         cb_enable_votalge_gate_(true);
+
+        s_logger->debug("jump up over: ltcurr-z: "
+                        "{}, curr-z: {}, curr-length: {}, _tmp: {}",
+                        this->line_traj_->curr_pos()[2],
+                        this->curr_cmd_axis_[2], line_traj_->curr_length(), _tmp);
+        _tmp = 0;
     }
 }
 
@@ -348,11 +389,16 @@ void G01AutoTask::_servo_substate_jumpdowning() {
     this->jump_pm_handler_.run_once();
     this->curr_cmd_axis_ = this->jump_pm_handler_.get_current_pos();
 
-
     if (this->jump_pm_handler_.is_over()) {
         // Down 走完, Buffer段要走伺服, 这里恢复line traj的长度
 
-        line_traj_->set_curr_length(servoing_length_before_jump_ - jumping_param_.buffer_blu);
+        line_traj_->set_curr_length(servoing_length_before_jump_ -
+                                    jumping_param_.buffer_blu);
+
+        s_logger->debug("jump down over: ltcurr-z: "
+                        "{}, curr-z: {}, curr-length: {}",
+                        this->line_traj_->curr_pos()[2],
+                        this->curr_cmd_axis_[2], line_traj_->curr_length());
 
         _servo_substate_changeto(ServoSubState::JumpDowningBuffer);
     }
@@ -366,25 +412,40 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
     auto servo_cmd = cb_get_servo_cmd_();
 
     // 计算缓冲段剩余长度
-    unit_t buffer_remaining_length = servoing_length_before_jump_ - line_traj_->curr_length();
+    unit_t buffer_remaining_length =
+        servoing_length_before_jump_ - line_traj_->curr_length();
 
     if (servo_cmd > 0.0) {
-        if (servo_cmd >= buffer_remaining_length || buffer_remaining_length <= 0) {
+        if (servo_cmd >= buffer_remaining_length ||
+            buffer_remaining_length <= 0) {
             // 缓冲段最后一次运动
             servo_cmd = buffer_remaining_length;
+
+            s_logger->debug(
+                "buffer over, servo_cmd:{}, buffer_remaining_length: {}",
+                servo_cmd, buffer_remaining_length);
 
             buffer_over = true;
         }
 
         line_traj_->run_once(servo_cmd);
         this->curr_cmd_axis_ = this->line_traj_->curr_pos();
-        
+
     } else if (servo_cmd < 0.0) {
+        s_logger->debug("buffer interrupted, buffer_remaining_length: {}",
+                        buffer_remaining_length);
         buffer_interrupted = true; // 缓冲段有回退, 直接退出走正常伺服回退
     }
 
     if (buffer_over || buffer_interrupted) {
-        last_jump_end_time_ms_ = GetCurrentTimeMs(); // 更新变量: 上一次抬刀结束时间
+        last_jump_end_time_ms_ =
+            GetCurrentTimeMs(); // 更新变量: 上一次抬刀结束时间
+
+        s_logger->debug("jump down buffer over: ltcurr-z: "
+                        "{}, curr-z: {}, curr-length: {}",
+                        this->line_traj_->curr_pos()[2],
+                        this->curr_cmd_axis_[2], line_traj_->curr_length());
+
         _servo_substate_changeto(ServoSubState::Servoing); // 抬刀全部结束
         return;
     }
@@ -431,6 +492,7 @@ bool G01AutoTask::_servoing_do_servothings() {
 
             // if satisfy all check, set stopped
             if (true) {
+                this->curr_cmd_axis_ = line_traj_->curr_pos();
                 return true;
             }
         }
@@ -467,6 +529,12 @@ bool G01AutoTask::_plan_jump_up() {
         this->jump_up_target_pos_[i] =
             (up_start_pos[i] - curr_maching_dir[i] * jumping_param_.up_blu);
     }
+
+    s_logger->debug("plan jump up: startpos-z: {}, targetpos-z: {}, ltcurr-z: "
+                    "{}, curr-z: {}, curr-length: {}",
+                    up_start_pos[2], jump_up_target_pos_[2],
+                    this->line_traj_->curr_pos()[2], this->curr_cmd_axis_[2],
+                    line_traj_->curr_length());
 
     return this->jump_pm_handler_.start(
         jumping_param_.speed_param, up_start_pos, this->jump_up_target_pos_);

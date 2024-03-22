@@ -25,27 +25,7 @@ public:
                 const std::function<bool(axis_t &)> &cb_get_real_axis,
                 const std::function<unit_t(void)> &cb_get_servo_cmd,
                 const std::function<void(JumpParam &)> &cb_get_jump_param,
-                const std::function<void(bool)> &cb_enable_votalge_gate)
-        : AutoTask(AutoTaskType::G01, line_traj->start_pos()),
-          line_traj_(line_traj),
-          max_jump_height_from_begin_(max_jump_height_from_begin),
-          cb_get_real_axis_(cb_get_real_axis),
-          cb_get_servo_cmd_(cb_get_servo_cmd),
-          cb_get_jump_param_(cb_get_jump_param),
-          cb_enable_votalge_gate_(cb_enable_votalge_gate) {
-
-        assert(line_traj_->at_start());
-
-        // 开始时获取一次抬刀参数
-        cb_get_jump_param_(jumping_param_);
-
-        // 设定一个"上一次抬刀结束时间" = "上一次开始放电的时间"
-        // 用于根据DN值, 开始下一次抬刀
-        last_jump_end_time_ms_ = GetCurrentTimeMs();
-
-        // 使能电压gate
-        cb_enable_votalge_gate_(true);
-    }
+                const std::function<void(bool)> &cb_enable_votalge_gate);
 
     bool pause() override;
     bool resume() override;
@@ -105,7 +85,7 @@ public:
 
 private:
     static inline int64_t GetCurrentTimeMs() {
-        return std::chrono::duration_cast<std::chrono::microseconds>(
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::system_clock::now().time_since_epoch())
             .count();
     }

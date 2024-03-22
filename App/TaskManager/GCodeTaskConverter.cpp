@@ -22,7 +22,6 @@ static const std::unordered_map<std::string, GCodeTaskType> s_type_map = {
     XX_(G01MotionCommand),
     XX_(CoordinateModeCommand),
     XX_(CoordinateIndexCommand),
-    XX_(G00MotionCommand),
     XX_(EleparamSetCommand),
     XX_(FeedSpeedSetCommand),
     XX_(DelayCommand),
@@ -112,6 +111,7 @@ static std::optional<GCodeTaskBase::ptr> _make_g01(const json::object &jo) {
     }
 
     std::vector<std::optional<double>> values;
+    values.resize(6);
     for (std::size_t i = 0; i < 6; ++i) {
         if (!coords[i].is_null()) {
             values[i] = coords[i].as_double();

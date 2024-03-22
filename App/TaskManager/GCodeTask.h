@@ -59,6 +59,12 @@ public:
           cmd_values_(cmd_values) {}
     ~GCodeTaskG01Motion() noexcept override = default;
 
+    auto coord_index() const { return coord_index_; }
+
+    auto coord_mode() const { return coord_mode_; }
+
+    const auto& cmd_values() const { return cmd_values_; }
+
     bool is_motion_task() const override { return true; }
 
 private:

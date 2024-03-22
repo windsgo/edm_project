@@ -6,6 +6,7 @@
 
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
+#include "Motion/JumpDefines.h"
 #include "Motion/MoveruntimeWrapper/MoveruntimeWrapper.h"
 
 #include "Exception/exception.h"
@@ -45,7 +46,7 @@ enum MotionCommandType {
     MotionCommandAuto_StartG00FastMove,
 
     // 启动G01伺服加工 命令
-    MotionCommandAuto_StartG01ServoMove, // TODO
+    MotionCommandAuto_StartG01ServoMove,
 
     // 火花碰边 命令
     MotionCommandAuto_StartManualTouchMove, // TODO
@@ -210,6 +211,19 @@ public:
     ~MotionCommandSettingClearWarning() noexcept override = default;
 };
 
+class MotionCommandSettingSetJumpParam final : public MotionCommandBase {
+public:
+    MotionCommandSettingSetJumpParam(const JumpParam &jump_param)
+        : MotionCommandBase(MotionCommandSetting_SetJumpParam),
+          jump_param_(jump_param) {}
+    ~MotionCommandSettingSetJumpParam() noexcept override = default;
+
+    const auto &jump_param() const { return jump_param_; }
+
+private:
+    move::JumpParam jump_param_;
+};
+
 // 启动Auto G00快速移动
 class MotionCommandAutoStartG00FastMove final
     : public MotionCommandLinearMoveBase {
@@ -231,6 +245,25 @@ public:
 private:
     MoveRuntimePlanSpeedInput speed_param_;
     bool touch_detect_enable_;
+};
+
+// 启动Auto G00快速移动
+class MotionCommandAutoStartG01ServoMove final
+    : public MotionCommandLinearMoveBase {
+public:
+    MotionCommandAutoStartG01ServoMove(const axis_t &start, const axis_t &end,
+                                       unit_t max_jump_height_from_begin)
+        : MotionCommandLinearMoveBase(MotionCommandAuto_StartG01ServoMove,
+                                      start, end),
+          max_jump_height_from_begin_(max_jump_height_from_begin) {}
+    ~MotionCommandAutoStartG01ServoMove() noexcept override = default;
+
+    auto max_jump_height_from_begin() const {
+        return max_jump_height_from_begin_;
+    }
+
+private:
+    unit_t max_jump_height_from_begin_;
 };
 
 class MotionCommandAutoStop final : public MotionCommandBase {

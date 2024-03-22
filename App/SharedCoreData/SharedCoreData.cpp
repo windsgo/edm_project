@@ -284,7 +284,8 @@ void SharedCoreData::_init_data() {
                            sys_settings_.get_info_dispatcher_peroid_ms());
 
     // init power manager
-    power_manager_ = new PowerManager(io_ctrler_, power_ctrler_, 1000, this);
+    power_manager_ = new PowerManager(io_ctrler_, power_ctrler_,
+                                      motion_cmd_queue_, 1000, this);
 }
 
 void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
