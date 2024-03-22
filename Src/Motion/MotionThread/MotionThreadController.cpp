@@ -1,5 +1,7 @@
 #include "MotionThreadController.h"
 
+#include "ethercat.h"
+
 #include "Logger/LogMacro.h"
 
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
@@ -138,11 +140,11 @@ void MotionThreadController::_thread_cycle_work() {
     }
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
-    if (ecat_manager_->is_ecat_connected()) {
-        TIMEUSESTAT(ecat_time_statistic_, ecat_manager_->ecat_sync(),
-                    thread_state_ == ThreadState::Running &&
-                        ecat_state_ == EcatState::EcatReady);
-    }
+    // if (ecat_manager_->is_ecat_connected()) {
+    //     TIMEUSESTAT(ecat_time_statistic_, ecat_manager_->ecat_sync(),
+    //                 thread_state_ == ThreadState::Running &&
+    //                     ecat_state_ == EcatState::EcatReady);
+    // }
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
     switch (thread_state_) {
@@ -268,6 +270,8 @@ void *MotionThreadController::_run() {
     int ht = (next_.tv_nsec / 1000000) + 1; /* round to nearest ms */
     next_.tv_nsec = ht * 1000000;
 
+    ec_send_processdata();
+
     while (!thread_exit_) {
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
@@ -313,7 +317,8 @@ void MotionThreadController::_threadstate_stopping() {
         return;
     }
 
-    ecat_manager_->disable_cycle_run_once();
+    ecat_manager_->ecat_sync(
+        [this]() { ecat_manager_->disable_cycle_run_once(); });
 #else  // EDM_OFFLINE_RUN_NO_ECAT
     _switch_thread_state(ThreadState::CanExit);
 #endif // EDM_OFFLINE_RUN_NO_ECAT
@@ -343,6 +348,11 @@ void MotionThreadController::_threadstate_running() {
         if (ret) {
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
         }
+
+        int send_ret = ec_send_processdata();
+        if (send_ret <= 0) {
+            s_logger->error("send ret1 : {}", send_ret);
+        }
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
         break;
@@ -351,6 +361,7 @@ void MotionThreadController::_threadstate_running() {
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
         _ecat_state_switch_to_ready();
 #else  // EDM_OFFLINE_RUN_NO_ECAT
+
         if (ecat_manager_->servo_all_operation_enabled()) {
             _ecat_state_switch_to_ready();
             ecat_clear_fault_reenable_flag_ = false;
@@ -369,12 +380,16 @@ void MotionThreadController::_threadstate_running() {
         ecat_clear_fault_reenable_flag_ = false;
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
         _ecat_state_switch_to_ready();
-#else  // EDM_OFFLINE_RUN_NO_ECAT
-        if (!ecat_manager_->servo_all_operation_enabled()) {
-            ecat_manager_->clear_fault_cycle_run_once();
-        } else {
-            _ecat_state_switch_to_ready();
-        }
+#else // EDM_OFFLINE_RUN_NO_ECAT
+
+        ecat_manager_->ecat_sync([this]() {
+            if (!ecat_manager_->servo_all_operation_enabled()) {
+                ecat_manager_->clear_fault_cycle_run_once();
+            } else {
+                _ecat_state_switch_to_ready();
+            }
+        });
+
 #endif // EDM_OFFLINE_RUN_NO_ECAT
         break;
     }
@@ -382,6 +397,21 @@ void MotionThreadController::_threadstate_running() {
         ecat_clear_fault_reenable_flag_ = false;
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
+        ecat_manager_->ecat_sync([this]() {
+            // set to motor axis
+            const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
+
+            for (int i = 0; i < cmd_axis.size(); ++i) {
+                ecat_manager_->set_servo_target_position(
+                    i,
+                    static_cast<int32_t>(std::lround(
+                        cmd_axis[i])) // TODO, gear ratio, default 1.0
+                );
+            }
+
+            _dc_sync(); //! 只在正常的情况下进行DC同步
+        });
+
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {
             s_logger->warn("in EcatReady, ecat disconnected");
@@ -407,20 +437,6 @@ void MotionThreadController::_threadstate_running() {
         TIMEUSESTAT(statemachine_time_statistic_,
                     motion_state_machine_->run_once(), true);
 
-#ifndef EDM_OFFLINE_RUN_NO_ECAT
-        // set to motor axis
-        const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
-
-        for (int i = 0; i < cmd_axis.size(); ++i) {
-            ecat_manager_->set_servo_target_position(
-                i,
-                static_cast<int32_t>(
-                    std::lround(cmd_axis[i])) // TODO, gear ratio, default 1.0
-            );
-        }
-
-        _dc_sync(); //! 只在正常的情况下进行DC同步
-#endif              // EDM_OFFLINE_RUN_NO_ECAT
         break;
     }
     }

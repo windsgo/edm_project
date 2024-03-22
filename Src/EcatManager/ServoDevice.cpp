@@ -20,9 +20,15 @@ void PanasonicServoDevice::set_operation_mode(uint8_t operation_mode) {
     ctrl_->modes_of_operation = operation_mode;
 }
 
-uint16_t PanasonicServoDevice::get_status_word() { return stat_->status_word; }
+uint16_t PanasonicServoDevice::get_current_control_word() const {
+    return ctrl_->control_word;
+}
 
-int32_t PanasonicServoDevice::get_actual_position() {
+uint16_t PanasonicServoDevice::get_status_word() const {
+    return stat_->status_word;
+}
+
+int32_t PanasonicServoDevice::get_actual_position() const {
     return stat_->position_actual_value;
 }
 

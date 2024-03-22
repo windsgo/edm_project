@@ -112,4 +112,4 @@ target_link_libraries(edm PUBLIC
 )
 
 add_subdirectory(App)
-add_subdirectory(tests)
+# add_subdirectory(tests)

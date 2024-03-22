@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-
+#include <functional>
 namespace edm {
 
 namespace ecat {
@@ -34,9 +34,10 @@ public:
 
     void disconnect_ecat();
 
-    // do send and receive progress data object
-    // check wkc when receiving
-    void ecat_sync();
+    // recv first, then assign the pdo tx data, then send
+    // that is `recv - pdo assign - send - calc` sequence
+    // which is much better than `send - recv - calc - pdo assign` sequence
+    void ecat_sync(const std::function<void(void)>& do_pdo_assign_func);
 
     // calulate toff to get linux time and DC synced
     void dc_sync_time(int64_t cycletime, int64_t *offsettime);

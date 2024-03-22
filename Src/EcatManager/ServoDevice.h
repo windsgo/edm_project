@@ -22,8 +22,10 @@ public:
     virtual void set_target_position(int32_t target_posistion) = 0;
     virtual void set_operation_mode(uint8_t operation_mode) = 0;
 
-    virtual uint16_t get_status_word() = 0;
-    virtual int32_t get_actual_position() = 0;
+    virtual uint16_t get_current_control_word() const = 0;
+
+    virtual uint16_t get_status_word() const = 0;
+    virtual int32_t get_actual_position() const = 0;
 
     virtual bool sw_fault() const = 0;
     virtual bool sw_switch_on_disabled() const = 0;
@@ -61,8 +63,10 @@ public:
     void set_target_position(int32_t target_posistion) override;
     void set_operation_mode(uint8_t operation_mode) override;
 
-    uint16_t get_status_word() override;
-    int32_t get_actual_position() override;
+    uint16_t get_current_control_word() const override;
+
+    uint16_t get_status_word() const override;
+    int32_t get_actual_position() const override;
 
     bool sw_fault() const override;
     bool sw_switch_on_disabled() const override;
@@ -80,7 +84,7 @@ public:
 
     void sync_actual_position_to_target_position() override;
 
-private:
+public:
     volatile Panasonic_A5B_Ctrl *ctrl_;
     volatile Panasonic_A5B_Stat *stat_;
 };

@@ -4,6 +4,8 @@
 #include "Logger/LogMacro.h"
 #include "config.h"
 
+#include "ServoDevice.h"
+
 #include <string.h>
 
 #ifdef EDM_ECAT_DRIVER_SOEM
@@ -223,12 +225,44 @@ void EcatManager::disconnect_ecat() {
     connected_ = false;
 }
 
-void EcatManager::ecat_sync() {
+// void EcatManager::ecat_sync() {
+//     int wkc;
+// #ifdef EDM_ECAT_DRIVER_SOEM
+//     auto ss = std::static_pointer_cast<PanasonicServoDevice>(servo_devices_[0]);
+//     EDM_CYCLIC_LOG(s_logger->debug, 500, "cw1: {:08b}, m1: {}",
+//                    servo_devices_[0]->get_current_control_word(), ss->ctrl_->modes_of_operation);
+//     wkc = ec_receive_processdata(200); // at most 200 us
+//     EDM_CYCLIC_LOG(s_logger->debug, 500, "cw2: {:08b}, m2: {}",
+//                    servo_devices_[0]->get_current_control_word(), ss->ctrl_->modes_of_operation);
+//     int send_ret = ec_send_processdata();
+// #endif // EDM_ECAT_DRIVER_SOEM
+
+//     if (send_ret <= 0) {
+//         s_logger->error("send ret : {}", send_ret);
+//     }
+
+//     const int expected_wkc = (servo_num_ + io_num_) * 3;
+//     if (wkc < expected_wkc || wkc < 0) {
+//         wkc_failed_sc.push_back_valid();
+//     } else {
+//         wkc_failed_sc.push_back_invalid();
+//     }
+
+//     if (wkc_failed_sc.valid_rate() > wkc_failed_threshold) {
+//         s_logger->critical("ecat valid err: {}", wkc_failed_sc.valid_rate());
+//         connected_ = false;
+// #ifdef EDM_ECAT_DRIVER_SOEM
+//         // disconnect_ecat();
+//         ec_close();
+// #endif // EDM_ECAT_DRIVER_SOEM
+//     }
+// }
+
+void EcatManager::ecat_sync(const std::function<void(void)>& do_pdo_assign_func) {
     int wkc;
 #ifdef EDM_ECAT_DRIVER_SOEM
-    ec_send_processdata();
     wkc = ec_receive_processdata(200); // at most 200 us
-#endif                                 // EDM_ECAT_DRIVER_SOEM
+#endif // EDM_ECAT_DRIVER_SOEM
 
     const int expected_wkc = (servo_num_ + io_num_) * 3;
     if (wkc < expected_wkc || wkc < 0) {
@@ -245,6 +279,15 @@ void EcatManager::ecat_sync() {
         ec_close();
 #endif // EDM_ECAT_DRIVER_SOEM
     }
+
+    /* Do PDO assignment using callback */
+    if (do_pdo_assign_func) {
+        do_pdo_assign_func();
+    }
+
+#ifdef EDM_ECAT_DRIVER_SOEM
+    int send_ret = ec_send_processdata();
+#endif // EDM_ECAT_DRIVER_SOEM
 }
 
 /* PI calculation to get linux time synced to DC time */
@@ -267,8 +310,7 @@ static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
 }
 
 /* PI calculation to get linux time synced to DC time */
-void EcatManager::dc_sync_time(int64_t cycletime,
-                               int64_t *offsettime) {
+void EcatManager::dc_sync_time(int64_t cycletime, int64_t *offsettime) {
     if (!this->connected_) {
         *offsettime = 0;
         return;
