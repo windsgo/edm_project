@@ -15,7 +15,8 @@ namespace app {
 // 因为PowerController不是线程安全的
 class MotionEventVoltageEnable : public QEvent {
 public:
-    MotionEventVoltageEnable(bool voltage_enable) : QEvent(type) {}
+    MotionEventVoltageEnable(bool voltage_enable)
+        : QEvent(type), voltage_enable_(voltage_enable) {}
     constexpr static const QEvent::Type type =
         QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_MotionVoltageEnable);
 
