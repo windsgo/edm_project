@@ -66,12 +66,6 @@ private:
     void _init_connections();
 
 private:
-    bool _is_info_mainmode_idle() const;
-    bool _is_info_mainmode_auto() const;
-    bool _is_info_autostate_paused() const;
-    bool _is_info_autostate_stopped() const;
-
-private:
     bool _cmd_start_pointmove(
         std::shared_ptr<edm::move::MotionCommandManualStartPointMove> cmd);
     bool _cmd_stop_pointmove();

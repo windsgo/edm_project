@@ -77,24 +77,6 @@ void TaskManager::_init_connections() {
             &TaskManager::sig_switch_coordindex);
 }
 
-bool TaskManager::_is_info_mainmode_idle() const {
-    return info_dispatcher_->get_info().main_mode == move::MotionMainMode::Idle;
-}
-
-bool TaskManager::_is_info_mainmode_auto() const {
-    return info_dispatcher_->get_info().main_mode == move::MotionMainMode::Auto;
-}
-
-bool TaskManager::_is_info_autostate_paused() const {
-    return info_dispatcher_->get_info().auto_state ==
-           move::MotionAutoState::Paused;
-}
-
-bool TaskManager::_is_info_autostate_stopped() const {
-    return info_dispatcher_->get_info().auto_state ==
-           move::MotionAutoState::Stopped;
-}
-
 bool TaskManager::_cmd_start_pointmove(
     std::shared_ptr<edm::move::MotionCommandManualStartPointMove> cmd) {
     this->shared_core_data_->get_motion_cmd_queue()->push_command(cmd);

@@ -390,9 +390,7 @@ void GCodeRunner::_state_current_node_initing() {
         }
 
         // motor start pos
-        const auto &motor_start_pos = shared_core_data_->get_info_dispatcher()
-                                          ->get_info()
-                                          .curr_cmd_axis_blu;
+        const auto &motor_start_pos = local_info_cache_.curr_cmd_axis_blu;
 
         // mach start pos
         move::axis_t mach_start_pos;
@@ -505,9 +503,7 @@ void GCodeRunner::_state_current_node_initing() {
         }
 
         // motor start pos
-        const auto &motor_start_pos = shared_core_data_->get_info_dispatcher()
-                                          ->get_info()
-                                          .curr_cmd_axis_blu;
+        const auto &motor_start_pos = local_info_cache_.curr_cmd_axis_blu;
 
         // mach start pos
         move::axis_t mach_start_pos;
