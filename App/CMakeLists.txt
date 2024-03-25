@@ -25,6 +25,7 @@ set(APP_SOURCES
     codeeditor/highlighter.cpp
     DataDisplayer/DataDisplayer.cpp
     CoordSettingPanel/CoordSettingPanel.cpp
+    SystemSettingPanel/SystemSettingPanel.cpp
     Resource/app_resource.qrc # qt resource
 )
 

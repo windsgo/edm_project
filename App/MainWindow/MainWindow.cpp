@@ -93,6 +93,10 @@ void MainWindow::_init_members() {
     test_panel_ = new TestPanel(shared_core_data_);
     testpanel_layout->addWidget(test_panel_);
 
+    auto system_setting_panel_layout = new QGridLayout(ui->tab_system_setting);
+    system_setting_panel_ = new SystemSettingPanel();
+    system_setting_panel_layout->addWidget(system_setting_panel_);
+
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
 }

@@ -1,28 +1,28 @@
 {
-    "coord_config_file": "coord.json",
-    "log_config_file": "logdefine.json",
-    "qss_file": "gui.qss",
-    "can_device_name": "can0",
     "can_device_bitrate": 500000,
+    "can_device_name": "can0",
+    "coord_config_file": "coord.json",
     "ecat": {
-        "ecat_netif_name": "enx34298f700ae1",
-        "ecat_iomap_size": 4096
+        "ecat_iomap_size": 4096,
+        "ecat_netif_name": "enx34298f700ae1"
     },
     "fast_move_param": {
-        "max_acc_um_s2": 300000,
-        "nacc_ms": 100,
-        "speed_0_um_s": 3000,
-        "speed_1_um_s": 1000,
-        "speed_2_um_s": 330,
-        "speed_3_um_s": 16
+        "max_acc_um_s2": 300000.000000,
+        "nacc_ms": 90,
+        "speed_0_um_s": 3000.000000,
+        "speed_1_um_s": 1000.000000,
+        "speed_2_um_s": 330.000000,
+        "speed_3_um_s": 16.000000
     },
-    "power_database_file": "power.db",
     "helper_can_device_name": "can1",
-    "interp_module_path_relative_to_root": "Src/Interpreter/rs274pyInterpreter/pymodule/",
     "info_dispatcher_peroid_ms": 20,
+    "interp_module_path_relative_to_root": "Src/Interpreter/rs274pyInterpreter/pymodule/",
     "jump_param": {
-        "max_acc_um_s2": 1440000,
-        "nacc_ms": 60,
-        "buffer_um": 30
-    }
+        "buffer_um": 30,
+        "max_acc_um_s2": 1440000.000000,
+        "nacc_ms": 60
+    },
+    "log_config_file": "logdefine.json",
+    "power_database_file": "power.db",
+    "qss_file": "gui.qss"
 }

@@ -13,6 +13,7 @@
 #include "GCodePanel/GCodePanel.h"
 #include "TestPanel/TestPanel.h"
 #include "CoordSettingPanel/CoordSettingPanel.h"
+#include "SystemSettingPanel/SystemSettingPanel.h"
 
 #include "TaskManager/TaskManager.h"
 #include "TaskManager/GCodeTaskConverter.h"
@@ -63,6 +64,7 @@ private:
     GCodePanel* gcode_panel_;
     TestPanel* test_panel_;
     CoordSettingPanel* coord_setting_panel_;
+    SystemSettingPanel* system_setting_panel_;
 
 private:
 

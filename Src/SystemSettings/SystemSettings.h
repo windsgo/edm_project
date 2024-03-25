@@ -119,7 +119,7 @@ public:
     double get_fmparam_max_acc_um_s2() const {
         return data_.fast_move_param.max_acc_um_s2;
     }
-    double get_fmparam_nacc_ms() const { return data_.fast_move_param.nacc_ms; }
+    uint32_t get_fmparam_nacc_ms() const { return data_.fast_move_param.nacc_ms; }
     double get_fmparam_speed_0_um_s() const {
         return data_.fast_move_param.speed_0_um_s;
     }
@@ -151,13 +151,28 @@ public:
 
 public:
     // TODO change settings and save to local file
+    inline void set_fastmove_max_acc_um_s2(double v) { data_.fast_move_param.max_acc_um_s2 = v; }
+    inline void set_fastmove_nacc_ms(uint32_t v) { data_.fast_move_param.nacc_ms = v; }
+    inline void set_fastmove_speed_0_um_s(double v) { data_.fast_move_param.speed_0_um_s = v; }
+    inline void set_fastmove_speed_1_um_s(double v) { data_.fast_move_param.speed_1_um_s = v; }
+    inline void set_fastmove_speed_2_um_s(double v) { data_.fast_move_param.speed_2_um_s = v; }
+    inline void set_fastmove_speed_3_um_s(double v) { data_.fast_move_param.speed_3_um_s = v; }
+
+    inline void set_jumpparam_max_acc_um_s2(double v) { data_.jump_param.max_acc_um_s2 = v; }
+    inline void set_jumpparam_nacc_ms(double v) { data_.jump_param.nacc_ms = v; }
+    inline void set_jumpparam_buffer_um(double v) { data_.jump_param.buffer_um = v; }
+
+public:
+    bool save_to_file() const {
+        return _save_to_file(SystemSettings::GetSysConfigPath());
+    }
+
+    void reload_from_file() { _reload_from_file(); }
 
 private:
     bool _save_to_file(const std::string &filename) const;
-
-private:
-    SystemSettings() {
-        std::ifstream ifs(GetSysConfigPath());
+    void _reload_from_file() {
+        std::ifstream ifs(SystemSettings::GetSysConfigPath());
         if (!ifs.is_open()) {
             throw exception(EDM_FMT::format(
                 "system settings init failed: config file open failed: {}",
@@ -182,6 +197,11 @@ private:
         }
 
         ifs.close();
+    }
+
+private:
+    SystemSettings() {
+        _reload_from_file();
     }
 
 private:
