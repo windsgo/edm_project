@@ -24,7 +24,7 @@ private:
     constexpr static const double s2ms_{1000.0};
     constexpr static const double ms2us_{1000.0};
     constexpr static const double p2ms_{EDM_SERVO_PEROID_US /
-                                        1000};        // 周期 -> ms
+                                        1000.0};        // 周期 -> ms
     constexpr static const double ms2p_{1.0 / p2ms_}; // ms -> 周期
 
     // speed unit factors

@@ -139,6 +139,12 @@ void MotionThreadController::_thread_cycle_work() {
             auto t = calcdiff_ns(temp_curr_ts, this->next_);
             if (t > 0)
                 latency_averager_->push(t);
+            
+            if (t > cycletime_ns_) {
+                s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
+                // add_timespec(&this->next_, cycletime_ns_);
+                this->next_ = temp_curr_ts;
+            }
         }
     }
 

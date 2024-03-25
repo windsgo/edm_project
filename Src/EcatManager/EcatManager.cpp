@@ -261,13 +261,13 @@ void EcatManager::disconnect_ecat() {
 void EcatManager::ecat_sync(const std::function<void(void)>& do_pdo_assign_func) {
     int wkc;
 #ifdef EDM_ECAT_DRIVER_SOEM
-    wkc = ec_receive_processdata(200); // at most 200 us
+    wkc = ec_receive_processdata(80); // at most 200 us
 #endif // EDM_ECAT_DRIVER_SOEM
 
     const int expected_wkc = (servo_num_ + io_num_) * 3;
     if (wkc < expected_wkc || wkc < 0) {
         wkc_failed_sc.push_back_valid();
-        // s_logger->warn("wkc not ok: {}", wkc);
+        s_logger->warn("wkc not ok: {}", wkc);
     } else {
         wkc_failed_sc.push_back_invalid();
     }
@@ -308,6 +308,8 @@ static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
     }
     *offsettime = -(delta / 100) - (integral / 20);
     //    gl_delta = delta;
+
+    // EDM_CYCLIC_LOG(s_logger->debug, 500, "ref {}, delta: {}, integral: {}", reftime, delta, integral);
 }
 
 /* PI calculation to get linux time synced to DC time */
