@@ -4,6 +4,9 @@ build/**
 .vscode/**
 __pycache__
 
+Data
+Data/**
+
 *.log
 
 *.json

@@ -28,14 +28,14 @@ TestPanel::~TestPanel() { delete ui; }
 
 void TestPanel::_update_phy_touchdetect() {
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-    shared_core_data_->set_manual_touch_detect_flag(
+    shared_core_data_->get_can_recv_buffer()->set_manual_touch_detect_flag(
         ui->pb_phy_detected->isChecked());
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 }
 
 void TestPanel::_update_servo() {
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-    shared_core_data_->set_manual_servo_cmd(
+    shared_core_data_->get_can_recv_buffer()->set_manual_servo_cmd(
         (double)ui->horizontalSlider_servo->value() / 100.0,
         util::UnitConverter::um_ms2blu_p(
             (double)ui->horizontalSlider_servo_2->value() / 100.0));

@@ -24,5 +24,6 @@
     },
     "log_config_file": "logdefine.json",
     "power_database_file": "power.db",
-    "qss_file": "gui.qss"
+    "qss_file": "gui.qss",
+    "datasave_dir": "Data/"
 }

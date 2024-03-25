@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QWidget>
 
+#include "CanReceiveBuffer/CanReceiveBuffer.h"
+
 #include "MainWindow/MainWindow.h"
 
 #include "Logger/LogMacro.h"
@@ -26,6 +28,7 @@ static void print_sys_start() {
     s_logger->info("-----------------------------------------");
     s_logger->info("------------ System Started -------------");
     s_logger->info("-----------------------------------------");
+    s_logger->info("sizeof(Can1IOBoard407ServoData): {}", sizeof(edm::Can1IOBoard407ServoData));
 }
 
 using namespace edm::app;

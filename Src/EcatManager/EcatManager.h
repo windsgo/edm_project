@@ -68,7 +68,7 @@ private:
     std::size_t iomap_size_;
     char *iomap_;
 
-    bool connected_ = false;
+    volatile bool connected_ = false;
 
     uint32_t servo_num_;
     std::vector<ServoDevice::ptr> servo_devices_;

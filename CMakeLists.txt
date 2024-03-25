@@ -82,6 +82,7 @@ set(PROJECT_SOURCES
     Src/Motion/TouchDetectHandler/TouchDetectHandler.cpp
     Src/Motion/Trajectory/TrajectorySegement.cpp
     Src/Motion/Trajectory/TrajectoryList.cpp
+    Src/Motion/MotionSharedData/MotionSharedData.cpp
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
     Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
     Src/Coordinate/Coordinate.cpp

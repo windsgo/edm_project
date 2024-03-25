@@ -17,6 +17,8 @@
 
 #include "MotionAutoTaskRunner.h"
 
+#include "Motion/MotionSharedData/MotionSharedData.h"
+
 namespace edm {
 
 namespace move {
@@ -31,12 +33,9 @@ class MotionStateMachine final {
 public:
     using ptr = std::shared_ptr<MotionStateMachine>;
     MotionStateMachine(const std::function<bool(axis_t &)> &cb_get_act_axis,
-                       TouchDetectHandler::ptr touch_detect_handler,
                        SignalBuffer::ptr signal_buffer,
-                       const std::function<double(void)> &cb_get_servo_cmd,
                        const std::function<void(bool)> &cb_enable_votalge_gate,
-                       const std::function<void(bool)> &cb_mach_on,
-                       const std::function<double(void)>& cb_get_onlynew_servo_cmd);
+                       const std::function<void(bool)> &cb_mach_on);
     ~MotionStateMachine() = default;
 
     // run once
@@ -55,6 +54,8 @@ public: // setting interfaces
     // reset the local `cmd_axis_` to the input value
     void set_cmd_axis(const axis_t &init_cmd_axis);
     void refresh_axis_using_actpos();
+
+    inline auto get_touch_detect_handler() const { return touch_detect_handler_; }
 
 public: // operate interfaces
     // input target_pos only, start_pos is default as current calc pos
@@ -128,10 +129,6 @@ private: // callbacks
     // get real axis
     std::function<bool(axis_t &)> cb_get_act_axis_;
 
-    // get servo cmd
-    std::function<double(void)> cb_get_servo_cmd_;
-    std::function<double(void)> cb_get_onlynew_servo_cmd_;
-
     // 获取缓存抬刀参数回调(给G01用)
     std::function<void(JumpParam &)> cb_get_jump_param_;
 
@@ -155,7 +152,6 @@ private: // signal dispatcher
 
 public:
     static const char *GetMainModeStr(MotionMainMode mode);
-    // TODO  auto mode
 };
 
 } // namespace move

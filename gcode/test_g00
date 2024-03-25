@@ -5,9 +5,9 @@ i.g91()
 i.f(200)
 # i.set_coord(60)
 for j in range(10):
-    i.g00(x=1)
+    i.g00(x=5)
     i.g04(0.1)
-    i.g00(x=-1)
+    i.g00(x=-5)
     i.g04(0.1)
 
 i.m00()

@@ -67,13 +67,15 @@ public: // settings
         "Src/Interpreter/rs274pyInterpreter/pymodule/"};
     uint32_t info_dispatcher_peroid_ms{20};
     _jump_param jump_param;
+    std::string datasave_dir;
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
                     MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param,
                     MEO_OPT power_database_file, MEO_OPT helper_can_device_name,
                     MEO_OPT interp_module_path_relative_to_root,
-                    MEO_OPT info_dispatcher_peroid_ms, MEO_OPT jump_param);
+                    MEO_OPT info_dispatcher_peroid_ms, MEO_OPT jump_param,
+                    MEO_OPT datasave_dir);
 };
 
 }; // namespace _sys
@@ -119,7 +121,9 @@ public:
     double get_fmparam_max_acc_um_s2() const {
         return data_.fast_move_param.max_acc_um_s2;
     }
-    uint32_t get_fmparam_nacc_ms() const { return data_.fast_move_param.nacc_ms; }
+    uint32_t get_fmparam_nacc_ms() const {
+        return data_.fast_move_param.nacc_ms;
+    }
     double get_fmparam_speed_0_um_s() const {
         return data_.fast_move_param.speed_0_um_s;
     }
@@ -149,18 +153,38 @@ public:
 
     const auto &get_jump_param() const { return data_.jump_param; }
 
+    const auto &get_datasave_dir() const { return data_.datasave_dir; }
+
 public:
     // TODO change settings and save to local file
-    inline void set_fastmove_max_acc_um_s2(double v) { data_.fast_move_param.max_acc_um_s2 = v; }
-    inline void set_fastmove_nacc_ms(uint32_t v) { data_.fast_move_param.nacc_ms = v; }
-    inline void set_fastmove_speed_0_um_s(double v) { data_.fast_move_param.speed_0_um_s = v; }
-    inline void set_fastmove_speed_1_um_s(double v) { data_.fast_move_param.speed_1_um_s = v; }
-    inline void set_fastmove_speed_2_um_s(double v) { data_.fast_move_param.speed_2_um_s = v; }
-    inline void set_fastmove_speed_3_um_s(double v) { data_.fast_move_param.speed_3_um_s = v; }
+    inline void set_fastmove_max_acc_um_s2(double v) {
+        data_.fast_move_param.max_acc_um_s2 = v;
+    }
+    inline void set_fastmove_nacc_ms(uint32_t v) {
+        data_.fast_move_param.nacc_ms = v;
+    }
+    inline void set_fastmove_speed_0_um_s(double v) {
+        data_.fast_move_param.speed_0_um_s = v;
+    }
+    inline void set_fastmove_speed_1_um_s(double v) {
+        data_.fast_move_param.speed_1_um_s = v;
+    }
+    inline void set_fastmove_speed_2_um_s(double v) {
+        data_.fast_move_param.speed_2_um_s = v;
+    }
+    inline void set_fastmove_speed_3_um_s(double v) {
+        data_.fast_move_param.speed_3_um_s = v;
+    }
 
-    inline void set_jumpparam_max_acc_um_s2(double v) { data_.jump_param.max_acc_um_s2 = v; }
-    inline void set_jumpparam_nacc_ms(double v) { data_.jump_param.nacc_ms = v; }
-    inline void set_jumpparam_buffer_um(double v) { data_.jump_param.buffer_um = v; }
+    inline void set_jumpparam_max_acc_um_s2(double v) {
+        data_.jump_param.max_acc_um_s2 = v;
+    }
+    inline void set_jumpparam_nacc_ms(double v) {
+        data_.jump_param.nacc_ms = v;
+    }
+    inline void set_jumpparam_buffer_um(double v) {
+        data_.jump_param.buffer_um = v;
+    }
 
 public:
     bool save_to_file() const {
@@ -200,9 +224,7 @@ private:
     }
 
 private:
-    SystemSettings() {
-        _reload_from_file();
-    }
+    SystemSettings() { _reload_from_file(); }
 
 private:
     _sys::_SystemSettingsData data_;

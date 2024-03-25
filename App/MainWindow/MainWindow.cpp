@@ -46,6 +46,8 @@ MainWindow::MainWindow(QWidget *parent)
         auto cmd = std::make_shared<move::MotionCommandSettingClearStatData>();
         this->shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
     });
+
+    _init_test_record();
 }
 
 MainWindow::~MainWindow() {
@@ -117,6 +119,13 @@ void MainWindow::_init_status_bar_palette_and_connection() {
             &MainWindow::slot_warn_message);
     connect(this->shared_core_data_, &SharedCoreData::sig_error_message, this,
             &MainWindow::slot_error_message);
+}
+
+void MainWindow::_init_test_record()
+{
+    connect(ui->pb_start_record1, &QPushButton::clicked, this, [this](bool checked) {
+
+    });
 }
 
 void MainWindow::slot_info_message(const QString &str, int timeout) {

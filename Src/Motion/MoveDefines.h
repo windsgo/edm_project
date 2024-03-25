@@ -120,6 +120,14 @@ struct MotionSignal {
     MotionInfo info;
 };
 
+// 记录器记录数据
+struct RecordMotionData1 {
+    axis_t cmd;
+    axis_t act;
+
+    unit_t servo_cmd;
+};
+
 } // namespace move
 
 } // namespace edm

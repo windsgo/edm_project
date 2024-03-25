@@ -44,6 +44,8 @@ public:
 
     void _init_status_bar_palette_and_connection();
 
+    void _init_test_record();
+
 public:
     void slot_info_message(const QString& str, int timeout = 0);
     void slot_warn_message(const QString& str, int timeout = 0);

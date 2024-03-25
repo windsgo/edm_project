@@ -133,9 +133,7 @@ struct eventtype_register__ {
 };
 static struct eventtype_register__ et_register;
 
-SharedCoreData::SharedCoreData(QObject *parent)
-    : QObject(parent), random_device_(), gen_(random_device_()),
-      uniform_real_distribution_(-1.0, 1.0) {
+SharedCoreData::SharedCoreData(QObject *parent) : QObject(parent) {
     _init_data();
 }
 
@@ -295,9 +293,8 @@ void SharedCoreData::_init_data() {
 
     motion_thread_ctrler_ = std::make_shared<move::MotionThreadController>(
         sys_settings_.get_ecat_netif_name(), motion_cmd_queue_,
-        motion_signal_queue_, cb_enable_votalge_gate_, cb_get_servo_cmd_,
-        cb_get_touch_physical_detected_, cb_mach_on_, cb_get_onlynew_servo_cmd_,
-        sys_settings_.get_ecat_iomap_size(), EDM_SERVO_NUM);
+        motion_signal_queue_, cb_enable_votalge_gate_, cb_mach_on_,
+        can_recv_buffer_, sys_settings_.get_ecat_iomap_size(), EDM_SERVO_NUM);
 
     // init info dispatcher
     info_dispatcher_ =
@@ -356,71 +353,6 @@ void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
 }
 
 void SharedCoreData::_init_motionthread_cb() {
-    cb_get_touch_physical_detected_ = [this]() -> bool {
-#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-        return this->manual_touch_detect_flag_;
-#else // EDM_OFFLINE_MANUAL_TOUCH_DETECT
-        Can1IOBoard407ServoData sd;
-        this->can_recv_buffer_->load_servo_data(sd);
-
-        return sd.touch_detected;
-
-#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
-    };
-
-    cb_get_servo_cmd_ = [this]() -> double {
-#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-        double amplitude_um = this->manual_servo_cmd_feed_amplitude_um_;
-        double probability_offset =
-            (this->manual_servo_cmd_feed_probability_ - 0.50);
-
-        double rd =
-            uniform_real_distribution_(gen_); // rd 在 -1.0, 1.0之间正太分布
-
-        // 根据 probability_offset 进行概率偏移
-        rd += probability_offset * 2;
-        if (rd > 1.0)
-            rd = 1.0;
-        else if (rd < -1.0)
-            rd = -1.0;
-
-        return util::UnitConverter::um2blu(rd * amplitude_um);
-#else // EDM_OFFLINE_MANUAL_SERVO_CMD
-        Can1IOBoard407ServoData sd;
-        this->can_recv_buffer_->load_servo_data(sd);
-
-        double um_ret = 0.0;
-        if (sd.servo_direction > 0) {
-            um_ret = (double)sd.servo_distance_0_01um / 100.0;
-        } else {
-            um_ret = (-1.0) * (double)sd.servo_distance_0_01um / 100.0;
-        }
-
-        return util::UnitConverter::um2blu(um_ret);
-
-#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
-    };
-
-    cb_get_onlynew_servo_cmd_ = [this]() -> double {
-#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-        static int i = 0;
-        ++i;
-        if (i < 2) {
-            return 0.0;
-        } else {
-            i = 0;
-            return cb_get_servo_cmd_();
-        }
-#else  // EDM_OFFLINE_MANUAL_SERVO_CMD
-        if (this->can_recv_buffer_->is_servo_data_new()) {
-            this->can_recv_buffer_->clear_servo_data_new_flag();
-            return cb_get_servo_cmd_();
-        } else {
-            return 0.0;
-        }
-#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
-    };
-
     cb_enable_votalge_gate_ = [this](bool arg) -> void {
         s_logger->debug("push voltage gate command: {}", arg);
 

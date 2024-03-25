@@ -9,22 +9,20 @@ EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 namespace edm {
 
 namespace move {
+
+static auto s_motion_shared = MotionSharedData::instance();
+
 MotionThreadController::MotionThreadController(
     std::string_view ifname, MotionCommandQueue::ptr motion_cmd_queue,
     MotionSignalQueue::ptr motion_signal_queue,
     const std::function<void(bool)> &cb_enable_voltage_gate,
-    const std::function<double(void)> &cb_get_servo_cmd,
-    const std::function<bool(void)> &cb_get_touch_physical_detected,
     const std::function<void(bool)> &cb_mach_on,
-    const std::function<double(void)> &cb_get_onlynew_servo_cmd,
-    uint32_t iomap_size, uint32_t servo_num, uint32_t io_num)
+    CanReceiveBuffer::ptr can_recv_buffer, uint32_t iomap_size,
+    uint32_t servo_num, uint32_t io_num)
     : motion_cmd_queue_(motion_cmd_queue),
       motion_signal_queue_(motion_signal_queue),
-      cb_enable_votalge_gate_(cb_enable_voltage_gate),
-      cb_get_servo_cmd_(cb_get_servo_cmd),
-      cb_get_touch_physical_detected_(cb_get_touch_physical_detected),
-      cb_mach_on_(cb_mach_on),
-      cb_get_onlynew_servo_cmd_(cb_get_onlynew_servo_cmd) {
+      cb_enable_votalge_gate_(cb_enable_voltage_gate), cb_mach_on_(cb_mach_on),
+      can_recv_buffer_(can_recv_buffer) {
     //! 需要注意的是, 构造函数中的代码运行在Caller线程, 不运行在新的线程
     //! 所以线程要最后创建, 防止数据竞争, 和使用未初始化成员变量的问题
 
@@ -37,15 +35,15 @@ MotionThreadController::MotionThreadController(
 
     signal_buffer_ = std::make_shared<SignalBuffer>();
 
+    //! 初始化公共数据的can buffer
+    s_motion_shared->set_can_recv_buffer(can_recv_buffer);
+
     //! 创建motion状态机
     auto get_act_pos_cb =
         std::bind_front(&MotionThreadController::_get_act_pos, this);
-    touch_detect_handler_ =
-        std::make_shared<TouchDetectHandler>(cb_get_touch_physical_detected_);
+
     motion_state_machine_ = std::make_shared<MotionStateMachine>(
-        get_act_pos_cb, touch_detect_handler_, signal_buffer_,
-        cb_get_servo_cmd_, cb_enable_votalge_gate_, cb_mach_on_,
-        cb_get_onlynew_servo_cmd_);
+        get_act_pos_cb, signal_buffer_, cb_enable_votalge_gate_, cb_mach_on_);
     if (!motion_state_machine_) {
         s_logger->critical("MotionStateMachine create failed");
         throw exception("MotionStateMachine create failed");
@@ -355,10 +353,7 @@ void MotionThreadController::_threadstate_running() {
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
         }
 
-        int send_ret = ec_send_processdata();
-        if (send_ret <= 0) {
-            s_logger->error("send ret1 : {}", send_ret);
-        }
+        ec_send_processdata();
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
         break;
@@ -395,6 +390,15 @@ void MotionThreadController::_threadstate_running() {
                 _ecat_state_switch_to_ready();
             }
         });
+
+        if (!ecat_manager_->is_ecat_connected()) {
+            s_logger->warn("in EcatConnectedEnabling, ecat disconnected");
+            _switch_ecat_state(EcatState::EcatDisconnected);
+            ecat_connect_flag_ = false;
+            // 重置 运动状态机
+            motion_state_machine_->reset();
+            break;
+        }
 
 #endif // EDM_OFFLINE_RUN_NO_ECAT
         break;
@@ -517,7 +521,7 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         // 接触感知开启设定 //! 注意在点动结束后关闭接触感知
         if (ret) {
-            touch_detect_handler_->set_detect_enable(
+            motion_state_machine_->get_touch_detect_handler()->set_detect_enable(
                 spm_cmd->touch_detect_enable());
         }
 
@@ -644,13 +648,13 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         s_logger->trace("Handle MotionCmd: Setting_ClearWarning");
 
         // 目前只有接触感知报警
-        touch_detect_handler_->clear_warning();
+        motion_state_machine_->get_touch_detect_handler()->clear_warning();
 
         accept_cmd_flag = true;
         break;
     }
     case MotionCommandSetting_ClearStatData: {
-        
+
         info_time_statistic_.clear();
         ecat_time_statistic_.clear();
         total_time_statistic_.clear();
@@ -756,9 +760,9 @@ void MotionThreadController::_copy_info_cache() {
 #endif // EDM_OFFLINE_RUN_NO_ECAT
     info_cache_.setEcatAllEnabled(ecat_state_ == EcatState::EcatReady);
     info_cache_.setTouchDetectEnabled(
-        touch_detect_handler_->is_detect_enable());
-    info_cache_.setTouchDetected(touch_detect_handler_->physical_detected());
-    info_cache_.setTouchWarning(touch_detect_handler_->has_warning());
+        motion_state_machine_->get_touch_detect_handler()->is_detect_enable());
+    info_cache_.setTouchDetected(motion_state_machine_->get_touch_detect_handler()->physical_detected());
+    info_cache_.setTouchWarning(motion_state_machine_->get_touch_detect_handler()->has_warning());
 
 #ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
     // Store To Atomic

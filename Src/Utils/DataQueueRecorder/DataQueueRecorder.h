@@ -40,6 +40,7 @@ public:
     }
 
     inline bool start_record(std::string_view filename) {
+        std::lock_guard lg(mutex_);
         if (running_flag_) {
             return false;
         }
@@ -68,6 +69,8 @@ public:
         // start recording thread
         thread_ = std::thread(_ThreadEntry, this);
 
+        running_flag_ = true;
+
         return true;
     }
 
@@ -93,6 +96,7 @@ public:
     }
 
     inline void stop_record() {
+        std::lock_guard lg(mutex_);
         stop_flag_ = true;
         cv_.notify_all();
     }

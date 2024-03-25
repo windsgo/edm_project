@@ -36,6 +36,8 @@
 
 #include "SharedCoreData/Power/PowerManager.h"
 
+#include "Utils/DataQueueRecorder/DataQueueRecorder.h"
+
 #include <QEvent>
 #include <QObject>
 
@@ -120,39 +122,8 @@ private:
     PowerManager* power_manager_;
 
 private:
-    std::function<bool(void)> cb_get_touch_physical_detected_;
-    std::function<double(void)> cb_get_servo_cmd_;
-    std::function<double(void)> cb_get_onlynew_servo_cmd_; // 仅获取最新的伺服指令, 如果没有返回0, 如果有, 返回后清除new标志位 
     std::function<void(bool)> cb_enable_votalge_gate_;
     std::function<void(bool)> cb_mach_on_;
-
-#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-    std::atomic_bool manual_touch_detect_flag_{false};
-#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
-
-#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-    // 离线测试时, 给此类输入一个幅值和进给概率, 每次调用, 随机给出一个进给量
-    std::atomic<double> manual_servo_cmd_feed_probability_ {0.75}; // 进给概率
-    std::atomic<double> manual_servo_cmd_feed_amplitude_um_ {0.5}; // 幅值
-#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
-
-    std::random_device random_device_;
-    std::mt19937 gen_;
-    std::uniform_real_distribution<> uniform_real_distribution_;
-
-public:
-#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-    inline void set_manual_touch_detect_flag(bool detected) {
-        manual_touch_detect_flag_ = detected;
-    }
-#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
-
-#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-    inline void set_manual_servo_cmd(double feed_probability, double feed_amplitude_um) {
-        manual_servo_cmd_feed_probability_ = feed_probability;
-        manual_servo_cmd_feed_amplitude_um_ = feed_amplitude_um;
-    }
-#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
 };
 
 } // namespace app

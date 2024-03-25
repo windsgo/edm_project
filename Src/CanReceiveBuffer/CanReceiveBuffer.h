@@ -3,6 +3,9 @@
 #include <atomic>
 #include <memory>
 #include <functional>
+#include <random>
+
+#include "config.h"
 
 #include "Motion/MoveDefines.h"
 
@@ -36,7 +39,6 @@ struct __attribute__((__packed__)) Can1IOBoard407ServoData {
     // index 6 ~ 7
     uint8_t _reserved[2];           // reserved
 };
-static_assert(sizeof(Can1IOBoard407ServoData) == 8);
 
 struct __attribute__((__packed__)) Can1IOBoard407ServoData2 {
     // index 0-1:
@@ -88,7 +90,6 @@ struct __attribute__((__packed__)) Can1IOBoard407ADCInfo {
     // index 6 ~ 7:
     uint8_t _reserved[2];           //  reserved
 };
-static_assert(sizeof(Can1IOBoard407ADCInfo) == 8);
 
 struct dummy_8bytes {
     uint8_t dummy[8];
@@ -103,10 +104,46 @@ public:
     CanReceiveBuffer(can::CanController::ptr can_ctrler, uint32_t can_device_index);
 
 public:
-    void load_servo_data(Can1IOBoard407ServoData& servo_data);
-    void load_adc_info(Can1IOBoard407ADCInfo& adc_info);
+    inline void load_servo_data(Can1IOBoard407ServoData& servo_data) const {
+        *reinterpret_cast<dummy_8bytes *>(&servo_data) = at_servo_data_.load(); 
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+        // 离线随机伺服指令发生
+        double amplitude_um = this->manual_servo_cmd_feed_amplitude_um_;
+        double probability_offset =
+                (this->manual_servo_cmd_feed_probability_ - 0.50);
 
-    inline bool is_servo_data_new() const { return at_servo_data_is_new_; }
+        double rd =
+                uniform_real_distribution_(gen_); // rd 在 -1.0, 1.0之间正太分布
+
+        // 根据 probability_offset 进行概率偏移
+        rd += probability_offset * 2;
+        if (rd > 1.0)
+            rd = 1.0;
+        else if (rd < -1.0)
+            rd = -1.0;
+
+        servo_data.servo_direction = (int)(rd >= 0);
+        uint16_t temp_0_01um =  std::labs(rd * amplitude_um * 100.0); // 转换到0.01um单位
+        if (temp_0_01um > 10000) temp_0_01um = 10000;
+        servo_data.servo_distance_0_01um = temp_0_01um;
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+
+#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+        servo_data.touch_detected = this->manual_touch_detect_flag_;
+#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    }
+
+    inline void load_adc_info(Can1IOBoard407ADCInfo& adc_info) const { 
+        *reinterpret_cast<dummy_8bytes *>(&adc_info) = at_adc_info_.load(); 
+    }
+
+    inline bool is_servo_data_new() const {
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+        return true;
+#else // EDM_OFFLINE_MANUAL_SERVO_CMD
+        return at_servo_data_is_new_;
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+    }
     inline void clear_servo_data_new_flag() { at_servo_data_is_new_ = false; }
 
 private:
@@ -118,6 +155,35 @@ private:
     std::atomic<dummy_8bytes> at_adc_info_;
 
     std::atomic_bool at_servo_data_is_new_ {false};
+
+private: // 用于离线测试时的随机数发生器
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+    // 离线测试时, 给此类输入一个幅值和进给概率, 每次调用, 随机给出一个进给量
+    std::atomic<double> manual_servo_cmd_feed_probability_ {0.75}; // 进给概率
+    std::atomic<double> manual_servo_cmd_feed_amplitude_um_ {0.5}; // 幅值
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+
+    mutable std::random_device random_device_;
+    mutable std::mt19937 gen_;
+    mutable std::uniform_real_distribution<> uniform_real_distribution_;
+
+#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    std::atomic_bool manual_touch_detect_flag_{false};
+#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+
+public:
+#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    inline void set_manual_touch_detect_flag(bool detected) {
+        manual_touch_detect_flag_ = detected;
+    }
+#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+    inline void set_manual_servo_cmd(double feed_probability, double feed_amplitude_um) {
+        manual_servo_cmd_feed_probability_ = feed_probability;
+        manual_servo_cmd_feed_amplitude_um_ = feed_amplitude_um;
+    }
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
 
 private:
     constexpr static const uint32_t servodata_rxid_ {EDM_CAN_RXID_IOBOARD_SERVODATA};

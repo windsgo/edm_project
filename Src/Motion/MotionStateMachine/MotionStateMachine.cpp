@@ -11,40 +11,35 @@ EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 namespace edm {
 
 namespace move {
+
+static auto s_motion_shared = MotionSharedData::instance();
+
 MotionStateMachine::MotionStateMachine(
     const std::function<bool(axis_t &)> &cb_get_act_axis,
-    TouchDetectHandler::ptr touch_detect_handler,
     SignalBuffer::ptr signal_buffer,
-    const std::function<double(void)> &cb_get_servo_cmd,
     const std::function<void(bool)> &cb_enable_votalge_gate,
-    const std::function<void(bool)> &cb_mach_on,
-    const std::function<double(void)> &cb_get_onlynew_servo_cmd)
+    const std::function<void(bool)> &cb_mach_on)
     : cb_get_act_axis_(cb_get_act_axis),
-      touch_detect_handler_(touch_detect_handler),
-      signal_buffer_(signal_buffer), cb_get_servo_cmd_(cb_get_servo_cmd),
-      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on),
-      cb_get_onlynew_servo_cmd_(cb_get_onlynew_servo_cmd) {
+      signal_buffer_(signal_buffer), 
+      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on) {
 
     //! use assert more than exception is better
     if (!cb_get_act_axis_) {
         throw exception("no cb_get_act_axis_");
     }
 
-    if (!cb_get_servo_cmd_) {
-        throw exception("no cb_get_servo_cmd_");
-    }
-
     if (!cb_enable_votalge_gate_) {
         throw exception("no cb_enable_votalge_gate_");
-    }
-
-    if (!touch_detect_handler_) {
-        throw exception("no touch_detect_handler_");
     }
 
     if (!signal_buffer_) {
         throw exception("no signal_buffer_");
     }
+    
+    auto physical_touch_detect_cb = [this]() -> bool {
+        return s_motion_shared->cached_servo_data().touch_detected;
+    };
+    touch_detect_handler_ = std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
 
     cb_get_jump_param_ =
         std::bind_front(&MotionStateMachine::_get_jump_param, this);
@@ -63,6 +58,9 @@ MotionStateMachine::MotionStateMachine(
 }
 
 void MotionStateMachine::run_once() {
+    //! 状态机每周期开始更新can buffer缓存到本地
+    s_motion_shared->update_can_buffer_cache();
+
     if (!enabled_) {
         return;
     }
@@ -197,10 +195,8 @@ bool MotionStateMachine::start_auto_g01(const axis_t &target_pos,
         std::make_shared<TrajectoryLinearSegement>(cmd_axis_, target_pos);
 
     auto new_g01_auto_task = std::make_shared<G01AutoTask>(
-        g01_line_traj, max_jump_height_from_begin, this->cb_get_act_axis_,
-        this->cb_get_servo_cmd_, this->cb_get_jump_param_,
-        this->cb_enable_votalge_gate_, this->cb_mach_on_,
-        cb_get_onlynew_servo_cmd_);
+        g01_line_traj, max_jump_height_from_begin, this->cb_get_act_axis_, this->cb_get_jump_param_,
+        this->cb_enable_votalge_gate_, this->cb_mach_on_);
 
     if (new_g01_auto_task->is_over()) {
         return false;

@@ -8,21 +8,20 @@ namespace edm {
 
 namespace move {
 
+static auto s_motion_shared = MotionSharedData::instance();
+
 G01AutoTask::G01AutoTask(
     TrajectoryLinearSegement::ptr line_traj, unit_t max_jump_height_from_begin,
     const std::function<bool(axis_t &)> &cb_get_real_axis,
-    const std::function<unit_t(void)> &cb_get_servo_cmd,
     const std::function<void(JumpParam &)> &cb_get_jump_param,
     const std::function<void(bool)> &cb_enable_votalge_gate,
-    const std::function<void(bool)> &cb_mach_on,
-    const std::function<double(void)> &cb_get_onlynew_servo_cmd)
+    const std::function<void(bool)> &cb_mach_on)
     : AutoTask(AutoTaskType::G01, line_traj->start_pos()),
       line_traj_(line_traj),
       max_jump_height_from_begin_(max_jump_height_from_begin),
-      cb_get_real_axis_(cb_get_real_axis), cb_get_servo_cmd_(cb_get_servo_cmd),
+      cb_get_real_axis_(cb_get_real_axis),
       cb_get_jump_param_(cb_get_jump_param),
-      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on),
-      cb_get_onlynew_servo_cmd_(cb_get_onlynew_servo_cmd) {
+      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on) {
 
     assert(line_traj_->at_start());
 
@@ -420,7 +419,7 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
     bool buffer_interrupted = false;
 
     // 获取一次伺服指令
-    auto servo_cmd = cb_get_servo_cmd_();
+    auto servo_cmd = _get_servo_cmd_from_shared();
 
     // 计算缓冲段剩余长度
     unit_t buffer_remaining_length =
@@ -494,7 +493,14 @@ bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
 }
 
 bool G01AutoTask::_servoing_do_servothings() {
-    double servo_cmd = cb_get_onlynew_servo_cmd_(); // return value's unit is blu
+    double servo_cmd =
+        _get_servo_cmd_from_shared(); // return value's unit is blu
+    if (s_motion_shared->can_recv_buffer()->is_servo_data_new()) {
+        s_motion_shared->can_recv_buffer()->clear_servo_data_new_flag();
+    } else {
+        servo_cmd = 0.0;
+        return false; //! No need to continue
+    }
 
     if (servo_cmd > 0.0) {
         line_traj_->run_once(servo_cmd);
@@ -583,6 +589,21 @@ bool G01AutoTask::_check_and_validate_jump_height() {
     }
 
     return true;
+}
+
+double G01AutoTask::_get_servo_cmd_from_shared() {
+    int dir = s_motion_shared->cached_servo_data().servo_direction;
+    double dis_blu = util::UnitConverter::um2blu(
+        (double)(s_motion_shared->cached_servo_data().servo_distance_0_01um) /
+        100.0);
+    
+    EDM_CYCLIC_LOG(s_logger->debug, 200, "dis_blu: {}", dis_blu);
+
+    if (dir > 0) {
+        return dis_blu;
+    } else {
+        return -dis_blu;
+    }
 }
 
 } // namespace move
