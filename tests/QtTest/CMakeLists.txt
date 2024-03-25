@@ -6,9 +6,9 @@ find_package(Qt5 COMPONENTS Core Widgets Network SerialBus REQUIRED)
 message(STATUS ${Qt5_DIR})
 message(STATUS ${Qt5_VERSION})
 
-add_executable(test_qt test_qt.cpp)
-add_dependencies(test_qt edm)
-target_link_libraries(test_qt edm Qt5::Core Qt5::SerialBus)
+# add_executable(test_qt test_qt.cpp)
+# add_dependencies(test_qt edm)
+# target_link_libraries(test_qt edm Qt5::Core Qt5::SerialBus)
 
 
 add_executable(test_can test_can.cpp)
@@ -24,6 +24,6 @@ target_link_libraries(test_can edm Qt5::Core Qt5::SerialBus)
 # add_dependencies(test_power edm)
 # target_link_libraries(test_power edm Qt5::Core Qt5::SerialBus)
 
-add_executable(testpowerwidget testpowerwidget.cpp)
-add_dependencies(testpowerwidget edm)
-target_link_libraries(testpowerwidget edm Qt5::Core Qt5::SerialBus Qt5::Widgets)
+# add_executable(testpowerwidget testpowerwidget.cpp)
+# add_dependencies(testpowerwidget edm)
+# target_link_libraries(testpowerwidget edm Qt5::Core Qt5::SerialBus Qt5::Widgets)

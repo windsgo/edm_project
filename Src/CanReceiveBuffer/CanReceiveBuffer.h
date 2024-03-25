@@ -38,6 +38,30 @@ struct __attribute__((__packed__)) Can1IOBoard407ServoData {
 };
 static_assert(sizeof(Can1IOBoard407ServoData) == 8);
 
+struct __attribute__((__packed__)) Can1IOBoard407ServoData2 {
+    // index 0-1:
+    uint8_t touch_detected : 1;     // 接触感知, 1表示有接触
+    uint8_t servo_direction : 1;    // servo_direction 伺服方向, 1:进给 0:后退
+    uint16_t servo_distance_0_01um : 14;     // servo_distance 伺服距离 单位0.01um, 即需要除以100后才是um
+    
+    // index 2-3
+    uint16_t average_voltage : 9;
+    uint8_t current : 7; 
+    
+    // index 4: 
+    uint8_t open_rate : 8;          // 开路率
+    
+    // index 5: 
+    uint8_t normal_rate : 8;        // 正常加工率
+    
+    // index 6: 
+    uint8_t arc_rate : 8;           // 拉弧率
+    
+    // index 7: 
+    uint8_t short_rate : 8;         // 短路率 (index 4 ~ 7 应该加起来为100)
+};
+static_assert(sizeof(Can1IOBoard407ServoData2) == 8);
+
 /**
  * @brief 伺服板(现407)返回的ADCInfo, RxID = 0x0232
  * @author lyf

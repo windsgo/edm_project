@@ -4,6 +4,9 @@
 
 #include "SharedCoreData/SharedCoreData.h"
 
+#include "TaskManager/GCodeRunner.h"
+#include "TaskManager/TaskManager.h"
+
 namespace Ui {
 class InfoPanel;
 }

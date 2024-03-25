@@ -23,6 +23,8 @@ set(APP_SOURCES
     TestPanel/TestPanel.cpp
     codeeditor/codeeditor.cpp
     codeeditor/highlighter.cpp
+    DataDisplayer/DataDisplayer.cpp
+    CoordSettingPanel/CoordSettingPanel.cpp
     Resource/app_resource.qrc # qt resource
 )
 

@@ -12,6 +12,7 @@
 #include "PowerPanel/PowerPanel.h"
 #include "GCodePanel/GCodePanel.h"
 #include "TestPanel/TestPanel.h"
+#include "CoordSettingPanel/CoordSettingPanel.h"
 
 #include "TaskManager/TaskManager.h"
 #include "TaskManager/GCodeTaskConverter.h"
@@ -38,8 +39,6 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void _init_test_gcode_buttons();
-
     void _init_members();
 
     void _init_status_bar_palette_and_connection();
@@ -63,9 +62,9 @@ private:
     PowerPanel* power_panel_;
     GCodePanel* gcode_panel_;
     TestPanel* test_panel_;
+    CoordSettingPanel* coord_setting_panel_;
 
 private:
-    CodeEditor* test_codeeditor_;
 
     QTimer* test_latency_timer_;
 
