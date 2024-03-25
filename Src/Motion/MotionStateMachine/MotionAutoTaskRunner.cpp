@@ -214,6 +214,7 @@ bool AutoTaskRunner::stop(bool immediate) {
     switch (state_) {
     case MotionAutoState::NormalMoving:
     case MotionAutoState::Resuming:
+    case MotionAutoState::Paused:
     case MotionAutoState::Pausing: {
         auto ret = curr_task_->stop(immediate);
         if (ret) {
@@ -225,10 +226,6 @@ bool AutoTaskRunner::stop(bool immediate) {
     }
     case MotionAutoState::Stopping:
     case MotionAutoState::Stopped:
-        return true;
-
-    case MotionAutoState::Paused:
-        _autostate_switch_to(MotionAutoState::Stopping);
         return true;
     }
 

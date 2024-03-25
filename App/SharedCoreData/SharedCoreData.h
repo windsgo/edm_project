@@ -122,6 +122,7 @@ private:
 private:
     std::function<bool(void)> cb_get_touch_physical_detected_;
     std::function<double(void)> cb_get_servo_cmd_;
+    std::function<double(void)> cb_get_onlynew_servo_cmd_; // 仅获取最新的伺服指令, 如果没有返回0, 如果有, 返回后清除new标志位 
     std::function<void(bool)> cb_enable_votalge_gate_;
     std::function<void(bool)> cb_mach_on_;
 

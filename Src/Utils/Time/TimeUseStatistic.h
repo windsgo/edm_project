@@ -60,9 +60,11 @@ public:
     using ptr = std::shared_ptr<TimeUseStatistic>;
     TimeUseStatistic() = default;
 
-    void push(int64_t v) { averager_.push(v); }
+    inline void clear() { averager_.clear(); } 
 
-    const auto &averager() const { return averager_; }
+    inline void push(int64_t v) { averager_.push(v); }
+
+    inline auto &averager() const { return averager_; }
 
 private:
     LongPeroidAverager<int64_t> averager_;

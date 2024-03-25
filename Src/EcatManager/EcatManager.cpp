@@ -267,6 +267,7 @@ void EcatManager::ecat_sync(const std::function<void(void)>& do_pdo_assign_func)
     const int expected_wkc = (servo_num_ + io_num_) * 3;
     if (wkc < expected_wkc || wkc < 0) {
         wkc_failed_sc.push_back_valid();
+        s_logger->warn("wkc not ok: {}", wkc);
     } else {
         wkc_failed_sc.push_back_invalid();
     }

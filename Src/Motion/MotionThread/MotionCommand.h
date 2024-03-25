@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <memory>
 
+#include "Motion/JumpDefines.h"
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
-#include "Motion/JumpDefines.h"
 #include "Motion/MoveruntimeWrapper/MoveruntimeWrapper.h"
 
 #include "Exception/exception.h"
@@ -73,6 +73,9 @@ enum MotionCommandType {
 
     // 清除报警
     MotionCommandSetting_ClearWarning,
+
+    // 清除统计数据
+    MotionCommandSetting_ClearStatData,
 
     MotionCommand_Max
 };
@@ -288,6 +291,13 @@ class MotionCommandAutoResume final : public MotionCommandBase {
 public:
     MotionCommandAutoResume() : MotionCommandBase(MotionCommandAuto_Resume) {}
     ~MotionCommandAutoResume() noexcept override = default;
+};
+
+class MotionCommandSettingClearStatData final : public MotionCommandBase {
+public:
+    MotionCommandSettingClearStatData()
+        : MotionCommandBase(MotionCommandSetting_ClearStatData) {}
+    ~MotionCommandSettingClearStatData() noexcept override = default;
 };
 
 // class MotionCommandStartLinearServoMove final

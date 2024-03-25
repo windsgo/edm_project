@@ -17,12 +17,13 @@ MotionStateMachine::MotionStateMachine(
     SignalBuffer::ptr signal_buffer,
     const std::function<double(void)> &cb_get_servo_cmd,
     const std::function<void(bool)> &cb_enable_votalge_gate,
-    const std::function<void(bool)> &cb_mach_on)
+    const std::function<void(bool)> &cb_mach_on,
+    const std::function<double(void)> &cb_get_onlynew_servo_cmd)
     : cb_get_act_axis_(cb_get_act_axis),
       touch_detect_handler_(touch_detect_handler),
       signal_buffer_(signal_buffer), cb_get_servo_cmd_(cb_get_servo_cmd),
-      cb_enable_votalge_gate_(cb_enable_votalge_gate),
-      cb_mach_on_(cb_mach_on) {
+      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on),
+      cb_get_onlynew_servo_cmd_(cb_get_onlynew_servo_cmd) {
 
     //! use assert more than exception is better
     if (!cb_get_act_axis_) {
@@ -198,7 +199,8 @@ bool MotionStateMachine::start_auto_g01(const axis_t &target_pos,
     auto new_g01_auto_task = std::make_shared<G01AutoTask>(
         g01_line_traj, max_jump_height_from_begin, this->cb_get_act_axis_,
         this->cb_get_servo_cmd_, this->cb_get_jump_param_,
-        this->cb_enable_votalge_gate_, this->cb_mach_on_);
+        this->cb_enable_votalge_gate_, this->cb_mach_on_,
+        cb_get_onlynew_servo_cmd_);
 
     if (new_g01_auto_task->is_over()) {
         return false;

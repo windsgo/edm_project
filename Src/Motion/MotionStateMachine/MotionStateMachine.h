@@ -35,7 +35,8 @@ public:
                        SignalBuffer::ptr signal_buffer,
                        const std::function<double(void)> &cb_get_servo_cmd,
                        const std::function<void(bool)> &cb_enable_votalge_gate,
-                       const std::function<void(bool)> &cb_mach_on);
+                       const std::function<void(bool)> &cb_mach_on,
+                       const std::function<double(void)>& cb_get_onlynew_servo_cmd);
     ~MotionStateMachine() = default;
 
     // run once
@@ -129,6 +130,7 @@ private: // callbacks
 
     // get servo cmd
     std::function<double(void)> cb_get_servo_cmd_;
+    std::function<double(void)> cb_get_onlynew_servo_cmd_;
 
     // 获取缓存抬刀参数回调(给G01用)
     std::function<void(JumpParam &)> cb_get_jump_param_;

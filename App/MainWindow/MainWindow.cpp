@@ -41,6 +41,11 @@ MainWindow::MainWindow(QWidget *parent)
             
     });
     test_latency_timer_->start(200);
+
+    connect(ui->pb_clear_statdata, &QPushButton::clicked, this, [this]() {
+        auto cmd = std::make_shared<move::MotionCommandSettingClearStatData>();
+        this->shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+    });
 }
 
 MainWindow::~MainWindow() {

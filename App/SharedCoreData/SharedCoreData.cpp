@@ -28,8 +28,7 @@ private:
 
 class MotionEventMachOn : public QEvent {
 public:
-    MotionEventMachOn(bool mach_on)
-        : QEvent(type), mach_on_(mach_on) {}
+    MotionEventMachOn(bool mach_on) : QEvent(type), mach_on_(mach_on) {}
     constexpr static const QEvent::Type type =
         QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_MotionMachOn);
 
@@ -207,8 +206,7 @@ void SharedCoreData::customEvent(QEvent *e) {
 
     case MotionEventMachOn::type: {
         auto mach_on_event = static_cast<MotionEventMachOn *>(e);
-        this->power_manager_->set_highpower_on(
-            mach_on_event->mach_on());
+        this->power_manager_->set_highpower_on(mach_on_event->mach_on());
         this->power_ctrler_->update_eleparam_and_send();
         e->accept();
         break;
@@ -298,7 +296,7 @@ void SharedCoreData::_init_data() {
     motion_thread_ctrler_ = std::make_shared<move::MotionThreadController>(
         sys_settings_.get_ecat_netif_name(), motion_cmd_queue_,
         motion_signal_queue_, cb_enable_votalge_gate_, cb_get_servo_cmd_,
-        cb_get_touch_physical_detected_, cb_mach_on_,
+        cb_get_touch_physical_detected_, cb_mach_on_, cb_get_onlynew_servo_cmd_,
         sys_settings_.get_ecat_iomap_size(), EDM_SERVO_NUM);
 
     // init info dispatcher
@@ -403,6 +401,26 @@ void SharedCoreData::_init_motionthread_cb() {
 #endif // EDM_OFFLINE_MANUAL_SERVO_CMD
     };
 
+    cb_get_onlynew_servo_cmd_ = [this]() -> double {
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+        static int i = 0;
+        ++i;
+        if (i < 2) {
+            return 0.0;
+        } else {
+            i = 0;
+            return cb_get_servo_cmd_();
+        }
+#else  // EDM_OFFLINE_MANUAL_SERVO_CMD
+        if (this->can_recv_buffer_->is_servo_data_new()) {
+            this->can_recv_buffer_->clear_servo_data_new_flag();
+            return cb_get_servo_cmd_();
+        } else {
+            return 0.0;
+        }
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+    };
+
     cb_enable_votalge_gate_ = [this](bool arg) -> void {
         s_logger->debug("push voltage gate command: {}", arg);
 
@@ -423,8 +441,8 @@ void SharedCoreData::_init_motionthread_cb() {
     cb_mach_on_ = [this](bool arg) -> void {
         auto run_cmd = global::CommandCommonFunctionFactory::bind(
             [this](bool _mach_on) {
-                QCoreApplication::postEvent(
-                    this, new MotionEventMachOn(_mach_on));
+                QCoreApplication::postEvent(this,
+                                            new MotionEventMachOn(_mach_on));
             },
             arg);
 

@@ -14,13 +14,15 @@ G01AutoTask::G01AutoTask(
     const std::function<unit_t(void)> &cb_get_servo_cmd,
     const std::function<void(JumpParam &)> &cb_get_jump_param,
     const std::function<void(bool)> &cb_enable_votalge_gate,
-    const std::function<void(bool)> &cb_mach_on)
+    const std::function<void(bool)> &cb_mach_on,
+    const std::function<double(void)> &cb_get_onlynew_servo_cmd)
     : AutoTask(AutoTaskType::G01, line_traj->start_pos()),
       line_traj_(line_traj),
       max_jump_height_from_begin_(max_jump_height_from_begin),
       cb_get_real_axis_(cb_get_real_axis), cb_get_servo_cmd_(cb_get_servo_cmd),
       cb_get_jump_param_(cb_get_jump_param),
-      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on) {
+      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on),
+      cb_get_onlynew_servo_cmd_(cb_get_onlynew_servo_cmd) {
 
     assert(line_traj_->at_start());
 
@@ -440,7 +442,7 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
         line_traj_->run_once(servo_cmd);
         this->curr_cmd_axis_ = this->line_traj_->curr_pos();
 
-    } else if (servo_cmd < 0.0) {
+    } else if (servo_cmd <= 0.0) {
         s_logger->debug("buffer interrupted, buffer_remaining_length: {}",
                         buffer_remaining_length);
         buffer_interrupted = true; // 缓冲段有回退, 直接退出走正常伺服回退
@@ -492,7 +494,7 @@ bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
 }
 
 bool G01AutoTask::_servoing_do_servothings() {
-    double servo_cmd = cb_get_servo_cmd_(); // return value's unit is blu
+    double servo_cmd = cb_get_onlynew_servo_cmd_(); // return value's unit is blu
 
     if (servo_cmd > 0.0) {
         line_traj_->run_once(servo_cmd);

@@ -26,7 +26,8 @@ public:
                 const std::function<unit_t(void)> &cb_get_servo_cmd,
                 const std::function<void(JumpParam &)> &cb_get_jump_param,
                 const std::function<void(bool)> &cb_enable_votalge_gate,
-                const std::function<void(bool)> &cb_mach_on);
+                const std::function<void(bool)> &cb_mach_on,
+                const std::function<double(void)>& cb_get_onlynew_servo_cmd);
 
     bool pause() override;
     bool resume() override;
@@ -161,6 +162,7 @@ private:
 
     // 获取当前可用的伺服指令 (直接返回一个double值, 包含正负)
     std::function<unit_t(void)> cb_get_servo_cmd_;
+    std::function<double(void)> cb_get_onlynew_servo_cmd_;
 
     // 获取状态机缓存的抬刀参数
     std::function<void(JumpParam &)> cb_get_jump_param_;
