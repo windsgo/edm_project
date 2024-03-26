@@ -168,6 +168,7 @@ private: // Data
 
     struct timespec next_, tleft_;
 
+    int32_t latency_target_fd_{-1};
     const int32_t latency_target_value_{0}; // 消除系统时钟偏移(禁止电源休眠)
 
 private:

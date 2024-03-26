@@ -68,6 +68,9 @@ MotionThreadController::~MotionThreadController() {
 
     // 等待线程退出
     pthread_join(this->thread_, NULL);
+
+	if (latency_target_fd_ >= 0)
+		close(latency_target_fd_);
 }
 
 void *MotionThreadController::_ThreadEntry(void *mtc) {
@@ -519,29 +522,58 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
 bool MotionThreadController::_set_cpu_dma_latency() {
     /* 消除系统时钟偏移函数，取自cyclic_test */
     struct stat s;
+    int ret;
 
     if (stat("/dev/cpu_dma_latency", &s) == 0) {
-        int latency_target_fd = open("/dev/cpu_dma_latency", O_RDWR);
-        if (latency_target_fd == -1) {
+        latency_target_fd_ = open("/dev/cpu_dma_latency", O_RDWR);
+        if (latency_target_fd_ == -1) {
             s_logger->error("open /dev/cpu_dma_latency failed");
             return false;
         }
 
-        int ret = write(latency_target_fd, &latency_target_value_, 4);
+        ret = write(latency_target_fd_, &latency_target_value_, 4);
         if (ret <= 0) {
             s_logger->error("# error setting cpu_dma_latency to {}!: {}\n",
                             latency_target_value_, strerror(errno));
-            close(latency_target_fd);
+            close(latency_target_fd_);
             return false;
         }
 
-        close(latency_target_fd);
-        s_logger->info("# /dev/cpu_dma_latency set to {}us\n",
+        //! 不可以在这里关闭!!, 不然就直接无效了
+        // close(latency_target_fd_); 
+        s_logger->info("# /dev/cpu_dma_latency {} set to {}us\n", latency_target_fd_,
                        latency_target_value_);
         return true;
     } else {
         return false;
     }
+
+    // struct stat s;
+	// int err;
+
+	// errno = 0;
+	// err = stat("/dev/cpu_dma_latency", &s);
+	// if (err == -1) {
+	// 	s_logger->error("WARN: stat /dev/cpu_dma_latency failed");
+	// 	return false;
+	// }
+
+	// errno = 0;
+	// latency_target_fd = open("/dev/cpu_dma_latency", O_RDWR);
+	// if (latency_target_fd == -1) {
+	// 	s_logger->error("WARN: open /dev/cpu_dma_latency");
+	// 	return false;
+	// }
+
+	// errno = 0;
+	// err = write(latency_target_fd, &latency_target_value, 4);
+	// if (err < 1) {
+	// 	s_logger->error("# error setting cpu_dma_latency to {}!", latency_target_value);
+	// 	close(latency_target_fd);
+	// 	return false;
+	// }
+	// printf("# /dev/cpu_dma_latency set to %dus\n", latency_target_value);
+    // return true;
 }
 
 void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
