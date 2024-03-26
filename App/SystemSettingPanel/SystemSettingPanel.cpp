@@ -6,7 +6,7 @@
 namespace edm {
 namespace app {
 
-static auto s_sys_setting = SystemSettings::instance();
+static auto& s_sys_setting = SystemSettings::instance();
 
 SystemSettingPanel::SystemSettingPanel(QWidget *parent) :
     QWidget(parent),

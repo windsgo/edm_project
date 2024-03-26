@@ -40,7 +40,7 @@ void add_timespec(struct timespec *ts, int64 addtime) {
     sec = (addtime - nsec) / NSEC_PER_SEC;
     ts->tv_sec += sec;
     ts->tv_nsec += nsec;
-    if (ts->tv_nsec > NSEC_PER_SEC) {
+    if (ts->tv_nsec >= NSEC_PER_SEC) {
         nsec = ts->tv_nsec % NSEC_PER_SEC;
         ts->tv_sec += (ts->tv_nsec - nsec) / NSEC_PER_SEC;
         ts->tv_nsec = nsec;
@@ -97,6 +97,12 @@ static void set_latency_target(void) {
 volatile int target_pos = 0;
 
 #include <chrono>
+
+static inline int64_t calcdiff_ns(const timespec &t1, const timespec &t2) {
+    int64_t diff = NSEC_PER_SEC * (int64_t)((int)t1.tv_sec - (int)t2.tv_sec);
+    diff += ((int)t1.tv_nsec - (int)t2.tv_nsec);
+    return diff;
+}
 
 struct Data {
     int act_pos;

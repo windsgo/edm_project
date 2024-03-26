@@ -2,7 +2,9 @@ i = RS274Interpreter()
 
 i.g54()
 i.g91()
-i.f(827)
+i.f(800)
+i.g00(x=2000)
+i.m00()
 
 for j in range(100):
     i.g00(x=187.7)

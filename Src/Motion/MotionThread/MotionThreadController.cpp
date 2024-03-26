@@ -1,4 +1,5 @@
 #include "MotionThreadController.h"
+#include "EcatManager/ServoDevice.h"
 
 #include "ethercat.h"
 
@@ -125,28 +126,23 @@ static inline int64_t calcdiff_ns(const timespec &t1, const timespec &t2) {
 
 void MotionThreadController::_thread_cycle_work() {
     //! 下一个周期开始的位置
-    // 这一周期理论的周期开始时间: ts
-    // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
-    if (thread_state_ == ThreadState::Running &&
-        ecat_state_ == EcatState::EcatReady) {
-        // 统计时防止上一周期因为在连接而导致时长超时
-        static int i = 0;
-        if (i < 1000) {
-            ++i;
-        } else {
-            struct timespec temp_curr_ts;
-            clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
-            auto t = calcdiff_ns(temp_curr_ts, this->next_);
-            if (t > 0)
-                latency_averager_->push(t);
-            
-            if (t > cycletime_ns_) {
-                s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
-                // add_timespec(&this->next_, cycletime_ns_);
-                this->next_ = temp_curr_ts;
-            }
-        }
-    }
+    // // 这一周期理论的周期开始时间: ts
+    // // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
+    // if (thread_state_ == ThreadState::Running &&
+    //     ecat_state_ == EcatState::EcatReady) {
+    //     // 统计时防止上一周期因为在连接而导致时长超时
+    //     struct timespec temp_curr_ts;
+    //     clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
+    //     auto t = calcdiff_ns(temp_curr_ts, this->next_);
+    //     if (t > 0)
+    //         latency_averager_->push(t);
+
+    //     if (t > cycletime_ns_) {
+    //         s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
+    //         // add_timespec(&this->next_, cycletime_ns_);
+    //         this->next_ = temp_curr_ts;
+    //     }
+    // }
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
     // if (ecat_manager_->is_ecat_connected()) {
@@ -254,7 +250,8 @@ bool MotionThreadController::_create_thread() {
     /* Set cpu affinity */
     cpu_set_t mask;
     CPU_ZERO(&mask);
-    CPU_SET(1, &mask);
+    CPU_SET(2, &mask);
+    CPU_SET(3, &mask);
     ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &mask);
     if (ret) {
         s_logger->critical("pthread_attr_setaffinity_np failed: {}", ret);
@@ -276,6 +273,12 @@ bool MotionThreadController::_create_thread() {
 
 void *MotionThreadController::_run() {
 
+    cpu_set_t get;
+    CPU_ZERO(&get);
+    pthread_getaffinity_np(pthread_self(), sizeof(get), &get);
+    auto isset = CPU_ISSET(2, &get);
+    s_logger->debug("isset: {}", isset);
+
     clock_gettime(CLOCK_MONOTONIC, &next_);
     int ht = (next_.tv_nsec / 1000000) + 1; /* round to nearest ms */
     next_.tv_nsec = ht * 1000000;
@@ -291,10 +294,41 @@ void *MotionThreadController::_run() {
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
         /* calculate next cycle start */
-        add_timespec(&next_, cycletime_ns_ + toff_);
+        // add_timespec(&next_, cycletime_ns_ + toff_);
+        add_timespec(&next_, cycletime_ns_);
 
         /* wait to cycle start */
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_, &tleft_);
+
+        // while (true) {
+        //     struct timespec ttt;
+        //     clock_gettime(CLOCK_MONOTONIC, &ttt);
+
+        //     if (ttt.tv_sec >= next_.tv_sec && ttt.tv_nsec > next_.tv_nsec) {
+        //         auto t = calcdiff_ns(ttt, this->next_);
+        //         if (t > 0)
+        //             latency_averager_->push(t);
+                
+        //         next_ = ttt;
+        //         break;
+        //     }
+        // }
+
+        // 这一周期理论的周期开始时间: ts
+        // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
+
+        // 统计时防止上一周期因为在连接而导致时长超时
+        struct timespec temp_curr_ts;
+        clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
+        auto t = calcdiff_ns(temp_curr_ts, this->next_);
+        if (t > 0)
+            latency_averager_->push(t);
+
+        // if (t > cycletime_ns_) {
+        //     s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
+        //     // add_timespec(&this->next_, cycletime_ns_);
+        //     this->next_ = temp_curr_ts;
+        // }
 
         TIMEUSESTAT(total_time_statistic_, _thread_cycle_work(),
                     thread_state_ == ThreadState::Running &&
@@ -426,6 +460,21 @@ void MotionThreadController::_threadstate_running() {
                 );
             }
 
+            // test
+
+            // static int j = 0;
+            // ++j;
+            // auto pana_d =
+            // std::static_pointer_cast<ecat::PanasonicServoDevice>(
+            //     ecat_manager_->get_servo_device(0));
+            // if (j < 100) {
+            //     pana_d->ctrl_->v_offset = 10000;
+            // } else if (j < 200) {
+            //     pana_d->ctrl_->v_offset = -10000;
+            // } else {
+            //     j = 0;
+            // }
+
             _dc_sync(); //! 只在正常的情况下进行DC同步
         }),
                     true);
@@ -527,8 +576,8 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         // 接触感知开启设定 //! 注意在点动结束后关闭接触感知
         if (ret) {
-            motion_state_machine_->get_touch_detect_handler()->set_detect_enable(
-                spm_cmd->touch_detect_enable());
+            motion_state_machine_->get_touch_detect_handler()
+                ->set_detect_enable(spm_cmd->touch_detect_enable());
         }
 
         accept_cmd_flag = ret;
@@ -767,8 +816,10 @@ void MotionThreadController::_copy_info_cache() {
     info_cache_.setEcatAllEnabled(ecat_state_ == EcatState::EcatReady);
     info_cache_.setTouchDetectEnabled(
         motion_state_machine_->get_touch_detect_handler()->is_detect_enable());
-    info_cache_.setTouchDetected(motion_state_machine_->get_touch_detect_handler()->physical_detected());
-    info_cache_.setTouchWarning(motion_state_machine_->get_touch_detect_handler()->has_warning());
+    info_cache_.setTouchDetected(
+        motion_state_machine_->get_touch_detect_handler()->physical_detected());
+    info_cache_.setTouchWarning(
+        motion_state_machine_->get_touch_detect_handler()->has_warning());
 
 #ifdef EDM_MOTION_INFO_GET_USE_ATOMIC
     // Store To Atomic

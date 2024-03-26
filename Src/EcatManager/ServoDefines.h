@@ -38,6 +38,7 @@ struct PACKED Panasonic_A5B_Ctrl {
     uint8_t modes_of_operation;
     int32_t target_position;
     uint16_t touch_probe_function;
+    int32_t v_offset;
 };
 PACKED_END
 

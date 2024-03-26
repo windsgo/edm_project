@@ -45,7 +45,7 @@ void InfoDispatcher::_handle_signal_callback(const move::MotionSignal &signal) {
     // 拷贝info
     info_cache_ = signal.info;
 
-    s_logger->debug(
+    s_logger->trace(
         "InfoDispatcher signal handle: {}",
         move::MotionSignalQueue::GetMotionSignalTypeStr(signal.type));
 

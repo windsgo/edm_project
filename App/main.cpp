@@ -4,6 +4,11 @@
 #include <QObject>
 #include <QWidget>
 
+#include <sched.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
 
 #include "MainWindow/MainWindow.h"
@@ -31,9 +36,20 @@ static void print_sys_start() {
     s_logger->info("sizeof(Can1IOBoard407ServoData): {}", sizeof(edm::Can1IOBoard407ServoData));
 }
 
+static void init_mainthread_cpu_affinity() {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    CPU_SET(4, &mask);
+    if (sched_setaffinity(0, sizeof(mask), &mask)) {
+        s_logger->error("set main thread affinity failed: pid: {}", (unsigned int)pthread_self());
+    }
+}
+
 using namespace edm::app;
 
 int main(int argc, char **argv) {
+
+    init_mainthread_cpu_affinity();
 
     print_sys_start();
 

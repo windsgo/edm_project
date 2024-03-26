@@ -482,6 +482,8 @@ move::MoveRuntimePlanSpeedInput MovePanel::_get_default_speed_param() const {
     speed.exit_v = 0;
     speed.cruise_v = _get_speed_blu_s_from_mfrx();
 
+    s_logger->debug("pm: cruise v: {}", _get_speed_blu_s_from_mfrx());
+
     return speed;
 }
 
