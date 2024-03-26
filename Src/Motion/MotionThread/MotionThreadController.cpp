@@ -69,8 +69,8 @@ MotionThreadController::~MotionThreadController() {
     // 等待线程退出
     pthread_join(this->thread_, NULL);
 
-	if (latency_target_fd_ >= 0)
-		close(latency_target_fd_);
+    if (latency_target_fd_ >= 0)
+        close(latency_target_fd_);
 }
 
 void *MotionThreadController::_ThreadEntry(void *mtc) {
@@ -311,7 +311,7 @@ void *MotionThreadController::_run() {
         //         auto t = calcdiff_ns(ttt, this->next_);
         //         if (t > 0)
         //             latency_averager_->push(t);
-                
+
         //         next_ = ttt;
         //         break;
         //     }
@@ -327,11 +327,12 @@ void *MotionThreadController::_run() {
         if (t > 0)
             latency_averager_->push(t);
 
-        // if (t > cycletime_ns_) {
-        //     s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
-        //     // add_timespec(&this->next_, cycletime_ns_);
-        //     this->next_ = temp_curr_ts;
-        // }
+        //! 防止固定间隔的时间戳跟不上 // TODO 后续细看DC时间同步
+        if (t > cycletime_ns_) {
+            s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
+            // add_timespec(&this->next_, cycletime_ns_);
+            this->next_ = temp_curr_ts;
+        }
 
         TIMEUSESTAT(total_time_statistic_, _thread_cycle_work(),
                     thread_state_ == ThreadState::Running &&
@@ -479,6 +480,7 @@ void MotionThreadController::_threadstate_running() {
             // }
 
             _dc_sync(); //! 只在正常的情况下进行DC同步
+            // TODO 后续细看DC时间同步
         }),
                     true);
 
@@ -517,6 +519,14 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
     motion_state_machine_->reset();
     motion_state_machine_->refresh_axis_using_actpos();
     motion_state_machine_->set_enable(true);
+
+    struct timespec temp_curr_ts;
+    clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
+    add_timespec(&temp_curr_ts, cycletime_ns_);
+
+    //! 主要用于防止连接Ecat的过程太耗时，导致固定间隔的时间戳跟不上
+    // 在这里重置一下,
+    this->next_ = temp_curr_ts;
 }
 
 bool MotionThreadController::_set_cpu_dma_latency() {
@@ -540,39 +550,38 @@ bool MotionThreadController::_set_cpu_dma_latency() {
         }
 
         //! 不可以在这里关闭!!, 不然就直接无效了
-        // close(latency_target_fd_); 
-        s_logger->info("# /dev/cpu_dma_latency {} set to {}us\n", latency_target_fd_,
-                       latency_target_value_);
+        // close(latency_target_fd_);
+        s_logger->info("# /dev/cpu_dma_latency {} set to {}us\n",
+                       latency_target_fd_, latency_target_value_);
         return true;
     } else {
         return false;
     }
 
     // struct stat s;
-	// int err;
+    // int err;
 
-	// errno = 0;
-	// err = stat("/dev/cpu_dma_latency", &s);
-	// if (err == -1) {
-	// 	s_logger->error("WARN: stat /dev/cpu_dma_latency failed");
-	// 	return false;
-	// }
+    // errno = 0;
+    // err = stat("/dev/cpu_dma_latency", &s);
+    // if (err == -1) {
+    // 	s_logger->error("WARN: stat /dev/cpu_dma_latency failed");
+    // 	return false;
+    // }
 
-	// errno = 0;
-	// latency_target_fd = open("/dev/cpu_dma_latency", O_RDWR);
-	// if (latency_target_fd == -1) {
-	// 	s_logger->error("WARN: open /dev/cpu_dma_latency");
-	// 	return false;
-	// }
+    // errno = 0;
+    // latency_target_fd = open("/dev/cpu_dma_latency", O_RDWR);
+    // if (latency_target_fd == -1) {
+    // 	s_logger->error("WARN: open /dev/cpu_dma_latency");
+    // 	return false;
+    // }
 
-	// errno = 0;
-	// err = write(latency_target_fd, &latency_target_value, 4);
-	// if (err < 1) {
-	// 	s_logger->error("# error setting cpu_dma_latency to {}!", latency_target_value);
-	// 	close(latency_target_fd);
-	// 	return false;
-	// }
-	// printf("# /dev/cpu_dma_latency set to %dus\n", latency_target_value);
+    // errno = 0;
+    // err = write(latency_target_fd, &latency_target_value, 4);
+    // if (err < 1) {
+    // 	s_logger->error("# error setting cpu_dma_latency to {}!",
+    // latency_target_value); 	close(latency_target_fd); 	return false;
+    // }
+    // printf("# /dev/cpu_dma_latency set to %dus\n", latency_target_value);
     // return true;
 }
 
