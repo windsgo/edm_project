@@ -10,8 +10,8 @@
     "fast_move_param": {
         "max_acc_um_s2": 300000.000000,
         "nacc_ms": 90,
-        "speed_0_um_s": 4000.000000,
-        "speed_1_um_s": 1000.000000,
+        "speed_0_um_s": 33000.000000,
+        "speed_1_um_s": 6600.000000,
         "speed_2_um_s": 330.000000,
         "speed_3_um_s": 16.000000
     },

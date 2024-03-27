@@ -384,6 +384,8 @@ void SharedCoreData::_init_motionthread_cb() {
             [this](bool _enable) {
                 QCoreApplication::postEvent(
                     this, new MotionEventVoltageEnable(_enable));
+                QCoreApplication::postEvent(
+                    this, new MotionEventVoltageEnable(_enable));
             },
             arg);
 

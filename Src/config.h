@@ -4,7 +4,7 @@
 #define EDM_SYSTEM_SETTINGS_CONFIG_FILE EDM_CONFIG_DIR "system.json"
 
 // 坐标轴(=驱动器)数目
-#define EDM_SERVO_NUM                   1
+#define EDM_SERVO_NUM                   3
 #define EDM_AXIS_NUM                    EDM_SERVO_NUM
 
 #define EDM_AXIS_MAX_NUM                6 // const, 最多6轴
@@ -72,7 +72,7 @@
 #define EDM_MOTION_INFO_GET_USE_ATOMIC
 
 // OFFLINE DEFINE
-#define EDM_OFFLINE_RUN
+// #define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程
