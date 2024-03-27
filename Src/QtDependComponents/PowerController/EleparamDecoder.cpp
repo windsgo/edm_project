@@ -149,8 +149,8 @@ void EleparamDecoder::_canframe_handle_on() {
     } else if (param_on >= 100 && param_on <= 107) {
         pulse_on -= 100;  // 100-107按0-7
         pulse_on &= 0xBF; // 第6位设为0
-        pulse_on &= 0x7F; // 第7位设为 0
-        // pulse_on |= 0x80; // 第7为设为1
+        // pulse_on &= 0x7F; // 第7位设为 0
+        pulse_on |= 0x80; // 第7为设为1
     }
 
     CAN_BUFFER[0][6] = pulse_on;
