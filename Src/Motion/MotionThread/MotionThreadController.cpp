@@ -254,7 +254,7 @@ bool MotionThreadController::_create_thread() {
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(2, &mask);
-    // CPU_SET(3, &mask);
+    CPU_SET(3, &mask);
     ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &mask);
     if (ret) {
         s_logger->critical("pthread_attr_setaffinity_np failed: {}", ret);

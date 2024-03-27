@@ -177,17 +177,17 @@
 
 ### 最终启动命令参数
 
-只限制rt线程在cpu2:
+限制rt线程在cpu2,3, 超线程不禁用
 
 ```bash
 
-GRUB_CMDLINE_LINUX="audit=0 isolcpus=2 nohz=on nohz_full=2 rcu_nocbs=2 irqaffinity=0,1 
+GRUB_CMDLINE_LINUX="audit=0 isolcpus=2,3 nohz=on nohz_full=2,3 rcu_nocbs=2,3 irqaffinity=0,1 
     rcu_nocb_poll=1024 rcupdate.rcu_cpu_stall_suppress=1 acpi_irq_nobalance 
-    numa_balancing=disable cpufreq.off=1 nosmap nosmt  nohalt  noirqbalance hugepages=1024  
+    numa_balancing=disable cpufreq.off=1 nosmap noirqbalance hugepages=1024  
     i915.enable_rc6=0 i915.enable_dc=0 i915.disable_power_well=0  i915.enable_execlists=0  
     nmi_watchdog=0 nosoftlockup processor.max_cstate=0 intel.max_cstate=0 
     processor_idle.max_cstate=0 intel_idle.max_cstate=0 clocksource=tsc tsc=reliable 
-    nmi_watchdog=0 noht nosoftlockup intel_pstate=disable idle=poll nohalt nosmap  
+    nmi_watchdog=0 nosoftlockup intel_pstate=disable idle=poll nohalt 
     mce=ignore_ce hpet=disable clocksource=tsc tsc=reliable"
 
 ```
