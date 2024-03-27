@@ -49,7 +49,7 @@ using namespace edm::app;
 
 int main(int argc, char **argv) {
 
-    init_mainthread_cpu_affinity();
+    // init_mainthread_cpu_affinity();
 
     print_sys_start();
 

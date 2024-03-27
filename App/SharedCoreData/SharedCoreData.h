@@ -49,7 +49,7 @@ class SharedCoreData final : public QObject {
     Q_OBJECT
 public:
     SharedCoreData(QObject *parent = nullptr);
-    ~SharedCoreData() noexcept = default;
+    ~SharedCoreData();
 
 public:
     inline const auto& get_system_settings() const { return sys_settings_; }
@@ -124,6 +124,12 @@ private:
 private:
     std::function<void(bool)> cb_enable_votalge_gate_;
     std::function<void(bool)> cb_mach_on_;
+
+private:
+#ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+    std::thread helper_can_simulate_thread_;
+    std::atomic_bool helper_can_simulate_thread_stop_flag_ {false};
+#endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
 };
 
 } // namespace app

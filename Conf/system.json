@@ -16,7 +16,7 @@
         "speed_3_um_s": 16.000000
     },
     "helper_can_device_name": "can1",
-    "info_dispatcher_peroid_ms": 100,
+    "info_dispatcher_peroid_ms": 40,
     "interp_module_path_relative_to_root": "Src/Interpreter/rs274pyInterpreter/pymodule/",
     "jump_param": {
         "buffer_um": 30,

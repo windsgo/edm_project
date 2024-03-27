@@ -78,11 +78,12 @@
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_3 3 // 调试ECAT, 不连接CAN, 启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_4 \
-    4 // 本地调试CAN, 不连接ECAT, 启动实时线程, 要求2个CAN设备互联
+    4 // 本地调试CAN, 不连接ECAT, 启动实时线程, 要求2个CAN设备互联, 模拟测试压力, 但是不取CAN返回值
 #define EDM_OFFLINE_RUN_TYPE_5 \
     5 // 调试CAN, 不连接ECAT, 启动实时线程, 但使用CAN返回的接触感知(连接IO板)
+#define EDM_OFFLINE_RUN_TYPE_6 6// 连接ECAT, 2个CAN互连, 模拟测试压力, 但是不取CAN返回值
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_3 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_6 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 
@@ -98,10 +99,16 @@
 #elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_3)
 #undef EDM_OFFLINE_RUN_NO_ECAT // 取消此定义, 并连接ECAT
 #elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_4)
+#undef EDM_OFFLINE_RUN_NO_CAN
 #define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE // 离线测试时, 连接两个CAN设备,
                                               // 用于保持正常的can通信链路
 #elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_5)
 #undef EDM_OFFLINE_MANUAL_TOUCH_DETECT // 取消此定义, 采用CAN返回的接触感知信号
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_6)
+#undef EDM_OFFLINE_RUN_NO_ECAT // 取消此定义, 并连接ECAT
+#undef EDM_OFFLINE_RUN_NO_CAN
+#define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE // 离线测试时, 连接两个CAN设备,
+                                              // 用于保持正常的can通信链路
 #else
 #error "No EDM_OFFLINE_RUN_TYPE defined"
 #endif // EDM_OFFLINE_RUN_TYPE value

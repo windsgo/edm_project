@@ -23,7 +23,7 @@
                 },
                 {
                     "type": "stdout",
-                    "level": "debug",
+                    "level": "info",
                     "multi_thread": false
                 }
             ]
@@ -45,7 +45,7 @@
                 },
                 {
                     "type": "stdout",
-                    "level": "debug",
+                    "level": "info",
                     "multi_thread": true
                 }
             ]

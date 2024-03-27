@@ -137,6 +137,13 @@ SharedCoreData::SharedCoreData(QObject *parent) : QObject(parent) {
     _init_data();
 }
 
+SharedCoreData::~SharedCoreData() {
+#ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+    helper_can_simulate_thread_stop_flag_ = true;
+    helper_can_simulate_thread_.join();
+#endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+}
+
 void SharedCoreData::send_ioboard_bz_once() const {
     power::CanIOBoardCommonMessageStrc ms;
     ms.message_type =
@@ -268,6 +275,20 @@ void SharedCoreData::_init_data() {
     });
     t.start(1000);
     el.exec();
+
+
+#ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+    helper_can_simulate_thread_ = std::thread([this](int helper_can_index) {
+        QByteArray ba1{8, 0x0c};
+        QCanBusFrame frame1{EDM_CAN_RXID_IOBOARD_SERVODATA, ba1};
+        while (!helper_can_simulate_thread_stop_flag_) {
+            can_ctrler_->send_frame(helper_can_index, frame1);
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(1ms);
+        }
+    }, helper_can_device_index);
+#endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+
 #else  // EDM_OFFLINE_RUN_NO_CAN
     int can_device_index = -1;
 #endif // EDM_OFFLINE_RUN_NO_CAN

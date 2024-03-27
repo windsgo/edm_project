@@ -254,7 +254,7 @@ bool MotionThreadController::_create_thread() {
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(2, &mask);
-    CPU_SET(3, &mask);
+    // CPU_SET(3, &mask);
     ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &mask);
     if (ret) {
         s_logger->critical("pthread_attr_setaffinity_np failed: {}", ret);
@@ -276,11 +276,11 @@ bool MotionThreadController::_create_thread() {
 
 void *MotionThreadController::_run() {
 
-    cpu_set_t get;
-    CPU_ZERO(&get);
-    pthread_getaffinity_np(pthread_self(), sizeof(get), &get);
-    auto isset = CPU_ISSET(2, &get);
-    s_logger->debug("isset: {}", isset);
+    // cpu_set_t get;
+    // CPU_ZERO(&get);
+    // pthread_getaffinity_np(pthread_self(), sizeof(get), &get);
+    // auto isset = CPU_ISSET(2, &get);
+    // s_logger->debug("isset: {}", isset);
 
     clock_gettime(CLOCK_MONOTONIC, &next_);
     int ht = (next_.tv_nsec / 1000000) + 1; /* round to nearest ms */
@@ -296,9 +296,12 @@ void *MotionThreadController::_run() {
         }
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
+        static struct timespec test_last_next;
+        test_last_next = next_;
+
         /* calculate next cycle start */
-        // add_timespec(&next_, cycletime_ns_ + toff_);
-        add_timespec(&next_, cycletime_ns_);
+        add_timespec(&next_, cycletime_ns_ + toff_);
+        // add_timespec(&next_, cycletime_ns_);
 
         /* wait to cycle start */
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_, &tleft_);
@@ -324,12 +327,20 @@ void *MotionThreadController::_run() {
         struct timespec temp_curr_ts;
         clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
         auto t = calcdiff_ns(temp_curr_ts, this->next_);
-        if (t > 0)
+        if (t > 0 && ecat_time_statistic_.averager().latest() < cycletime_ns_)
             latency_averager_->push(t);
 
         //! 防止固定间隔的时间戳跟不上 // TODO 后续细看DC时间同步
         if (t > cycletime_ns_) {
-            s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
+            s_logger->warn(
+                "t {} > cycletime_ns_; toff {}, last ecat: {}, last total: {}",
+                t, toff_, ecat_time_statistic_.averager().latest(),
+                total_time_statistic_.averager().latest());
+            s_logger->warn("last next: {}, {}", test_last_next.tv_sec,
+                           test_last_next.tv_nsec);
+            s_logger->warn("next: {}, {}", next_.tv_sec, next_.tv_nsec);
+            s_logger->warn("now: {}, {}", temp_curr_ts.tv_sec,
+                           temp_curr_ts.tv_nsec);
             // add_timespec(&this->next_, cycletime_ns_);
             this->next_ = temp_curr_ts;
         }
