@@ -181,7 +181,7 @@
 
 ```bash
 
-GRUB_CMDLINE_LINUX="audit=0 isolcpus=2 nohz_full=2 rcu_nocbs=2 irqaffinity=0,1 
+GRUB_CMDLINE_LINUX="audit=0 isolcpus=2 nohz=on nohz_full=2 rcu_nocbs=2 irqaffinity=0,1 
     rcu_nocb_poll=1024 rcupdate.rcu_cpu_stall_suppress=1 acpi_irq_nobalance 
     numa_balancing=disable cpufreq.off=1 nosmap nosmt  nohalt  noirqbalance hugepages=1024  
     i915.enable_rc6=0 i915.enable_dc=0 i915.disable_power_well=0  i915.enable_execlists=0  

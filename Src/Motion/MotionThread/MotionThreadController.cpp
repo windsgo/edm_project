@@ -333,9 +333,11 @@ void *MotionThreadController::_run() {
         //! 防止固定间隔的时间戳跟不上 // TODO 后续细看DC时间同步
         if (t > cycletime_ns_) {
             s_logger->warn(
-                "t {} > cycletime_ns_; toff {}, last ecat: {}, last total: {}",
+                "t {} > cycletime_ns_; toff {}, last ecat: {}, last total: {}, last info: {}, last sm: {}",
                 t, toff_, ecat_time_statistic_.averager().latest(),
-                total_time_statistic_.averager().latest());
+                total_time_statistic_.averager().latest(),
+                info_time_statistic_.averager().latest(),
+                statemachine_time_statistic_.averager().latest());
             s_logger->warn("last next: {}, {}", test_last_next.tv_sec,
                            test_last_next.tv_nsec);
             s_logger->warn("next: {}, {}", next_.tv_sec, next_.tv_nsec);
