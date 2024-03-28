@@ -143,14 +143,18 @@ void EleparamDecoder::_canframe_handle_on() {
     if (param_on <= 7) {
         pulse_on &= 0x3F; // 第6,7位设为 0
     } else if (param_on < 64) {
-        pulse_on |= 0x40; // 第6位设为 1
-        pulse_on &= 0x7F; // 第7位设为 0
-        // pulse_on |= 0xC0; //第6,7位设为 1
+        // pulse_on |= 0x40; // 第6位设为 1
+        // pulse_on &= 0x7F; // 第7位设为 0
+        pulse_on |= 0xC0; //第6,7位设为 1
     } else if (param_on >= 100 && param_on <= 107) {
         pulse_on -= 100;  // 100-107按0-7
         pulse_on &= 0xBF; // 第6位设为0
         // pulse_on &= 0x7F; // 第7位设为 0
         pulse_on |= 0x80; // 第7为设为1
+    }
+
+    if (input_->ele_param().ip == 0 && param_on >= 8) {
+        pulse_on ^= (1 << 7); // 第7位取反
     }
 
     CAN_BUFFER[0][6] = pulse_on;
@@ -169,6 +173,7 @@ void EleparamDecoder::_canframe_handle_off() {
 void EleparamDecoder::_canframe_handle_up_and_on() {
     // do nothing
     // TODO up 和 dn 要设置给运动控制(抬刀用), 靠外层设置, 这里只是decode
+    CAN_BUFFER[1][0] = 0x41; //! 发固定值, 以使on>100表现正常
 }
 
 void EleparamDecoder::_canframe_handle_ip() {
@@ -232,6 +237,8 @@ void EleparamDecoder::_canframe_handle_hp() {
     AND_EQUAL(CAN_BUFFER[1][2], 0x0F);
     OR_EQUAL(CAN_BUFFER[1][2], hp_units << 4); // hp个位
 
+    OR_EQUAL(CAN_BUFFER[1][2], 0x80); //! 最高位始终给1
+
     if (hp_tens == 2 || hp_tens == 3 || hp_tens == 6 || hp_tens == 7) {
         OR_EQUAL(CAN_BUFFER[1][6], 0x01); // CPS bit0 设为1
     } else {
@@ -248,8 +255,8 @@ void EleparamDecoder::_canframe_handle_sv() {
     // sv 伺服电压 (应当由伺服采样模块(目前为IO采样板)处理, 不需要发送给电源)
     // TODO 外部要将sv值通过can发送给采样板
 
-    // AND_EQUAL(CAN_BUFFER[1][3], 0x0F);                        // 清空高4位
-    // OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param().sv << 4); // 高4位设定sv
+    AND_EQUAL(CAN_BUFFER[1][3], 0x0F);                        // 清空高4位
+    OR_EQUAL(CAN_BUFFER[1][3], 0x50); // 高4位设定sv //! 给固定值
 }
 
 void EleparamDecoder::_canframe_handle_al() {
@@ -291,7 +298,9 @@ void EleparamDecoder::_canframe_handle_machbit() {
 }
 
 void EleparamDecoder::_canframe_handle_pulsecounter() {
-    CAN_BUFFER[0][3] = static_cast<uint8_t>(input_->counter());
+    auto count = input_->counter();
+    CAN_BUFFER[0][3] = count & 0xFF;
+    CAN_BUFFER[0][4] = (count >> 8) & 0xFF;
 }
 
 void EleparamDecoder::_canframe_calc_crc() {

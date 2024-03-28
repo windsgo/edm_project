@@ -33,8 +33,9 @@ public:
 
 public:
     // 提供单独设定新的心跳值的接口
-    void set_pulse_count(uint8_t count) {
-        can_buffer_[0][3] = count;
+    void set_pulse_count(uint16_t count) {
+        can_buffer_[0][3] = count & 0xFF;
+        can_buffer_[0][4] = (count >> 8) & 0xFF;
 
         uint16_t sum = 0x00;
         // 重新计算校验和

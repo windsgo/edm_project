@@ -81,6 +81,8 @@ private:
     void _handle_servo_settings();
     bool _is_bz_enable();
 
+    void _add_canframe_pulse_value();
+
 private:
     can::CanController::ptr can_ctrler_;
     io::IOController::ptr io_ctrler_;
@@ -99,9 +101,9 @@ private:
     // 精加工标志位(发送给IO板标识)
     uint8_t finishing_cut_flag_ = 0;
 
-    //! 心跳
+    //! 心跳 16位 9C00 - C3FF
     // 电参数can帧心跳值
-    uint8_t canframe_pulse_value_ = 0;
+    uint16_t canframe_pulse_value_ = 0x9C00;
 
     //! decode 缓存
     // 存储当前的电参数 参数结构体

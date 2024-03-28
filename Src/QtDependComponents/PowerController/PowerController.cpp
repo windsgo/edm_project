@@ -127,7 +127,7 @@ void PowerController::_update_eleparam_and_send(const EleParam_dkd_t& eleparam) 
     }
 
     // 心跳处理
-    ++canframe_pulse_value_;
+    _add_canframe_pulse_value();
     // 构造输入
     auto input = std::make_shared<EleparamDecodeInput>(
         eleparam, highpower_on_flag_, machpower_flag_, canframe_pulse_value_);
@@ -187,6 +187,13 @@ bool PowerController::_is_bz_enable() {
     //! 要注意这里的嵌套加锁情况
     // TODO
     return is_power_on() && (!is_highpower_on());
+}
+
+void PowerController::_add_canframe_pulse_value() {
+    ++canframe_pulse_value_;
+    if (canframe_pulse_value_ > 0xC3FF) {
+        canframe_pulse_value_ = 0x9C00;
+    }
 }
 
 // PowerController *PowerController::instance() {
@@ -250,7 +257,7 @@ void PowerController::trigger_send_eleparam() {
     if (!curr_result_)
         return;
 
-    ++canframe_pulse_value_;
+    _add_canframe_pulse_value();
     curr_result_->set_pulse_count(canframe_pulse_value_);
 
     // 发送can buffer
