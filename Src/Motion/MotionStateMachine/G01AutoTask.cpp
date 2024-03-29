@@ -353,7 +353,7 @@ void G01AutoTask::_servo_substate_servoing() {
     // 抬刀规划失败, 继续正常走伺服
     auto servo_can_end = _servoing_do_servothings();
     if (servo_can_end) {
-        _state_changeto(State::Stopped);
+        _state_changeto(State::Stopping);
         return;
     }
 }

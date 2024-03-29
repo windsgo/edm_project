@@ -4,7 +4,7 @@
 #define EDM_SYSTEM_SETTINGS_CONFIG_FILE EDM_CONFIG_DIR "system.json"
 
 // 坐标轴(=驱动器)数目
-#define EDM_SERVO_NUM                   3
+#define EDM_SERVO_NUM                   1
 #define EDM_AXIS_NUM                    EDM_SERVO_NUM
 
 #define EDM_AXIS_MAX_NUM                6 // const, 最多6轴
@@ -86,7 +86,7 @@
     5 // 调试CAN, 不连接ECAT, 启动实时线程, 但使用CAN返回的接触感知(连接IO板)
 #define EDM_OFFLINE_RUN_TYPE_6 6// 连接ECAT, 2个CAN互连, 模拟测试压力, 但是不取CAN返回值
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_2 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_3 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 
