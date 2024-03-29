@@ -36,7 +36,7 @@
 
 #include "SharedCoreData/Power/PowerManager.h"
 
-#include "Utils/DataQueueRecorder/DataQueueRecorder.h"
+#include "Motion/MotionSharedData/MotionSharedData.h"
 
 #include <QEvent>
 #include <QObject>
@@ -130,6 +130,9 @@ private:
     std::thread helper_can_simulate_thread_;
     std::atomic_bool helper_can_simulate_thread_stop_flag_ {false};
 #endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
+
+private:
+    util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr record_data1_queuerecorder_;
 };
 
 } // namespace app

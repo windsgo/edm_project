@@ -36,8 +36,9 @@ MotionThreadController::MotionThreadController(
 
     signal_buffer_ = std::make_shared<SignalBuffer>();
 
-    //! 初始化公共数据的can buffer
+    //! 初始化公共数据的can buffer, ecat_manager_
     s_motion_shared->set_can_recv_buffer(can_recv_buffer);
+    s_motion_shared->set_ecat_manager(ecat_manager_);
 
     //! 创建motion状态机
     auto get_act_pos_cb =

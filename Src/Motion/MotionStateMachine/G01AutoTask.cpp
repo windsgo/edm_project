@@ -502,6 +502,12 @@ bool G01AutoTask::_servoing_do_servothings() {
         return false; //! No need to continue
     }
 
+    // 记录数据
+    if (s_motion_shared->is_data_recorder_running()) {
+        s_motion_shared->get_record_data1_ref().g01_servo_cmd = servo_cmd;
+        s_motion_shared->get_record_data1_ref().is_g01_normal_servoing = true;
+    }
+
     if (servo_cmd > 0.0) {
         line_traj_->run_once(servo_cmd);
         if (line_traj_->at_end()) {

@@ -7,7 +7,7 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 namespace edm {
 
 static_assert(sizeof(Can1IOBoard407ServoData) == 8);
-static_assert(sizeof(Can1IOBoard407ServoData2) == 8);
+// static_assert(sizeof(Can1IOBoard407ServoData2) == 8);
 static_assert(sizeof(Can1IOBoard407ADCInfo) == 8);
 
 CanReceiveBuffer::CanReceiveBuffer(can::CanController::ptr can_ctrler,
@@ -36,7 +36,7 @@ CanReceiveBuffer::CanReceiveBuffer(can::CanController::ptr can_ctrler,
 // }
 
 void CanReceiveBuffer::_listen_cb(const QCanBusFrame &frame) {
-    if (frame.frameId() == servodata_rxid_) {
+    if (frame.frameId() == servodata_rxid_) [[likely]] {
         at_servo_data_is_new_ = true;
 
         at_servo_data_.store(

@@ -27,6 +27,8 @@ public:
     virtual uint16_t get_status_word() const = 0;
     virtual int32_t get_actual_position() const = 0;
 
+    virtual int32_t get_following_error() const = 0;
+
     virtual bool sw_fault() const = 0;
     virtual bool sw_switch_on_disabled() const = 0;
     virtual bool sw_ready_to_switch_on() const = 0;
@@ -67,6 +69,8 @@ public:
 
     uint16_t get_status_word() const override;
     int32_t get_actual_position() const override;
+
+    int32_t get_following_error() const override;
 
     bool sw_fault() const override;
     bool sw_switch_on_disabled() const override;

@@ -71,8 +71,11 @@
 // 使用原子操作获取info
 #define EDM_MOTION_INFO_GET_USE_ATOMIC
 
+// 使用新的IO板伺服返回协议(1ms返回一次, 并全部整合在一起)
+#define EDM_IOBOARD_NEW_SERVODATA_1MS
+
 // OFFLINE DEFINE
-// #define EDM_OFFLINE_RUN
+#define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程
@@ -83,7 +86,7 @@
     5 // 调试CAN, 不连接ECAT, 启动实时线程, 但使用CAN返回的接触感知(连接IO板)
 #define EDM_OFFLINE_RUN_TYPE_6 6// 连接ECAT, 2个CAN互连, 模拟测试压力, 但是不取CAN返回值
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_6 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_2 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 

@@ -32,6 +32,10 @@ int32_t PanasonicServoDevice::get_actual_position() const {
     return stat_->position_actual_value;
 }
 
+int32_t PanasonicServoDevice::get_following_error() const {
+    return stat_->following_error_actual_value;
+}
+
 bool PanasonicServoDevice::sw_fault() const {
     return (stat_->status_word & 0b01001111) == SW_Fault;
 }

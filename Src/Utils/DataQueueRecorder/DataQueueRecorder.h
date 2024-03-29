@@ -24,6 +24,7 @@ namespace util {
 template <typename DataType, int CacheSize = 1000>
 class DataQueueRecorder final {
 public:
+    using ptr = std::shared_ptr<DataQueueRecorder<DataType, CacheSize>>;
     DataQueueRecorder() {
 #ifdef EDM_DATAQUEUERECORDER_ENABLE_CACHE
         data_cache_.reserve(CacheSize);
