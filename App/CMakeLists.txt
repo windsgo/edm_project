@@ -26,6 +26,7 @@ set(APP_SOURCES
     DataDisplayer/DataDisplayer.cpp
     CoordSettingPanel/CoordSettingPanel.cpp
     SystemSettingPanel/SystemSettingPanel.cpp
+    DataQueueRecordPanel/DataQueueRecordPanel.cpp
     Resource/app_resource.qrc # qt resource
 )
 

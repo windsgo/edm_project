@@ -14,14 +14,9 @@
 #include "TestPanel/TestPanel.h"
 #include "CoordSettingPanel/CoordSettingPanel.h"
 #include "SystemSettingPanel/SystemSettingPanel.h"
+#include "DataQueueRecordPanel/DataQueueRecordPanel.h"
 
 #include "TaskManager/TaskManager.h"
-#include "TaskManager/GCodeTaskConverter.h"
-#include "TaskManager/GCodeTask.h"
-
-#include "TaskManager/GCodeRunner.h"
-
-#include "codeeditor/codeeditor.h"
 
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
@@ -44,8 +39,6 @@ public:
 
     void _init_status_bar_palette_and_connection();
 
-    void _init_test_record();
-
 public:
     void slot_info_message(const QString& str, int timeout = 0);
     void slot_warn_message(const QString& str, int timeout = 0);
@@ -67,6 +60,7 @@ private:
     TestPanel* test_panel_;
     CoordSettingPanel* coord_setting_panel_;
     SystemSettingPanel* system_setting_panel_;
+    DataQueueRecordPanel* dqr_panel_;
 
 private:
 

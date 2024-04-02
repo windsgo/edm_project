@@ -46,6 +46,10 @@ public:
             return false;
         }
 
+        if (thread_.joinable()) {
+            thread_.join(); // 释放上一个线程的资源, 这里应当会立刻返回
+        }
+
         filename_ = filename;
 
         // init file ostream
@@ -96,10 +100,16 @@ public:
         cv_.notify_all();
     }
 
-    inline void stop_record() {
-        std::lock_guard lg(mutex_);
-        stop_flag_ = true;
-        cv_.notify_all();
+    inline void stop_record(bool wait_for_stopped = false) {
+        {
+            std::lock_guard lg(mutex_);
+            stop_flag_ = true;
+            cv_.notify_all();
+        }
+        
+        if (wait_for_stopped && thread_.joinable()) {
+            thread_.join();
+        }
     }
 
     inline bool is_running() const { return running_flag_; }

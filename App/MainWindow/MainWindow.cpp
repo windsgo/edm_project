@@ -1,8 +1,10 @@
 #include "MainWindow.h"
+#include "DataQueueRecordPanel/DataQueueRecordPanel.h"
 #include "ui_MainWindow.h"
 
 #include <QFile>
 #include <QMessageBox>
+#include <qgridlayout.h>
 
 #include "Logger/LogMacro.h"
 
@@ -38,7 +40,6 @@ MainWindow::MainWindow(QWidget *parent)
             QString::number(i.time_use_data.statemachine_time_use_avg));
         ui->le_timeuse_totalavg->setText(
             QString::number(i.time_use_data.total_time_use_avg));
-            
     });
     test_latency_timer_->start(200);
 
@@ -46,8 +47,6 @@ MainWindow::MainWindow(QWidget *parent)
         auto cmd = std::make_shared<move::MotionCommandSettingClearStatData>();
         this->shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
     });
-
-    _init_test_record();
 }
 
 MainWindow::~MainWindow() {
@@ -99,6 +98,10 @@ void MainWindow::_init_members() {
     system_setting_panel_ = new SystemSettingPanel();
     system_setting_panel_layout->addWidget(system_setting_panel_);
 
+    auto dqr_panel_layout = new QGridLayout(ui->tab_record);
+    dqr_panel_ = new DataQueueRecordPanel(shared_core_data_);
+    dqr_panel_layout->addWidget(dqr_panel_);
+
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
 }
@@ -119,13 +122,6 @@ void MainWindow::_init_status_bar_palette_and_connection() {
             &MainWindow::slot_warn_message);
     connect(this->shared_core_data_, &SharedCoreData::sig_error_message, this,
             &MainWindow::slot_error_message);
-}
-
-void MainWindow::_init_test_record()
-{
-    connect(ui->pb_start_record1, &QPushButton::clicked, this, [this](bool checked) {
-
-    });
 }
 
 void MainWindow::slot_info_message(const QString &str, int timeout) {

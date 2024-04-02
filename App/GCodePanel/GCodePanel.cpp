@@ -233,7 +233,7 @@ void GCodePanel::_slot_cancel() {
         if (ret == QMessageBox::Yes) {
             _slot_save();
         } else if (ret == QMessageBox::No) {
-            _load_from_file(ui->le_current_file->text());
+            _load_from_file(gcode_root_dir_ + ui->le_current_file->text());
             _set_ui_edit_enable(false);
         } else {
             // Cancel or other ...

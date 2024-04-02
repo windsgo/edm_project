@@ -67,13 +67,16 @@ void MotionStateMachine::run_once() {
 
         // 记录周期开始时驱动器返回的数据: 实际位置, 跟随误差
         auto& rd1 = s_motion_shared->get_record_data1_ref();
+
+        this->cb_get_act_axis_(rd1.act_axis);
+
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
         auto em = s_motion_shared->get_ecat_manager();
         for (int i = 0; i < EDM_SERVO_NUM; ++i) {
             auto d = em->get_servo_device(i);
-            rd1.act_axis[i] = d->get_actual_position();
             rd1.following_error_axis[i] = d->get_following_error();
         }
-
+#endif // EDM_OFFLINE_RUN_NO_ECATs
         // 记录已经更新的放电信息反馈
         auto& csd = s_motion_shared->cached_servo_data();
         rd1.average_voltage = csd.average_voltage;
@@ -106,6 +109,8 @@ void MotionStateMachine::run_once() {
     }
 
     if (s_motion_shared->is_data_recorder_running()) {
+        s_motion_shared->get_record_data1_ref().new_cmd_axis = this->cmd_axis_;
+
         s_motion_shared->push_data_to_recorder();
     }
 }

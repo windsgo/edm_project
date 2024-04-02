@@ -409,6 +409,8 @@ void MotionThreadController::_threadstate_running() {
         bool ret = ecat_manager_->connect_ecat(3);
         if (ret) {
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
+        } else {
+            _switch_ecat_state(EcatState::EcatDisconnected);
         }
 
         ec_send_processdata();

@@ -131,7 +131,7 @@ private:
     std::atomic_bool helper_can_simulate_thread_stop_flag_ {false};
 #endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
 
-private:
+public:
     util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr record_data1_queuerecorder_;
 };
 
