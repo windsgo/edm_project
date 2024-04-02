@@ -16,6 +16,8 @@
 #include "SystemSettingPanel/SystemSettingPanel.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
 
+#include "DataDisplayer/DataDisplayer.h"
+
 #include "TaskManager/TaskManager.h"
 
 // SharedData
@@ -61,6 +63,11 @@ private:
     CoordSettingPanel* coord_setting_panel_;
     SystemSettingPanel* system_setting_panel_;
     DataQueueRecordPanel* dqr_panel_;
+
+    DataDisplayer* test_data_displayer_;
+    int data_index0_;
+    int data_index1_;
+    QTimer *display_timer_;
 
 private:
 

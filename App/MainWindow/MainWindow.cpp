@@ -104,6 +104,37 @@ void MainWindow::_init_members() {
 
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
+
+
+    // test
+    auto test_data_displayer_layout = new QGridLayout(ui->tab_testdisplay);
+    test_data_displayer_ = new DataDisplayer();
+    test_data_displayer_layout->addWidget(test_data_displayer_);
+
+    DisplayedDataDesc desc;
+    desc.data_name = "data0";
+    desc.yAxis = QwtPlot::yLeft;
+    desc.visible = true;
+    desc.data_max_points = 300;
+    desc.preferred_color = Qt::green;
+    data_index0_ = test_data_displayer_->add_data_item(desc);
+    desc.data_name = "data1";
+    desc.yAxis = QwtPlot::yRight;
+    desc.visible = true;
+    desc.data_max_points = -1;
+    desc.preferred_color = Qt::red;
+    data_index1_ = test_data_displayer_->add_data_item(desc);
+
+    display_timer_ = new QTimer(this);
+    connect(display_timer_, &QTimer::timeout, this, [this]() {
+        static int i = 0;
+        ++i;
+
+        test_data_displayer_->push_data(data_index0_, sin((double)i * 2.0 * 3.14159265 / 100) * 50 + 50);
+        test_data_displayer_->push_data(data_index1_, cos((double)i * 2.0 * 3.14159265 / 100));
+        test_data_displayer_->update_display();
+    });
+    display_timer_->start(40);
 }
 
 void MainWindow::_init_status_bar_palette_and_connection() {

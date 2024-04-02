@@ -23,7 +23,7 @@ DataDisplayer::DataDisplayer(QWidget *parent)
     ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "x");
     ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "y");
     ui->qwtPlot->setAxisAutoScale(QwtPlot::xBottom, true);
-    ui->qwtPlot->setStyleSheet("color: white;");
+//    ui->qwtPlot->setStyleSheet("color: white;");
 
     // init legend
     legend_ = new QwtLegend();
@@ -48,46 +48,33 @@ int DataDisplayer::add_data_item(const DisplayedDataDesc &data_desc) {
     data.data_desc = data_desc;
 
     // init vec
-    if (data.data_desc.data_max_points <= 0) {
-        data.data_vec.resize(x_points_);
-    } else {
-        if (data.data_desc.data_max_points > x_points_) {
-            data.data_desc.data_max_points = x_points_;
-        }
-
-        data.data_vec.resize(data.data_desc.data_max_points);
-    }
-    data.data_vec.fill(0.0);
-
-    if (data.data_desc.y_scale_percent <= 0 ||
-        data.data_desc.y_scale_percent >
-            ui->verticalSlider_scale_percent->maximum()) {
-        data.data_desc.y_scale_percent = 100;
-    }
-    if (data.data_desc.y_zero_offset <
-            ui->verticalSlider_zero_offset->minimum() ||
-        data.data_desc.y_zero_offset >
-            ui->verticalSlider_zero_offset->maximum()) {
-        data.data_desc.y_zero_offset = 0;
-    }
-
-    ui->comboBox_item_select->addItem(data.data_desc.data_name);
+    data.raw_data_vec.resize(_get_plotting_points_count(data));
+    data.raw_data_vec.fill(0.0);
 
     // init ui data if first (scale zero visible)
     _set_ui_data_desc_from_member_data_desc();
+
+    // check yaxis
+    if (data.data_desc.yAxis != QwtPlot::yLeft && data.data_desc.yAxis != QwtPlot::yRight) {
+        data.data_desc.yAxis = QwtPlot::yLeft;
+    }
 
     // init curve
     data.curve = new QwtPlotCurve(data.data_desc.data_name);
     if (data.data_desc.visible) {
         data.curve->attach(ui->qwtPlot);
-        data.curve->setPen(data.data_desc.preferred_color);
+        data.curve->setYAxis(data.data_desc.yAxis);
+        data.curve->setPen(data.data_desc.preferred_color, 1.0);
     }
 
     // set curve init samples
     _update_curve_from_vec(data);
 
     datas_.push_back(data);
-    Q_ASSERT(ui->comboBox_item_select->maxCount() == datas_.size());
+
+    ui->comboBox_item_select->addItem(data.data_desc.data_name);
+
+    Q_ASSERT(ui->comboBox_item_select->count() == (int)datas_.size());
     return next_index;
 }
 
@@ -96,14 +83,14 @@ bool DataDisplayer::push_data(int index, double v) {
         return false;
     }
 
-    if (index < 0 || index >= datas_.size()) {
+    if (index < 0 || index >= (int)datas_.size()) {
         return false;
     }
 
     auto& data = datas_[index];
 
-    data.data_vec.pop_front();
-    data.data_vec.push_back(v);
+    data.raw_data_vec.pop_front();
+    data.raw_data_vec.push_back(v);
 
     return true;
 }
@@ -134,6 +121,7 @@ void DataDisplayer::_init_buttons() {
 
         if (!data.data_desc.visible && checked) {
             data.curve->attach(ui->qwtPlot);
+            data.curve->setYAxis(data.data_desc.yAxis);
         } else if (data.data_desc.visible && !checked) {
             data.curve->detach();
         }
@@ -147,27 +135,8 @@ void DataDisplayer::_init_buttons() {
         if (index < 0) return;
 
         _set_ui_data_desc_from_member_data_desc();
-    }); 
-
-    connect(ui->verticalSlider_zero_offset, &QSlider::valueChanged, this, [this](int value) {
-        auto index = ui->comboBox_item_select->currentIndex();
-        if (index < 0) {
-            return;
-        }
-        auto& data = datas_[index];
-
-        data.data_desc.y_zero_offset = value;
     });
 
-    connect(ui->verticalSlider_scale_percent, &QSlider::valueChanged, this, [this](int value) {
-        auto index = ui->comboBox_item_select->currentIndex();
-        if (index < 0) {
-            return;
-        }
-        auto& data = datas_[index];
-
-        data.data_desc.y_scale_percent = value;
-    });
 }
 
 void DataDisplayer::_replot() {
@@ -196,32 +165,39 @@ void DataDisplayer::_update_settings_from_ui() {
     }
 
     if (old_x_points != x_points_) {
-        _resize_plotted_vector(x_vec_, x_points_);
+        _reset_x_vec(); // 重新设置x_vec_
         ui->qwtPlot->setAxisScale(QwtPlot::xBottom, 0, x_points_ - 1);
 
         for (auto &data : datas_) {
-            if (data.data_desc.data_max_points <= 0 ||
-                data.data_desc.data_max_points > x_points_) {
-                _resize_plotted_vector(data.data_vec, x_points_);
-            } else {
-                _resize_plotted_vector(data.data_vec,
-                                       data.data_desc.data_max_points);
-            }
+            _resize_data_vec(data); // 重新设置data数组的长度
         }
     }
 
-    // deal with ymin ymax
-    if (ui->sb_ymin->value() >= ui->sb_ymax->value()) {
+    // deal with left ymin ymax
+    if (ui->sb_left_ymin->value() >= ui->sb_left_ymax->value()) {
         // reset min and max
-        ui->sb_ymin->setValue(y_min_);
-        ui->sb_ymax->setValue(y_max_);
+        ui->sb_left_ymin->setValue(left_y_min_);
+        ui->sb_left_ymax->setValue(left_y_max_);
     }
 
     // get min and max from ui
-    y_min_ = ui->sb_ymin->value();
-    y_max_ = ui->sb_ymax->value();
+    left_y_min_ = ui->sb_left_ymin->value();
+    left_y_max_ = ui->sb_left_ymax->value();
 
-    ui->qwtPlot->setAxisScale(QwtPlot::yLeft, y_min_, y_max_);
+    ui->qwtPlot->setAxisScale(QwtPlot::yLeft, left_y_min_, left_y_max_);
+
+    // deal with right ymin ymax
+    if (ui->sb_right_ymin->value() >= ui->sb_right_ymax->value()) {
+        // reset min and max
+        ui->sb_right_ymin->setValue(right_y_min_);
+        ui->sb_right_ymax->setValue(right_y_max_);
+    }
+
+    // get min and max from ui
+    right_y_min_ = ui->sb_right_ymin->value();
+    right_y_max_ = ui->sb_right_ymax->value();
+
+    ui->qwtPlot->setAxisScale(QwtPlot::yRight, right_y_min_, right_y_max_);
 }
 
 void DataDisplayer::_resize_plotted_vector(QVector<double> &vec,
@@ -233,6 +209,8 @@ void DataDisplayer::_resize_plotted_vector(QVector<double> &vec,
     if (vec.size() > new_length) {
         // 删除vec靠前的一部分, 以达到new_length长度
         vec = vec.mid(vec.size() - new_length);
+
+        Q_ASSERT(vec.size() == new_length);
     } else {
         // vec前面增加一部分0, 以达到new_length长度
         QVector<double> zero_vec;
@@ -240,6 +218,8 @@ void DataDisplayer::_resize_plotted_vector(QVector<double> &vec,
         zero_vec.fill(0);
 
         vec = zero_vec + vec;
+
+        Q_ASSERT(vec.size() == new_length);
     }
 }
 
@@ -249,17 +229,54 @@ void DataDisplayer::_set_ui_data_desc_from_member_data_desc() {
 
     const auto& data = datas_[index];
 
-    ui->verticalSlider_zero_offset->setValue(data.data_desc.y_zero_offset);
-    ui->verticalSlider_scale_percent->setValue(data.data_desc.y_scale_percent);
+    // TODO
 
     ui->pb_item_visible->setChecked(data.data_desc.visible);
 }
 
 void DataDisplayer::_update_curve_from_vec(DataDisplayer::_DataInfo& data) {
+    int plotting_size = _get_plotting_points_count(data);
+    int x_vec_start_offset = x_points_ - plotting_size;
+    Q_ASSERT(x_vec_start_offset >= 0 && x_vec_start_offset < x_points_);
+    Q_ASSERT(data.raw_data_vec.size() == plotting_size);
+
+    data.curve->setSamples(x_vec_.data() + x_vec_start_offset, data.raw_data_vec.data(), plotting_size);
+}
+
+void DataDisplayer::_resize_data_vec(DataDisplayer::_DataInfo &data)
+{
+    int plotting_size = _get_plotting_points_count(data);
+    if (plotting_size == data.raw_data_vec.size()) {
+        return;
+    }
+
+    _resize_plotted_vector(data.raw_data_vec, plotting_size);
+
+    Q_ASSERT(data.raw_data_vec.size() == plotting_size);
+}
+
+void DataDisplayer::_reset_x_vec()
+{
+    if (x_points_ == x_vec_.size()) {
+        return;
+    }
+
+    x_vec_.resize(x_points_);
+    for (int i = 0; i < x_points_; ++i) {
+        x_vec_[i] = i;
+    }
+}
+
+int DataDisplayer::_get_plotting_points_count(const DataDisplayer::_DataInfo &data) const
+{
     if (data.data_desc.data_max_points <= 0) {
-        data.curve->setSamples(x_vec_, data.data_vec);  
+        return x_points_;
     } else {
-        data.curve->setSamples(x_vec_.mid(x_points_ - data.data_desc.data_max_points), data.data_vec);
+        if (data.data_desc.data_max_points > x_points_) {
+            return x_points_;
+        } else {
+            return data.data_desc.data_max_points;
+        }
     }
 }
 
