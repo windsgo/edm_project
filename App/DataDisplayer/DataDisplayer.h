@@ -22,6 +22,7 @@ struct DisplayedDataDesc {
     QString data_name;
     int data_max_points {-1}; // 设置为-1(<0的数), 跟随窗口设置点数
     QColor preferred_color {QColor(Qt::green)};
+    double line_width {1.0};
 
     bool visible{true};
 
@@ -33,7 +34,7 @@ class DataDisplayer : public QWidget
     Q_OBJECT
 
 public:
-    explicit DataDisplayer(QWidget *parent = nullptr);
+    explicit DataDisplayer(int x_points = 1000, QWidget *parent = nullptr);
     ~DataDisplayer();
 
     // 添加一个数据项目, 返回注册的编号(用于push数据时传入编号).
@@ -46,10 +47,29 @@ public:
     // 刷新显示
     void update_display();
 
+    // 设置坐标轴的名称, 颜色接口
+    void set_axis_title(QwtPlot::Axis axis, const QString& title, QColor color=Qt::black);
+    
+    // 设置y坐标轴刻度
+    void set_axis_scale(QwtPlot::Axis axis, double min, double max);
+
+    void clear();
+
+    void set_datainput_enable(bool enable);
+    void set_plot_enable(bool enable);
+
 private:
     void _init_buttons();
 
-    void _clear(); // TODO
+    void _set_xpoints(int x_points);
+
+    void _set_yleft_scale(double min, double max);
+    void _set_yright_scale(double min, double max);
+
+    void _set_datainput_enable(bool enable) { data_input_enable_ = enable; }
+    void _set_plot_enable(bool enable) { plot_enable_ = enable; }
+
+    void _clear();
 
     // 重新绘图: 从各个data的vec更新curve的sample, 并重新绘图
     void _replot();
@@ -74,7 +94,8 @@ private:
     double right_y_min_;
     double right_y_max_;
 
-    bool enable_ {true}; // TODO
+    bool data_input_enable_ {true};
+    bool plot_enable_ {true};
     
 private: // member datas
 

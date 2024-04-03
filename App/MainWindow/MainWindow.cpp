@@ -1,10 +1,13 @@
 #include "MainWindow.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
+#include "qwt_axis.h"
+#include "qwt_plot.h"
 #include "ui_MainWindow.h"
 
 #include <QFile>
 #include <QMessageBox>
 #include <qgridlayout.h>
+#include <qnamespace.h>
 
 #include "Logger/LogMacro.h"
 
@@ -110,6 +113,10 @@ void MainWindow::_init_members() {
     auto test_data_displayer_layout = new QGridLayout(ui->tab_testdisplay);
     test_data_displayer_ = new DataDisplayer();
     test_data_displayer_layout->addWidget(test_data_displayer_);
+    test_data_displayer_->set_axis_title(QwtPlot::yLeft, "D0", Qt::green);
+    test_data_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 100);
+    test_data_displayer_->set_axis_title(QwtPlot::yRight, "D1", Qt::red);
+    test_data_displayer_->set_axis_scale(QwtPlot::yRight, -2, 2);
 
     DisplayedDataDesc desc;
     desc.data_name = "data0";
@@ -117,12 +124,14 @@ void MainWindow::_init_members() {
     desc.visible = true;
     desc.data_max_points = 300;
     desc.preferred_color = Qt::green;
+    desc.line_width = 2.0;
     data_index0_ = test_data_displayer_->add_data_item(desc);
     desc.data_name = "data1";
     desc.yAxis = QwtPlot::yRight;
     desc.visible = true;
     desc.data_max_points = -1;
     desc.preferred_color = Qt::red;
+    desc.line_width = 2.0;
     data_index1_ = test_data_displayer_->add_data_item(desc);
 
     display_timer_ = new QTimer(this);
