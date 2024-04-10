@@ -5,6 +5,8 @@
 #include "QtDependComponents/IOController/IOController.h"
 
 #include "Utils/Format/edm_format.h"
+#include <chrono>
+#include <cstdint>
 
 namespace edm {
 
@@ -33,7 +35,8 @@ PowerController::PowerController(can::CanController::ptr can_ctrler,
 
 void PowerController::set_highpower_on(bool on) {
     highpower_on_flag_ = on;
-    update_eleparam_and_send(); // 要把mach继电器开这个信息计算出来发到io, 以及machbit发到电源
+    update_eleparam_and_send(); // 要把mach继电器开这个信息计算出来发到io,
+                                // 以及machbit发到电源
 }
 
 bool PowerController::is_highpower_on() const { return highpower_on_flag_; }
@@ -119,7 +122,8 @@ void PowerController::_trigger_send_ioboard_eleparam() {
     can_ctrler_->send_frame(can_device_index_, frame);
 }
 
-void PowerController::_update_eleparam_and_send(const EleParam_dkd_t& eleparam) {
+void PowerController::_update_eleparam_and_send(
+    const EleParam_dkd_t &eleparam) {
     s_logger->trace("update_eleparam_and_send:");
     auto strs = eleparam_to_string(eleparam);
     for (const auto &s : strs) {
@@ -151,12 +155,24 @@ void PowerController::_handle_servo_settings() {
 
     uint8_t bz_enable = _is_bz_enable();
 
+    //! 防止CAN丢包导致伺服设定没发下去, 这里定时发
+    //! (PowerManager会定时调用到这个函数)
+    static int64_t last_send_time = 0;
+    bool forced = false;
+    int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    if (now - last_send_time > 5) {
+        // 平均5s发一次
+        last_send_time = now;
+        forced = true;
+    }
+
     if (curr_eleparam_.servo_sensitivity != servo_setting_.servo_sensitivity ||
         curr_eleparam_.servo_speed != servo_setting_.servo_speed ||
         curr_eleparam_.UpperThreshold != servo_setting_.servo_voltage_1 ||
         curr_eleparam_.LowerThreshold != servo_setting_.servo_voltage_2 ||
         curr_eleparam_.sv != servo_setting_.servo_sv ||
-        bz_enable != servo_setting_.touch_zigbee_warning_enable) {
+        bz_enable != servo_setting_.touch_zigbee_warning_enable || forced) {
         // 有变化
 
         // 全部重新赋值
@@ -202,7 +218,7 @@ void PowerController::_add_canframe_pulse_value() {
 // }
 
 std::array<std::string, 3>
-PowerController::eleparam_to_string(const EleParam_dkd_t& e) {
+PowerController::eleparam_to_string(const EleParam_dkd_t &e) {
     static constexpr const char *ele_fmt1 =
         "ON: {}, OF: {}, IP: {}, HP: {}, PP: {}, LV: {}, C : {}, JM: {}";
     static constexpr const char *ele_fmt2 =
@@ -213,13 +229,12 @@ PowerController::eleparam_to_string(const EleParam_dkd_t& e) {
     // 摇动参数不打印, 这个系统不做摇动
 
     return {
-        EDM_FMT::format(ele_fmt1, e.pulse_on, e.pulse_off, e.ip, e.hp,
-                        e.pp, e.lv, e.c, e.jump_jm),
-        EDM_FMT::format(ele_fmt2, e.ma, e.al, e.ld, e.oc, e.pl, e.up,
-                        e.dn, e.jump_js),
-        EDM_FMT::format(ele_fmt3, e.sv, e.servo_sensitivity,
-                        e.UpperThreshold, e.LowerThreshold, e.servo_speed,
-                        e.upper_index),
+        EDM_FMT::format(ele_fmt1, e.pulse_on, e.pulse_off, e.ip, e.hp, e.pp,
+                        e.lv, e.c, e.jump_jm),
+        EDM_FMT::format(ele_fmt2, e.ma, e.al, e.ld, e.oc, e.pl, e.up, e.dn,
+                        e.jump_js),
+        EDM_FMT::format(ele_fmt3, e.sv, e.servo_sensitivity, e.UpperThreshold,
+                        e.LowerThreshold, e.servo_speed, e.upper_index),
     };
 }
 
@@ -232,7 +247,8 @@ void PowerController::update_eleparam_and_send(
     const EleParam_dkd_t &new_eleparam) {
     // 存储当前结构体
     curr_eleparam_ = new_eleparam;
-    if(!eleparam_inited_) eleparam_inited_ = true;
+    if (!eleparam_inited_)
+        eleparam_inited_ = true;
 
     _update_eleparam_and_send(curr_eleparam_);
 }
@@ -240,7 +256,8 @@ void PowerController::update_eleparam_and_send(
 void PowerController::update_eleparam_and_send(
     EleParam_dkd_t::ptr new_eleparam) {
     curr_eleparam_ = *new_eleparam;
-    if(!eleparam_inited_) eleparam_inited_ = true;
+    if (!eleparam_inited_)
+        eleparam_inited_ = true;
 
     _update_eleparam_and_send(curr_eleparam_);
 }
