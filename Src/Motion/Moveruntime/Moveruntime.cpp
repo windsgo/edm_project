@@ -4,6 +4,9 @@
 #include "Logger/LogMacro.h"
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 
+#include "SystemSettings/SystemSettings.h"
+static const double T = edm::SystemSettings::instance().get_motion_cycle_us() / 1000000.0;
+
 static double _get_target_length_iod(double vi, double vo, double d1, double d2,
                                      double T) {
     return ((vi + vo) * (d1 + 0.5 * d2) + (vo - vi) * T);
@@ -59,8 +62,8 @@ bool Moveruntime::plan(const MoveRuntimePlanSpeedInput& speed_param,
 
     /* 速度规划 */
 
-    constexpr static const double T = EDM_SERVO_PEROID_US / 1000000.0;
-    constexpr static const double TCube = T * T * T;
+    // constexpr static const double T = EDM_SERVO_PEROID_US / 1000000.0;
+    static const double TCube = T * T * T;
     double v0, s0, j1, s1, s2, j3, s3, v4, s4, j5, s5, s6, j7, s7, s123, s567,
         si2o;
     double d0, d1, d2, d5, d6;

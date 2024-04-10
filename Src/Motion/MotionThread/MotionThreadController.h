@@ -17,6 +17,8 @@
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
 #include "Motion/MotionSharedData/MotionSharedData.h"
 
+#include "SystemSettings/SystemSettings.h"
+
 // C Headers
 #include <fcntl.h>
 #include <limits.h>
@@ -164,7 +166,7 @@ private: // Data
     pthread_t thread_;
     bool thread_exit_ = false;
     std::atomic_bool thread_stop_flag_{false}; // 用于指示线程退出
-    const int64_t cycletime_ns_{EDM_SERVO_PEROID_NS}; // 周期(ns)
+    const int64_t cycletime_ns_{SystemSettings::instance().get_motion_cycle_us() * 1000}; // 周期(ns)
     int64_t toff_{0}; // 每周期cycletime的修正量(ns) (基于DC同步)
 
     struct timespec next_, tleft_;

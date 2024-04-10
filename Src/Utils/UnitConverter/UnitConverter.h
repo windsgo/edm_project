@@ -2,6 +2,8 @@
 
 #include "Motion/MoveDefines.h"
 
+#include "SystemSettings/SystemSettings.h"
+
 #include "config.h"
 
 namespace edm {
@@ -23,9 +25,9 @@ private:
     constexpr static const double min2s_{60.0};
     constexpr static const double s2ms_{1000.0};
     constexpr static const double ms2us_{1000.0};
-    constexpr static const double p2ms_{EDM_SERVO_PEROID_US /
-                                        1000.0};        // 周期 -> ms
-    constexpr static const double ms2p_{1.0 / p2ms_}; // ms -> 周期
+    static const uint32_t MOTION_CYCLE_US;
+    static const double p2ms_; // {MOTION_CYCLE_US / 1000.0}; // 周期 -> ms
+    static const double ms2p_; //{1.0 / p2ms_};              // ms -> 周期
 
     // speed unit factors
     constexpr static const double mm_min2um_s_{1000.0 / 60.0}; // mm/min -> um/s
