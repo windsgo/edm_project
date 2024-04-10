@@ -1,6 +1,7 @@
 #include "MotionThreadController.h"
 #include "EcatManager/ServoDevice.h"
 
+#include "Utils/Time/TimeUseStatistic.h"
 #include "ethercat.h"
 
 #include "Logger/LogMacro.h"
@@ -51,8 +52,8 @@ MotionThreadController::MotionThreadController(
         throw exception("MotionStateMachine create failed");
     }
 
-    latency_averager_ = std::make_shared<util::LongPeroidAverager<int32_t>>(
-        [](int max) { s_logger->warn("latency_averager_ max: {}", max); });
+    // latency_averager_ = std::make_shared<util::LongPeroidAverager<int32_t>>(
+    //     [](int max) { s_logger->warn("latency_averager_ max: {}", max); });
 
     //! 线程最后创建, 在成员变量都初始化完毕后再创建
     if (!_create_thread()) {
@@ -324,12 +325,19 @@ void *MotionThreadController::_run() {
         // 这一周期理论的周期开始时间: ts
         // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
 
+#ifndef EDM_OFFLINE_NO_REALTIME_THREAD
         // 统计时防止上一周期因为在连接而导致时长超时
         struct timespec temp_curr_ts;
         clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
         auto t = calcdiff_ns(temp_curr_ts, this->next_);
-        if (t > 0 && ecat_time_statistic_.averager().latest() < cycletime_ns_)
-            latency_averager_->push(t);
+        if (t > 0 && ecat_time_statistic_.averager().latest() < cycletime_ns_) {
+            latency_averager_.push(t);
+
+            if (t > 45000) {
+                // 超过45us的延迟, 累加警告计数
+                ++latency_warning_count_;
+            }
+        }
 
         //! 防止固定间隔的时间戳跟不上 // TODO 后续细看DC时间同步
         if (t > cycletime_ns_) {
@@ -347,6 +355,7 @@ void *MotionThreadController::_run() {
             // add_timespec(&this->next_, cycletime_ns_);
             this->next_ = temp_curr_ts;
         }
+#endif // EDM_OFFLINE_NO_REALTIME_THREAD
 
         TIMEUSESTAT(total_time_statistic_, _thread_cycle_work(),
                     thread_state_ == ThreadState::Running &&
@@ -772,7 +781,8 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         total_time_statistic_.clear();
         statemachine_time_statistic_.clear();
 
-        latency_averager_->clear();
+        latency_averager_.clear();
+        latency_warning_count_ = 0;
 
         accept_cmd_flag = true;
 
@@ -848,10 +858,11 @@ void MotionThreadController::_copy_info_cache() {
     // = avg_latency_ns_; info_cache_.latency_data.max_latency =
     // max_latency_ns_; info_cache_.latency_data.min_latency = min_latency_ns_;
 
-    info_cache_.latency_data.curr_latency = latency_averager_->latest();
-    info_cache_.latency_data.avg_latency = latency_averager_->average();
-    info_cache_.latency_data.max_latency = latency_averager_->max();
-    info_cache_.latency_data.min_latency = latency_averager_->min();
+    info_cache_.latency_data.curr_latency = latency_averager_.latest();
+    info_cache_.latency_data.avg_latency = latency_averager_.average();
+    info_cache_.latency_data.max_latency = latency_averager_.max();
+    // info_cache_.latency_data.min_latency = latency_averager_.min();
+    info_cache_.latency_data.warning_count = latency_warning_count_;
 
     info_cache_.time_use_data.total_time_use_avg =
         TIMEUSESTAT_AVG(total_time_statistic_);
@@ -861,6 +872,8 @@ void MotionThreadController::_copy_info_cache() {
         TIMEUSESTAT_AVG(ecat_time_statistic_);
     info_cache_.time_use_data.statemachine_time_use_avg =
         TIMEUSESTAT_AVG(statemachine_time_statistic_);
+    info_cache_.time_use_data.total_time_use_max = 
+        TIMEUSESTAT_MAX(total_time_statistic_);
 
     // bit_state1
     info_cache_.bit_state1 = 0;

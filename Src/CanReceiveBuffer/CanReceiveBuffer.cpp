@@ -49,7 +49,7 @@ void CanReceiveBuffer::_listen_cb(const QCanBusFrame &frame) {
         EDM_CYCLIC_LOG(s_logger->debug, 500,
                        "touchdetected: {}, sdir: {}, sdis: {}",
                        (int)temp.touch_detected, (int)temp.servo_direction,
-                       (int)temp.servo_distance_0_01um);
+                       (int)temp.servo_distance_0_001um);
 
     } else if (frame.frameId() == adcinfo_rxid_) {
         at_adc_info_.store(

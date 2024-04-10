@@ -28,12 +28,12 @@ MainWindow::MainWindow(QWidget *parent)
 
         ui->le_test_latency_curr->setText(
             QString::number(i.latency_data.curr_latency));
-        ui->le_test_latency_min->setText(
-            QString::number(i.latency_data.min_latency));
         ui->le_test_latency_avg->setText(
             QString::number(i.latency_data.avg_latency));
         ui->le_test_latency_max->setText(
             QString::number(i.latency_data.max_latency));
+        ui->le_test_latency_warning_count->setText(
+            QString::number(i.latency_data.warning_count));
 
         ui->le_timeuse_ecatavg->setText(
             QString::number(i.time_use_data.ecat_time_use_avg));
@@ -43,6 +43,8 @@ MainWindow::MainWindow(QWidget *parent)
             QString::number(i.time_use_data.statemachine_time_use_avg));
         ui->le_timeuse_totalavg->setText(
             QString::number(i.time_use_data.total_time_use_avg));
+        ui->le_timeuse_totalmax->setText(
+            QString::number(i.time_use_data.total_time_use_max));
     });
     test_latency_timer_->start(200);
 

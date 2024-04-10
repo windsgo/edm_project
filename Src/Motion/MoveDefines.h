@@ -64,13 +64,16 @@ struct MotionInfo {
 
     struct LatencyData {
         int curr_latency{};
-        int min_latency{};
+        // int min_latency{}; // 最小值没必要记录
         int max_latency{};
         int avg_latency{};
+        int warning_count{};
     } latency_data;
 
     struct TimeUseData {
         int total_time_use_avg{};
+        int total_time_use_max{};
+
         int info_time_use_avg{};
         int ecat_time_use_avg{};
         int statemachine_time_use_avg{};

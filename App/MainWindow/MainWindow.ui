@@ -134,7 +134,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>6</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_power">
        <attribute name="title">
@@ -155,16 +155,10 @@
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
            <layout class="QGridLayout" name="gridLayout">
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="le_test_latency_avg">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="readOnly">
-               <bool>true</bool>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Max</string>
               </property>
              </widget>
             </item>
@@ -181,17 +175,17 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_2">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_4">
               <property name="text">
-               <string>Min</string>
+               <string>Curr</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Max</string>
+               <string>Latency Data</string>
               </property>
              </widget>
             </item>
@@ -202,15 +196,15 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_4">
+            <item row="0" column="1">
+             <widget class="QPushButton" name="pb_clear_statdata">
               <property name="text">
-               <string>Curr</string>
+               <string>Clear Stat Data</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="le_test_latency_min">
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="le_test_latency_avg">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -235,17 +229,23 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_5">
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_2">
               <property name="text">
-               <string>Latency Data</string>
+               <string>WarningCount</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QPushButton" name="pb_clear_statdata">
-              <property name="text">
-               <string>Clear Stat Data</string>
+            <item row="5" column="1">
+             <widget class="QLineEdit" name="le_test_latency_warning_count">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -253,17 +253,16 @@
           </item>
           <item>
            <layout class="QGridLayout" name="gridLayout_2">
-            <item row="0" column="0" colspan="2">
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>TimeUse Data</string>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="le_timeuse_infoavg">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_7">
-              <property name="text">
-               <string>EcatAvg</string>
+              <property name="readOnly">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -280,6 +279,20 @@
               </property>
              </widget>
             </item>
+            <item row="0" column="0" colspan="2">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>TimeUse Data</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_7">
+              <property name="text">
+               <string>EcatAvg</string>
+              </property>
+             </widget>
+            </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_8">
               <property name="text">
@@ -287,8 +300,8 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="le_timeuse_totalavg">
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="le_timeuse_smavg">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -307,8 +320,15 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="le_timeuse_infoavg">
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>SMAvg</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="le_timeuse_totalavg">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -320,15 +340,15 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_10">
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_11">
               <property name="text">
-               <string>SMAvg</string>
+               <string>TotalMax</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
-             <widget class="QLineEdit" name="le_timeuse_smavg">
+            <item row="5" column="1">
+             <widget class="QLineEdit" name="le_timeuse_totalmax">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>

@@ -11,10 +11,7 @@ namespace util {
 template <typename DataType> class LongPeroidAverager {
 public:
     using ptr = std::shared_ptr<LongPeroidAverager<DataType>>;
-    using NewMaxCallback_t = std::function<void(const DataType &new_max_value)>;
     LongPeroidAverager() = default;
-    LongPeroidAverager(const NewMaxCallback_t &cb_new_max)
-        : cb_new_max_(cb_new_max) {}
 
     void push(const DataType &d) {
         latest_ = d;
@@ -29,9 +26,6 @@ public:
 
         if (d > max_) {
             max_ = d;
-            if (cb_new_max_) {
-                cb_new_max_(max_);
-            }
         }
 
         ++count_;
@@ -59,8 +53,6 @@ private:
     DataType min_{};
     DataType max_{};
     DataType average_{};
-
-    NewMaxCallback_t cb_new_max_;
 };
 
 } // namespace util

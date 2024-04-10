@@ -600,8 +600,8 @@ bool G01AutoTask::_check_and_validate_jump_height() {
 double G01AutoTask::_get_servo_cmd_from_shared() {
     int dir = s_motion_shared->cached_servo_data().servo_direction;
     double dis_blu = util::UnitConverter::um2blu(
-        (double)(s_motion_shared->cached_servo_data().servo_distance_0_01um) /
-        100.0);
+        (double)(s_motion_shared->cached_servo_data().servo_distance_0_001um) /
+        1000.0);
     
     EDM_CYCLIC_LOG(s_logger->debug, 200, "dis_blu: {}", dis_blu);
 

@@ -20,7 +20,7 @@ struct __attribute__((__packed__)) Can1IOBoard407ServoData {
     // index 0~1:
     uint8_t touch_detected : 1;     // 接触感知, 1表示有接触
     uint8_t servo_direction : 1;    // servo_direction 伺服方向, 1:进给 0:后退
-    uint16_t servo_distance_0_01um : 14;     // servo_distance 伺服距离 单位0.01um, 即需要除以100后才是um
+    uint16_t servo_distance_0_001um : 14;     // servo_distance 伺服距离 单位0.01um, 即需要除以100后才是um
     
     // index 2~3
     uint16_t average_voltage : 9;  // V
@@ -48,7 +48,7 @@ static_assert(sizeof(Can1IOBoard407ServoData) == 8);
  */
 struct __attribute__((__packed__)) Can1IOBoard407ServoData {
     // index 0~1:
-    uint16_t servo_distance_0_01um : 15;     // servo_distance 伺服距离 单位0.01um, 即需要除以100后才是um
+    uint16_t servo_distance_0_001um : 15;     // servo_distance 伺服距离 单位0.01um, 即需要除以100后才是um
     uint8_t servo_direction : 1;    // servo_direction 伺服方向, 1:进给 0:后退
     
     // index 2
@@ -126,9 +126,9 @@ public:
             rd = -1.0;
 
         servo_data.servo_direction = (int)(rd >= 0);
-        uint16_t temp_0_01um =  std::labs(rd * amplitude_um * 100.0); // 转换到0.01um单位
-        if (temp_0_01um > 10000) temp_0_01um = 10000;
-        servo_data.servo_distance_0_01um = temp_0_01um;
+        uint16_t temp_0_001um =  std::abs(rd * amplitude_um * 1000.0); // 转换到0.001um单位
+        if (temp_0_001um > 100000) temp_0_001um = 100000;
+        servo_data.servo_distance_0_001um = temp_0_001um;
 #endif // EDM_OFFLINE_MANUAL_SERVO_CMD
 
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT

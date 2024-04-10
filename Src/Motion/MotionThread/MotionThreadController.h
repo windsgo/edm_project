@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <mutex>
 #include <atomic>
 
@@ -173,7 +174,8 @@ private: // Data
 
 private:
     // Thread周期相关测试数据
-    util::LongPeroidAverager<int32_t>::ptr latency_averager_;
+    util::LongPeroidAverager<int32_t> latency_averager_;
+    uint32_t latency_warning_count_{};
 
     util::TimeUseStatistic total_time_statistic_;
     util::TimeUseStatistic ecat_time_statistic_;
