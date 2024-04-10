@@ -173,7 +173,8 @@ void EleparamDecoder::_canframe_handle_off() {
 void EleparamDecoder::_canframe_handle_up_and_on() {
     // do nothing
     // TODO up 和 dn 要设置给运动控制(抬刀用), 靠外层设置, 这里只是decode
-    CAN_BUFFER[1][0] = 0x41; //! 发固定值, 以使on>100表现正常
+    CAN_BUFFER[1][0] = 0x40; //! 发固定值, 以使on>100表现正常
+    // 2024.04.10 0x41 -> 0x40, up位给0, 防止电源自己切断电压
 }
 
 void EleparamDecoder::_canframe_handle_ip() {
