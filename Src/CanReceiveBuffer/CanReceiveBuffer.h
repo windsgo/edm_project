@@ -127,7 +127,7 @@ public:
 
         servo_data.servo_direction = (int)(rd >= 0);
         uint16_t temp_0_001um =  std::abs(rd * amplitude_um * 1000.0); // 转换到0.001um单位
-        if (temp_0_001um > 100000) temp_0_001um = 100000;
+        if (temp_0_001um > 10000) temp_0_001um = 10000;
         servo_data.servo_distance_0_001um = temp_0_001um;
 #endif // EDM_OFFLINE_MANUAL_SERVO_CMD
 
