@@ -69,6 +69,7 @@ public: // settings
     _jump_param jump_param;
     std::string datasave_dir;
     uint32_t motion_cycle_us {1000};
+    uint32_t monitor_peroid_ms{50};
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
@@ -76,7 +77,8 @@ public: // settings
                     MEO_OPT power_database_file, MEO_OPT helper_can_device_name,
                     MEO_OPT interp_module_path_relative_to_root,
                     MEO_OPT info_dispatcher_peroid_ms, MEO_OPT jump_param,
-                    MEO_OPT datasave_dir, MEO_OPT motion_cycle_us);
+                    MEO_OPT datasave_dir, MEO_OPT motion_cycle_us,
+                    MEO_OPT monitor_peroid_ms);
 };
 
 }; // namespace _sys
@@ -157,6 +159,8 @@ public:
     const auto &get_datasave_dir() const { return data_.datasave_dir; }
 
     uint32_t get_motion_cycle_us() const { return data_.motion_cycle_us; }
+
+    uint32_t get_monitor_peroid_ms() const { return data_.monitor_peroid_ms; }
 
 public:
     // TODO change settings and save to local file

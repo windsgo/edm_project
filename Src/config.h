@@ -94,6 +94,7 @@
 #define EDM_OFFLINE_RUN_NO_CAN          // 离线不连接CAN设备
 #define EDM_OFFLINE_MANUAL_TOUCH_DETECT // 离线手动按钮标志接触感知
 #define EDM_OFFLINE_MANUAL_SERVO_CMD    // 离线手动按钮/滑动条标志伺服速度
+#define EDM_OFFLINE_MANUAL_VOLTAGE      // 离线手动电压(调试电压实时显示)
 
 #if (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_1)
 #define EDM_OFFLINE_NO_REALTIME_THREAD // 离线不启动实时线程

@@ -37,9 +37,14 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private:
     void _init_members();
+    void _init_tab_monitor();
 
     void _init_status_bar_palette_and_connection();
+
+private:
+    void _slot_monitor_timer_doit();
 
 public:
     void slot_info_message(const QString& str, int timeout = 0);
@@ -64,10 +69,10 @@ private:
     SystemSettingPanel* system_setting_panel_;
     DataQueueRecordPanel* dqr_panel_;
 
-    DataDisplayer* test_data_displayer_;
-    int data_index0_;
-    int data_index1_;
-    QTimer *display_timer_;
+    // DataDisplayer* test_data_displayer_;
+    // int data_index0_;
+    // int data_index1_;
+    // QTimer *display_timer_;
 
 private:
 
@@ -77,6 +82,17 @@ private: // default palette of status bar, for message show
     QPalette status_bar_info_palette_;
     QPalette status_bar_warn_palette_;
     QPalette status_bar_error_palette_;
+
+private: // monitor 
+    DataDisplayer* vol_cur_displayer_;
+    int monitor_voltage_index_;
+    int monitor_current_index_;
+    DataDisplayer* mach_rate_displayer_;
+    int monitor_normal_rate_index_;
+    int monitor_short_rate_index_;
+    int monitor_open_rate_index_;
+
+    QTimer* monitor_timer_;
 };
 
 } // namespace app

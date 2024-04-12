@@ -1,5 +1,8 @@
 #include "MainWindow.h"
+#include "CanReceiveBuffer/CanReceiveBuffer.h"
+#include "DataDisplayer/DataDisplayer.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
+#include "SystemSettings/SystemSettings.h"
 #include "qwt_axis.h"
 #include "qwt_plot.h"
 #include "ui_MainWindow.h"
@@ -11,6 +14,7 @@
 #include <qfiledialog.h>
 #include <qgridlayout.h>
 #include <qnamespace.h>
+#include <qpushbutton.h>
 
 #include "Logger/LogMacro.h"
 
@@ -70,6 +74,8 @@ MainWindow::~MainWindow() {
     s_logger->info("------------ MainWindow Dtor ------------");
     s_logger->info("-----------------------------------------");
 
+    delete test_panel_;
+
     delete ui;
 }
 
@@ -106,9 +112,14 @@ void MainWindow::_init_members() {
     gcode_panel_ = new GCodePanel(shared_core_data_, task_manager_);
     gcode_layout->addWidget(gcode_panel_);
 
-    auto testpanel_layout = new QGridLayout(ui->groupBox_test);
+    // auto testpanel_layout = new QGridLayout(ui->groupBox_test);
+    // test_panel_ = new TestPanel(shared_core_data_);
+    // testpanel_layout->addWidget(test_panel_);
     test_panel_ = new TestPanel(shared_core_data_);
-    testpanel_layout->addWidget(test_panel_);
+    test_panel_->show();
+    test_panel_->hide();
+    connect(ui->pb_testpanel, &QPushButton::clicked, this,
+            [this]() { test_panel_->show(); });
 
     auto system_setting_panel_layout = new QGridLayout(ui->tab_system_setting);
     system_setting_panel_ = new SystemSettingPanel();
@@ -118,47 +129,108 @@ void MainWindow::_init_members() {
     dqr_panel_ = new DataQueueRecordPanel(shared_core_data_);
     dqr_panel_layout->addWidget(dqr_panel_);
 
+    _init_tab_monitor();
+
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
 
+    // // test
+    // auto test_data_displayer_layout = new QGridLayout(ui->tab_testdisplay);
+    // test_data_displayer_ = new DataDisplayer();
+    // auto dummy = new DataDisplayer();
+    // test_data_displayer_layout->addWidget(test_data_displayer_, 0, 0);
+    // test_data_displayer_layout->addWidget(dummy, 1, 0);
+    // test_data_displayer_->set_axis_title(QwtPlot::yLeft, "D0", Qt::green);
+    // test_data_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 100);
+    // test_data_displayer_->set_axis_title(QwtPlot::yRight, "D1", Qt::red);
+    // test_data_displayer_->set_axis_scale(QwtPlot::yRight, -2, 2);
 
-    // test
-    auto test_data_displayer_layout = new QGridLayout(ui->tab_testdisplay);
-    test_data_displayer_ = new DataDisplayer();
-    auto dummy = new DataDisplayer();
-    test_data_displayer_layout->addWidget(test_data_displayer_, 0, 0);
-    test_data_displayer_layout->addWidget(dummy, 1, 0);
-    test_data_displayer_->set_axis_title(QwtPlot::yLeft, "D0", Qt::green);
-    test_data_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 100);
-    test_data_displayer_->set_axis_title(QwtPlot::yRight, "D1", Qt::red);
-    test_data_displayer_->set_axis_scale(QwtPlot::yRight, -2, 2);
+    // DisplayedDataDesc desc;
+    // desc.data_name = "data0";
+    // desc.yAxis = QwtPlot::yLeft;
+    // desc.visible = true;
+    // desc.data_max_points = 300;
+    // desc.preferred_color = Qt::green;
+    // desc.line_width = 2.0;
+    // data_index0_ = test_data_displayer_->add_data_item(desc);
+    // desc.data_name = "data1";
+    // desc.yAxis = QwtPlot::yRight;
+    // desc.visible = true;
+    // desc.data_max_points = -1;
+    // desc.preferred_color = Qt::red;
+    // desc.line_width = 2.0;
+    // data_index1_ = test_data_displayer_->add_data_item(desc);
 
+    // display_timer_ = new QTimer(this);
+    // connect(display_timer_, &QTimer::timeout, this, [this]() {
+    //     static int i = 0;
+    //     ++i;
+
+    //     test_data_displayer_->push_data(
+    //         data_index0_, sin((double)i * 2.0 * 3.14159265 / 100) * 50 + 50);
+    //     test_data_displayer_->push_data(
+    //         data_index1_, cos((double)i * 2.0 * 3.14159265 / 100));
+    //     test_data_displayer_->update_display();
+    // });
+    // display_timer_->start(40);
+}
+
+void MainWindow::_init_tab_monitor() {
+    // layout
+    auto vol_cur_displayer_layout = new QGridLayout(ui->tab_monitor);
+    vol_cur_displayer_ = new DataDisplayer();
+    mach_rate_displayer_ = new DataDisplayer();
+
+    vol_cur_displayer_layout->addWidget(vol_cur_displayer_, 0, 0);
+    vol_cur_displayer_layout->addWidget(mach_rate_displayer_, 1, 0);
+
+    // add datas
     DisplayedDataDesc desc;
-    desc.data_name = "data0";
-    desc.yAxis = QwtPlot::yLeft;
     desc.visible = true;
-    desc.data_max_points = 300;
-    desc.preferred_color = Qt::green;
     desc.line_width = 2.0;
-    data_index0_ = test_data_displayer_->add_data_item(desc);
-    desc.data_name = "data1";
-    desc.yAxis = QwtPlot::yRight;
-    desc.visible = true;
+    // vol_cur
+    vol_cur_displayer_->set_axis_title(QwtPlot::yLeft, "V", Qt::red);
+    vol_cur_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 400);
+    vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "I", Qt::green);
+    vol_cur_displayer_->set_axis_scale(QwtPlot::yRight, 0, 30);
+
+    mach_rate_displayer_->set_axis_title(QwtPlot::yLeft, "Rate", Qt::black);
+    mach_rate_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 100);
+
     desc.data_max_points = -1;
+    // vol
+    desc.data_name = "V";
+    desc.yAxis = QwtPlot::yLeft;
     desc.preferred_color = Qt::red;
-    desc.line_width = 2.0;
-    data_index1_ = test_data_displayer_->add_data_item(desc);
+    monitor_voltage_index_ = vol_cur_displayer_->add_data_item(desc);
 
-    display_timer_ = new QTimer(this);
-    connect(display_timer_, &QTimer::timeout, this, [this]() {
-        static int i = 0;
-        ++i;
+    // cur
+    desc.data_name = "I";
+    desc.yAxis = QwtPlot::yRight;
+    desc.preferred_color = Qt::green;
+    monitor_current_index_ = vol_cur_displayer_->add_data_item(desc);
 
-        test_data_displayer_->push_data(data_index0_, sin((double)i * 2.0 * 3.14159265 / 100) * 50 + 50);
-        test_data_displayer_->push_data(data_index1_, cos((double)i * 2.0 * 3.14159265 / 100));
-        test_data_displayer_->update_display();
-    });
-    display_timer_->start(40);
+    // mach rate
+    desc.yAxis = QwtPlot::yLeft;
+    desc.data_max_points = -1;
+    // normal
+    desc.data_name = "normal";
+    desc.preferred_color = Qt::green;
+    monitor_normal_rate_index_ = mach_rate_displayer_->add_data_item(desc);
+    // short
+    desc.data_name = "short";
+    desc.preferred_color = Qt::red;
+    monitor_short_rate_index_ = mach_rate_displayer_->add_data_item(desc);
+    // normal
+    desc.data_name = "open";
+    desc.preferred_color = Qt::yellow;
+    monitor_open_rate_index_ = mach_rate_displayer_->add_data_item(desc);
+
+    // init timer
+    monitor_timer_ = new QTimer(this);
+    connect(monitor_timer_, &QTimer::timeout, this,
+            &MainWindow::_slot_monitor_timer_doit);
+    monitor_timer_->start(SystemSettings::instance().get_monitor_peroid_ms());
 }
 
 void MainWindow::_init_status_bar_palette_and_connection() {
@@ -177,6 +249,22 @@ void MainWindow::_init_status_bar_palette_and_connection() {
             &MainWindow::slot_warn_message);
     connect(this->shared_core_data_, &SharedCoreData::sig_error_message, this,
             &MainWindow::slot_error_message);
+}
+
+void MainWindow::_slot_monitor_timer_doit() {
+    // TODO
+    Can1IOBoard407ServoData sd;
+    shared_core_data_->get_can_recv_buffer()->load_servo_data(sd);
+
+    vol_cur_displayer_->push_data(monitor_voltage_index_,
+                                  (double)sd.average_voltage);
+    vol_cur_displayer_->push_data(monitor_current_index_, (double)sd.current);
+    vol_cur_displayer_->update_display();
+
+    mach_rate_displayer_->push_data(monitor_normal_rate_index_, sd.normal_rate);
+    mach_rate_displayer_->push_data(monitor_short_rate_index_, sd.short_rate);
+    mach_rate_displayer_->push_data(monitor_open_rate_index_, sd.open_rate);
+    mach_rate_displayer_->update_display();
 }
 
 void MainWindow::slot_info_message(const QString &str, int timeout) {

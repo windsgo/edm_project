@@ -22,6 +22,8 @@ private:
     void _update_phy_touchdetect();
     void _update_servo();
 
+    void _update_manual_voltage();
+
 private:
     Ui::TestPanel *ui;
 

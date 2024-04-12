@@ -63,4 +63,39 @@ void CanReceiveBuffer::_listen_cb(const QCanBusFrame &frame) {
     }
 }
 
+void CanReceiveBuffer::load_servo_data(
+    Can1IOBoard407ServoData &servo_data) const {
+    *reinterpret_cast<dummy_8bytes *>(&servo_data) = at_servo_data_.load();
+#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
+    // 离线随机伺服指令发生
+    double amplitude_um = this->manual_servo_cmd_feed_amplitude_um_;
+    double probability_offset =
+        (this->manual_servo_cmd_feed_probability_ - 0.50);
+
+    double rd = uniform_real_distribution_(gen_); // rd 在 -1.0, 1.0之间正太分布
+
+    // 根据 probability_offset 进行概率偏移
+    rd += probability_offset * 2;
+    if (rd > 1.0)
+        rd = 1.0;
+    else if (rd < -1.0)
+        rd = -1.0;
+
+    servo_data.servo_direction = (int)(rd >= 0);
+    uint16_t temp_0_001um =
+        std::abs(rd * amplitude_um * 1000.0); // 转换到0.001um单位
+    if (temp_0_001um > 10000)
+        temp_0_001um = 10000;
+    servo_data.servo_distance_0_001um = temp_0_001um;
+#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+
+#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    servo_data.touch_detected = this->manual_touch_detect_flag_;
+#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
+
+#ifdef EDM_OFFLINE_MANUAL_VOLTAGE
+    servo_data.average_voltage = this->manual_voltage_value_;
+#endif // EDM_OFFLINE_MANUAL_VOLTAGE
+}
+
 } // namespace edm

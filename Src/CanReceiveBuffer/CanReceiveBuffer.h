@@ -107,34 +107,7 @@ public:
     CanReceiveBuffer(can::CanController::ptr can_ctrler, uint32_t can_device_index);
 
 public:
-    inline void load_servo_data(Can1IOBoard407ServoData& servo_data) const {
-        *reinterpret_cast<dummy_8bytes *>(&servo_data) = at_servo_data_.load(); 
-#ifdef EDM_OFFLINE_MANUAL_SERVO_CMD
-        // 离线随机伺服指令发生
-        double amplitude_um = this->manual_servo_cmd_feed_amplitude_um_;
-        double probability_offset =
-                (this->manual_servo_cmd_feed_probability_ - 0.50);
-
-        double rd =
-                uniform_real_distribution_(gen_); // rd 在 -1.0, 1.0之间正太分布
-
-        // 根据 probability_offset 进行概率偏移
-        rd += probability_offset * 2;
-        if (rd > 1.0)
-            rd = 1.0;
-        else if (rd < -1.0)
-            rd = -1.0;
-
-        servo_data.servo_direction = (int)(rd >= 0);
-        uint16_t temp_0_001um =  std::abs(rd * amplitude_um * 1000.0); // 转换到0.001um单位
-        if (temp_0_001um > 10000) temp_0_001um = 10000;
-        servo_data.servo_distance_0_001um = temp_0_001um;
-#endif // EDM_OFFLINE_MANUAL_SERVO_CMD
-
-#ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-        servo_data.touch_detected = this->manual_touch_detect_flag_;
-#endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
-    }
+    void load_servo_data(Can1IOBoard407ServoData& servo_data) const;
 
     inline void load_adc_info(Can1IOBoard407ADCInfo& adc_info) const { 
         *reinterpret_cast<dummy_8bytes *>(&adc_info) = at_adc_info_.load(); 
@@ -187,6 +160,14 @@ public:
         manual_servo_cmd_feed_amplitude_um_ = feed_amplitude_um;
     }
 #endif // EDM_OFFLINE_MANUAL_SERVO_CMD
+
+#ifdef EDM_OFFLINE_MANUAL_VOLTAGE
+    // 离线手动设置电压
+private:
+    std::atomic_uint16_t manual_voltage_value_ {10};
+public:
+    inline void set_manual_voltage(uint16_t voltage) { manual_voltage_value_.store(voltage); }
+#endif // EDM_OFFLINE_MANUAL_VOLTAGE
 
 private:
     constexpr static const uint32_t servodata_rxid_ {EDM_CAN_RXID_IOBOARD_SERVODATA};
