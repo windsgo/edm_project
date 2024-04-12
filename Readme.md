@@ -1,5 +1,23 @@
 # Title
 
+## 必要依赖
+
+### GCC/G++13
+
+```bash
+#!/bin/bash
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt-get update
+sudo apt-get install gcc-13 g++-13
+```
+
+### dconf
+
+```bash
+#!/bin/bash
+sudo apt install dbus-x11
+```
+
 ## 实时性措施
 
 ### 实时线程

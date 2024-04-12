@@ -4,8 +4,11 @@
 #include "qwt_plot.h"
 #include "ui_MainWindow.h"
 
+#include <QFileDialog>
+
 #include <QFile>
 #include <QMessageBox>
+#include <qfiledialog.h>
 #include <qgridlayout.h>
 #include <qnamespace.h>
 
@@ -20,6 +23,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     _init_members();
     _init_status_bar_palette_and_connection();
+
+    {
+        // 启动一次file dialog, 系统会分配缓存, 防止后续影响整个进程的实时性
+        QFileDialog *dummy_f = new QFileDialog();
+        dummy_f->show();
+        dummy_f->hide();
+        delete dummy_f;
+    }
 
     test_latency_timer_ = new QTimer(this);
     connect(test_latency_timer_, &QTimer::timeout, this, [this]() {
