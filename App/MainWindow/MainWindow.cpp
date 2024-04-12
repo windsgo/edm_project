@@ -125,7 +125,9 @@ void MainWindow::_init_members() {
     // test
     auto test_data_displayer_layout = new QGridLayout(ui->tab_testdisplay);
     test_data_displayer_ = new DataDisplayer();
-    test_data_displayer_layout->addWidget(test_data_displayer_);
+    auto dummy = new DataDisplayer();
+    test_data_displayer_layout->addWidget(test_data_displayer_, 0, 0);
+    test_data_displayer_layout->addWidget(dummy, 1, 0);
     test_data_displayer_->set_axis_title(QwtPlot::yLeft, "D0", Qt::green);
     test_data_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 100);
     test_data_displayer_->set_axis_title(QwtPlot::yRight, "D1", Qt::red);

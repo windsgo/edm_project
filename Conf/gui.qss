@@ -4,6 +4,10 @@ QWidget
 font-family: "Monospace";
 }
 
+#DataDisplayer QWidget {
+    font-size: 10pt;
+}
+
 QPushButton
 {
 border:1px groove rgb(59, 59, 59);

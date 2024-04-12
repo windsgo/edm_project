@@ -9,6 +9,7 @@
 #include "qwt_text.h"
 #include "ui_DataDisplayer.h"
 #include <cassert>
+#include <qabstractbutton.h>
 #include <qcolor.h>
 #include <qcombobox.h>
 #include <qglobal.h>
@@ -16,6 +17,7 @@
 #include <qpushbutton.h>
 #include <qslider.h>
 #include <qvector.h>
+#include <QButtonGroup>
 
 #include "qwt_plot_grid.h"
 
@@ -30,9 +32,9 @@ DataDisplayer::DataDisplayer(int x_points, QWidget *parent)
     ui->qwtPlot->enableAxis(QwtPlot::xBottom);
     ui->qwtPlot->enableAxis(QwtPlot::yLeft);
     ui->qwtPlot->enableAxis(QwtPlot::yRight);
-    ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "x");
-    ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "y");
-    ui->qwtPlot->setAxisTitle(QwtPlot::yRight, "y");
+//    ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "x");
+//    ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "y");
+//    ui->qwtPlot->setAxisTitle(QwtPlot::yRight, "y");
     ui->qwtPlot->setAxisAutoScale(QwtPlot::xBottom, true);
 
     // init legend
@@ -183,6 +185,11 @@ void DataDisplayer::_init_buttons() {
 
                 _replot();
             });
+    
+    QButtonGroup* yleft_yright_group = new QButtonGroup(this);
+    yleft_yright_group->addButton(ui->pb_select_yleft);
+    yleft_yright_group->addButton(ui->pb_select_yright);
+    yleft_yright_group->setExclusive(true);
 
     connect(ui->pb_select_yleft, &QPushButton::toggled, this,
             [this](bool checked) {
