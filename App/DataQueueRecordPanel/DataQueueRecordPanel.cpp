@@ -30,8 +30,8 @@ DataQueueRecordPanel::DataQueueRecordPanel(SharedCoreData *shared_core_data,
 DataQueueRecordPanel::~DataQueueRecordPanel() { delete ui; }
 
 static void _check_and_create_dir(const QString &dir_str) {
-    QDir dir(dir_str);
-    if (!dir.exists()) {
+    QDir dir;
+    if (!dir.exists(dir_str)) {
         s_logger->info("creating dir: {}", dir_str.toStdString());
         dir.mkpath(dir_str);
     }

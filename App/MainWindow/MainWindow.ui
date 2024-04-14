@@ -415,6 +415,37 @@
          </item>
         </layout>
        </widget>
+       <widget class="QwtDial" name="Dial_Voltage">
+        <property name="geometry">
+         <rect>
+          <x>620</x>
+          <y>140</y>
+          <width>200</width>
+          <height>200</height>
+         </rect>
+        </property>
+        <property name="upperBound">
+         <double>400.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>50.000000000000000</double>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="lineWidth">
+         <number>4</number>
+        </property>
+        <property name="mode">
+         <enum>QwtDial::RotateNeedle</enum>
+        </property>
+        <property name="minScaleArc">
+         <double>60.000000000000000</double>
+        </property>
+        <property name="maxScaleArc">
+         <double>300.000000000000000</double>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="tab_coord_setting">
        <attribute name="title">
@@ -452,6 +483,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QwtDial</class>
+   <extends>QWidget</extends>
+   <header>qwt_dial.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

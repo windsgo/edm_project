@@ -9,6 +9,7 @@
 
 #include <QFileDialog>
 
+#include "qwt_dial_needle.h"
 #include <QFile>
 #include <QMessageBox>
 #include <qfiledialog.h>
@@ -265,6 +266,12 @@ void MainWindow::_slot_monitor_timer_doit() {
     mach_rate_displayer_->push_data(monitor_short_rate_index_, sd.short_rate);
     mach_rate_displayer_->push_data(monitor_open_rate_index_, sd.open_rate);
     mach_rate_displayer_->update_display();
+
+    auto needle = new QwtDialSimpleNeedle(QwtDialSimpleNeedle::Style::Arrow,
+                                          true, Qt::green, Qt::gray);
+    needle->setWidth(10);
+    ui->Dial_Voltage->setNeedle(needle);
+    ui->Dial_Voltage->setValue((double)sd.average_voltage);
 }
 
 void MainWindow::slot_info_message(const QString &str, int timeout) {
