@@ -75,8 +75,13 @@ struct MotionInfo {
         int total_time_use_max{};
 
         int info_time_use_avg{};
+        int info_time_use_max{};
+
         int ecat_time_use_avg{};
+        int ecat_time_use_max{};
+
         int statemachine_time_use_avg{};
+        int statemachine_time_use_max{};
     } time_use_data;
 
     //! see `enum MotionInfoBitState1`

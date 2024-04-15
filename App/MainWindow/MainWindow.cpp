@@ -53,10 +53,19 @@ MainWindow::MainWindow(QWidget *parent)
 
         ui->le_timeuse_ecatavg->setText(
             QString::number(i.time_use_data.ecat_time_use_avg));
+        ui->le_timeuse_ecatmax->setText(
+            QString::number(i.time_use_data.ecat_time_use_max));
+
         ui->le_timeuse_infoavg->setText(
             QString::number(i.time_use_data.info_time_use_avg));
+        ui->le_timeuse_infomax->setText(
+            QString::number(i.time_use_data.info_time_use_max));
+
         ui->le_timeuse_smavg->setText(
             QString::number(i.time_use_data.statemachine_time_use_avg));
+        ui->le_timeuse_smmax->setText(
+            QString::number(i.time_use_data.statemachine_time_use_max));
+
         ui->le_timeuse_totalavg->setText(
             QString::number(i.time_use_data.total_time_use_avg));
         ui->le_timeuse_totalmax->setText(

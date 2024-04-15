@@ -200,7 +200,7 @@
           <x>9</x>
           <y>9</y>
           <width>531</width>
-          <height>176</height>
+          <height>199</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -304,54 +304,53 @@
          </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_2">
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="le_timeuse_infoavg">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="1">
-            <widget class="QLineEdit" name="le_timeuse_ecatavg">
+            <widget class="QLabel" name="label_11">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="readOnly">
-              <bool>true</bool>
+             <property name="text">
+              <string>Avg</string>
              </property>
             </widget>
            </item>
            <item row="0" column="0" colspan="2">
             <widget class="QLabel" name="label_6">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>TimeUse Data</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_7">
+           <item row="6" column="0">
+            <widget class="QLabel" name="label_10">
              <property name="text">
-              <string>EcatAvg</string>
+              <string>SM</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_8">
-             <property name="text">
-              <string>TotalAvg</string>
+           <item row="3" column="2">
+            <widget class="QLineEdit" name="le_timeuse_totalmax">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
+           <item row="6" column="1">
             <widget class="QLineEdit" name="le_timeuse_smavg">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -364,21 +363,14 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
+           <item row="5" column="0">
             <widget class="QLabel" name="label_9">
              <property name="text">
-              <string>InfoAvg</string>
+              <string>Info</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_10">
-             <property name="text">
-              <string>SMAvg</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
+           <item row="3" column="1">
             <widget class="QLineEdit" name="le_timeuse_totalavg">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -391,15 +383,87 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_11">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_8">
              <property name="text">
-              <string>TotalMax</string>
+              <string>Total</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QLabel" name="label_12">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Max</string>
              </property>
             </widget>
            </item>
            <item row="5" column="1">
-            <widget class="QLineEdit" name="le_timeuse_totalmax">
+            <widget class="QLineEdit" name="le_timeuse_infoavg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="le_timeuse_ecatavg">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="text">
+              <string>Ecat</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="2">
+            <widget class="QLineEdit" name="le_timeuse_ecatmax">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="2">
+            <widget class="QLineEdit" name="le_timeuse_infomax">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="2">
+            <widget class="QLineEdit" name="le_timeuse_smmax">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -415,7 +479,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QwtDial" name="Dial_Voltage">
+       <widget class="QwtDial" name="Dial_Voltage" native="true">
         <property name="geometry">
          <rect>
           <x>620</x>
@@ -424,25 +488,22 @@
           <height>200</height>
          </rect>
         </property>
-        <property name="upperBound">
+        <property name="upperBound" stdset="0">
          <double>400.000000000000000</double>
         </property>
-        <property name="value">
+        <property name="value" stdset="0">
          <double>50.000000000000000</double>
         </property>
-        <property name="readOnly">
+        <property name="readOnly" stdset="0">
          <bool>true</bool>
         </property>
-        <property name="lineWidth">
+        <property name="lineWidth" stdset="0">
          <number>4</number>
         </property>
-        <property name="mode">
-         <enum>QwtDial::RotateNeedle</enum>
-        </property>
-        <property name="minScaleArc">
+        <property name="minScaleArc" stdset="0">
          <double>60.000000000000000</double>
         </property>
-        <property name="maxScaleArc">
+        <property name="maxScaleArc" stdset="0">
          <double>300.000000000000000</double>
         </property>
        </widget>

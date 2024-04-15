@@ -866,14 +866,20 @@ void MotionThreadController::_copy_info_cache() {
 
     info_cache_.time_use_data.total_time_use_avg =
         TIMEUSESTAT_AVG(total_time_statistic_);
+    info_cache_.time_use_data.total_time_use_max =
+        TIMEUSESTAT_MAX(total_time_statistic_);
     info_cache_.time_use_data.info_time_use_avg =
         TIMEUSESTAT_AVG(info_time_statistic_);
+    info_cache_.time_use_data.info_time_use_max =
+        TIMEUSESTAT_MAX(info_time_statistic_);
     info_cache_.time_use_data.ecat_time_use_avg =
         TIMEUSESTAT_AVG(ecat_time_statistic_);
+    info_cache_.time_use_data.ecat_time_use_max =
+        TIMEUSESTAT_MAX(ecat_time_statistic_);
     info_cache_.time_use_data.statemachine_time_use_avg =
         TIMEUSESTAT_AVG(statemachine_time_statistic_);
-    info_cache_.time_use_data.total_time_use_max = 
-        TIMEUSESTAT_MAX(total_time_statistic_);
+    info_cache_.time_use_data.statemachine_time_use_max =
+        TIMEUSESTAT_MAX(statemachine_time_statistic_);
 
     // bit_state1
     info_cache_.bit_state1 = 0;
