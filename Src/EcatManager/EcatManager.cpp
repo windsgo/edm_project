@@ -7,6 +7,7 @@
 
 #include "ServoDevice.h"
 
+#include <ctime>
 #include <ecrt.h>
 #include <memory>
 #include <string.h>
@@ -14,6 +15,9 @@
 #ifdef EDM_ECAT_DRIVER_SOEM
 #include "ethercat.h"
 #endif // EDM_ECAT_DRIVER_SOEM
+
+#define NSEC_PER_SEC   (1000000000L)
+#define TIMESPEC2NS(T) ((uint64_t)(T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -96,7 +100,7 @@ EcatManager::~EcatManager() {
 
 #ifdef EDM_ECAT_DRIVER_IGH
     if (igh_master_) {
-        s_logger->debug("in ~EcatManager, release igh_master_");
+        s_logger->info("in ~EcatManager, release igh_master_");
         ecrt_release_master(igh_master_);
     }
 #endif // EDM_ECAT_DRIVER_IGH
@@ -260,6 +264,8 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
             return false;
         }
 
+        ecrt_slave_config_dc(pana_sc, 0x0300, 250000, 50000, 0, 0);
+
         // for each servo domain
         igh_domain_regs_vec_[i].clear();
         ec_pdo_entry_reg_t temp;
@@ -394,18 +400,18 @@ bool EcatManager::_igh_check_receive_valid() {
     ec_master_state_t master_state;
     ecrt_master_state(igh_master_, &master_state);
 
-    if (master_state.slaves_responding != servo_num_ + io_num_) {
+    if (master_state.slaves_responding != servo_num_ + io_num_) [[unlikely]] {
         s_logger->warn("igh slaves_responding: {}",
                        (int)master_state.slaves_responding);
         return false;
     }
 
-    if (!master_state.link_up) {
+    if (!master_state.link_up) [[unlikely]] {
         s_logger->warn("igh link down");
         return false;
     }
 
-    if (master_state.al_states != 0b1000) {
+    if (master_state.al_states != 0b1000) [[unlikely]] {
         s_logger->warn("igh al_states: {:4b}", (uint8_t)master_state.al_states);
         return false;
     }
@@ -415,13 +421,14 @@ bool EcatManager::_igh_check_receive_valid() {
     for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
         ecrt_domain_state(igh_domain_vec_[i], &domain_state);
 
-        if (domain_state.working_counter != 3) {
+        if (domain_state.working_counter != 3) [[unlikely]] {
             s_logger->warn("igh domain {} wkc {}", i,
                            (int)domain_state.working_counter);
             return false;
         }
 
-        if (domain_state.wc_state != ec_wc_state_t::EC_WC_COMPLETE) {
+        if (domain_state.wc_state != ec_wc_state_t::EC_WC_COMPLETE)
+            [[unlikely]] {
             s_logger->warn("igh domain {} wc_state {}", i,
                            (int)domain_state.wc_state);
             return false;
@@ -537,7 +544,7 @@ void EcatManager::ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
 
 #ifdef EDM_ECAT_DRIVER_IGH
     ecrt_master_receive(igh_master_);
-    for (auto &domain : igh_domain_vec_) {
+    for (auto domain : igh_domain_vec_) {
         ecrt_domain_process(domain);
     }
 #endif // EDM_ECAT_DRIVER_IGH
@@ -553,11 +560,11 @@ void EcatManager::ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
 
         if (!state_check) {
             wkc_failed_sc.push_back_valid();
-        } else {
+        } else [[likely]] {
             wkc_failed_sc.push_back_invalid();
         }
 
-        if (wkc_failed_sc.valid_rate() > wkc_failed_threshold) {
+        if (wkc_failed_sc.valid_rate() > wkc_failed_threshold) [[unlikely]] {
             s_logger->critical("ecat valid err: {}",
                                wkc_failed_sc.valid_rate());
             connected_ = false;
@@ -574,9 +581,11 @@ void EcatManager::ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
     }
 
     /* Do PDO assignment using callback */
-    if (do_pdo_assign_func) {
+    if (do_pdo_assign_func) [[likely]] {
         do_pdo_assign_func();
     }
+
+    igh_sync_clocks();
 
     /* send progress data */
 #ifdef EDM_ECAT_DRIVER_SOEM
@@ -584,10 +593,55 @@ void EcatManager::ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
 #endif // EDM_ECAT_DRIVER_SOEM
 
 #ifdef EDM_ECAT_DRIVER_IGH
-    for (auto &domain : igh_domain_vec_) {
+    for (auto domain : igh_domain_vec_) {
         ecrt_domain_queue(domain);
     }
     ecrt_master_send(igh_master_);
+#endif // EDM_ECAT_DRIVER_IGH
+}
+
+void EcatManager::ecat_recv() {
+#ifdef EDM_ECAT_DRIVER_SOEM
+    int wkc;
+    wkc = ec_receive_processdata(80); // at most 200 us
+#endif                                // EDM_ECAT_DRIVER_SOEM
+
+#ifdef EDM_ECAT_DRIVER_IGH
+    ecrt_master_receive(igh_master_);
+    for (auto domain : igh_domain_vec_) {
+        ecrt_domain_process(domain);
+    }
+#endif // EDM_ECAT_DRIVER_IGH
+}
+
+void EcatManager::ecat_send() {
+#ifdef EDM_ECAT_DRIVER_SOEM
+    int send_ret = ec_send_processdata();
+#endif // EDM_ECAT_DRIVER_SOEM
+
+#ifdef EDM_ECAT_DRIVER_IGH
+    for (auto domain : igh_domain_vec_) {
+        ecrt_domain_queue(domain);
+    }
+    ecrt_master_send(igh_master_);
+#endif // EDM_ECAT_DRIVER_IGH
+}
+
+void EcatManager::tell_master_application_time(uint64_t app_time) {
+#ifdef EDM_ECAT_DRIVER_IGH
+    if (igh_master_) [[likely]] {
+        ecrt_master_application_time(igh_master_, app_time);
+    }
+#endif // EDM_ECAT_DRIVER_IGH
+}
+
+void EcatManager::igh_sync_clocks() {
+#ifdef EDM_ECAT_DRIVER_IGH
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC, &time);
+    ecrt_master_sync_reference_clock_to(igh_master_, TIMESPEC2NS(time));
+
+    ecrt_master_sync_slave_clocks(igh_master_);
 #endif // EDM_ECAT_DRIVER_IGH
 }
 

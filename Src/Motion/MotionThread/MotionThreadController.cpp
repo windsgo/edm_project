@@ -7,6 +7,12 @@
 #include "ethercat.h"
 #endif // EDM_ECAT_DRIVER_SOEM
 
+#define NSEC_PER_SEC (1000000000L)
+#define TIMESPEC2NS(T) ((uint64_t) (T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
+#ifdef EDM_ECAT_DRIVER_IGH
+#include "ecrt.h"
+#endif 
+
 #include "Logger/LogMacro.h"
 
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
@@ -89,8 +95,6 @@ void *MotionThreadController::_ThreadEntry(void *mtc) {
 
     return ret;
 }
-
-#define NSEC_PER_SEC 1000000000
 
 /* add ns to timespec */
 static void add_timespec(struct timespec *ts, int64_t addtime) {
@@ -313,6 +317,9 @@ void *MotionThreadController::_run() {
         /* wait to cycle start */
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_, &tleft_);
 
+        // part of igh dc
+        ecat_manager_->tell_master_application_time(TIMESPEC2NS(next_));
+
         // while (true) {
         //     struct timespec ttt;
         //     clock_gettime(CLOCK_MONOTONIC, &ttt);
@@ -494,18 +501,39 @@ void MotionThreadController::_threadstate_running() {
                         motion_state_machine_->get_cmd_axis();
 
                     for (int i = 0; i < cmd_axis.size(); ++i) {
-                        const auto device = ecat_manager_->get_servo_device(i);
+                        const auto device =
+                        ecat_manager_->get_servo_device(i);
                         device->set_target_position(
                             static_cast<int32_t>(std::lround(cmd_axis[i])));
                         device->cw_enable_operation();
                         device->set_operation_mode(OM_CSP);
                     }
 
+                    #ifdef EDM_ECAT_DRIVER_SOEM
                     _dc_sync(); //! 只在正常的情况下进行DC同步
+                    #endif // EDM_ECAT_DRIVER_SOEM
                     // TODO 后续细看DC时间同步
                 },
-                false),
+                true),
             true);
+
+        // TIMEUSESTAT(
+        //     ecat_time_statistic_, { ecat_manager_->ecat_recv(); }, true);
+
+        // // set to motor axis
+        // const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
+
+        // for (int i = 0; i < cmd_axis.size(); ++i) {
+        //     const auto device = ecat_manager_->get_servo_device(i);
+        //     device->set_target_position(
+        //         static_cast<int32_t>(std::lround(cmd_axis[i])));
+        //     device->cw_enable_operation();
+        //     device->set_operation_mode(OM_CSP);
+        // }
+
+        // // _dc_sync(); //! 只在正常的情况下进行DC同步
+        // // TODO 后续细看DC时间同步
+        // ecat_manager_->ecat_send();
 
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {

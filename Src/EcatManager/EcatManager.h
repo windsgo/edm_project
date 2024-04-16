@@ -46,6 +46,14 @@ public:
     // which is much better than `send - recv - calc - pdo assign` sequence
     void ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
                    bool check_state_valid = false);
+    
+    void ecat_recv();
+    void ecat_send();
+
+    // igh time sync things
+    void tell_master_application_time(uint64_t app_time);
+
+    void igh_sync_clocks();
 
     // calulate toff to get linux time and DC synced
     void dc_sync_time(int64_t cycletime, int64_t *offsettime);

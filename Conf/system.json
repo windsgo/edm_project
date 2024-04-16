@@ -26,6 +26,6 @@
     "log_config_file": "logdefine.json",
     "power_database_file": "power.db",
     "qss_file": "gui.qss",
-    "motion_cycle_us": 1000,
+    "motion_cycle_us": 250,
     "monitor_peroid_ms": 50
 }

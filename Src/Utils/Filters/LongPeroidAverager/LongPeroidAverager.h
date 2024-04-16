@@ -24,7 +24,7 @@ public:
             min_ = d;
         }
 
-        if (d > max_) {
+        if (d > max_) [[unlikely]] {
             max_ = d;
         }
 
