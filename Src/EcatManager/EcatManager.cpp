@@ -12,6 +12,8 @@
 #include <memory>
 #include <string.h>
 
+#include "SystemSettings/SystemSettings.h"
+
 #ifdef EDM_ECAT_DRIVER_SOEM
 #include "ethercat.h"
 #endif // EDM_ECAT_DRIVER_SOEM
@@ -264,7 +266,9 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
             return false;
         }
 
-        ecrt_slave_config_dc(pana_sc, 0x0300, 250000, 50000, 0, 0);
+        auto motion_cycle_us = SystemSettings::instance().get_motion_cycle_us();
+        ecrt_slave_config_dc(pana_sc, 0x0300, motion_cycle_us * 1000, 90000, 0,
+                             0);
 
         // for each servo domain
         igh_domain_regs_vec_[i].clear();
