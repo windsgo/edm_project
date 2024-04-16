@@ -3,8 +3,12 @@
 #include <cstdint>
 #include <memory>
 
-#include "ServoDefines.h"
 #include "Panasonic.h"
+#include "ServoDefines.h"
+
+// #ifdef EDM_ECAT_DRIVER_IGH
+// #include "ecrt.h"
+// #endif // EDM_ECAT_DRIVER_IGH
 
 namespace edm {
 
@@ -22,7 +26,7 @@ public:
     virtual void set_target_position(int32_t target_posistion) = 0;
     virtual void set_operation_mode(uint8_t operation_mode) = 0;
 
-    virtual uint16_t get_current_control_word() const = 0;
+    // virtual uint16_t get_current_control_word() const = 0;
 
     virtual uint16_t get_status_word() const = 0;
     virtual int32_t get_actual_position() const = 0;
@@ -48,14 +52,22 @@ public:
 
 class PanasonicServoDevice final : public ServoDevice {
 public:
+#ifdef EDM_ECAT_DRIVER_SOEM
     PanasonicServoDevice(Panasonic_A5B_Ctrl *ctrl,
                          Panasonic_A5B_Stat *stat) noexcept;
+#endif // EDM_ECAT_DRIVER_SOEM
+#ifdef EDM_ECAT_DRIVER_IGH
+    PanasonicServoDevice(
+        uint8_t *domain_pd,
+        const Panasonic_A6B_InputDomainOffsets &input_offsets,
+        const Panasonic_A6B_OutputDomainOffsets &output_offsets) noexcept;
+#endif // EDM_ECAT_DRIVER_IGH
     virtual ~PanasonicServoDevice() noexcept = default;
 
-    PanasonicServoDevice(const PanasonicServoDevice&) = delete;
-    PanasonicServoDevice& operator=(const PanasonicServoDevice&) = delete;
-    PanasonicServoDevice(PanasonicServoDevice&&) = delete;
-    PanasonicServoDevice& operator=(PanasonicServoDevice&&) = delete;
+    PanasonicServoDevice(const PanasonicServoDevice &) = delete;
+    PanasonicServoDevice &operator=(const PanasonicServoDevice &) = delete;
+    PanasonicServoDevice(PanasonicServoDevice &&) = delete;
+    PanasonicServoDevice &operator=(PanasonicServoDevice &&) = delete;
 
     constexpr ServoType type() const override {
         return ServoType::Panasonic_A5B;
@@ -65,7 +77,7 @@ public:
     void set_target_position(int32_t target_posistion) override;
     void set_operation_mode(uint8_t operation_mode) override;
 
-    uint16_t get_current_control_word() const override;
+    // uint16_t get_current_control_word() const override;
 
     uint16_t get_status_word() const override;
     int32_t get_actual_position() const override;
@@ -88,9 +100,18 @@ public:
 
     void sync_actual_position_to_target_position() override;
 
-public:
+private:
+#ifdef EDM_ECAT_DRIVER_SOEM
     volatile Panasonic_A5B_Ctrl *ctrl_;
     volatile Panasonic_A5B_Stat *stat_;
+#endif // EDM_ECAT_DRIVER_SOEM
+
+#ifdef EDM_ECAT_DRIVER_IGH
+    uint8_t *domain_pd_;
+
+    Panasonic_A6B_InputDomainOffsets input_offsets_;
+    Panasonic_A6B_OutputDomainOffsets output_offsets_;
+#endif // EDM_ECAT_DRIVER_IGH
 };
 
 } // namespace ecat

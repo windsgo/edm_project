@@ -2,7 +2,10 @@
 #include "EcatManager/ServoDevice.h"
 
 #include "Utils/Time/TimeUseStatistic.h"
+
+#ifdef EDM_ECAT_DRIVER_SOEM
 #include "ethercat.h"
+#endif // EDM_ECAT_DRIVER_SOEM
 
 #include "Logger/LogMacro.h"
 
@@ -288,7 +291,9 @@ void *MotionThreadController::_run() {
     int ht = (next_.tv_nsec / 1000000) + 1; /* round to nearest ms */
     next_.tv_nsec = ht * 1000000;
 
+#ifdef EDM_ECAT_DRIVER_SOEM
     ec_send_processdata();
+#endif // EDM_ECAT_DRIVER_SOEM
 
     while (!thread_exit_) {
 
@@ -341,12 +346,12 @@ void *MotionThreadController::_run() {
 
         //! 防止固定间隔的时间戳跟不上 // TODO 后续细看DC时间同步
         if (t > cycletime_ns_) {
-            s_logger->warn(
-                "t {} > cycletime_ns_; toff {}, last ecat: {}, last total: {}, last info: {}, last sm: {}",
-                t, toff_, ecat_time_statistic_.averager().latest(),
-                total_time_statistic_.averager().latest(),
-                info_time_statistic_.averager().latest(),
-                statemachine_time_statistic_.averager().latest());
+            s_logger->warn("t {} > cycletime_ns_; toff {}, last ecat: {}, last "
+                           "total: {}, last info: {}, last sm: {}",
+                           t, toff_, ecat_time_statistic_.averager().latest(),
+                           total_time_statistic_.averager().latest(),
+                           info_time_statistic_.averager().latest(),
+                           statemachine_time_statistic_.averager().latest());
             s_logger->warn("last next: {}, {}", test_last_next.tv_sec,
                            test_last_next.tv_nsec);
             s_logger->warn("next: {}, {}", next_.tv_sec, next_.tv_nsec);
@@ -414,7 +419,7 @@ void MotionThreadController::_threadstate_running() {
 
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
         _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
-#else  // EDM_OFFLINE_RUN_NO_ECAT
+#else // EDM_OFFLINE_RUN_NO_ECAT
         bool ret = ecat_manager_->connect_ecat(3);
         if (ret) {
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
@@ -422,7 +427,10 @@ void MotionThreadController::_threadstate_running() {
             _switch_ecat_state(EcatState::EcatDisconnected);
         }
 
+#ifdef EDM_ECAT_DRIVER_SOEM
         ec_send_processdata();
+#endif // EDM_ECAT_DRIVER_SOEM
+
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
         break;
@@ -477,37 +485,27 @@ void MotionThreadController::_threadstate_running() {
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
 
-        TIMEUSESTAT(ecat_time_statistic_, ecat_manager_->ecat_sync([this]() {
-            // set to motor axis
-            const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
+        TIMEUSESTAT(
+            ecat_time_statistic_,
+            ecat_manager_->ecat_sync(
+                [this]() {
+                    // set to motor axis
+                    const auto &cmd_axis =
+                        motion_state_machine_->get_cmd_axis();
 
-            for (int i = 0; i < cmd_axis.size(); ++i) {
-                ecat_manager_->set_servo_target_position(
-                    i,
-                    static_cast<int32_t>(std::lround(
-                        cmd_axis[i])) // TODO, gear ratio, default 1.0
-                );
-            }
+                    for (int i = 0; i < cmd_axis.size(); ++i) {
+                        const auto device = ecat_manager_->get_servo_device(i);
+                        device->set_target_position(
+                            static_cast<int32_t>(std::lround(cmd_axis[i])));
+                        device->cw_enable_operation();
+                        device->set_operation_mode(OM_CSP);
+                    }
 
-            // test
-
-            // static int j = 0;
-            // ++j;
-            // auto pana_d =
-            // std::static_pointer_cast<ecat::PanasonicServoDevice>(
-            //     ecat_manager_->get_servo_device(0));
-            // if (j < 100) {
-            //     pana_d->ctrl_->v_offset = 10000;
-            // } else if (j < 200) {
-            //     pana_d->ctrl_->v_offset = -10000;
-            // } else {
-            //     j = 0;
-            // }
-
-            _dc_sync(); //! 只在正常的情况下进行DC同步
-            // TODO 后续细看DC时间同步
-        }),
-                    true);
+                    _dc_sync(); //! 只在正常的情况下进行DC同步
+                    // TODO 后续细看DC时间同步
+                },
+                false),
+            true);
 
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {

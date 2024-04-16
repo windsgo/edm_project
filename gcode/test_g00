@@ -4,7 +4,7 @@ i.g54()
 i.g91()
 i.f(300)
 
-for j in range(100):
+for j in range(1000):
     i.g00(x=10)
     i.g04(0.4)
     i.g00(x=-10)

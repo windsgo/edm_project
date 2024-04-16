@@ -22,8 +22,14 @@
 // #define EDM_SERVO_PEROID_MS_PER_PEROID              (EDM_SERVO_PEROID_MS)
 // #define EDM_SERVO_PEROID_PEROID_PER_MS              (1.0 / EDM_SERVO_PEROID_MS)
 
-#define EDM_ECAT_DRIVER_SOEM                        // Use "soem" as software driver
+// #define EDM_ECAT_DRIVER_SOEM                        // Use "soem" as software driver
 // #define EDM_ECAT_DRIVER_IGH                    // or "igh", choose only one
+
+#if defined(EDM_ECAT_DRIVER_SOEM) && defined(EDM_ECAT_DRIVER_IGH)
+#error "can not define both ethercat master"
+#elif !defined(EDM_ECAT_DRIVER_SOEM) && !defined(EDM_ECAT_DRIVER_IGH)
+#error "no ethercat master defined"
+#endif 
 
 #define EDM_CAN_SET_DOWN_WHEN_WORKER_DELETED        // canworker析构时,
                                                     // 将can设备设置down

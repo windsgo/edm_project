@@ -32,6 +32,32 @@ namespace ecat {
 
 enum class ServoType { UnknownType = 0, Panasonic_A5B = 1 };
 
+// IGH
+#define PanaSonic_A6B_VendorID 0x0000066f
+#define PanaSonic_A6B_ProductCode 0x60380006
+
+
+struct Panasonic_A6B_OutputDomainOffsets {
+    uint32_t off_control_word;
+    uint32_t off_modes_of_operation;
+    uint32_t off_target_position;
+    // uint32_t off_touch_probe_function;
+    uint32_t off_v_offset;
+};
+
+struct Panasonic_A6B_InputDomainOffsets {
+    // uint32_t off_error_code;
+    uint32_t off_status_word;
+    // uint32_t off_modes_of_operation_display;
+    uint32_t off_position_actual_value;
+    // uint32_t off_touch_probe_status;
+    // uint32_t off_touch_probe_pos1_pos_value;
+    uint32_t off_following_error_actual_value;
+    // uint32_t off_digital_inputs;
+};
+
+// SOEM
+
 PACKED_BEGIN
 struct PACKED Panasonic_A5B_Ctrl {
     uint16_t control_word;

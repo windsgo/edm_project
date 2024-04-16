@@ -1,14 +1,21 @@
 #pragma once
 
-#include "ServoDevice.h"
 #include "EcatDefine.h"
+#include "EcatManager/ServoDefines.h"
+#include "ServoDevice.h"
 
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"
+#include "config.h"
+#include <array>
+
+#ifdef EDM_ECAT_DRIVER_IGH
+#include "ecrt.h"
+#endif // EDM_ECAT_DRIVER_IGH
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
-#include <functional>
 namespace edm {
 
 namespace ecat {
@@ -37,7 +44,8 @@ public:
     // recv first, then assign the pdo tx data, then send
     // that is `recv - pdo assign - send - calc` sequence
     // which is much better than `send - recv - calc - pdo assign` sequence
-    void ecat_sync(const std::function<void(void)>& do_pdo_assign_func);
+    void ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
+                   bool check_state_valid = false);
 
     // calulate toff to get linux time and DC synced
     void dc_sync_time(int64_t cycletime, int64_t *offsettime);
@@ -51,23 +59,36 @@ public:
     bool servo_has_fault() const;
     bool servo_all_operation_enabled() const;
     bool servo_all_disabled() const;
- 
+
     void clear_fault_cycle_run_once();
-    void disable_cycle_run_once(); //! note: if has fault, it will clear fault first.
+    void
+    disable_cycle_run_once(); //! note: if has fault, it will clear fault first.
 
 private:
     bool _connect_ecat_try_once(int expected_slavecount);
-    bool _wait_slaves_to_safe_op();
-    bool _wait_slaves_to_operational();
 
-    void _conf_servo_pdo_map();
-    void _conf_servo_default_op();
+#ifdef EDM_ECAT_DRIVER_SOEM
+    bool _soem_wait_slaves_to_safe_op();
+    bool _soem_wait_slaves_to_operational();
+
+    void _soem_conf_servo_pdo_map();
+    void _soem_conf_servo_default_op();
+#endif // EDM_ECAT_DRIVER_SOEM
 
 private:
+#ifdef EDM_ECAT_DRIVER_SOEM
+    bool _soem_check_receive_valid(int wkc);
+#endif // EDM_ECAT_DRIVER_SOEM
+#ifdef EDM_ECAT_DRIVER_IGH
+    bool _igh_check_receive_valid();
+#endif // EDM_ECAT_DRIVER_IGH
+
+private: // soem things
     std::string ifname_;
     std::size_t iomap_size_;
     char *iomap_;
 
+private:
     volatile bool connected_ = false;
 
     uint32_t servo_num_;
@@ -79,6 +100,26 @@ private:
     // used for wkc filter
     util::SlidingCounter<100> wkc_failed_sc;
     const double wkc_failed_threshold = 0.95;
+
+private: // igh things
+#ifdef EDM_ECAT_DRIVER_IGH
+    ec_master_t *igh_master_{nullptr};
+
+    // 每一个从站分配一个domain
+    std::vector<ec_domain_t *> igh_domain_vec_;
+
+    // 每一个从站的domain的pdo数据指针
+    std::vector<uint8_t *> igh_domain_pd_vec_;
+
+    // 每一个从站的domain的pdo注册结构体数组
+    std::vector<std::vector<ec_pdo_entry_reg_t>> igh_domain_regs_vec_;
+
+    // 每一个从站的pdo offset
+    std::vector<Panasonic_A6B_InputDomainOffsets>
+        igh_domain_pdo_input_offsets_vec_;
+    std::vector<Panasonic_A6B_OutputDomainOffsets>
+        igh_domain_pdo_output_offsets_vec_;
+#endif // EDM_ECAT_DRIVER_IGH
 };
 
 } // namespace ecat

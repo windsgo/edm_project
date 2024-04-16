@@ -17,6 +17,10 @@ endif()
 ## config
 add_definitions(-DEDM_ROOT_DIR="${PROJECT_SOURCE_DIR}/") ## 最后要有斜杠
 
+## 使用IGH主站开关
+set(USE_IGH TRUE)
+# set(USE_IGH FALSE)
+
 ## libs
 # fmt library
 set(fmt_DIR ${PROJECT_SOURCE_DIR}/third_party/fmt/lib/cmake/fmt)
@@ -39,10 +43,15 @@ find_package(Boost COMPONENTS python REQUIRED)
 add_subdirectory(third_party/spdlog)
 target_compile_options(spdlog PRIVATE -fPIC)
 
-# soem
-add_subdirectory(third_party/SOEM-1.4.0)
-target_compile_options(soem PRIVATE -fPIC -Wno-error=stringop-truncation -Wno-stringop-truncation)
-set(SOEM_INCLUDE_DIRS third_party/SOEM-1.4.0/soem/ third_party/SOEM-1.4.0/osal/ third_party/SOEM-1.4.0/osal/linux/ third_party/SOEM-1.4.0/oshw/linux/)
+if (${USE_IGH})
+    # igh
+    find_package(EtherCAT REQUIRED)
+else()
+    # soem
+    add_subdirectory(third_party/SOEM-1.4.0)
+    target_compile_options(soem PRIVATE -fPIC -Wno-error=stringop-truncation -Wno-stringop-truncation)
+    set(SOEM_INCLUDE_DIRS third_party/SOEM-1.4.0/soem/ third_party/SOEM-1.4.0/osal/ third_party/SOEM-1.4.0/osal/linux/ third_party/SOEM-1.4.0/oshw/linux/)
+endif()
 
 # find qt5
 set(Qt5_DIR $ENV{HOME}/Qt5.14.2/5.14.2/gcc_64/lib/cmake/Qt5)
@@ -106,12 +115,21 @@ target_link_libraries(edm PUBLIC
     Boost::python 
     Boost::boost
     Python3::Python
-    soem
     Qt5::Core Qt5::SerialBus
     m # <math.h> or <cmath>
     pthread # <pthread.h>
     atomic
 )
+
+if (${USE_IGH})
+    target_link_libraries(edm PUBLIC EtherLab::ethercat)
+    add_definitions(-DEDM_ECAT_DRIVER_IGH)
+    message(STATUS "using igh")
+else()
+    target_link_libraries(edm PUBLIC soem)
+    add_definitions(-DEDM_ECAT_DRIVER_SOEM)
+    message(STATUS "using soem")
+endif()
 
 add_subdirectory(App)
 # add_subdirectory(tests)
