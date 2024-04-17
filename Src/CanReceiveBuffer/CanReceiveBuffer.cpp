@@ -51,7 +51,9 @@ void CanReceiveBuffer::_listen_cb(const QCanBusFrame &frame) {
                        (int)temp.touch_detected, (int)temp.servo_direction,
                        (int)temp.servo_distance_0_001um);
 
-    } else if (frame.frameId() == adcinfo_rxid_) {
+    }
+#ifndef EDM_IOBOARD_NEW_SERVODATA_1MS
+    else if (frame.frameId() == adcinfo_rxid_) {
         at_adc_info_.store(
             *reinterpret_cast<dummy_8bytes *>(frame.payload().data()));
 
@@ -61,6 +63,7 @@ void CanReceiveBuffer::_listen_cb(const QCanBusFrame &frame) {
         EDM_CYCLIC_LOG(s_logger->debug, 500, "v: {}, i: {}",
                        (int)temp.new_voltage, (int)temp.new_current);
     }
+#endif // EDM_IOBOARD_NEW_SERVODATA_1MS
 }
 
 void CanReceiveBuffer::load_servo_data(

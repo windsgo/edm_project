@@ -2,16 +2,18 @@
 #include "EcatManager/ServoDevice.h"
 
 #include "Utils/Time/TimeUseStatistic.h"
+#include <cstdint>
+#include <ctime>
 
 #ifdef EDM_ECAT_DRIVER_SOEM
 #include "ethercat.h"
 #endif // EDM_ECAT_DRIVER_SOEM
 
-#define NSEC_PER_SEC (1000000000L)
-#define TIMESPEC2NS(T) ((uint64_t) (T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
+#define NSEC_PER_SEC   (1000000000L)
+#define TIMESPEC2NS(T) ((uint64_t)(T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
 #ifdef EDM_ECAT_DRIVER_IGH
 #include "ecrt.h"
-#endif 
+#endif
 
 #include "Logger/LogMacro.h"
 
@@ -60,6 +62,8 @@ MotionThreadController::MotionThreadController(
         s_logger->critical("MotionStateMachine create failed");
         throw exception("MotionStateMachine create failed");
     }
+
+    // ecat_manager_->connect_ecat(1);
 
     // latency_averager_ = std::make_shared<util::LongPeroidAverager<int32_t>>(
     //     [](int max) { s_logger->warn("latency_averager_ max: {}", max); });
@@ -137,33 +141,6 @@ static inline int64_t calcdiff_ns(const timespec &t1, const timespec &t2) {
 }
 
 void MotionThreadController::_thread_cycle_work() {
-    //! 下一个周期开始的位置
-    // // 这一周期理论的周期开始时间: ts
-    // // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
-    // if (thread_state_ == ThreadState::Running &&
-    //     ecat_state_ == EcatState::EcatReady) {
-    //     // 统计时防止上一周期因为在连接而导致时长超时
-    //     struct timespec temp_curr_ts;
-    //     clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
-    //     auto t = calcdiff_ns(temp_curr_ts, this->next_);
-    //     if (t > 0)
-    //         latency_averager_->push(t);
-
-    //     if (t > cycletime_ns_) {
-    //         s_logger->warn("t {} > cycletime_ns_; toff {}", t, toff_);
-    //         // add_timespec(&this->next_, cycletime_ns_);
-    //         this->next_ = temp_curr_ts;
-    //     }
-    // }
-
-#ifndef EDM_OFFLINE_RUN_NO_ECAT
-    // if (ecat_manager_->is_ecat_connected()) {
-    //     TIMEUSESTAT(ecat_time_statistic_, ecat_manager_->ecat_sync(),
-    //                 thread_state_ == ThreadState::Running &&
-    //                     ecat_state_ == EcatState::EcatReady);
-    // }
-#endif // EDM_OFFLINE_RUN_NO_ECAT
-
     switch (thread_state_) {
     default:
     case ThreadState::Init:
@@ -285,15 +262,13 @@ bool MotionThreadController::_create_thread() {
 
 void *MotionThreadController::_run() {
 
-    // cpu_set_t get;
-    // CPU_ZERO(&get);
-    // pthread_getaffinity_np(pthread_self(), sizeof(get), &get);
-    // auto isset = CPU_ISSET(2, &get);
-    // s_logger->debug("isset: {}", isset);
+    // init dc_systime_ns_
+    dc_systime_ns_ = _get_systime_ns();
+    s_logger->debug("dc_systime_ns_ init: {}", dc_systime_ns_);
 
-    clock_gettime(CLOCK_MONOTONIC, &next_);
-    int ht = (next_.tv_nsec / 1000000) + 1; /* round to nearest ms */
-    next_.tv_nsec = ht * 1000000;
+    // init wakeup_systime_ns_
+    wakeup_systime_ns_ = _get_systime_ns() + 100 * cycletime_ns_;
+    s_logger->debug("wakeup_systime_ns_ init: {}", wakeup_systime_ns_);
 
 #ifdef EDM_ECAT_DRIVER_SOEM
     ec_send_processdata();
@@ -302,23 +277,15 @@ void *MotionThreadController::_run() {
     while (!thread_exit_) {
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
+#ifdef EDM_ECAT_DRIVER_SOEM
         if (!ecat_manager_->is_ecat_connected()) {
             toff_ = 0; // 未连接, toff是不对的值
         }
+#endif // EDM_ECAT_DRIVER_SOEM
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 
-        static struct timespec test_last_next;
-        test_last_next = next_;
-
-        /* calculate next cycle start */
-        add_timespec(&next_, cycletime_ns_ + toff_);
-        // add_timespec(&next_, cycletime_ns_);
-
-        /* wait to cycle start */
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_, &tleft_);
-
-        // part of igh dc
-        ecat_manager_->tell_master_application_time(TIMESPEC2NS(next_));
+        // 等待下一个周期唤醒
+        _wait_peroid();
 
         // while (true) {
         //     struct timespec ttt;
@@ -337,6 +304,7 @@ void *MotionThreadController::_run() {
         // 这一周期理论的周期开始时间: ts
         // 这一周期实际的开始时间: temp_curr_ts > ts (os保证)
 
+#if 0
 #ifndef EDM_OFFLINE_NO_REALTIME_THREAD
         // 统计时防止上一周期因为在连接而导致时长超时
         struct timespec temp_curr_ts;
@@ -368,6 +336,7 @@ void *MotionThreadController::_run() {
             this->next_ = temp_curr_ts;
         }
 #endif // EDM_OFFLINE_NO_REALTIME_THREAD
+#endif
 
         TIMEUSESTAT(total_time_statistic_, _thread_cycle_work(),
                     thread_state_ == ThreadState::Running &&
@@ -400,8 +369,7 @@ void MotionThreadController::_threadstate_stopping() {
         return;
     }
 
-    ecat_manager_->ecat_sync(
-        [this]() { ecat_manager_->disable_cycle_run_once(); });
+    _ecat_sync_wrapper([this]() { ecat_manager_->disable_cycle_run_once(); });
 #else  // EDM_OFFLINE_RUN_NO_ECAT
     _switch_thread_state(ThreadState::CanExit);
 #endif // EDM_OFFLINE_RUN_NO_ECAT
@@ -425,11 +393,15 @@ void MotionThreadController::_threadstate_running() {
         ecat_connect_flag_ = false;
 
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
-        _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
+        _switch_ecat_state(EcatState::EcatConnectedWaitingForOP);
 #else // EDM_OFFLINE_RUN_NO_ECAT
-        bool ret = ecat_manager_->connect_ecat(3);
+        bool ret = ecat_manager_->connect_ecat(1);
         if (ret) {
-            _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
+            _switch_ecat_state(EcatState::EcatConnectedWaitingForOP);
+#ifdef EDM_ECAT_DRIVER_IGH
+            op_wait_count_ = 0;
+#endif // EDM_ECAT_DRIVER_IGH
+            wakeup_systime_ns_ = _get_systime_ns() + cycletime_ns_ * 50;
         } else {
             _switch_ecat_state(EcatState::EcatDisconnected);
         }
@@ -439,7 +411,40 @@ void MotionThreadController::_threadstate_running() {
 #endif // EDM_ECAT_DRIVER_SOEM
 
 #endif // EDM_OFFLINE_RUN_NO_ECAT
+        break;
+    }
+    case EcatState::EcatConnectedWaitingForOP: {
+        bool op_reached{false};
+#ifdef EDM_OFFLINE_RUN_NO_ECAT
+        op_reached = true;
+#else // EDM_OFFLINE_RUN_NO_ECAT
 
+#ifdef EDM_ECAT_DRIVER_SOEM
+        op_reached = true;
+#endif // EDM_ECAT_DRIVER_SOEM
+
+#ifdef EDM_ECAT_DRIVER_IGH
+        // 在规定的时间内检查是否到达OP
+        ++op_wait_count_;
+        if (op_wait_count_ > op_wait_count_max_) {
+            s_logger->error("igh: wait for op timeout");
+            _switch_ecat_state(EcatState::EcatDisconnected);
+            ecat_manager_->disconnect_ecat();
+            break;
+        }
+
+        _ecat_sync_wrapper([&, this]() -> void {
+            op_reached = ecat_manager_->igh_check_op();
+        });
+#endif // EDM_ECAT_DRIVER_IGH
+
+        if (op_reached) {
+            _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
+            wakeup_systime_ns_ = _get_systime_ns() + cycletime_ns_ * 50;
+            s_logger->info("op reached");
+        }
+
+#endif // EDM_OFFLINE_RUN_NO_ECAT
         break;
     }
     case EcatState::EcatConnectedNotAllEnabled: {
@@ -467,7 +472,7 @@ void MotionThreadController::_threadstate_running() {
         _ecat_state_switch_to_ready();
 #else // EDM_OFFLINE_RUN_NO_ECAT
 
-        ecat_manager_->ecat_sync([this]() {
+        _ecat_sync_wrapper([this]() -> void {
             if (!ecat_manager_->servo_all_operation_enabled()) {
                 ecat_manager_->clear_fault_cycle_run_once();
             } else {
@@ -492,48 +497,22 @@ void MotionThreadController::_threadstate_running() {
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
 
-        TIMEUSESTAT(
-            ecat_time_statistic_,
-            ecat_manager_->ecat_sync(
-                [this]() {
-                    // set to motor axis
-                    const auto &cmd_axis =
-                        motion_state_machine_->get_cmd_axis();
+        /** Ecat Sync start*/
+        _ecat_sync_wrapper(
+            [this]() -> void {
+                const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
 
-                    for (int i = 0; i < cmd_axis.size(); ++i) {
-                        const auto device =
-                        ecat_manager_->get_servo_device(i);
-                        device->set_target_position(
-                            static_cast<int32_t>(std::lround(cmd_axis[i])));
-                        device->cw_enable_operation();
-                        device->set_operation_mode(OM_CSP);
-                    }
-
-                    #ifdef EDM_ECAT_DRIVER_SOEM
-                    _dc_sync(); //! 只在正常的情况下进行DC同步
-                    #endif // EDM_ECAT_DRIVER_SOEM
-                    // TODO 后续细看DC时间同步
-                },
-                true),
+                for (int i = 0; i < cmd_axis.size(); ++i) {
+                    const auto device = ecat_manager_->get_servo_device(i);
+                    device->set_target_position(
+                        static_cast<int32_t>(std::lround(cmd_axis[i])));
+                    device->cw_enable_operation();
+                    device->set_operation_mode(OM_CSP);
+                }
+            },
             true);
 
-        // TIMEUSESTAT(
-        //     ecat_time_statistic_, { ecat_manager_->ecat_recv(); }, true);
-
-        // // set to motor axis
-        // const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
-
-        // for (int i = 0; i < cmd_axis.size(); ++i) {
-        //     const auto device = ecat_manager_->get_servo_device(i);
-        //     device->set_target_position(
-        //         static_cast<int32_t>(std::lround(cmd_axis[i])));
-        //     device->cw_enable_operation();
-        //     device->set_operation_mode(OM_CSP);
-        // }
-
-        // // _dc_sync(); //! 只在正常的情况下进行DC同步
-        // // TODO 后续细看DC时间同步
-        // ecat_manager_->ecat_send();
+        /** Ecat sync over */
 
         // 先检查驱动器情况
         if (!ecat_manager_->is_ecat_connected()) {
@@ -571,13 +550,13 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
     motion_state_machine_->refresh_axis_using_actpos();
     motion_state_machine_->set_enable(true);
 
-    struct timespec temp_curr_ts;
-    clock_gettime(CLOCK_MONOTONIC, &temp_curr_ts);
-    add_timespec(&temp_curr_ts, cycletime_ns_);
+    // 重新统计数
+    latency_averager_.clear();
 
-    //! 主要用于防止连接Ecat的过程太耗时，导致固定间隔的时间戳跟不上
-    // 在这里重置一下,
-    this->next_ = temp_curr_ts;
+    total_time_statistic_.clear();
+    ecat_time_statistic_.clear();
+    info_time_statistic_.clear();
+    statemachine_time_statistic_.clear();
 }
 
 bool MotionThreadController::_set_cpu_dma_latency() {
@@ -608,32 +587,6 @@ bool MotionThreadController::_set_cpu_dma_latency() {
     } else {
         return false;
     }
-
-    // struct stat s;
-    // int err;
-
-    // errno = 0;
-    // err = stat("/dev/cpu_dma_latency", &s);
-    // if (err == -1) {
-    // 	s_logger->error("WARN: stat /dev/cpu_dma_latency failed");
-    // 	return false;
-    // }
-
-    // errno = 0;
-    // latency_target_fd = open("/dev/cpu_dma_latency", O_RDWR);
-    // if (latency_target_fd == -1) {
-    // 	s_logger->error("WARN: open /dev/cpu_dma_latency");
-    // 	return false;
-    // }
-
-    // errno = 0;
-    // err = write(latency_target_fd, &latency_target_value, 4);
-    // if (err < 1) {
-    // 	s_logger->error("# error setting cpu_dma_latency to {}!",
-    // latency_target_value); 	close(latency_target_fd); 	return false;
-    // }
-    // printf("# /dev/cpu_dma_latency set to %dus\n", latency_target_value);
-    // return true;
 }
 
 void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
@@ -845,12 +798,6 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
     }
 }
 
-void MotionThreadController::_dc_sync() {
-    /* calulate toff to get linux time and DC synced */
-    ecat_manager_->dc_sync_time(cycletime_ns_,
-                                &toff_); //! 对指令速度突变的改善很有效果
-}
-
 bool MotionThreadController::_get_act_pos(axis_t &axis) {
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
     axis = motion_state_machine_->get_cmd_axis(); // 离线, 返回指令位置
@@ -944,6 +891,52 @@ void MotionThreadController::_handle_signal() {
     signal_buffer_->reset_all(); //! clear
 }
 
+void MotionThreadController::_ecat_sync_wrapper(
+    const std::function<void(void)> &cb, bool run_check) {
+
+    int wkc{-1};
+    // 统计接收用时delay
+    TIMEUSESTAT(
+        ecat_time_statistic_,
+        {
+#ifdef EDM_ECAT_DRIVER_SOEM
+            wkc = ecat_manager_->soem_master_receive();
+#endif // EDM_ECAT_DRIVER_SOEM
+#ifdef EDM_ECAT_DRIVER_IGH
+            ecat_manager_->igh_master_receive();
+            ecat_manager_->igh_domain_process();
+#endif // EDM_ECAT_DRIVER_IGH
+        },
+        true);
+
+    if (run_check) [[likely]] {
+        if (!ecat_manager_->receive_check(wkc)) {
+            return;
+        }
+    }
+
+    if (cb) [[likely]] {
+        cb();
+    }
+
+    // 发送的控制指令是上个周期的计算结果
+#ifdef EDM_ECAT_DRIVER_IGH
+    ecat_manager_->igh_domain_queue();
+#endif // EDM_ECAT_DRIVER_IGH
+
+    _sync_distributed_clocks();
+
+#ifdef EDM_ECAT_DRIVER_SOEM
+    ecat_manager_->soem_master_send();
+#endif // EDM_ECAT_DRIVER_SOEM
+
+#ifdef EDM_ECAT_DRIVER_IGH
+    ecat_manager_->igh_master_send();
+#endif // EDM_ECAT_DRIVER_IGH
+
+    _update_master_clock();
+}
+
 const char *MotionThreadController::GetThreadStateStr(ThreadState s) {
     switch (s) {
 #define XX_(v__)           \
@@ -967,6 +960,7 @@ const char *MotionThreadController::GetEcatStateStr(EcatState s) {
         XX_(Init)
         XX_(EcatDisconnected)
         XX_(EcatConnecting)
+        XX_(EcatConnectedWaitingForOP)
         XX_(EcatConnectedNotAllEnabled)
         XX_(EcatConnectedEnabling)
         XX_(EcatReady)
@@ -989,6 +983,178 @@ void MotionThreadController::_switch_ecat_state(EcatState new_ecat_state) {
                     GetEcatStateStr(ecat_state_),
                     GetEcatStateStr(new_ecat_state));
     ecat_state_ = new_ecat_state;
+}
+
+int64_t MotionThreadController::_get_systime_ns() const {
+    // get current monoclock abs time
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    // convert to ns
+    auto now_ns = static_cast<int64_t>(timespec2ns(&now));
+
+    if (now_ns >= systime_base_ns_) [[likely]] {
+        // system time is: mono time ref to system_base_time_ns_
+        return now_ns - systime_base_ns_;
+    } else {
+        s_logger->warn("_get_system_time_ns: now_ns {} < systime_base_ns_ {}",
+                       now_ns, systime_base_ns_);
+        return 0;
+    }
+}
+
+int64_t MotionThreadController::_system2mono(uint64_t systime_ns) const {
+    if (systime_base_ns_ < 0 && ((uint64_t)(-systime_base_ns_) > systime_ns)) {
+        s_logger->warn("_system2mono: systime_base_ns_ {}, systime_ns {}",
+                       systime_base_ns_, systime_ns);
+        return 0;
+    } else [[likely]] {
+        return systime_ns + systime_base_ns_;
+    }
+}
+
+void MotionThreadController::_sync_distributed_clocks() {
+#ifdef EDM_ECAT_DRIVER_SOEM
+    /* calulate toff to get linux time and DC synced */
+    //! 对指令速度突变的改善很有效果
+    ecat_manager_->soem_dc_sync_time(cycletime_ns_, &toff_);
+#endif // EDM_ECAT_DRIVER_IGH
+
+#ifdef EDM_ECAT_DRIVER_IGH
+#if (EDM_ECAT_DRIVER_IGH_DC_MODE == EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0)
+    uint64_t prev_app_time = dc_systime_ns_;
+#endif // EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0
+
+    dc_systime_ns_ = _get_systime_ns();
+
+#if (EDM_ECAT_DRIVER_IGH_DC_MODE == EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0)
+    uint32_t ref_time = ecat_manager_->igh_get_reference_clock_time();
+    dc_diff_ns_ = (uint32_t)dc_systime_ns_ - ref_time;
+
+    // EDM_CYCLIC_LOG(s_logger->debug, 4000,
+    //                "_sync_distributed_clocks: ref: {}, diff: {}", ref_time,
+    //                dc_diff_ns_);
+#endif // EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0
+
+#if (EDM_ECAT_DRIVER_IGH_DC_MODE == EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_MASTER)
+    // sync reference clock to master
+    ecat_manager_->igh_sync_reference_clock_to(dc_systime_ns_);
+#endif
+
+    // call ecrt_master_sync_slave_clocks()
+    ecat_manager_->igh_sync_slave_clocks();
+#endif // EDM_ECAT_DRIVER_IGH
+}
+
+/** Return the sign of a number
+ *
+ * ie -1 for -ve value, 0 for 0, +1 for +ve value
+ *
+ * \retval the sign of the value
+ */
+#define edm_sign(val)              \
+    ({                             \
+        typeof(val) _val = (val);  \
+        ((_val > 0) - (_val < 0)); \
+    })
+
+void MotionThreadController::_update_master_clock() {
+#ifdef EDM_ECAT_DRIVER_SOEM
+    systime_base_ns_ += toff_;
+#endif // EDM_ECAT_DRIVER_SOEM
+
+#ifdef EDM_ECAT_DRIVER_IGH
+#if (EDM_ECAT_DRIVER_IGH_DC_MODE == EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0)
+    int32_t delta = dc_diff_ns_ - prev_dc_diff_ns_;
+    prev_dc_diff_ns_ = dc_diff_ns_;
+
+    // normalise the time diff
+    dc_diff_ns_ = ((dc_diff_ns_ + (cycletime_ns_ / 2)) % cycletime_ns_) -
+                  (cycletime_ns_ / 2);
+
+    {
+        // add to totals
+        dc_diff_total_ns_ += dc_diff_ns_;
+        dc_delta_total_ns_ += delta;
+        dc_filter_idx_++;
+
+        if (dc_filter_idx_ >= dc_filter_cnt) {
+            // add rounded delta average
+            dc_adjust_ns_ +=
+                ((dc_delta_total_ns_ + (dc_filter_cnt / 2)) / dc_filter_cnt);
+
+            // and add adjustment for general diff (to pull in drift)
+            dc_adjust_ns_ += edm_sign(dc_diff_total_ns_ / dc_filter_cnt);
+
+            // limit crazy numbers (0.1% of std cycle time)
+            if (dc_adjust_ns_ < -1000) {
+                dc_adjust_ns_ = -1000;
+            } else if (dc_adjust_ns_ > 1000) {
+                dc_adjust_ns_ = 1000;
+            }
+
+            // reset
+            dc_diff_total_ns_ = 0LL;
+            dc_delta_total_ns_ = 0LL;
+            dc_filter_idx_ = 0;
+        }
+
+        // add cycles adjustment to time base (including a spot adjustment)
+        systime_base_ns_ += dc_adjust_ns_ + edm_sign(dc_diff_ns_);
+
+        // EDM_CYCLIC_LOG(
+        //     s_logger->debug, 4000,
+        //     "_update_master_clock: systime_base_ns_: {}, dc_adjust_ns_: {}",
+        //     systime_base_ns_, dc_adjust_ns_);
+    }
+#endif // EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0
+#endif // EDM_ECAT_DRIVER_IGH
+}
+
+void MotionThreadController::_wait_peroid() {
+    // 获取新的 wakeup 时间 (systime不会变, 但是转换到mono时,
+    // 由于调整了systime_base基准, 转换出的时间就是经过调整的linux时间了)
+    auto wakeup_time_mono_ns = _system2mono(wakeup_systime_ns_);
+
+    struct timespec wakeup_time_timespec, dummy_tleft;
+    ns2timespec(wakeup_time_mono_ns, &wakeup_time_timespec);
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wakeup_time_timespec,
+                    &dummy_tleft);
+
+#ifdef EDM_ECAT_DRIVER_IGH
+    // set master time in nano-seconds
+    // call ecrt_master_application_time
+    ecat_manager_->igh_tell_application_time(wakeup_systime_ns_);
+#endif // EDM_ECAT_DRIVER_IGH
+
+    // 计算唤醒延迟
+    {
+        // 获取理论唤醒的monotime
+        auto wakeup_time_ns = _system2mono(wakeup_systime_ns_);
+
+        // 获取实际时间
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        auto now_ns = timespec2ns(&now);
+
+        // 计算latency
+        auto latency = now_ns - wakeup_time_ns;
+        if (latency > 0) {
+            latency_averager_.push(latency);
+
+            if (latency > 45000) {
+                if (thread_state_ == ThreadState::Running) {
+                    // 超过45us的延迟, 累加警告计数
+                    ++latency_warning_count_;
+                    s_logger->warn("latency: {}", latency);
+                }
+            }
+        }
+    }
+
+    // calc next wake time (in sys time)
+    // 下一个wakeup的systime
+    wakeup_systime_ns_ += cycletime_ns_;
 }
 
 } // namespace move

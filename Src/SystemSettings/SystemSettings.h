@@ -70,6 +70,9 @@ public: // settings
     std::string datasave_dir;
     uint32_t motion_cycle_us {1000};
     uint32_t monitor_peroid_ms{50};
+    uint32_t ecat_sync0_shift_time_ns{90000};
+    uint32_t dc_filter_cnt{1024};
+    uint32_t igh_op_wait_count_max{10000};
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
@@ -78,7 +81,8 @@ public: // settings
                     MEO_OPT interp_module_path_relative_to_root,
                     MEO_OPT info_dispatcher_peroid_ms, MEO_OPT jump_param,
                     MEO_OPT datasave_dir, MEO_OPT motion_cycle_us,
-                    MEO_OPT monitor_peroid_ms);
+                    MEO_OPT monitor_peroid_ms, MEO_OPT ecat_sync0_shift_time_ns,
+                    MEO_OPT dc_filter_cnt, MEO_OPT igh_op_wait_count_max);
 };
 
 }; // namespace _sys
@@ -121,22 +125,22 @@ public:
     }
 
     // speed
-    double get_fmparam_max_acc_um_s2() const {
+    inline double get_fmparam_max_acc_um_s2() const {
         return data_.fast_move_param.max_acc_um_s2;
     }
-    uint32_t get_fmparam_nacc_ms() const {
+    inline uint32_t get_fmparam_nacc_ms() const {
         return data_.fast_move_param.nacc_ms;
     }
-    double get_fmparam_speed_0_um_s() const {
+    inline double get_fmparam_speed_0_um_s() const {
         return data_.fast_move_param.speed_0_um_s;
     }
-    double get_fmparam_speed_1_um_s() const {
+    inline double get_fmparam_speed_1_um_s() const {
         return data_.fast_move_param.speed_1_um_s;
     }
-    double get_fmparam_speed_2_um_s() const {
+    inline double get_fmparam_speed_2_um_s() const {
         return data_.fast_move_param.speed_2_um_s;
     }
-    double get_fmparam_speed_3_um_s() const {
+    inline double get_fmparam_speed_3_um_s() const {
         return data_.fast_move_param.speed_3_um_s;
     }
 
@@ -146,21 +150,27 @@ public:
     }
 
     // interp module
-    const std::string &get_interp_module_path_relative_to_root() const {
+    inline const std::string &get_interp_module_path_relative_to_root() const {
         return data_.interp_module_path_relative_to_root;
     }
 
-    uint32_t get_info_dispatcher_peroid_ms() const {
+    inline uint32_t get_info_dispatcher_peroid_ms() const {
         return data_.info_dispatcher_peroid_ms;
     }
 
-    const auto &get_jump_param() const { return data_.jump_param; }
+    inline const auto &get_jump_param() const { return data_.jump_param; }
 
-    const auto &get_datasave_dir() const { return data_.datasave_dir; }
+    inline const auto &get_datasave_dir() const { return data_.datasave_dir; }
 
     uint32_t get_motion_cycle_us() const { return data_.motion_cycle_us; }
 
     uint32_t get_monitor_peroid_ms() const { return data_.monitor_peroid_ms; }
+
+    inline uint32_t get_ecat_sync0_shift_time_ns() const { return data_.ecat_sync0_shift_time_ns; }
+
+    inline auto get_dc_filter_cnt() const { return data_.dc_filter_cnt; }
+
+    inline auto get_igh_op_wait_count_max() const { return data_.igh_op_wait_count_max; }
 
 public:
     // TODO change settings and save to local file

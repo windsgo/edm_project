@@ -27,5 +27,8 @@
     "power_database_file": "power.db",
     "qss_file": "gui.qss",
     "motion_cycle_us": 250,
-    "monitor_peroid_ms": 50
+    "monitor_peroid_ms": 50,
+    "ecat_sync0_shift_time_ns": 125000,
+    "dc_filter_cnt": 128,
+    "igh_op_wait_count_max": 20000
 }

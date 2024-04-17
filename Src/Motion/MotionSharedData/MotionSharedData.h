@@ -43,7 +43,9 @@ public:
     inline void update_can_buffer_cache() {
         if (can_recv_buffer_) {
             can_recv_buffer_->load_servo_data(cached_servo_data_);
+#ifndef EDM_IOBOARD_NEW_SERVODATA_1MS
             can_recv_buffer_->load_adc_info(cached_adc_info_);
+#endif // EDM_IOBOARD_NEW_SERVODATA_1MS
         }
     }
 
@@ -70,11 +72,11 @@ public: // 数据记录相关, 一个周期内可能需要在不同地方记录�
         move::unit_t g01_servo_cmd{0.0};
 
         // 放电状态数据
-        uint8_t normal_charge_rate {0};
-        uint8_t short_charge_rate {0};
-        uint8_t open_charge_rate {0};
-        uint8_t current {0}; // 电流
-        uint16_t average_voltage {0};
+        uint8_t normal_charge_rate{0};
+        uint8_t short_charge_rate{0};
+        uint8_t open_charge_rate{0};
+        uint8_t current{0}; // 电流
+        uint16_t average_voltage{0};
 
         inline void clear() {
             new_cmd_axis.fill(0.0);

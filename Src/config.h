@@ -25,6 +25,14 @@
 // #define EDM_ECAT_DRIVER_SOEM                        // Use "soem" as software driver
 // #define EDM_ECAT_DRIVER_IGH                    // or "igh", choose only one
 
+#ifdef EDM_ECAT_DRIVER_IGH
+#define EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_MASTER 0
+#define EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0 1
+
+#define EDM_ECAT_DRIVER_IGH_DC_MODE EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_SLAVE0
+// #define EDM_ECAT_DRIVER_IGH_DC_MODE EDM_ECAT_DRIVER_IGH_DC_SYNC_TO_MASTER
+#endif // EDM_ECAT_DRIVER_IGH
+
 #if defined(EDM_ECAT_DRIVER_SOEM) && defined(EDM_ECAT_DRIVER_IGH)
 #error "can not define both ethercat master"
 #elif !defined(EDM_ECAT_DRIVER_SOEM) && !defined(EDM_ECAT_DRIVER_IGH)

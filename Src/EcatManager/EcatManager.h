@@ -44,19 +44,42 @@ public:
     // recv first, then assign the pdo tx data, then send
     // that is `recv - pdo assign - send - calc` sequence
     // which is much better than `send - recv - calc - pdo assign` sequence
-    void ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
-                   bool check_state_valid = false);
-    
-    void ecat_recv();
-    void ecat_send();
+    // void ecat_sync(const std::function<void(void)> &do_pdo_assign_func,
+    //                bool check_state_valid = false);
+
+    bool receive_check(int wkc = -1);
+
+#ifdef EDM_ECAT_DRIVER_IGH
+    /** IGH Test Interface */
+    void igh_master_receive();
+    void igh_domain_process();
+    void igh_domain_queue();
+    void igh_master_send();
 
     // igh time sync things
-    void tell_master_application_time(uint64_t app_time);
+    void igh_tell_application_time(uint64_t app_time);
 
-    void igh_sync_clocks();
+    // 以主战为同步时钟方法
+    void igh_sync_reference_clock_to(uint64_t time);
+    void igh_sync_reference_clock();
+
+    // 获取从站的参考时钟
+    uint32_t igh_get_reference_clock_time();
+
+    // sync slaves
+    void igh_sync_slave_clocks();
+
+    // 检查是否所有从站到达OP
+    bool igh_check_op();
+#endif // EDM_ECAT_DRIVER_IGH
+
+#ifdef EDM_ECAT_DRIVER_SOEM
+    int soem_master_receive();
+    void soem_master_send();
 
     // calulate toff to get linux time and DC synced
-    void dc_sync_time(int64_t cycletime, int64_t *offsettime);
+    void soem_dc_sync_time(int64_t cycletime, int64_t *offsettime);
+#endif // EDM_ECAT_DRIVER_SOEM
 
     /* servo related interfaces */
     ServoDevice::ptr get_servo_device(uint32_t servo_index) const;
@@ -69,8 +92,9 @@ public:
     bool servo_all_disabled() const;
 
     void clear_fault_cycle_run_once();
-    void
-    disable_cycle_run_once(); //! note: if has fault, it will clear fault first.
+
+    //! note: if has fault, it will clear fault first.
+    void disable_cycle_run_once();
 
 private:
     bool _connect_ecat_try_once(int expected_slavecount);
@@ -107,11 +131,13 @@ private:
 
     // used for wkc filter
     util::SlidingCounter<100> wkc_failed_sc;
-    const double wkc_failed_threshold = 0.95;
+    const double wkc_failed_threshold = 0.90;
 
 private: // igh things
 #ifdef EDM_ECAT_DRIVER_IGH
     ec_master_t *igh_master_{nullptr};
+
+    std::vector<ec_slave_config_t *> igh_sc_vec_;
 
     // 每一个从站分配一个domain
     std::vector<ec_domain_t *> igh_domain_vec_;
@@ -127,6 +153,8 @@ private: // igh things
         igh_domain_pdo_input_offsets_vec_;
     std::vector<Panasonic_A6B_OutputDomainOffsets>
         igh_domain_pdo_output_offsets_vec_;
+
+    int sync_ref_counter_{0};
 #endif // EDM_ECAT_DRIVER_IGH
 };
 
