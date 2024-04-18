@@ -1,6 +1,7 @@
 #include "EcatManager.h"
 
 #include "EcatManager/ServoDefines.h"
+#include "Exception/exception.h"
 #include "Logger/LogMacro.h"
 
 #include "ServoDevice.h"
@@ -14,6 +15,7 @@
 
 #ifdef EDM_ECAT_DRIVER_SOEM
 #include "ethercat.h"
+#include "ethercatmain.h"
 #endif // EDM_ECAT_DRIVER_SOEM
 
 #define NSEC_PER_SEC   (1000000000L)
@@ -72,6 +74,10 @@ EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
     // request master (init); index default 0; configured in
     // /etc/sysconfig/ethercat
     igh_master_ = ecrt_request_master(0);
+    if (!igh_master_) {
+        s_logger->critical("igh ecrt_request_master failed");
+        throw exception("igh ecrt_request_master failed");
+    }
 
     // resize member vectors according to servonum and ionum (unused now)
     // and assign each pointer to nullptr
@@ -591,7 +597,7 @@ void EcatManager::disconnect_ecat() {
 
 bool EcatManager::receive_check(int wkc [[maybe_unused]]) {
 #ifdef EDM_ECAT_DRIVER_SOEM
-    auto state_check = _soem_check_receive_valid();
+    auto state_check = _soem_check_receive_valid(wkc);
 #endif // EDM_ECAT_DRIVER_SOEM
 
 #ifdef EDM_ECAT_DRIVER_IGH
@@ -608,7 +614,12 @@ bool EcatManager::receive_check(int wkc [[maybe_unused]]) {
         s_logger->critical("igh ecat valid err: {}",
                            wkc_failed_sc.valid_rate());
         connected_ = false;
+#ifdef EDM_ECAT_DRIVER_SOEM
+        ec_close();
+#endif // EDM_ECAT_DRIVER_SOEM
+#ifdef EDM_ECAT_DRIVER_IGH
         ecrt_master_deactivate(igh_master_);
+#endif // EDM_ECAT_DRIVER_IGH
         return false;
     }
 
@@ -661,13 +672,9 @@ bool EcatManager::igh_check_op() {
 #endif // EDM_ECAT_DRIVER_IGH
 
 #ifdef EDM_ECAT_DRIVER_SOEM
-int EcatManager::soem_master_receive() {
-    return ec_receive_processdata(80);
-}
+int EcatManager::soem_master_receive() { return ec_receive_processdata(80); }
 
-void EcatManager::soem_master_send() {
-    ec_send_processdata();
-}
+void EcatManager::soem_master_send() { ec_send_processdata(); }
 
 /* PI calculation to get linux time synced to DC time */
 static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
@@ -693,7 +700,6 @@ static void ec_sync(int64_t reftime, int64_t cycletime, int64_t *offsettime) {
 
 /* PI calculation to get linux time synced to DC time */
 void EcatManager::soem_dc_sync_time(int64_t cycletime, int64_t *offsettime) {
-#ifdef EDM_ECAT_DRIVER_SOEM
     if (!this->connected_) {
         *offsettime = 0;
         return;
@@ -704,7 +710,6 @@ void EcatManager::soem_dc_sync_time(int64_t cycletime, int64_t *offsettime) {
     } else {
         ec_sync(ec_DCtime, cycletime, offsettime);
     }
-#endif // EDM_ECAT_DRIVER_SOEM
 }
 #endif // EDM_ECAT_DRIVER_SOEM
 

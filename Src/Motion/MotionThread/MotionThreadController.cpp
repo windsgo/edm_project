@@ -262,9 +262,11 @@ bool MotionThreadController::_create_thread() {
 
 void *MotionThreadController::_run() {
 
+#ifdef EDM_ECAT_DRIVER_IGH
     // init dc_systime_ns_
     dc_systime_ns_ = _get_systime_ns();
     s_logger->debug("dc_systime_ns_ init: {}", dc_systime_ns_);
+#endif // EDM_ECAT_DRIVER_IGH
 
     // init wakeup_systime_ns_
     wakeup_systime_ns_ = _get_systime_ns() + 100 * cycletime_ns_;
@@ -401,7 +403,7 @@ void MotionThreadController::_threadstate_running() {
 #ifdef EDM_ECAT_DRIVER_IGH
             op_wait_count_ = 0;
 #endif // EDM_ECAT_DRIVER_IGH
-            wakeup_systime_ns_ = _get_systime_ns() + cycletime_ns_ * 50;
+       // wakeup_systime_ns_ = _get_systime_ns() + cycletime_ns_ * 50;
         } else {
             _switch_ecat_state(EcatState::EcatDisconnected);
         }
@@ -906,35 +908,35 @@ void MotionThreadController::_ecat_sync_wrapper(
             ecat_manager_->igh_master_receive();
             ecat_manager_->igh_domain_process();
 #endif // EDM_ECAT_DRIVER_IGH
-        },
-        true);
 
-    if (run_check) [[likely]] {
-        if (!ecat_manager_->receive_check(wkc)) {
-            return;
-        }
-    }
+            if (run_check) [[likely]] {
+                if (!ecat_manager_->receive_check(wkc)) {
+                    return;
+                }
+            }
 
-    if (cb) [[likely]] {
-        cb();
-    }
+            if (cb) [[likely]] {
+                cb();
+            }
 
-    // 发送的控制指令是上个周期的计算结果
+        // 发送的控制指令是上个周期的计算结果
 #ifdef EDM_ECAT_DRIVER_IGH
-    ecat_manager_->igh_domain_queue();
+            ecat_manager_->igh_domain_queue();
 #endif // EDM_ECAT_DRIVER_IGH
 
-    _sync_distributed_clocks();
+            _sync_distributed_clocks();
 
 #ifdef EDM_ECAT_DRIVER_SOEM
-    ecat_manager_->soem_master_send();
+            ecat_manager_->soem_master_send();
 #endif // EDM_ECAT_DRIVER_SOEM
 
 #ifdef EDM_ECAT_DRIVER_IGH
-    ecat_manager_->igh_master_send();
+            ecat_manager_->igh_master_send();
 #endif // EDM_ECAT_DRIVER_IGH
 
-    _update_master_clock();
+            _update_master_clock();
+        },
+        true);
 }
 
 const char *MotionThreadController::GetThreadStateStr(ThreadState s) {
@@ -1143,11 +1145,20 @@ void MotionThreadController::_wait_peroid() {
             latency_averager_.push(latency);
 
             if (latency > 45000) {
-                if (thread_state_ == ThreadState::Running) {
+                if (thread_state_ == ThreadState::Running && ecat_state_ == EcatState::EcatReady) {
                     // 超过45us的延迟, 累加警告计数
                     ++latency_warning_count_;
-                    s_logger->warn("latency: {}", latency);
+                    s_logger->warn("latency: {}, last_ecat: {}", latency,
+                                   TIMEUSESTAT_LATEST(ecat_time_statistic_));
+                    s_logger->debug("wakeup_mono: {}, wakeup_sys: {}, "
+                                    "sys_base: {}, now_mono: {}",
+                                    wakeup_time_ns, wakeup_systime_ns_,
+                                    systime_base_ns_, now_ns);
                 }
+            }
+
+            if (latency > cycletime_ns_) {
+                systime_base_ns_ += latency;
             }
         }
     }

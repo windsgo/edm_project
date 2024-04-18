@@ -5,7 +5,7 @@
     "datasave_dir": "Data/",
     "ecat": {
         "ecat_iomap_size": 4096,
-        "ecat_netif_name": "enp2s0"
+        "ecat_netif_name": "enp3s0"
     },
     "fast_move_param": {
         "max_acc_um_s2": 300000.000000,
@@ -29,6 +29,6 @@
     "motion_cycle_us": 250,
     "monitor_peroid_ms": 50,
     "ecat_sync0_shift_time_ns": 125000,
-    "dc_filter_cnt": 128,
+    "dc_filter_cnt": 1024,
     "igh_op_wait_count_max": 20000
 }

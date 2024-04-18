@@ -209,3 +209,60 @@ GRUB_CMDLINE_LINUX="audit=0 isolcpus=2,3 nohz=on nohz_full=2,3 rcu_nocbs=2,3 irq
     mce=ignore_ce hpet=disable clocksource=tsc tsc=reliable"
 
 ```
+
+## IGH配置
+
+### 下载
+
+- 版本使用gitlab上`1.6-stable`分支, 压缩包在`third_party`文件夹中
+
+
+### 编译安装
+
+参考igh源码目录中的`INSTALL.md`进行编译安装:
+
+- 注意 `--enable-igb --enable-r8169`需要根据实际网卡的驱动进行选择对应的专用驱动。
+- 查看网卡驱动可以使用 `ethtool -i enp3s0` 命令, 其中 `enp3s0`是对应网卡名, 由`ip a`获得。
+
+```bash
+# 生成configure
+./bootstrap # to create the configure script, if downloaded from the repo
+
+# configure
+./configure --enable-8139too=no --enable-igb --enable-r8169 --enable-cycle --enable-hrtimer
+
+# build
+make all modules -j8
+
+# install
+sudo make modules_install install
+sudo depmod
+```
+
+### 配置
+
+Linking the init script and copying the sysconfig file from $PREFIX/etc
+to the appropriate locations and customizing the sysconfig file.
+
+```bash
+sudo ln -s ${PREFIX}/etc/init.d/ethercat /etc/init.d/ethercat
+sudo cp ${PREFIX}/etc/sysconfig/ethercat /etc/sysconfig/ethercat
+sudo vim /etc/sysconfig/ethercat
+```
+
+- `${PREFIX}`默认为`/usr/local`
+- `/etc/sysconfig/ethercat`中, 修改 `MASTER0_DEVICE`为对应网卡的物理地址, 修改 `DEVICE_MODULES`为对应驱动, 如`DEVICE_MODULES="igb"` 或 `DEVICE_MODULES="r8169"`
+
+
+```bash
+# 这一段一定要在root的bash中完成
+bash
+su root
+echo KERNEL==\"EtherCAT[0-9]*\", MODE=\"0664\" > /etc/udev/rules.d/99-EtherCAT.rules
+```
+
+Now you can start the EtherCAT master:
+
+```bash
+/etc/init.d/ethercat start
+```
