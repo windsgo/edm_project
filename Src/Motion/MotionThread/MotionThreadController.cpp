@@ -167,11 +167,11 @@ void MotionThreadController::_thread_cycle_work() {
     //! 在最外层 返回info, 以及处理要返回的信号
 
     // 周期的最后, 处理命令, 处理info cache
-    // TIMEUSESTAT(info_time_statistic_,
-    //             _fetch_command_and_handle_and_copy_info_cache(),
-    //             thread_state_ == ThreadState::Running &&
-    //                 ecat_state_ == EcatState::EcatReady)
-    _fetch_command_and_handle_and_copy_info_cache();
+    TIMEUSESTAT(info_time_statistic_,
+                _fetch_command_and_handle_and_copy_info_cache(),
+                thread_state_ == ThreadState::Running &&
+                    ecat_state_ == EcatState::EcatReady);
+    // _fetch_command_and_handle_and_copy_info_cache();
 
     // handle signal and clear signal buffer
     _handle_signal();
@@ -595,7 +595,8 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
     auto cmd_opt = motion_cmd_queue_->try_get_command();
     if (!cmd_opt) {
         // 没有命令, 只是拷贝info cache
-        TIMEUSESTAT(info_time_statistic_, _copy_info_cache(), true);
+        // TIMEUSESTAT(info_time_statistic_, _copy_info_cache(), true);
+        _copy_info_cache();
 
         return;
     }
@@ -788,10 +789,11 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         break;
     }
 
-    TIMEUSESTAT(info_time_statistic_, _copy_info_cache(),
-                true); // 在处理完命令之后, accept/ignore之前, 缓存info,
-                       // 保证外界在发送并等待完指令被accept/ignore后,
-                       // 直接查询的info一定是正确的
+    // 在处理完命令之后, accept/ignore之前, 缓存info,
+    // 保证外界在发送并等待完指令被accept/ignore后,
+    // 直接查询的info一定是正确的
+    // TIMEUSESTAT(info_time_statistic_, _copy_info_cache(), true);
+    _copy_info_cache();
 
     if (accept_cmd_flag) {
         cmd->accept();
@@ -1145,7 +1147,8 @@ void MotionThreadController::_wait_peroid() {
             latency_averager_.push(latency);
 
             if (latency > 45000) {
-                if (thread_state_ == ThreadState::Running && ecat_state_ == EcatState::EcatReady) {
+                if (thread_state_ == ThreadState::Running &&
+                    ecat_state_ == EcatState::EcatReady) {
                     // 超过45us的延迟, 累加警告计数
                     ++latency_warning_count_;
                     s_logger->warn("latency: {}, last_ecat: {}", latency,
