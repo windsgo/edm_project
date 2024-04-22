@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 
 #include <random>
+#include <thread>
 
 #include "Logger/LogMacro.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -276,17 +277,18 @@ void SharedCoreData::_init_data() {
     t.start(1000);
     el.exec();
 
-
 #ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
-    helper_can_simulate_thread_ = std::thread([this](int helper_can_index) {
-        QByteArray ba1{8, 0x0c};
-        QCanBusFrame frame1{EDM_CAN_RXID_IOBOARD_SERVODATA, ba1};
-        while (!helper_can_simulate_thread_stop_flag_) {
-            can_ctrler_->send_frame(helper_can_index, frame1);
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(1ms);
-        }
-    }, helper_can_device_index);
+    helper_can_simulate_thread_ = std::thread(
+        [this](int helper_can_index) {
+            QByteArray ba1{8, 0x0c};
+            QCanBusFrame frame1{EDM_CAN_RXID_IOBOARD_SERVODATA, ba1};
+            while (!helper_can_simulate_thread_stop_flag_) {
+                can_ctrler_->send_frame(helper_can_index, frame1);
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for(1ms);
+            }
+        },
+        helper_can_device_index);
 #endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
 
 #else  // EDM_OFFLINE_RUN_NO_CAN
@@ -327,7 +329,8 @@ void SharedCoreData::_init_data() {
                                       motion_cmd_queue_, 1000, this);
 
     // 获取运动线程中的记录器指针, 用于操作开始结束
-    record_data1_queuerecorder_ = move::MotionSharedData::instance()->get_record_data1_queuerecorder();
+    record_data1_queuerecorder_ =
+        move::MotionSharedData::instance()->get_record_data1_queuerecorder();
 }
 
 void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
@@ -385,8 +388,7 @@ void SharedCoreData::_init_motionthread_cb() {
         // 所以优先保证motion操作电压的函数可以快速返回
         auto run_cmd = global::CommandCommonFunctionFactory::bind(
             [this](bool _enable) {
-                QCoreApplication::postEvent(
-                    this, new MotionEventVoltageEnable(_enable));
+                // send 3 times
                 QCoreApplication::postEvent(
                     this, new MotionEventVoltageEnable(_enable));
             },

@@ -214,7 +214,6 @@ bool AutoTaskRunner::stop(bool immediate) {
     switch (state_) {
     case MotionAutoState::NormalMoving:
     case MotionAutoState::Resuming:
-    case MotionAutoState::Paused:
     case MotionAutoState::Pausing: {
         auto ret = curr_task_->stop(immediate);
         if (ret) {
@@ -223,6 +222,15 @@ bool AutoTaskRunner::stop(bool immediate) {
         } else {
             return false;
         }
+    }
+    case MotionAutoState::Paused: {
+        // 2024.04.22 fix
+        //！ paused 时, 停止, 直接转到stopped
+        //！ 不再执行 curr_task 的 stop 动作,
+        // 以解决暂停点动之后, 还没resume直接stop时, 坐标跳变到curr task的坐标去
+
+        _autostate_switch_to(MotionAutoState::Stopped);
+        return true;
     }
     case MotionAutoState::Stopping:
     case MotionAutoState::Stopped:

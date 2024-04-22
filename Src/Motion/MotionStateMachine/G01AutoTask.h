@@ -168,6 +168,9 @@ private:
 
     // 抬刀操作电压位回调
     std::function<void(bool)> cb_enable_votalge_gate_;
+    // 上一次发送的时间点 (ms)
+    std::chrono::high_resolution_clock::time_point
+        last_send_enable_votalge_gate_time_;
 
     // 高频使能回调 (做在Motion内部更方便, 更好是做在外面, 但是判断复杂)
     std::function<void(bool)> cb_mach_on_;

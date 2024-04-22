@@ -73,6 +73,9 @@ private:
     void _recovering_pausing();
     void _outside_stopping();
 
+    static const char* _state_str(State state);
+    void _switch_state_to(State new_state);
+
 private:
     TouchDetectHandler::ptr touch_detect_handler_;
     PointMoveHandler pm_handler_;

@@ -46,7 +46,7 @@ void CanReceiveBuffer::_listen_cb(const QCanBusFrame &frame) {
         Can1IOBoard407ServoData temp =
             *reinterpret_cast<Can1IOBoard407ServoData *>(
                 frame.payload().data());
-        EDM_CYCLIC_LOG(s_logger->debug, 500,
+        EDM_CYCLIC_LOG(s_logger->trace, 500,
                        "touchdetected: {}, sdir: {}, sdis: {}",
                        (int)temp.touch_detected, (int)temp.servo_direction,
                        (int)temp.servo_distance_0_001um);

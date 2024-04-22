@@ -1,8 +1,16 @@
 #include "G01AutoTask.h"
 
 #include "Logger/LogMacro.h"
+#include <chrono>
 
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
+
+#include "SystemSettings/SystemSettings.h"
+
+static bool s_g01_run_each_servo_cmd =
+    edm::SystemSettings::instance().get_g01_run_each_servo_cmd();
+
+#define MULTI_SEND_INTERVAL 30 // (ms)
 
 namespace edm {
 
@@ -37,6 +45,8 @@ G01AutoTask::G01AutoTask(
 
     // 使能电压gate
     cb_enable_votalge_gate_(true);
+    last_send_enable_votalge_gate_time_ = std::chrono::high_resolution_clock::now();
+
     cb_mach_on_(true);
 }
 
@@ -267,6 +277,7 @@ void G01AutoTask::_state_resuming() {
             // 重置抬刀计时
             last_jump_end_time_ms_ = GetCurrentTimeMs();
             cb_enable_votalge_gate_(true);
+            last_send_enable_votalge_gate_time_ = std::chrono::high_resolution_clock::now();
             cb_mach_on_(true);
             _state_changeto(State::NormalRunning);
             assert(servo_sub_state_ == ServoSubState::Servoing);
@@ -278,6 +289,7 @@ void G01AutoTask::_state_resuming() {
         assert(false); // should not be here
         last_jump_end_time_ms_ = GetCurrentTimeMs();
         cb_enable_votalge_gate_(true);
+        last_send_enable_votalge_gate_time_ = std::chrono::high_resolution_clock::now();
         cb_mach_on_(true);
         _state_changeto(State::NormalRunning);
         break;
@@ -359,10 +371,19 @@ void G01AutoTask::_servo_substate_servoing() {
 }
 
 void G01AutoTask::_servo_substate_jumpuping() {
-    static int _tmp = 0;
-    ++_tmp;
+    // static int _tmp = 0;
+    // ++_tmp;
     this->jump_pm_handler_.run_once();
     this->curr_cmd_axis_ = this->jump_pm_handler_.get_current_pos();
+
+    // multi send
+    auto now = std::chrono::high_resolution_clock::now();
+    auto elapsed = now - last_send_enable_votalge_gate_time_;
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > MULTI_SEND_INTERVAL) {
+        cb_enable_votalge_gate_(false);
+        last_send_enable_votalge_gate_time_ = now;
+        // s_logger->info("upping multi");
+    }
 
     if (this->jump_pm_handler_.is_over()) {
         // UP走完
@@ -385,19 +406,29 @@ void G01AutoTask::_servo_substate_jumpuping() {
         // 置状态, 操作电压
         _servo_substate_changeto(ServoSubState::JumpDowning);
         cb_enable_votalge_gate_(true);
+        last_send_enable_votalge_gate_time_ = std::chrono::high_resolution_clock::now();
 
-        s_logger->debug("jump up over: ltcurr-z: "
-                        "{}, curr-z: {}, curr-length: {}, _tmp: {}",
-                        this->line_traj_->curr_pos()[2],
-                        this->curr_cmd_axis_[2], line_traj_->curr_length(),
-                        _tmp);
-        _tmp = 0;
+        // s_logger->debug("jump up over: ltcurr-z: "
+        //                 "{}, curr-z: {}, curr-length: {}, _tmp: {}",
+        //                 this->line_traj_->curr_pos()[2],
+        //                 this->curr_cmd_axis_[2], line_traj_->curr_length(),
+        //                 _tmp);
+        // _tmp = 0;
     }
 }
 
 void G01AutoTask::_servo_substate_jumpdowning() {
     this->jump_pm_handler_.run_once();
-    this->curr_cmd_axis_ = this->jump_pm_handler_.get_current_pos();
+    this->curr_cmd_axis_ = this->jump_pm_handler_.get_current_pos();    
+    
+    // multi send
+    auto now = std::chrono::high_resolution_clock::now();
+    auto elapsed = now - last_send_enable_votalge_gate_time_;
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > MULTI_SEND_INTERVAL) {
+        cb_enable_votalge_gate_(true);
+        last_send_enable_votalge_gate_time_ = now;
+        // s_logger->info("downing multi");
+    }
 
     if (this->jump_pm_handler_.is_over()) {
         // Down 走完, Buffer段要走伺服, 这里恢复line traj的长度
@@ -488,6 +519,7 @@ bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
     // 置状态, 操作电压
     _servo_substate_changeto(ServoSubState::JumpUping);
     cb_enable_votalge_gate_(false);
+    last_send_enable_votalge_gate_time_ = std::chrono::high_resolution_clock::now();
 
     return true;
 }
@@ -495,11 +527,14 @@ bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
 bool G01AutoTask::_servoing_do_servothings() {
     double servo_cmd =
         _get_servo_cmd_from_shared(); // return value's unit is blu
-    if (s_motion_shared->can_recv_buffer()->is_servo_data_new()) {
-        s_motion_shared->can_recv_buffer()->clear_servo_data_new_flag();
-    } else {
-        servo_cmd = 0.0;
-        return false; //! No need to continue
+
+    if (s_g01_run_each_servo_cmd) [[unlikely]] {
+        if (s_motion_shared->can_recv_buffer()->is_servo_data_new()) {
+            s_motion_shared->can_recv_buffer()->clear_servo_data_new_flag();
+        } else {
+            servo_cmd = 0.0;
+            return false; //! No need to continue
+        }
     }
 
     // 记录数据
@@ -602,8 +637,8 @@ double G01AutoTask::_get_servo_cmd_from_shared() {
     double dis_blu = util::UnitConverter::um2blu(
         (double)(s_motion_shared->cached_servo_data().servo_distance_0_001um) /
         1000.0);
-    
-    EDM_CYCLIC_LOG(s_logger->debug, 200, "dis_blu: {}", dis_blu);
+
+    // EDM_CYCLIC_LOG(s_logger->debug, 200, "dis_blu: {}", dis_blu);
 
     if (dir > 0) {
         return dis_blu;

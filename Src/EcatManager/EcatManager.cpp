@@ -1,5 +1,6 @@
 #include "EcatManager.h"
 
+#include "EcatManager/Panasonic.h"
 #include "EcatManager/ServoDefines.h"
 #include "Exception/exception.h"
 #include "Logger/LogMacro.h"
@@ -33,7 +34,7 @@ ec_pdo_entry_info_t slave_0_pdo_entries[] = {
     {0x6060, 0x00, 8},  /* Modes of operation */
     {0x607a, 0x00, 32}, /* Target position */
     {0x60b8, 0x00, 16}, /* Touch probe function */
-    {0x60b1, 0x00, 32}, /* Velocity offset */
+    // {0x60b1, 0x00, 32}, /* Velocity offset */
 
     {0x603f, 0x00, 16}, /* Error code */
     {0x6041, 0x00, 16}, /* Statusword */
@@ -46,8 +47,10 @@ ec_pdo_entry_info_t slave_0_pdo_entries[] = {
 };
 
 ec_pdo_info_t slave_0_pdos[] = {
-    {0x1600, 5, slave_0_pdo_entries + 0}, /* Receive PDO mapping 1 */
-    {0x1a00, 8, slave_0_pdo_entries + 5}, /* Transmit PDO mapping 1 */
+    // {0x1600, 5, slave_0_pdo_entries + 0}, /* Receive PDO mapping 1 */
+    // {0x1a00, 8, slave_0_pdo_entries + 5}, /* Transmit PDO mapping 1 */
+    {0x1600, 4, slave_0_pdo_entries + 0}, /* Receive PDO mapping 1 */
+    {0x1a00, 8, slave_0_pdo_entries + 4}, /* Transmit PDO mapping 1 */
 };
 
 ec_sync_info_t slave_0_syncs[] = {
@@ -56,6 +59,14 @@ ec_sync_info_t slave_0_syncs[] = {
     {2, EC_DIR_OUTPUT, 1, slave_0_pdos + 0, EC_WD_ENABLE},
     {3, EC_DIR_INPUT, 1, slave_0_pdos + 1, EC_WD_DISABLE},
     {0xff}};
+
+// 不同的松下驱动器也有不同的product_code
+static std::vector<std::pair<uint32_t, uint32_t>>
+    s_slave_vendor_and_product_code_vec = {
+        {0x0000066f, 0x60380006}, // X
+        {0x0000066f, 0x60380006}, // Y
+        {0x0000066f, 0x60380007}, // Z
+};
 #endif // EDM_ECAT_DRIVER_IGH
 
 EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
@@ -262,9 +273,10 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
     auto ecat_sync0_shift_time_ns =
         SystemSettings::instance().get_ecat_sync0_shift_time_ns();
     for (uint16_t i = 0; i < servo_num_; ++i) {
-        igh_sc_vec_[i] =
-            ecrt_master_slave_config(igh_master_, 0, i, PanaSonic_A6B_VendorID,
-                                     PanaSonic_A6B_ProductCode);
+        igh_sc_vec_[i] = ecrt_master_slave_config(
+            igh_master_, 0, i, s_slave_vendor_and_product_code_vec[i].first,
+            s_slave_vendor_and_product_code_vec[i].second);
+
         if (!igh_sc_vec_[i]) {
             s_logger->error("ecrt_master_slave_config error: servo {}", i);
             return false;
@@ -280,8 +292,8 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         ec_pdo_entry_reg_t temp;
         temp.alias = 0;
         temp.position = i;
-        temp.vendor_id = PanaSonic_A6B_VendorID;
-        temp.product_code = PanaSonic_A6B_ProductCode;
+        temp.vendor_id = s_slave_vendor_and_product_code_vec[i].first;
+        temp.product_code = s_slave_vendor_and_product_code_vec[i].second;
         temp.bit_position = NULL;
 
         // output
@@ -306,10 +318,10 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         igh_domain_regs_vec_[i].push_back(temp);
 
         // v_offset (custom)
-        temp.index = 0x60b1;
-        temp.subindex = 0x00;
-        temp.offset = &igh_domain_pdo_output_offsets_vec_[i].off_v_offset;
-        igh_domain_regs_vec_[i].push_back(temp);
+        // temp.index = 0x60b1;
+        // temp.subindex = 0x00;
+        // temp.offset = &igh_domain_pdo_output_offsets_vec_[i].off_v_offset;
+        // igh_domain_regs_vec_[i].push_back(temp);
 
         // input
         // status word
@@ -767,7 +779,7 @@ bool EcatManager::servo_all_disabled() const {
 
 void EcatManager::clear_fault_cycle_run_once() {
     for (auto &servo : servo_devices_) {
-        if (servo->sw_fault()) {
+            if (servo->sw_fault()) {
             servo->cw_fault_reset();
         } else if (servo->sw_switch_on_disabled()) {
             servo->cw_shut_down();

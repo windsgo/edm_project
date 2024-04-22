@@ -2,6 +2,7 @@
 
 #include "Logger/LogMacro.h"
 #include "Motion/MotionUtils/MotionUtils.h"
+#include "config.h"
 
 #include <cassert>
 
@@ -21,7 +22,7 @@ void PauseMoveController::init(const axis_t &init_axis) {
     pm_handler_.clear();
     ClearStackOrQueue(axis_recorder_);
     curr_cmd_axis_ = init_axis; //! 重要, 更新初始坐标
-    state_ = State::AllowManualPointMove;
+    _switch_state_to(State::AllowManualPointMove);
 }
 
 bool PauseMoveController::start_manual_pointmove(
@@ -44,7 +45,7 @@ bool PauseMoveController::start_manual_pointmove(
     }
 
     signal_buffer_->set_signal(MotionSignal_ManualPointMoveStarted);
-    state_ = State::ManualPointMoving;
+    _switch_state_to(State::ManualPointMoving);
     return true;
 
     //! 记录点位在每次停止之后记录, 从pm_handler可以读取起点和终点
@@ -75,7 +76,7 @@ bool PauseMoveController::pause_recover() {
         return false;
     }
 
-    state_ = State::RecoveringPausing;
+    _switch_state_to(State::RecoveringPausing);
     return true;
 }
 
@@ -93,7 +94,7 @@ bool PauseMoveController::resume_recover() {
         return false;
     }
 
-    state_ = State::Recovering;
+    _switch_state_to(State::Recovering);
     return true;
 }
 
@@ -107,7 +108,7 @@ bool PauseMoveController::stop(bool immediate) {
     case State::OutSideOrErrorStopped:
     case State::RecorverOver:
     case State::RecoveringPaused:
-        state_ = State::OutSideOrErrorStopped;
+        _switch_state_to(State::OutSideOrErrorStopped);
         return true;
 
     case State::OutSideStopping:
@@ -117,7 +118,7 @@ bool PauseMoveController::stop(bool immediate) {
     case State::Recovering:
     case State::RecoveringPausing:
         pm_handler_.stop(immediate);
-        state_ = State::OutSideStopping;
+        _switch_state_to(State::OutSideStopping);
         return true;
     default:
         s_logger->warn("{}: unknow pmc state: {}", __PRETTY_FUNCTION__,
@@ -144,7 +145,7 @@ bool PauseMoveController::activate_recover() {
 
     if (axis_recorder_.empty()) {
         s_logger->trace("{}: axis_recorder_ empty", __PRETTY_FUNCTION__);
-        state_ = State::RecorverOver;
+        _switch_state_to(State::RecorverOver);
         return true;
     }
 
@@ -159,11 +160,11 @@ bool PauseMoveController::activate_recover() {
     if (!ret) {
         s_logger->critical("{}: plan first segement failed",
                            __PRETTY_FUNCTION__);
-        state_ = State::OutSideOrErrorStopped;
+        _switch_state_to(State::OutSideOrErrorStopped);
         return false;
     }
 
-    state_ = State::Recovering;
+    _switch_state_to(State::Recovering);
     return true;
 }
 
@@ -212,7 +213,7 @@ void PauseMoveController::_manual_pointmoving() {
         if (pm_handler_.get_start_pos() == pm_handler_.get_current_pos()) {
             // 起点终点相同
             s_logger->warn("{}: pos the same", __PRETTY_FUNCTION__);
-            state_ = State::AllowManualPointMove;
+            _switch_state_to(State::AllowManualPointMove);
             return;
         }
 
@@ -221,10 +222,13 @@ void PauseMoveController::_manual_pointmoving() {
                                pm_handler_.get_current_pos(),
                                pm_handler_.get_speed_param());
 
-        s_logger->debug("record: {} -> {}", pm_handler_.get_start_pos()[0],
-                        pm_handler_.get_current_pos()[0]);
+        for (int i = 0; i < EDM_AXIS_NUM; ++i) {
+            s_logger->debug("record[{}]: {} -> {}", i,
+                            pm_handler_.get_start_pos()[i],
+                            pm_handler_.get_current_pos()[i]);
+        }
 
-        state_ = State::AllowManualPointMove;
+        _switch_state_to(State::AllowManualPointMove);
 
         return;
     }
@@ -248,7 +252,7 @@ void PauseMoveController::_recovering() {
 
         if (axis_recorder_.empty()) {
             s_logger->info("pm recover over");
-            state_ = State::RecorverOver;
+            _switch_state_to(State::RecorverOver);
             return;
         }
 
@@ -273,7 +277,7 @@ void PauseMoveController::_recovering() {
 
 void PauseMoveController::_recovering_pausing() {
     if (pm_handler_.is_paused()) {
-        state_ = State::RecoveringPaused;
+        _switch_state_to(State::RecoveringPaused);
         return;
     }
 
@@ -284,13 +288,40 @@ void PauseMoveController::_recovering_pausing() {
 
 void PauseMoveController::_outside_stopping() {
     if (pm_handler_.is_stopped()) {
-        state_ = State::OutSideOrErrorStopped;
+        _switch_state_to(State::OutSideOrErrorStopped);
         return;
     }
 
     pm_handler_.run_once();
 
     curr_cmd_axis_ = pm_handler_.get_current_pos();
+}
+
+const char *PauseMoveController::_state_str(State state) {
+    switch (state) {
+#define XX_(s)     \
+    case State::s: \
+        return #s;
+        XX_(NotInited);
+        XX_(AllowManualPointMove);
+        XX_(ManualPointMoving);
+        XX_(Recovering);
+        XX_(RecoveringPausing);
+        XX_(RecoveringPaused);
+        XX_(RecorverOver);
+        XX_(OutSideStopping);
+        XX_(OutSideOrErrorStopped);
+#undef XX_
+    default:
+        return "UNKNOW";
+    }
+}
+
+void PauseMoveController::_switch_state_to(State new_state) {
+    s_logger->trace("PauseMoveController: {} -> {}", _state_str(state_),
+                    _state_str(new_state));
+
+    state_ = new_state;
 }
 
 } // namespace move

@@ -1146,7 +1146,7 @@ void MotionThreadController::_wait_peroid() {
         if (latency > 0) {
             latency_averager_.push(latency);
 
-            if (latency > 60000) {
+            if (latency > 100000) {
                 if (thread_state_ == ThreadState::Running &&
                     ecat_state_ == EcatState::EcatReady) {
                     // 超过45us的延迟, 累加警告计数
