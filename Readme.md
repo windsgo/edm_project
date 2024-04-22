@@ -229,7 +229,7 @@ GRUB_CMDLINE_LINUX="audit=0 isolcpus=2,3 nohz=on nohz_full=2,3 rcu_nocbs=2,3 irq
 ./bootstrap # to create the configure script, if downloaded from the repo
 
 # configure
-./configure --enable-8139too=no --enable-igb --enable-r8169 --enable-cycle --enable-hrtimer
+./configure --enable-8139too=no --enable-igb --enable-r8169 --enable-cycles --enable-hrtimer
 
 # build
 make all modules -j8
