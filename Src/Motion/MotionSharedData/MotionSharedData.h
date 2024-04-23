@@ -3,9 +3,11 @@
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
 #include "Motion/MoveDefines.h"
 
+#include "SystemSettings/SystemSettings.h"
 #include "Utils/DataQueueRecorder/DataQueueRecorder.h"
 
 #include "EcatManager/EcatManager.h"
+#include <cstdint>
 
 namespace edm {
 
@@ -52,6 +54,9 @@ public:
 public: // 数据记录相关, 一个周期内可能需要在不同地方记录多个数据,
         // 统一设置在这里, 周期结束时push入记录队列
     struct RecordData1 {
+        // 本地us时间
+        uint64_t thread_tick_us {0};
+
         // move::axis_t last_cmd_axis; // 周期开始时(上一周期的指令位置)
 
         // 周期结束时新的指令位置
@@ -112,6 +117,11 @@ public: // 数据记录相关, 一个周期内可能需要在不同地方记录�
         return record_data1_queuerecorder_;
     }
 
+public:
+    inline void add_thread_tick() { thread_tick_us_ += thread_cycle_us_; ++thread_tick_; }
+    inline const auto get_thread_tick_us() const { return thread_tick_us_; }
+    inline const auto get_thread_tick() const { return thread_tick_; }
+
 private: // Can 接收与缓存相关数据
     CanReceiveBuffer::ptr can_recv_buffer_;
     Can1IOBoard407ServoData
@@ -125,6 +135,11 @@ private:
 private:
     // 共享ecat manager, 便于获取数据和设定(如速度偏置控制)
     ecat::EcatManager::ptr ecat_manager_;
+
+    // 共享的线程us计数器, 每次线程运行时都要加一下 thread_cycle_us_
+    uint64_t thread_tick_us_ {0}; // us 
+    uint64_t thread_tick_ {0}; // 1 (周期计数)
+    const uint32_t thread_cycle_us_ = SystemSettings::instance().get_motion_cycle_us();
 
 private:
     MotionSharedData()

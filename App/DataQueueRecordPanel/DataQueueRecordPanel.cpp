@@ -8,7 +8,10 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QPushButton>
+#include <fstream>
 #include <qfiledialog.h>
+#include <qpushbutton.h>
+#include <sstream>
 
 #include "Logger/LogMacro.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -121,24 +124,15 @@ void DataQueueRecordPanel::_init_record_data1() {
             ofs.precision(4);
 
             // header
-            for (int i = 0; i < EDM_AXIS_NUM; ++i) {
-                ofs << "cmd" << i << '\t';
+            if (ui->cb_include_header_1->isChecked()) {
+                ofs << _generate_data1_header() << '\n';
             }
-            for (int i = 0; i < EDM_AXIS_NUM; ++i) {
-                ofs << "act" << i << '\t';
-            }
-            for (int i = 0; i < EDM_AXIS_NUM; ++i) {
-                ofs << "err" << i << '\t';
-            }
-            ofs << "servocmd" << '\t'
-                << "isg01" << '\t'
-                << "avgvol" << '\t' << "current" << '\t'
-                << "normal" << '\t' << "short"
-                << '\t' << "open" << '\n';
 
             for (int i = 0; i < data_num; ++i) {
                 move::MotionSharedData::RecordData1 data;
                 ifs.read((char *)&data, sizeof(data));
+
+                ofs << data.thread_tick_us << '\t';
 
                 for (int i = 0; i < EDM_AXIS_NUM; ++i) {
                     ofs << (int)data.new_cmd_axis[i] << '\t';
@@ -151,18 +145,69 @@ void DataQueueRecordPanel::_init_record_data1() {
                 }
                 ofs << data.g01_servo_cmd << '\t'
                     << (int)data.is_g01_normal_servoing << '\t'
-                    << (int)data.average_voltage << '\t' << (int)data.current << '\t'
-                    << (int)data.normal_charge_rate << '\t' << (int)data.short_charge_rate
-                    << '\t' << (int)data.open_charge_rate << '\n';
+                    << (int)data.average_voltage << '\t' << (int)data.current
+                    << '\t' << (int)data.normal_charge_rate << '\t'
+                    << (int)data.short_charge_rate << '\t'
+                    << (int)data.open_charge_rate << '\n';
             }
 
             ifs.close();
             ofs.close();
 
             emit shared_core_data_->sig_info_message(
-                        QString{"Decode Success, saved to: %0"}.arg(decode_filename));
+                QString{"Decode Success, saved to: %0"}.arg(decode_filename));
         }
     });
+
+    connect(ui->pb_print_header_1, &QPushButton::clicked, this, [this]() {
+        auto ret = _save_data1_header_to_file(data1_header_file_.toStdString());
+
+        if (ret) {
+            emit shared_core_data_->sig_info_message(
+                QString{"Print Header Success, saved to: %0"}.arg(data1_header_file_));
+        } else {
+            emit shared_core_data_->sig_warn_message(
+                QString{"Print Header Failed, file: %0"}.arg(data1_header_file_));
+        }
+    });
+}
+
+std::string DataQueueRecordPanel::_generate_data1_header() const {
+    std::stringstream ss;
+
+    ss << "tick_us" << '\t';
+
+    for (int i = 0; i < EDM_AXIS_NUM; ++i) {
+        ss << "cmd" << i << '\t';
+    }
+    for (int i = 0; i < EDM_AXIS_NUM; ++i) {
+        ss << "act" << i << '\t';
+    }
+    for (int i = 0; i < EDM_AXIS_NUM; ++i) {
+        ss << "err" << i << '\t';
+    }
+    ss << "servocmd" << '\t' << "isg01" << '\t' << "avgvol" << '\t' << "current"
+       << '\t' << "normal" << '\t' << "short" << '\t' << "open";
+
+    return ss.str();
+}
+
+bool DataQueueRecordPanel::_save_data1_header_to_file(const std::string& filename) const {
+    auto header_str = _generate_data1_header();
+
+    std::ofstream ofs(filename);
+    if (!ofs.is_open()) {
+        s_logger->error(
+            "_save_data1_header_to_file failed: cannot open file : {}",
+            filename);
+        return false;
+    }
+
+    ofs << header_str;
+
+    ofs.close();
+
+    return true;
 }
 
 } // namespace app

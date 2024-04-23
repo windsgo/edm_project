@@ -289,6 +289,9 @@ void *MotionThreadController::_run() {
         // 等待下一个周期唤醒
         _wait_peroid();
 
+        // 线程计数
+        s_motion_shared->add_thread_tick();
+
         // while (true) {
         //     struct timespec ttt;
         //     clock_gettime(CLOCK_MONOTONIC, &ttt);
@@ -440,13 +443,13 @@ void MotionThreadController::_threadstate_running() {
         });
 #endif // EDM_ECAT_DRIVER_IGH
 
+#endif // EDM_OFFLINE_RUN_NO_ECAT
+
         if (op_reached) {
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
             wakeup_systime_ns_ = _get_systime_ns() + cycletime_ns_ * 50;
             s_logger->info("op reached");
         }
-
-#endif // EDM_OFFLINE_RUN_NO_ECAT
         break;
     }
     case EcatState::EcatConnectedNotAllEnabled: {

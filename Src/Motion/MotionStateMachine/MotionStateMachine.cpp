@@ -68,6 +68,8 @@ void MotionStateMachine::run_once() {
         // 记录周期开始时驱动器返回的数据: 实际位置, 跟随误差
         auto& rd1 = s_motion_shared->get_record_data1_ref();
 
+        rd1.thread_tick_us = s_motion_shared->get_thread_tick_us();
+
         this->cb_get_act_axis_(rd1.act_axis);
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
