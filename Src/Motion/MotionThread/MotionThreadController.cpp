@@ -1,6 +1,7 @@
 #include "MotionThreadController.h"
 #include "EcatManager/ServoDevice.h"
 
+#include "Motion/MotionThread/MotionCommand.h"
 #include "Utils/Time/TimeUseStatistic.h"
 #include <cstdint>
 #include <ctime>
@@ -782,6 +783,17 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         motion_state_machine_->set_jump_param(set_jump_param_cmd->jump_param());
 
         s_logger->debug("***** JumpParam Received");
+
+        accept_cmd_flag = true;
+        break;
+    }
+    case MotionCommandSetting_MotionSettings: {
+        s_logger->trace("Handle MotionCmd: Setting_MotionSettings");
+
+        auto set_motion_settings_cmd =
+            std::static_pointer_cast<MotionCommandSettingMotionSettings>(cmd);
+
+        s_motion_shared->set_settings(set_motion_settings_cmd->motion_settings());
 
         accept_cmd_flag = true;
         break;

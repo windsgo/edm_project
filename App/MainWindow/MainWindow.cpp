@@ -132,7 +132,7 @@ void MainWindow::_init_members() {
             [this]() { test_panel_->show(); });
 
     auto system_setting_panel_layout = new QGridLayout(ui->tab_system_setting);
-    system_setting_panel_ = new SystemSettingPanel();
+    system_setting_panel_ = new SystemSettingPanel(shared_core_data_);
     system_setting_panel_layout->addWidget(system_setting_panel_);
 
     auto dqr_panel_layout = new QGridLayout(ui->tab_record);

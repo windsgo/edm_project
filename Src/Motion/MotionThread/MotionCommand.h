@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "Motion/JumpDefines.h"
+#include "Motion/MotionSharedData/MotionSharedData.h"
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
 #include "Motion/MoveruntimeWrapper/MoveruntimeWrapper.h"
@@ -76,6 +77,9 @@ enum MotionCommandType {
 
     // 清除统计数据
     MotionCommandSetting_ClearStatData,
+
+    // Motion Settings设置
+    MotionCommandSetting_MotionSettings,
 
     MotionCommand_Max
 };
@@ -225,6 +229,19 @@ public:
 
 private:
     move::JumpParam jump_param_;
+};
+
+class MotionCommandSettingMotionSettings final : public MotionCommandBase {
+public:
+    MotionCommandSettingMotionSettings(const MotionSettings &motion_settings)
+        : MotionCommandBase(MotionCommandSetting_MotionSettings),
+          motion_settings_(motion_settings) {}
+    ~MotionCommandSettingMotionSettings() noexcept override = default;
+
+    const auto &motion_settings() const { return motion_settings_; }
+
+private:
+    move::MotionSettings motion_settings_;
 };
 
 // 启动Auto G00快速移动

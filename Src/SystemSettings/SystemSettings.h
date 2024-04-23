@@ -12,6 +12,7 @@
 #include "Utils/Format/edm_format.h"
 
 #include "config.h" // EDM_SYSTEM_SETTINGS_CONFIG_FILE
+#include "reflection/jsonization.hpp"
 
 #include <json.hpp>
 
@@ -49,6 +50,14 @@ struct _jump_param {
     MEO_JSONIZATION(MEO_OPT max_acc_um_s2, MEO_OPT nacc_ms, MEO_OPT buffer_um);
 };
 
+struct _motion_settings {
+    bool enable_g01_run_each_servo_cmd{true};
+    bool enable_g01_half_closed_loop{true};
+
+    MEO_JSONIZATION(MEO_OPT enable_g01_run_each_servo_cmd,
+                    MEO_OPT enable_g01_half_closed_loop);
+};
+
 class _SystemSettingsData final {
 public:
     _SystemSettingsData() noexcept = default;
@@ -67,13 +76,14 @@ public: // settings
         "Src/Interpreter/rs274pyInterpreter/pymodule/"};
     uint32_t info_dispatcher_peroid_ms{20};
     _jump_param jump_param;
-    std::string datasave_dir;
-    uint32_t motion_cycle_us {1000};
+    std::string datasave_dir {"Data/"};
+    uint32_t motion_cycle_us{1000};
     uint32_t monitor_peroid_ms{50};
     uint32_t ecat_sync0_shift_time_ns{90000};
     uint32_t dc_filter_cnt{1024};
     uint32_t igh_op_wait_count_max{10000};
-    bool g01_run_each_servo_cmd{false};
+
+    _motion_settings motion_settings;
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
@@ -84,7 +94,7 @@ public: // settings
                     MEO_OPT datasave_dir, MEO_OPT motion_cycle_us,
                     MEO_OPT monitor_peroid_ms, MEO_OPT ecat_sync0_shift_time_ns,
                     MEO_OPT dc_filter_cnt, MEO_OPT igh_op_wait_count_max,
-                    MEO_OPT g01_run_each_servo_cmd);
+                    MEO_OPT motion_settings);
 };
 
 }; // namespace _sys
@@ -168,13 +178,23 @@ public:
 
     uint32_t get_monitor_peroid_ms() const { return data_.monitor_peroid_ms; }
 
-    inline uint32_t get_ecat_sync0_shift_time_ns() const { return data_.ecat_sync0_shift_time_ns; }
+    inline uint32_t get_ecat_sync0_shift_time_ns() const {
+        return data_.ecat_sync0_shift_time_ns;
+    }
 
     inline auto get_dc_filter_cnt() const { return data_.dc_filter_cnt; }
 
-    inline auto get_igh_op_wait_count_max() const { return data_.igh_op_wait_count_max; }
+    inline auto get_igh_op_wait_count_max() const {
+        return data_.igh_op_wait_count_max;
+    }
 
-    inline auto get_g01_run_each_servo_cmd() const { return data_.g01_run_each_servo_cmd; }
+    // MotionSettings Related
+    inline auto get_enable_g01_run_each_servo_cmd() const {
+        return data_.motion_settings.enable_g01_run_each_servo_cmd;
+    }
+    inline auto get_enable_g01_half_closed_loop() const {
+        return data_.motion_settings.enable_g01_half_closed_loop;
+    }
 
 public:
     // TODO change settings and save to local file
@@ -205,6 +225,14 @@ public:
     }
     inline void set_jumpparam_buffer_um(double v) {
         data_.jump_param.buffer_um = v;
+    }
+
+    // MotionSettings Related
+    inline void set_enable_g01_run_each_servo_cmd(bool v) {
+        data_.motion_settings.enable_g01_run_each_servo_cmd = v;
+    }
+    inline void set_enable_g01_half_closed_loop(bool v) {
+        data_.motion_settings.enable_g01_half_closed_loop = v;
     }
 
 public:

@@ -13,6 +13,13 @@ namespace edm {
 
 namespace move {
 
+// 设定参数, 外部通过MotionCmd通道传递整个Setting结构, 保存在MotionSharedData
+// Motion组建可以实时读取
+struct MotionSettings {
+    bool enable_g01_run_each_servo_cmd {true}; // TODO 替代目前的一次读取方式
+    bool enable_g01_half_closed_loop {true};
+};
+
 //! 用于Motion全局数据交换、记录, 一些关键的数据可以记录在这里
 class MotionSharedData final {
 public:
@@ -122,6 +129,9 @@ public:
     inline const auto get_thread_tick_us() const { return thread_tick_us_; }
     inline const auto get_thread_tick() const { return thread_tick_; }
 
+    inline const auto& get_settings() const { return settings_; }
+    inline void set_settings(const MotionSettings& settings) { settings_ = settings; }
+
 private: // Can 接收与缓存相关数据
     CanReceiveBuffer::ptr can_recv_buffer_;
     Can1IOBoard407ServoData
@@ -135,6 +145,8 @@ private:
 private:
     // 共享ecat manager, 便于获取数据和设定(如速度偏置控制)
     ecat::EcatManager::ptr ecat_manager_;
+
+    MotionSettings settings_ {};
 
     // 共享的线程us计数器, 每次线程运行时都要加一下 thread_cycle_us_
     uint64_t thread_tick_us_ {0}; // us 

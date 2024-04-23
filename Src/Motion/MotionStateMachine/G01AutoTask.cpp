@@ -5,10 +5,8 @@
 
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 
-#include "SystemSettings/SystemSettings.h"
-
-static bool s_g01_run_each_servo_cmd =
-    edm::SystemSettings::instance().get_g01_run_each_servo_cmd();
+// static bool s_g01_run_each_servo_cmd =
+//     edm::SystemSettings::instance().get_enable_g01_run_each_servo_cmd();
 
 #define MULTI_SEND_INTERVAL 30 // (ms)
 
@@ -528,7 +526,7 @@ bool G01AutoTask::_servoing_do_servothings() {
     double servo_cmd =
         _get_servo_cmd_from_shared(); // return value's unit is blu
 
-    if (s_g01_run_each_servo_cmd) [[unlikely]] {
+    if (s_motion_shared->get_settings().enable_g01_run_each_servo_cmd) [[unlikely]] {
         if (s_motion_shared->can_recv_buffer()->is_servo_data_new()) {
             s_motion_shared->can_recv_buffer()->clear_servo_data_new_flag();
         } else {

@@ -3,10 +3,12 @@
     "can_device_name": "can0",
     "coord_config_file": "coord.json",
     "datasave_dir": "Data/",
+    "dc_filter_cnt": 1024,
     "ecat": {
         "ecat_iomap_size": 4096,
         "ecat_netif_name": "enp3s0"
     },
+    "ecat_sync0_shift_time_ns": 125000,
     "fast_move_param": {
         "max_acc_um_s2": 300000.000000,
         "nacc_ms": 90,
@@ -16,6 +18,7 @@
         "speed_3_um_s": 16.000000
     },
     "helper_can_device_name": "can1",
+    "igh_op_wait_count_max": 20000,
     "info_dispatcher_peroid_ms": 40,
     "interp_module_path_relative_to_root": "Src/Interpreter/rs274pyInterpreter/pymodule/",
     "jump_param": {
@@ -24,12 +27,12 @@
         "nacc_ms": 60
     },
     "log_config_file": "logdefine.json",
-    "power_database_file": "power.db",
-    "qss_file": "gui.qss",
-    "motion_cycle_us": 250,
     "monitor_peroid_ms": 40,
-    "ecat_sync0_shift_time_ns": 125000,
-    "dc_filter_cnt": 1024,
-    "igh_op_wait_count_max": 20000,
-    "g01_run_each_servo_cmd": true
+    "motion_cycle_us": 250,
+    "motion_settings": {
+        "enable_g01_half_closed_loop": false,
+        "enable_g01_run_each_servo_cmd": true
+    },
+    "power_database_file": "power.db",
+    "qss_file": "gui.qss"
 }
