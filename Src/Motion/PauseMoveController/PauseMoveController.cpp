@@ -3,6 +3,7 @@
 #include "Logger/LogMacro.h"
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "config.h"
+#include "Motion/MotionSharedData/MotionSharedData.h"
 
 #include <cassert>
 
@@ -12,16 +13,18 @@ namespace edm {
 
 namespace move {
 
+static auto s_motion_shared = MotionSharedData::instance();
+
 PauseMoveController::PauseMoveController(
     TouchDetectHandler::ptr touch_detect_handler,
     SignalBuffer::ptr signal_buffer)
     : touch_detect_handler_(touch_detect_handler),
       signal_buffer_(signal_buffer) {}
 
-void PauseMoveController::init(const axis_t &init_axis) {
+void PauseMoveController::init() {
     pm_handler_.clear();
     ClearStackOrQueue(axis_recorder_);
-    curr_cmd_axis_ = init_axis; //! 重要, 更新初始坐标
+    // curr_cmd_axis_ = init_axis; //! 重要, 更新初始坐标
     _switch_state_to(State::AllowManualPointMove);
 }
 
@@ -243,7 +246,8 @@ void PauseMoveController::_manual_pointmoving() {
     pm_handler_.run_once();
 
     // 更新坐标
-    curr_cmd_axis_ = pm_handler_.get_current_pos();
+    // curr_cmd_axis_ = pm_handler_.get_current_pos();
+    s_motion_shared->set_global_cmd_axis(pm_handler_.get_current_pos());
 }
 
 void PauseMoveController::_recovering() {
@@ -272,7 +276,8 @@ void PauseMoveController::_recovering() {
     // 继续运动, 不判断接触感知
     pm_handler_.run_once();
 
-    curr_cmd_axis_ = pm_handler_.get_current_pos();
+    // curr_cmd_axis_ = pm_handler_.get_current_pos();
+    s_motion_shared->set_global_cmd_axis(pm_handler_.get_current_pos());
 }
 
 void PauseMoveController::_recovering_pausing() {
@@ -283,7 +288,8 @@ void PauseMoveController::_recovering_pausing() {
 
     pm_handler_.run_once();
 
-    curr_cmd_axis_ = pm_handler_.get_current_pos();
+    // curr_cmd_axis_ = pm_handler_.get_current_pos();
+    s_motion_shared->set_global_cmd_axis(pm_handler_.get_current_pos());
 }
 
 void PauseMoveController::_outside_stopping() {
@@ -294,7 +300,8 @@ void PauseMoveController::_outside_stopping() {
 
     pm_handler_.run_once();
 
-    curr_cmd_axis_ = pm_handler_.get_current_pos();
+    // curr_cmd_axis_ = pm_handler_.get_current_pos();
+    s_motion_shared->set_global_cmd_axis(pm_handler_.get_current_pos());
 }
 
 const char *PauseMoveController::_state_str(State state) {

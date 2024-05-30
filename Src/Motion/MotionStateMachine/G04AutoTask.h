@@ -15,8 +15,8 @@ namespace move {
 
 class G04AutoTask final : public AutoTask {
 public:
-    G04AutoTask(const axis_t &init_axis, double delay_s)
-        : AutoTask(AutoTaskType::G04Delay, init_axis) {
+    G04AutoTask(double delay_s)
+        : AutoTask(AutoTaskType::G04Delay) {
         target_delay_peroids_ =
             util::UnitConverter::ms2p(std::round(delay_s * 1000.0));
         if (target_delay_peroids_ < 1) {

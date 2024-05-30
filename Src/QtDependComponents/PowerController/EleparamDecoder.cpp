@@ -173,11 +173,12 @@ void EleparamDecoder::_canframe_handle_off() {
 void EleparamDecoder::_canframe_handle_up_and_on() {
     // do nothing
     // TODO up 和 dn 要设置给运动控制(抬刀用), 靠外层设置, 这里只是decode
-    // CAN_BUFFER[1][0] = 0x40; //! 发固定值, 以使on>100表现正常
+    // CAN_BUFFER[1][0] = 0x90; //! 发固定值, 以使on>100表现正常
     // 2024.04.10 0x41 -> 0x40, up位给0, 防止电源自己切断电压
 
     CAN_BUFFER[1][0] = 0x00;
-    OR_EQUAL(CAN_BUFFER[1][0], input_->ele_param().dn << 4); // 只发dn; up=0
+    OR_EQUAL(CAN_BUFFER[1][0], input_->ele_param().dn << 9); // 只发dn=9; up=0
+    // OR_EQUAL(CAN_BUFFER[1][0], input_->ele_param().up); // 只发dn=9; up=0
 }
 
 void EleparamDecoder::_canframe_handle_ip() {
@@ -187,6 +188,21 @@ void EleparamDecoder::_canframe_handle_ip() {
     uint8_t ip_real_part = static_cast<uint8_t>(ip / 10); // ip 的整数部分
 
     CAN_BUFFER[1][1] = ip_real_part;
+
+#if 1
+    if (ip_decimal_part == 5) {
+        OR_EQUAL(CAN_BUFFER[1][1], 0x80);
+    } else {
+        AND_EQUAL(CAN_BUFFER[1][1], 0x7F);
+    }
+
+    AND_EQUAL(CAN_BUFFER[1][2], 0xF0);
+    if (ip_decimal_part == 5) {
+        OR_EQUAL(CAN_BUFFER[1][2], 0x02);
+    } else {
+        AND_EQUAL(CAN_BUFFER[1][2], 0xFD);
+    }
+#else
 
     /**
      * 0.1  = 0.1
@@ -228,6 +244,7 @@ void EleparamDecoder::_canframe_handle_ip() {
         // ip 不含 0.5A
         AND_EQUAL(CAN_BUFFER[1][2], 0xFD);
     }
+#endif 
 }
 
 void EleparamDecoder::_canframe_handle_hp() {
@@ -260,23 +277,23 @@ void EleparamDecoder::_canframe_handle_sv() {
     // TODO 外部要将sv值通过can发送给采样板
 
     AND_EQUAL(CAN_BUFFER[1][3], 0x0F);                        // 清空高4位
-    // OR_EQUAL(CAN_BUFFER[1][3], 0x50); // 高4位设定sv //! 给固定值
+    OR_EQUAL(CAN_BUFFER[1][3], 0x50); // 高4位设定sv //! 给固定值
 
-    if (input_->ele_param().sv < 10) {
-        OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param().sv << 4);
-    } else {
-        uint8_t send_sv {};
+    // if (input_->ele_param().sv < 10) {
+    //     OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param().sv << 4);
+    // } else {
+    //     uint8_t send_sv {};
 
-        if (input_->ele_param().sv > 75) {
-            send_sv = 7;
-        } else if (input_->ele_param().sv > 65) {
-            send_sv = 6;
-        } else {
-            send_sv = 5;
-        }
+    //     if (input_->ele_param().sv > 75) {
+    //         send_sv = 7;
+    //     } else if (input_->ele_param().sv > 65) {
+    //         send_sv = 6;
+    //     } else {
+    //         send_sv = 5;
+    //     }
 
-        OR_EQUAL(CAN_BUFFER[1][3], send_sv << 4);
-    }
+    //     OR_EQUAL(CAN_BUFFER[1][3], send_sv << 4);
+    // }
 }
 
 void EleparamDecoder::_canframe_handle_al() {

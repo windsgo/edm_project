@@ -32,8 +32,7 @@ namespace move {
 class MotionStateMachine final {
 public:
     using ptr = std::shared_ptr<MotionStateMachine>;
-    MotionStateMachine(const std::function<bool(axis_t &)> &cb_get_act_axis,
-                       SignalBuffer::ptr signal_buffer,
+    MotionStateMachine(SignalBuffer::ptr signal_buffer,
                        const std::function<void(bool)> &cb_enable_votalge_gate,
                        const std::function<void(bool)> &cb_mach_on);
     ~MotionStateMachine() = default;
@@ -52,8 +51,8 @@ public:
 
 public: // setting interfaces
     // reset the local `cmd_axis_` to the input value
-    void set_cmd_axis(const axis_t &init_cmd_axis);
-    void refresh_axis_using_actpos();
+    // void set_cmd_axis(const axis_t &init_cmd_axis);
+    // void refresh_axis_using_actpos();
 
     inline auto get_touch_detect_handler() const { return touch_detect_handler_; }
 
@@ -82,7 +81,7 @@ public: // operate interfaces
     bool stop_auto(bool immediate = false);
 
 public: // state interfaces
-    const axis_t &get_cmd_axis() const { return cmd_axis_; }
+    // const axis_t &get_cmd_axis() const { return cmd_axis_; }
     bool is_enabled() const { return enabled_; }
 
     MotionMainMode main_mode() const { return main_mode_; }
@@ -104,7 +103,7 @@ private:
     }
 
 private:              // state data
-    axis_t cmd_axis_; // 指令位值 (驱动器值, 单位blu)
+    // axis_t cmd_axis_; // 指令位值 (驱动器值, 单位blu)
 
     bool enabled_{
         false}; // 使能位 (防止reset后, 还未重新设置初始指令位置, 就进行运算)
@@ -127,7 +126,7 @@ private: // callbacks
     // Note: use operator bool to determine if the callback is callable / valid.
 
     // get real axis
-    std::function<bool(axis_t &)> cb_get_act_axis_;
+    // std::function<bool(axis_t &)> cb_get_act_axis_;
 
     // 获取缓存抬刀参数回调(给G01用)
     std::function<void(JumpParam &)> cb_get_jump_param_;

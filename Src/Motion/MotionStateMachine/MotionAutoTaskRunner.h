@@ -29,7 +29,7 @@ public:
     ~AutoTaskRunner() noexcept = default;
 
     // 重置状态机, 删除当前任务
-    void reset(const axis_t& init_axis);
+    void reset();
 
     // 重新启动一个任务 (无论任务是否结束, 如果未结束, 会打印警告)
     bool restart_task(AutoTask::ptr task);
@@ -58,7 +58,7 @@ public:
     // 用于判断当前是否是暂停点动的各状态还是正常AutoTask的各状态
     auto domin_state() const { return domin_state_; }
 
-    const auto& get_curr_cmd_axis() const { return curr_cmd_axis_; }
+    // const auto& get_curr_cmd_axis() const { return curr_cmd_axis_; }
 
 private:
     void _autostate_switch_to(MotionAutoState new_state);
@@ -104,7 +104,7 @@ private:
     PauseMoveController::ptr pausemove_controller_;
     SignalBuffer::ptr signal_buffer_;
 
-    axis_t curr_cmd_axis_;
+    // axis_t curr_cmd_axis_;
 };
 
 

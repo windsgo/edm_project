@@ -31,7 +31,7 @@ public:
                         SignalBuffer::ptr signal_buffer);
     ~PauseMoveController() noexcept = default;
 
-    void init(const axis_t &init_axis);
+    void init();
 
     auto state() const { return state_; }
 
@@ -65,7 +65,7 @@ public:
 
     void run_once();
 
-    const auto &get_cmd_axis() const { return curr_cmd_axis_; }
+    // const auto &get_cmd_axis() const { return curr_cmd_axis_; }
 
 private:
     void _manual_pointmoving();
@@ -81,7 +81,7 @@ private:
     PointMoveHandler pm_handler_;
     AxisRecordStack axis_recorder_;
 
-    axis_t curr_cmd_axis_;
+    // axis_t curr_cmd_axis_;
 
     State state_{State::NotInited};
 

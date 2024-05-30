@@ -8,15 +8,10 @@ namespace move {
 
 class G00AutoTask : public AutoTask {
 public:
-    G00AutoTask(const axis_t &init_axis, const axis_t &target_axis,
+    G00AutoTask(const axis_t &target_axis,
                 const MoveRuntimePlanSpeedInput &speed_param,
                 bool enable_touch_detect,
-                TouchDetectHandler::ptr touch_detect_handler)
-        : AutoTask(AutoTaskType::G00, init_axis),
-          enable_touch_detect_(enable_touch_detect),
-          touch_detect_handler_(touch_detect_handler) {
-        pm_handler_.start(speed_param, init_axis, target_axis);
-    }
+                TouchDetectHandler::ptr touch_detect_handler);
 
     bool pause() override;
     bool resume() override;

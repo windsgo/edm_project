@@ -101,7 +101,7 @@ private: // Thread
     void _fetch_command_and_handle_and_copy_info_cache();
 
     // 用于生成获取实际坐标的回调, 以及info cache获取实际坐标
-    bool _get_act_pos(axis_t &axis);
+    // bool _get_act_pos(axis_t &axis);
 
     void _copy_info_cache();
 

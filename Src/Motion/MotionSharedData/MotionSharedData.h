@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
+#include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
 
 #include "SystemSettings/SystemSettings.h"
@@ -16,8 +17,8 @@ namespace move {
 // 设定参数, 外部通过MotionCmd通道传递整个Setting结构, 保存在MotionSharedData
 // Motion组建可以实时读取
 struct MotionSettings {
-    bool enable_g01_run_each_servo_cmd {true}; // TODO 替代目前的一次读取方式
-    bool enable_g01_half_closed_loop {true};
+    bool enable_g01_run_each_servo_cmd{true}; // TODO 替代目前的一次读取方式
+    bool enable_g01_half_closed_loop{true};
 };
 
 //! 用于Motion全局数据交换、记录, 一些关键的数据可以记录在这里
@@ -62,7 +63,7 @@ public: // 数据记录相关, 一个周期内可能需要在不同地方记录�
         // 统一设置在这里, 周期结束时push入记录队列
     struct RecordData1 {
         // 本地us时间
-        uint64_t thread_tick_us {0};
+        uint64_t thread_tick_us{0};
 
         // move::axis_t last_cmd_axis; // 周期开始时(上一周期的指令位置)
 
@@ -125,12 +126,30 @@ public: // 数据记录相关, 一个周期内可能需要在不同地方记录�
     }
 
 public:
-    inline void add_thread_tick() { thread_tick_us_ += thread_cycle_us_; ++thread_tick_; }
+    inline void add_thread_tick() {
+        thread_tick_us_ += thread_cycle_us_;
+        ++thread_tick_;
+    }
     inline const auto get_thread_tick_us() const { return thread_tick_us_; }
     inline const auto get_thread_tick() const { return thread_tick_; }
 
-    inline const auto& get_settings() const { return settings_; }
-    inline void set_settings(const MotionSettings& settings) { settings_ = settings; }
+    inline const auto &get_settings() const { return settings_; }
+    inline void set_settings(const MotionSettings &settings) {
+        settings_ = settings;
+    }
+
+public:
+    inline const auto &get_global_cmd_axis() const { return global_cmd_axis_; }
+    inline void set_global_cmd_axis(const axis_t &cmd_axis) {
+        global_cmd_axis_ = cmd_axis;
+    }
+
+    axis_t get_act_axis() const;
+    void get_act_axis(axis_t& axis) const;
+
+private:
+    axis_t global_cmd_axis_; // 全局共享指令位置,
+                             // 简化指令坐标在各级之间传递的逻辑, 防止指令突变
 
 private: // Can 接收与缓存相关数据
     CanReceiveBuffer::ptr can_recv_buffer_;
@@ -146,17 +165,21 @@ private:
     // 共享ecat manager, 便于获取数据和设定(如速度偏置控制)
     ecat::EcatManager::ptr ecat_manager_;
 
-    MotionSettings settings_ {};
+    MotionSettings settings_{};
 
     // 共享的线程us计数器, 每次线程运行时都要加一下 thread_cycle_us_
-    uint64_t thread_tick_us_ {0}; // us 
-    uint64_t thread_tick_ {0}; // 1 (周期计数)
-    const uint32_t thread_cycle_us_ = SystemSettings::instance().get_motion_cycle_us();
+    uint64_t thread_tick_us_{0}; // us
+    uint64_t thread_tick_{0};    // 1 (周期计数)
+    const uint32_t thread_cycle_us_ =
+        SystemSettings::instance().get_motion_cycle_us();
 
 private:
     MotionSharedData()
         : record_data1_queuerecorder_(
-              std::make_shared<util::DataQueueRecorder<RecordData1>>()) {}
+              std::make_shared<util::DataQueueRecorder<RecordData1>>()) {
+        MotionUtils::ClearAxis(global_cmd_axis_);
+    }
+
     MotionSharedData(const MotionSharedData &) = delete;
     MotionSharedData(MotionSharedData &&) = delete;
     MotionSharedData &operator=(const MotionSharedData &) = delete;

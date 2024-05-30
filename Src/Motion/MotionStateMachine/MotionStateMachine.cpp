@@ -15,18 +15,13 @@ namespace move {
 static auto s_motion_shared = MotionSharedData::instance();
 
 MotionStateMachine::MotionStateMachine(
-    const std::function<bool(axis_t &)> &cb_get_act_axis,
     SignalBuffer::ptr signal_buffer,
     const std::function<void(bool)> &cb_enable_votalge_gate,
     const std::function<void(bool)> &cb_mach_on)
-    : cb_get_act_axis_(cb_get_act_axis),
-      signal_buffer_(signal_buffer), 
+    : signal_buffer_(signal_buffer), 
       cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on) {
 
     //! use assert more than exception is better
-    if (!cb_get_act_axis_) {
-        throw exception("no cb_get_act_axis_");
-    }
 
     if (!cb_enable_votalge_gate_) {
         throw exception("no cb_enable_votalge_gate_");
@@ -51,9 +46,9 @@ MotionStateMachine::MotionStateMachine(
     reset();
     // 初始化计算坐标
     // 先清0 (离线调试模式时实际坐标会直接返回当前值)
-    MotionUtils::ClearAxis(cmd_axis_);
+    // MotionUtils::ClearAxis(cmd_axis_);
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
-    cb_get_act_axis_(cmd_axis_);
+    // cb_get_act_axis_(cmd_axis_);
 #endif // EDM_OFFLINE_RUN_NO_ECAT
 }
 
@@ -70,7 +65,7 @@ void MotionStateMachine::run_once() {
 
         rd1.thread_tick_us = s_motion_shared->get_thread_tick_us();
 
-        this->cb_get_act_axis_(rd1.act_axis);
+        s_motion_shared->get_act_axis(rd1.act_axis);
 
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
         auto em = s_motion_shared->get_ecat_manager();
@@ -111,7 +106,7 @@ void MotionStateMachine::run_once() {
     }
 
     if (s_motion_shared->is_data_recorder_running()) {
-        s_motion_shared->get_record_data1_ref().new_cmd_axis = this->cmd_axis_;
+        s_motion_shared->get_record_data1_ref().new_cmd_axis = s_motion_shared->get_global_cmd_axis();
 
         s_motion_shared->push_data_to_recorder();
     }
@@ -126,27 +121,27 @@ void MotionStateMachine::reset() {
 
     //    touch_detect_handler_->reset();
 
-    auto_task_runner_->reset(cmd_axis_);
+    auto_task_runner_->reset();
 }
 
-void MotionStateMachine::set_cmd_axis(const axis_t &init_cmd_axis) {
-    s_logger->info("MotionStateMachine::set_cmd_axis.");
-    cmd_axis_ = init_cmd_axis;
-}
+// void MotionStateMachine::set_cmd_axis(const axis_t &init_cmd_axis) {
+//     s_logger->info("MotionStateMachine::set_cmd_axis.");
+//     cmd_axis_ = init_cmd_axis;
+// }
 
-void MotionStateMachine::refresh_axis_using_actpos() {
-    s_logger->info("MotionStateMachine::refresh_axis_using_actpos.");
-    if (cb_get_act_axis_) {
-        cb_get_act_axis_(this->cmd_axis_);
-    }
-}
+// void MotionStateMachine::refresh_axis_using_actpos() {
+//     s_logger->info("MotionStateMachine::refresh_axis_using_actpos.");
+//     if (cb_get_act_axis_) {
+//         cb_get_act_axis_(this->cmd_axis_);
+//     }
+// }
 
 bool MotionStateMachine::start_manual_pointmove(
     const MoveRuntimePlanSpeedInput &speed_param, const axis_t &target_pos) {
     switch (main_mode_) {
     case MotionMainMode::Idle: {
         s_logger->trace("{}: idle mode.", __PRETTY_FUNCTION__);
-        auto ret = pm_handler_.start(speed_param, cmd_axis_, target_pos);
+        auto ret = pm_handler_.start(speed_param, s_motion_shared->get_global_cmd_axis(), target_pos);
         if (ret) {
             _mainmode_switch_to(MotionMainMode::Manual);
             signal_buffer_->set_signal(MotionSignal_ManualPointMoveStarted);
@@ -161,7 +156,7 @@ bool MotionStateMachine::start_manual_pointmove(
         return false;
     case MotionMainMode::Auto:
         s_logger->trace("{}: in auto mode", __PRETTY_FUNCTION__);
-        return auto_task_runner_->start_manual_pointmove(speed_param, cmd_axis_,
+        return auto_task_runner_->start_manual_pointmove(speed_param, s_motion_shared->get_global_cmd_axis(),
                                                          target_pos);
         // 处理暂停点动的启动.
         break;
@@ -199,7 +194,7 @@ bool MotionStateMachine::start_auto_g00(
     }
 
     auto new_g00_auto_task = std::make_shared<G00AutoTask>(
-        cmd_axis_, target_pos, speed_param, enable_touch_detect,
+        target_pos, speed_param, enable_touch_detect,
         touch_detect_handler_);
 
     if (new_g00_auto_task->is_over()) {
@@ -225,10 +220,10 @@ bool MotionStateMachine::start_auto_g01(const axis_t &target_pos,
     }
 
     auto g01_line_traj =
-        std::make_shared<TrajectoryLinearSegement>(cmd_axis_, target_pos);
+        std::make_shared<TrajectoryLinearSegement>(s_motion_shared->get_global_cmd_axis(), target_pos);
 
     auto new_g01_auto_task = std::make_shared<G01AutoTask>(
-        g01_line_traj, max_jump_height_from_begin, this->cb_get_act_axis_, this->cb_get_jump_param_,
+        g01_line_traj, max_jump_height_from_begin, this->cb_get_jump_param_,
         this->cb_enable_votalge_gate_, this->cb_mach_on_);
 
     if (new_g01_auto_task->is_over()) {
@@ -252,7 +247,7 @@ bool MotionStateMachine::start_auto_g04(double deley_s) {
         return false;
     }
 
-    auto new_g04_auto_task = std::make_shared<G04AutoTask>(cmd_axis_, deley_s);
+    auto new_g04_auto_task = std::make_shared<G04AutoTask>(deley_s);
 
     if (new_g04_auto_task->is_over()) {
         return false;
@@ -275,7 +270,7 @@ bool MotionStateMachine::start_auto_m00fake() {
         return false;
     }
 
-    auto new_m00fake_auto_task = std::make_shared<M00FakeAutoTask>(cmd_axis_);
+    auto new_m00fake_auto_task = std::make_shared<M00FakeAutoTask>();
 
     if (new_m00fake_auto_task->is_over()) {
         return false;
@@ -355,7 +350,10 @@ void MotionStateMachine::_mainmode_manual() {
 
     // double last = cmd_axis_[0];
 
-    cmd_axis_ = pm_handler_.get_current_pos();
+    // cmd_axis_ = pm_handler_.get_current_pos();
+
+    // set to global cmd axis
+    s_motion_shared->set_global_cmd_axis(pm_handler_.get_current_pos());
 
     // r_.emplace(cmd_axis_[0] - last, last, cmd_axis_[0]);
 }
@@ -363,7 +361,7 @@ void MotionStateMachine::_mainmode_manual() {
 void MotionStateMachine::_mainmode_auto() {
     auto_task_runner_->run_once();
 
-    cmd_axis_ = auto_task_runner_->get_curr_cmd_axis();
+    // cmd_axis_ = auto_task_runner_->get_curr_cmd_axis();
 
     if (auto_task_runner_->state() == MotionAutoState::Stopped) {
         _mainmode_switch_to(MotionMainMode::Idle);

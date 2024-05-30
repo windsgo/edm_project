@@ -25,8 +25,8 @@ enum class AutoTaskType {
 class AutoTask {
 public:
     using ptr = std::shared_ptr<AutoTask>;
-    AutoTask(AutoTaskType type, const axis_t &init_axis) noexcept
-        : type_(type), curr_cmd_axis_(init_axis) {}
+    AutoTask(AutoTaskType type) noexcept
+        : type_(type) {}
     virtual ~AutoTask() noexcept = default;
 
     AutoTaskType type() const { return type_; }
@@ -59,13 +59,13 @@ public:
     // get current task's axis
     // Note: the task should maintain and keep the axis in the whole running
     // routine even if the task `is_over`
-    const axis_t &get_curr_cmd_axis() const { return curr_cmd_axis_; }
+    // const axis_t &get_curr_cmd_axis() const { return curr_cmd_axis_; }
 
 private:
     AutoTaskType type_;
 
 protected:
-    axis_t curr_cmd_axis_;
+    // axis_t curr_cmd_axis_;
 };
 
 } // namespace move

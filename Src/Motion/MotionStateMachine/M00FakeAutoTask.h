@@ -15,8 +15,8 @@ namespace move {
 
 class M00FakeAutoTask final : public AutoTask {
 public:
-    M00FakeAutoTask(const axis_t &init_axis)
-        : AutoTask(AutoTaskType::M00Fake, init_axis) {}
+    M00FakeAutoTask()
+        : AutoTask(AutoTaskType::M00Fake) {}
 
     bool pause() override {
         switch (state_) {

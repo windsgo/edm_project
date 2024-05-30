@@ -1,4 +1,5 @@
 #include "MotionAutoTaskRunner.h"
+#include "Motion/MotionSharedData/MotionSharedData.h"
 
 #include "Logger/LogMacro.h"
 
@@ -7,6 +8,9 @@ EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 namespace edm {
 
 namespace move {
+
+static auto s_motion_shared = MotionSharedData::instance();
+
 AutoTaskRunner::AutoTaskRunner(TouchDetectHandler::ptr touch_detect_handler,
                                SignalBuffer::ptr signal_buffer)
     : signal_buffer_(signal_buffer) {
@@ -14,19 +18,20 @@ AutoTaskRunner::AutoTaskRunner(TouchDetectHandler::ptr touch_detect_handler,
         touch_detect_handler, signal_buffer);
 }
 
-void AutoTaskRunner::reset(const axis_t &init_axis) {
+void AutoTaskRunner::reset() {
     curr_task_ = nullptr;
     _autostate_switch_to(MotionAutoState::Stopped);
 
-    pausemove_controller_->init(init_axis);
-    curr_cmd_axis_ = init_axis;
+    pausemove_controller_->init();
+    // curr_cmd_axis_ = init_axis;
 }
 
 bool AutoTaskRunner::restart_task(AutoTask::ptr task) {
     if (!curr_task_) {
         curr_task_ = task;
-        curr_cmd_axis_ = task->get_curr_cmd_axis();
+        // curr_cmd_axis_ = task->get_curr_cmd_axis();
         _autostate_switch_to(MotionAutoState::NormalMoving);
+        _dominated_state_switch_to(DominatedState::AutoTaskRunning);
         return true;
     }
 
@@ -35,7 +40,7 @@ bool AutoTaskRunner::restart_task(AutoTask::ptr task) {
     }
 
     curr_task_ = task;
-    curr_cmd_axis_ = task->get_curr_cmd_axis();
+    // curr_cmd_axis_ = task->get_curr_cmd_axis();
     _autostate_switch_to(MotionAutoState::NormalMoving);
     _dominated_state_switch_to(DominatedState::AutoTaskRunning);
     return true;
@@ -270,7 +275,7 @@ void AutoTaskRunner::_autostate_switch_to(MotionAutoState new_state) {
 
 void AutoTaskRunner::_autostate_switch_to_paused() {
     _autostate_switch_to(MotionAutoState::Paused);
-    pausemove_controller_->init(curr_cmd_axis_); //! 初始化坐标
+    pausemove_controller_->init(); //! 初始化坐标
 }
 
 void AutoTaskRunner::_normal_moving() {
@@ -278,7 +283,7 @@ void AutoTaskRunner::_normal_moving() {
     //! 运行放在前面
 
     curr_task_->run_once();
-    curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
+    // curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
 
     if (curr_task_->is_pausing() || curr_task_->is_paused()) {
         _autostate_switch_to(MotionAutoState::Pausing);
@@ -296,7 +301,7 @@ void AutoTaskRunner::_pausing() {
     //! 运行放在前面
 
     curr_task_->run_once();
-    curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
+    // curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
 
     if (curr_task_->is_paused()) {
         signal_buffer_->set_signal(MotionSignal_AutoPaused);
@@ -322,7 +327,7 @@ void AutoTaskRunner::_pausing() {
 void AutoTaskRunner::_paused() {
     // 这里run_once是运行手动点动
     pausemove_controller_->run_once();
-    curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
+    // curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
 
     // // 在这个状态处理 pausemove 的状态变化
     // if (pausemove_controller_->is_stopped()) {
@@ -345,7 +350,7 @@ void AutoTaskRunner::_paused() {
 void AutoTaskRunner::_resuming() {
     curr_task_->run_once();
     // 暂停恢复后的点一定与task暂停完成时的点一致, 应该不会出问题
-    curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
+    // curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
 
     //! 要防止G00少走一个周期
     //! 运行放在前面
@@ -370,7 +375,7 @@ void AutoTaskRunner::_resuming() {
 
 void AutoTaskRunner::_stopping() {
     curr_task_->run_once();
-    curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
+    // curr_cmd_axis_ = curr_task_->get_curr_cmd_axis();
 
     if (curr_task_->is_stopped()) {
         signal_buffer_->set_signal(MotionSignal_AutoStopped);
@@ -386,7 +391,7 @@ void AutoTaskRunner::_dominated_state_pmrecovering_run_once() {
 
         // 运行一次恢复过程
         pausemove_controller_->run_once();
-        curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
+        // curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
 
         // 处理 pausemove 的状态变化
 
@@ -415,7 +420,7 @@ void AutoTaskRunner::_dominated_state_pmrecovering_run_once() {
     case MotionAutoState::Pausing: {
         // 运行一次恢复过程
         pausemove_controller_->run_once();
-        curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
+        // curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
 
         if (pausemove_controller_->is_recover_paused()) {
             signal_buffer_->set_signal(MotionSignal_AutoPaused);
@@ -432,7 +437,7 @@ void AutoTaskRunner::_dominated_state_pmrecovering_run_once() {
     case MotionAutoState::Stopping: {
         // 运行一次恢复过程
         pausemove_controller_->run_once();
-        curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
+        // curr_cmd_axis_ = pausemove_controller_->get_cmd_axis();
         
         if (pausemove_controller_->is_stopped()) {
             signal_buffer_->set_signal(MotionSignal_AutoStopped);

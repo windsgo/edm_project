@@ -54,11 +54,9 @@ MotionThreadController::MotionThreadController(
     s_motion_shared->set_ecat_manager(ecat_manager_);
 
     //! 创建motion状态机
-    auto get_act_pos_cb =
-        std::bind_front(&MotionThreadController::_get_act_pos, this);
 
     motion_state_machine_ = std::make_shared<MotionStateMachine>(
-        get_act_pos_cb, signal_buffer_, cb_enable_votalge_gate_, cb_mach_on_);
+        signal_buffer_, cb_enable_votalge_gate_, cb_mach_on_);
     if (!motion_state_machine_) {
         s_logger->critical("MotionStateMachine create failed");
         throw exception("MotionStateMachine create failed");
@@ -553,7 +551,7 @@ void MotionThreadController::_threadstate_running() {
 void MotionThreadController::_ecat_state_switch_to_ready() {
     _switch_ecat_state(EcatState::EcatReady);
     motion_state_machine_->reset();
-    motion_state_machine_->refresh_axis_using_actpos();
+    s_motion_shared->set_global_cmd_axis(s_motion_shared->get_act_axis());
     motion_state_machine_->set_enable(true);
 
     // 重新统计数
@@ -817,30 +815,31 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
     }
 }
 
-bool MotionThreadController::_get_act_pos(axis_t &axis) {
-#ifdef EDM_OFFLINE_RUN_NO_ECAT
-    axis = motion_state_machine_->get_cmd_axis(); // 离线, 返回指令位置
-#else                                             // EDM_OFFLINE_RUN_NO_ECAT
-    if (!this->ecat_manager_->is_ecat_connected()) {
-        // MotionUtils::ClearAxis(axis);
-        return false;
-    }
+// bool MotionThreadController::_get_act_pos(axis_t &axis) {
+// #ifdef EDM_OFFLINE_RUN_NO_ECAT
+//     axis = s_motion_shared->get_global_cmd_axis();
+//     // axis = motion_state_machine_->get_cmd_axis(); // 离线, 返回指令位置
+// #else                                             // EDM_OFFLINE_RUN_NO_ECAT
+//     if (!this->ecat_manager_->is_ecat_connected()) {
+//         // MotionUtils::ClearAxis(axis);
+//         return false;
+//     }
 
-    for (int i = 0; i < axis.size(); ++i) {
-        axis[i] = (double)this->ecat_manager_->get_servo_actual_position(i);
-    }
-#endif                                            // EDM_OFFLINE_RUN_NO_ECAT
+//     for (int i = 0; i < axis.size(); ++i) {
+//         axis[i] = (double)this->ecat_manager_->get_servo_actual_position(i);
+//     }
+// #endif                                            // EDM_OFFLINE_RUN_NO_ECAT
 
-    return true;
-}
+//     return true;
+// }
 
 void MotionThreadController::_copy_info_cache() {
 #ifndef EDM_MOTION_INFO_GET_USE_ATOMIC
     std::lock_guard guard(info_cache_mutex_);
 #endif // EDM_MOTION_INFO_GET_USE_ATOMIC
 
-    info_cache_.curr_cmd_axis_blu = motion_state_machine_->get_cmd_axis();
-    _get_act_pos(info_cache_.curr_act_axis_blu);
+    info_cache_.curr_cmd_axis_blu = s_motion_shared->get_global_cmd_axis();
+    s_motion_shared->get_act_axis(info_cache_.curr_act_axis_blu);
 
     info_cache_.main_mode = motion_state_machine_->main_mode();
     info_cache_.auto_state = motion_state_machine_->auto_state();

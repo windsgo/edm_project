@@ -24,7 +24,6 @@ class G01AutoTask : public AutoTask {
 public:
     G01AutoTask(TrajectoryLinearSegement::ptr line_traj,
                 unit_t max_jump_height_from_begin,
-                const std::function<bool(axis_t &)> &cb_get_real_axis,
                 const std::function<void(JumpParam &)> &cb_get_jump_param,
                 const std::function<void(bool)> &cb_enable_votalge_gate,
                 const std::function<void(bool)> &cb_mach_on);
@@ -161,7 +160,7 @@ private:
 
 private:
     // 获取实际驱动器坐标的回调函数, 用于闭环控制
-    std::function<bool(axis_t &)> cb_get_real_axis_;
+    // std::function<bool(axis_t &)> cb_get_real_axis_;
 
     // 获取状态机缓存的抬刀参数
     std::function<void(JumpParam &)> cb_get_jump_param_;
