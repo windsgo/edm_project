@@ -82,6 +82,7 @@ EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
 #endif // EDM_ECAT_DRIVER_SOEM
 
 #ifdef EDM_ECAT_DRIVER_IGH
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
     // request master (init); index default 0; configured in
     // /etc/sysconfig/ethercat
     igh_master_ = ecrt_request_master(0);
@@ -89,6 +90,7 @@ EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
         s_logger->critical("igh ecrt_request_master failed");
         throw exception("igh ecrt_request_master failed");
     }
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
     // resize member vectors according to servonum and ionum (unused now)
     // and assign each pointer to nullptr

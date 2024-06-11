@@ -59,8 +59,8 @@
 
 // CAN TxID 集合
 #define EDM_CAN_TXID_POWER                          0x0010
-#define EDM_CAN_TXID_CANIO_1                        0x0356
-#define EDM_CAN_TXID_CANIO_2                        0x0358
+#define EDM_CAN_TXID_CANIO_1                        0x0456
+#define EDM_CAN_TXID_CANIO_2                        0x0458
 #define EDM_CAN_TXID_IOBOARD_SERVOSETTING           0x0401
 #define EDM_CAN_TXID_IOBOARD_COMMONMESSAGE          0x0402
 #define EDM_CAN_TXID_IOBOARD_ELEPARAMS              0x0403

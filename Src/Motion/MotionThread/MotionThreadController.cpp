@@ -1139,11 +1139,13 @@ void MotionThreadController::_wait_peroid() {
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wakeup_time_timespec,
                     &dummy_tleft);
 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
 #ifdef EDM_ECAT_DRIVER_IGH
     // set master time in nano-seconds
     // call ecrt_master_application_time
     ecat_manager_->igh_tell_application_time(wakeup_systime_ns_);
 #endif // EDM_ECAT_DRIVER_IGH
+#endif // EDM_OFFLINE_RUN_NO_ECAT
 
     // 计算唤醒延迟
     {
