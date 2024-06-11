@@ -1,4 +1,5 @@
 #include "MovePanel.h"
+#include "Motion/MoveDefines.h"
 #include "ui_MovePanel.h"
 
 #include <sstream>
@@ -169,27 +170,7 @@ void MovePanel::_init_handbox_auto_signals() {
     connect(s, &SharedCoreData::sig_handbox_start_pointmove, this,
             [this](const move::axis_t &dir, uint32_t speed_level,
                    bool touch_detect_enable) {
-                // 默认只支持单轴运动 // TODO 多轴以后再改吧
-                int axis = -1;
-                int d = 0;
-                for (int i = 0; i < dir.size(); ++i) {
-                    if (dir[i] > 0.5) {
-                        d = 1;
-                        axis = i;
-                        break;
-                    } else if (dir[i] < -0.5) {
-                        d = -1;
-                        axis = i;
-                        break;
-                    }
-                }
-
-                if (axis < 0) {
-                    s_logger->error(
-                        "handbox start pm failed, dir parse failed");
-                    return;
-                }
-
+                
                 if (speed_level >= 3) {
                     ui->pb_check_mfr3->setChecked(true);
                 } else if (speed_level == 2) {
@@ -200,13 +181,7 @@ void MovePanel::_init_handbox_auto_signals() {
                     ui->pb_check_mfr0->setChecked(true);
                 }
 
-                if (d > 0) {
-                    this->_start_single_axis_pointmove_pos(axis,
-                                                           touch_detect_enable);
-                } else {
-                    this->_start_single_axis_pointmove_neg(axis,
-                                                           touch_detect_enable);
-                }
+                this->_start_multiaxis_vectormove(dir, touch_detect_enable);
             });
 }
 
@@ -316,6 +291,18 @@ void MovePanel::_start_single_axis_pointmove_pos(
         return;
     }
 
+    move::axis_t dir;
+    for (uint8_t i = 0; i < dir.size(); ++i) {
+        if (i == axis_index) {
+            dir[i] = 1.0;
+        } else {
+            dir[i] = 0.0;
+        }
+    }
+    this->_start_multiaxis_vectormove(dir, touch_detect_enable);
+    return;
+
+#if 0
     // motor start pos
     const auto &motor_start_pos =
         shared_core_data_->get_info_dispatcher()->get_info().curr_cmd_axis_blu;
@@ -360,6 +347,7 @@ void MovePanel::_start_single_axis_pointmove_pos(
         emit shared_core_data_->sig_error_message(
             "start pointmove failed: send cmd error", s_statusbar_timeout);
     }
+#endif
 }
 
 void MovePanel::_start_single_axis_pointmove_neg(
@@ -369,6 +357,18 @@ void MovePanel::_start_single_axis_pointmove_neg(
         return;
     }
 
+    move::axis_t dir;
+    for (uint8_t i = 0; i < dir.size(); ++i) {
+        if (i == axis_index) {
+            dir[i] = -1.0;
+        } else {
+            dir[i] = 0.0;
+        }
+    }
+    this->_start_multiaxis_vectormove(dir, touch_detect_enable);
+    return;
+
+#if 0
     // motor start pos
     const auto &motor_start_pos =
         shared_core_data_->get_info_dispatcher()->get_info().curr_cmd_axis_blu;
@@ -401,6 +401,103 @@ void MovePanel::_start_single_axis_pointmove_neg(
         // modify target pos
         motor_target_pos[axis_index] =
             motor_start_pos[axis_index] - util::UnitConverter::um2blu(1.0);
+    }
+
+    auto ret = _start_pointmove_no_softlimit_check(motor_target_pos, speed,
+                                                   touch_detect_enable);
+
+    if (!ret) {
+        emit shared_core_data_->sig_error_message(
+            "start pointmove failed: send cmd error", s_statusbar_timeout);
+    }
+#endif
+}
+
+void MovePanel::_start_multiaxis_vectormove(const move::axis_t &dir,
+                                            bool touch_detect_enable) const {
+    // motor start pos
+    const auto &motor_start_pos =
+        shared_core_data_->get_info_dispatcher()->get_info().curr_cmd_axis_blu;
+
+    // mach start pos
+    move::axis_t mach_start_pos;
+    coord_sys_->get_cm().motor_to_machine(motor_start_pos, mach_start_pos);
+
+    // Solve Vector Move End Point (Mach Pos) (According to soft limits)
+    move::axis_t incs;
+    {
+        const auto &pos_soft_limits = coord_sys_->get_pos_soft_limit();
+        const auto &neg_soft_limits = coord_sys_->get_neg_soft_limit();
+
+        bool flag = false;
+        move::unit_t each_axis_inc_length = 0.0;
+        for (uint8_t i = 0; i < dir.size(); ++i) {
+            move::unit_t left_length = 0.0;
+            if (dir[i] > 0) {
+                // 正方向剩余距离，正常为正
+                left_length = pos_soft_limits[i] - mach_start_pos[i];
+                if (left_length <= 0) {
+                    s_logger->warn("axis {} is already outof pos softlimit, "
+                                   "left_length: {}",
+                                   i, left_length);
+                    return; // 放弃点动
+                }
+            } else if (dir[i] < 0) {
+                // 负方向剩余距离，正常为负
+                left_length = neg_soft_limits[i] - mach_start_pos[i];
+                if (left_length >= 0) {
+                    s_logger->warn("axis {} is already outof neg softlimit, "
+                                   "left_length: {}",
+                                   i, left_length);
+                    return; // 放弃点动
+                }
+            } else {
+                continue;
+            }
+
+            if ((!flag) || std::fabs(left_length) < each_axis_inc_length ) {
+                flag = true;
+                each_axis_inc_length = fabs(left_length); // 取更小的那个
+            }
+        }
+
+        for (uint8_t i = 0; i < dir.size(); ++i) {
+            if (dir[i] > 0) {
+                incs[i] = each_axis_inc_length;
+            } else if (dir[i] < 0) {
+                incs[i] = -each_axis_inc_length;
+            } else {
+                incs[i] = 0;
+            }
+        }
+    }
+
+    // calc mach target axis
+    move::axis_t mach_target_pos{mach_start_pos};
+    for (uint8_t i = 0; i < dir.size(); ++i) {
+        mach_target_pos[i] = mach_start_pos[i] + incs[i];
+    }
+
+    // transvert to motor target pos
+    move::axis_t motor_target_pos;
+    coord_sys_->get_cm().machine_to_motor(mach_target_pos, motor_target_pos);
+
+    // get speed param, and deal with MFR3
+    auto speed = _get_default_speed_param();
+    if (ui->pb_check_mfr3->isChecked()) {
+        // as fast as possible to reach 1um target incs
+        speed.cruise_v = 30000;
+
+        // modify target pos
+        for (uint8_t i = 0; i < dir.size(); ++i) {
+            if (dir[i] > 0) {
+                motor_target_pos[i] = motor_start_pos[i] + util::UnitConverter::um2blu(1.0);
+            } else if (dir[i] < 0) {
+                motor_target_pos[i] = motor_start_pos[i] - util::UnitConverter::um2blu(1.0);
+            } else {
+                motor_target_pos[i] = motor_start_pos[i];
+            }
+        }
     }
 
     auto ret = _start_pointmove_no_softlimit_check(motor_target_pos, speed,

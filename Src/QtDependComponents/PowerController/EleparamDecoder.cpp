@@ -552,7 +552,7 @@ void EleparamDecoder::_iosettings_handle_IPx() {
     auto upper_index = input_->ele_param().upper_index;
     // 特殊情况 C901, C902, 全部关断S
 
-    if (ip == 0 || upper_index == 901 || upper_index == 902) {
+    if (ip == 0/* || upper_index == 901 || upper_index == 902*/) {
         _set_contactor_io_IP0(false);
         _set_contactor_io_IP7(false);
         _set_contactor_io_IP15(false);
@@ -614,7 +614,7 @@ void EleparamDecoder::_iosettings_handle_MACH() {
 void EleparamDecoder::_iosettings_handle_PK() {
     auto upper_index =  input_->ele_param().upper_index;
     if (upper_index == 901 || upper_index == 902) {
-        _set_contactor_io_PK(false); // 不吸合 (只有901, 902吸合)
+        _set_contactor_io_PK(false); // 不吸合 (只有901, 902不吸合)
     } else {
         _set_contactor_io_PK(true); // 吸合
     }

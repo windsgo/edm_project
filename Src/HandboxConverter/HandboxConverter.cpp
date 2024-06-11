@@ -1,6 +1,7 @@
 #include "HandboxConverter.h"
 
 #include "Logger/LogMacro.h"
+#include <cstddef>
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -71,27 +72,29 @@ void HandboxConverter::_frame_start_pointmove(const QCanBusFrame &frame) {
     const uint8_t *p_uchar =
         reinterpret_cast<uint8_t *>(frame.payload().data());
 
-    uint8_t axis_num = p_uchar[0]; // 轴号
-    move::axis_t dir {0.0};
-
-    if (axis_num > dir.size()) {
-        s_logger->error("axis_num: {} > system axis num: {}", axis_num,
-                        dir.size());
-        return;
-    }
-
-    if (p_uchar[1] == 0) {
-        dir[axis_num] = 1.0;
-    } else {
-        dir[axis_num] = -1.0;
-    }
-
+    uint8_t axis_bits = p_uchar[0];
+    uint8_t dir_bits = p_uchar[1];
     uint8_t speed_level = p_uchar[5]; // 速度档位 0-3
+    bool touch_detect_enable = !p_uchar[6]; // 1-按住st, 0-不按st
+
+    move::axis_t dir {0.0};
+    for (uint8_t i = 0; i < dir.size(); ++i) {
+        if (axis_bits & (1 << i)) {
+            if (dir_bits & (1 << i)) {
+                // Pos
+                dir[i] = 1.0;
+            } else {
+                // Neg
+                dir[i] = -1.0;
+            }
+        } else {
+            dir[i] = 0.0;
+        }
+    }
+
     if (speed_level > 3) {
         speed_level = 3;
     }
-
-    bool touch_detect_enable = !p_uchar[6]; // 1-按住st, 0-不按st
 
     cb_start_manual_pointmove_(dir, speed_level, touch_detect_enable);
 }

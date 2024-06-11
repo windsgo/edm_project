@@ -1,4 +1,8 @@
 #include "TestPanel.h"
+#include "Coordinate/Coordinate.h"
+#include "Coordinate/CoordinateManager.h"
+#include "Coordinate/CoordinateSystem.h"
+#include "Motion/MoveDefines.h"
 #include "ui_TestPanel.h"
 
 #include <QSlider>
@@ -25,6 +29,48 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
             [this](int value [[maybe_unused]]) { _update_servo(); });
     connect(ui->horizontalSlider_voltage, &QSlider::valueChanged, this,
             [this](int value [[maybe_unused]]) { _update_manual_voltage(); });
+
+    connect(ui->pb_test_xy_posmove, &QPushButton::pressed, this, [this]() {
+#ifdef EDM_OFFLINE_RUN
+        if (coord::Coordinate::Size < 3) return; 
+
+        move::axis_t dir;
+        dir[0] = 1.0;
+        dir[1] = 1.0;
+        dir[2] = 0.0;
+
+        uint32_t speed_level = 0;
+        bool touch_detect_enable = true;
+        
+        emit shared_core_data_->sig_handbox_start_pointmove(dir, speed_level, touch_detect_enable);
+#endif
+    });
+    connect(ui->pb_test_xy_posmove, &QPushButton::released, this, [this]() {
+#ifdef EDM_OFFLINE_RUN
+        emit shared_core_data_->sig_handbox_stop_pointmove();
+#endif
+    });
+    
+    connect(ui->pb_test_yz_negmove, &QPushButton::pressed, this, [this]() {
+#ifdef EDM_OFFLINE_RUN
+        if (coord::Coordinate::Size < 3) return; 
+
+        move::axis_t dir;
+        dir[0] = 0.0;
+        dir[1] = -1.0;
+        dir[2] = -1.0;
+
+        uint32_t speed_level = 0;
+        bool touch_detect_enable = true;
+        
+        emit shared_core_data_->sig_handbox_start_pointmove(dir, speed_level, touch_detect_enable);
+#endif
+    });
+    connect(ui->pb_test_yz_negmove, &QPushButton::released, this, [this]() {
+#ifdef EDM_OFFLINE_RUN
+        emit shared_core_data_->sig_handbox_stop_pointmove();
+#endif
+    });
 }
 
 TestPanel::~TestPanel() { delete ui; }

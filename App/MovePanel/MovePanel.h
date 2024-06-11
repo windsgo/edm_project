@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QWidget>
 
+#include "Motion/MoveDefines.h"
 #include "SharedCoreData/SharedCoreData.h"
 
 #include "TaskManager/TaskManager.h"
@@ -46,6 +47,8 @@ private:
 
     void _start_single_axis_pointmove_pos(uint32_t axis_index, bool touch_detect_enable) const;
     void _start_single_axis_pointmove_neg(uint32_t axis_index, bool touch_detect_enable) const;
+
+    void _start_multiaxis_vectormove(const move::axis_t& dir, bool touch_detect_enable) const;
 
     void _le_start_pointmove() const;
 
