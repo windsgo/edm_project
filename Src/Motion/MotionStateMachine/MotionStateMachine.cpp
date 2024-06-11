@@ -36,8 +36,8 @@ MotionStateMachine::MotionStateMachine(
     };
     touch_detect_handler_ = std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
 
-    cb_get_jump_param_ =
-        std::bind_front(&MotionStateMachine::_get_jump_param, this);
+    // cb_get_jump_param_ =
+    //     std::bind_front(&MotionStateMachine::_get_jump_param, this);
 
     auto_task_runner_ =
         std::make_shared<AutoTaskRunner>(touch_detect_handler_, signal_buffer_);
@@ -223,7 +223,7 @@ bool MotionStateMachine::start_auto_g01(const axis_t &target_pos,
         std::make_shared<TrajectoryLinearSegement>(s_motion_shared->get_global_cmd_axis(), target_pos);
 
     auto new_g01_auto_task = std::make_shared<G01AutoTask>(
-        g01_line_traj, max_jump_height_from_begin, this->cb_get_jump_param_,
+        g01_line_traj, max_jump_height_from_begin,
         this->cb_enable_votalge_gate_, this->cb_mach_on_);
 
     if (new_g01_auto_task->is_over()) {

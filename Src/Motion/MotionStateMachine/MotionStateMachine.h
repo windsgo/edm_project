@@ -88,8 +88,6 @@ public: // state interfaces
 
     MotionAutoState auto_state() const { return auto_task_runner_->state(); }
 
-    void set_jump_param(const JumpParam& jp) { cached_jump_param_ = jp; }
-
 private: // inside functions: state process
     void _mainmode_idle();
     void _mainmode_manual();
@@ -97,20 +95,12 @@ private: // inside functions: state process
 
     void _mainmode_switch_to(MotionMainMode new_main_mode);
 
-private:
-    void _get_jump_param(JumpParam &jump_param) {
-        jump_param = cached_jump_param_;
-    }
-
 private:              // state data
     // axis_t cmd_axis_; // 指令位值 (驱动器值, 单位blu)
 
     bool enabled_{
         false}; // 使能位 (防止reset后, 还未重新设置初始指令位置, 就进行运算)
     MotionMainMode main_mode_{MotionMainMode::Idle}; // 主模式
-    // MotionAutoState auto_state_{MotionAutoState::Stopped}; // Auto状态
-
-    JumpParam cached_jump_param_; // 外层最后一次设置进来的抬刀参数, 缓存在这里, g01靠回调获取
 
 private: // motion runtime data
     // mainmode manual:
@@ -127,9 +117,6 @@ private: // callbacks
 
     // get real axis
     // std::function<bool(axis_t &)> cb_get_act_axis_;
-
-    // 获取缓存抬刀参数回调(给G01用)
-    std::function<void(JumpParam &)> cb_get_jump_param_;
 
     // 抬刀使能电源位
     std::function<void(bool)> cb_enable_votalge_gate_;

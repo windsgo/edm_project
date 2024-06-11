@@ -778,7 +778,7 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         auto set_jump_param_cmd =
             std::static_pointer_cast<MotionCommandSettingSetJumpParam>(cmd);
 
-        motion_state_machine_->set_jump_param(set_jump_param_cmd->jump_param());
+        s_motion_shared->set_jump_param(set_jump_param_cmd->jump_param());
 
         s_logger->debug("***** JumpParam Received");
 

@@ -18,18 +18,16 @@ static auto s_motion_shared = MotionSharedData::instance();
 
 G01AutoTask::G01AutoTask(
     TrajectoryLinearSegement::ptr line_traj, unit_t max_jump_height_from_begin,
-    const std::function<void(JumpParam &)> &cb_get_jump_param,
     const std::function<void(bool)> &cb_enable_votalge_gate,
     const std::function<void(bool)> &cb_mach_on)
     : AutoTask(AutoTaskType::G01), line_traj_(line_traj),
       max_jump_height_from_begin_(max_jump_height_from_begin),
-      cb_get_jump_param_(cb_get_jump_param),
       cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on) {
 
     assert(line_traj_->at_start());
 
     // 开始时获取一次抬刀参数
-    cb_get_jump_param_(jumping_param_);
+    jumping_param_ = s_motion_shared->get_jump_param();
 
     s_logger->debug("dn ms: {}, buffer_blu: {}", jumping_param_.dn_ms,
                     jumping_param_.buffer_blu);
@@ -502,7 +500,7 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
 
 bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
     // 更新抬刀参数
-    cb_get_jump_param_(jumping_param_);
+    jumping_param_ = s_motion_shared->get_jump_param();
 
     // 检查抬刀间隔, 如果到了就尝试规划一次抬刀
     auto now_ms = GetCurrentTimeMs();

@@ -72,6 +72,29 @@ static inline double _get_speed_blu_s_from_js(uint32_t js) {
     return util::UnitConverter::mm_min2blu_s((double)js * 100.0);
 }
 
+static inline double 
+    _get_jump_acc_from_js(uint32_t js) {
+    // 百,千,万位标识加速度, 
+    // 200xx表示0.200g(200*10e4 um/s^2) C002-C010加速度
+    // 041xx标识0.041g(041*10e4 um/s^2) C825/C810加速度
+    // 015xx表示0.015g(015*10e4 um/s^2) C901加速度
+        
+    // 1g = 10m/s^2 = 10*10^6 um/s^2 = 10e7 um/s^2
+    // 0.1g = 10e6 um/s^2
+    // e.g: 0.041g = 0.041 * 10^7 um/s^2 = 041*10e4 um/s^2
+        
+    // 最小单位为0.001g = 0.001 * 10^7 um/s^2 = 1*10^4 um/s^2
+    static const double js_standard_acc_blu_s2 = util::UnitConverter::um2blu(10000.0);
+        
+    uint32_t digits_345 = (js / 100) % 1000;
+    
+    if (digits_345 == 0) {
+        digits_345 = 1;
+    }  
+    
+    return digits_345 * js_standard_acc_blu_s2;
+}
+
 bool PowerManager::set_current_eleparam(const power::EleParam_dkd_t &eleparam) {
     power_ctrler_->update_eleparam_and_send(eleparam);
 
@@ -87,8 +110,9 @@ bool PowerManager::set_current_eleparam(const power::EleParam_dkd_t &eleparam) {
     jp.buffer_blu = sys_conf_jp.buffer_um;
     if (jp.buffer_blu < 0.0) jp.buffer_blu = 0.0;
 
-    jp.speed_param.acc0 =
-        util::UnitConverter::um2blu(sys_conf_jp.max_acc_um_s2);
+    // jp.speed_param.acc0 =
+    //     util::UnitConverter::um2blu(sys_conf_jp.max_acc_um_s2);
+    jp.speed_param.acc0 = _get_jump_acc_from_js(eleparam.jump_js);
     jp.speed_param.dec0 = -jp.speed_param.acc0;
     jp.speed_param.entry_v = 0;
     jp.speed_param.exit_v = 0;

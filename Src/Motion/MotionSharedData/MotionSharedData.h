@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
+#include "Motion/JumpDefines.h"
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
 
@@ -138,11 +139,12 @@ public:
         settings_ = settings;
     }
 
+    inline void set_jump_param(const JumpParam& jump_param) { jump_param_ = jump_param; }
+    const auto& get_jump_param() const { return jump_param_; }
+
 public:
     inline const auto &get_global_cmd_axis() const { return global_cmd_axis_; }
-    inline void set_global_cmd_axis(const axis_t &cmd_axis) {
-        global_cmd_axis_ = cmd_axis;
-    }
+    void set_global_cmd_axis(const axis_t &cmd_axis);
 
     axis_t get_act_axis() const;
     void get_act_axis(axis_t& axis) const;
@@ -165,7 +167,11 @@ private:
     // 共享ecat manager, 便于获取数据和设定(如速度偏置控制)
     ecat::EcatManager::ptr ecat_manager_;
 
+    // 设定
     MotionSettings settings_{};
+
+    // 抬刀参数存储
+    JumpParam jump_param_;
 
     // 共享的线程us计数器, 每次线程运行时都要加一下 thread_cycle_us_
     uint64_t thread_tick_us_{0}; // us
