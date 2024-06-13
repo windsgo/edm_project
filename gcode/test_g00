@@ -1,6 +1,11 @@
 i = RS274Interpreter()
 
 i.g54()
+i.g54()
+i.g54()
+i.g54()
+i.g54()
+i.g54()
 i.g90()
 i.f(100000)
 

@@ -61,6 +61,8 @@ bool GCodeRunner::pause() {
         } else {
             bool ret = _cmd_auto_pause();
             if (!ret) {
+                s_logger->warn("motion task pause failed");
+                delay_pause_flag_ = true; // delay pause
                 return false;
             }
 
@@ -73,6 +75,7 @@ bool GCodeRunner::pause() {
     case State::Paused:
         return true;
     case State::CurrentNodeIniting:
+        delay_pause_flag_ = true; // delay pause
         s_logger->warn("pause failed, when CurrentNodeIniting");
     case State::WaitingForStopped:
     case State::Stopped:
@@ -234,6 +237,7 @@ void GCodeRunner::_run_once() {
     local_info_cache_ =
         shared_core_data_->get_motion_thread_ctrler()->get_info_cache();
 #endif // EDM_MOTION_INFO_GET_USE_ATOMIC
+
     switch (state_) {
     case State::ReadyToStart: {
         _switch_to_state(State::CurrentNodeIniting);
@@ -271,6 +275,13 @@ void GCodeRunner::_run_once() {
     default:
         assert(false);
         break;
+    }
+
+    if (delay_pause_flag_) {
+        auto ret = this->pause();
+        if (ret) {
+            delay_pause_flag_ = false;
+        } 
     }
 }
 
@@ -347,6 +358,7 @@ void GCodeRunner::_reset_state() {
     curr_gcode_num_ = -1; //! reset to -1, means the state is un-inited
     update_timer_->stop();
     gcode_list_.clear();
+    delay_pause_flag_ = false;
 }
 
 void GCodeRunner::_init_help_connections() {
@@ -658,6 +670,7 @@ void GCodeRunner::_state_running() {
         switch (local_info_cache_.auto_state) {
         case move::MotionAutoState::Paused:
             _switch_to_state(State::Paused);
+            delay_pause_flag_ = false;
             emit sig_auto_paused();
             break;
         default:
@@ -759,6 +772,7 @@ void GCodeRunner::_state_waiting_for_paused() {
         switch (local_info_cache_.auto_state) {
         case move::MotionAutoState::Paused:
             _switch_to_state(State::Paused);
+            delay_pause_flag_ = false;
             emit sig_auto_paused();
             break;
         case move::MotionAutoState::Pausing:

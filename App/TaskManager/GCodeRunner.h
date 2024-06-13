@@ -113,6 +113,9 @@ private:
     int curr_gcode_num_;
 
     std::string last_error_str_;
+
+    // solve pause fail.
+    bool delay_pause_flag_ {false}; // 延迟暂停(下一个状态暂停)
 };
 
 } // namespace task
