@@ -1,7 +1,12 @@
 #include "GCodeTaskConverter.h"
 
+#include <memory>
+#include <optional>
 #include <unordered_map>
 
+#include "TaskManager/GCodeTask.h"
+#include "TaskManager/GCodeTaskBase.h"
+#include "common/utils.hpp"
 #include "config.h"
 
 #include "Logger/LogMacro.h"
@@ -26,7 +31,8 @@ static const std::unordered_map<std::string, GCodeTaskType> s_type_map = {
     XX_(FeedSpeedSetCommand),
     XX_(DelayCommand),
     XX_(PauseCommand),
-    XX_(ProgramEndCommand)
+    XX_(ProgramEndCommand),
+    XX_(CoordSetZeroCommand)
 
 #undef XX_
 
@@ -82,8 +88,9 @@ static std::optional<GCodeTaskBase::ptr> _make_g00(const json::object &jo) {
         }
     }
 
-    auto g00 = std::make_shared<GCodeTaskG00Motion>(
-        !m05, touch, feed_speed, coord_index, coord_mode, values, line_number, -1);
+    auto g00 = std::make_shared<GCodeTaskG00Motion>(!m05, touch, feed_speed,
+                                                    coord_index, coord_mode,
+                                                    values, line_number, -1);
 
     return g00;
 }
@@ -126,12 +133,14 @@ static std::optional<GCodeTaskBase::ptr> _make_g01(const json::object &jo) {
     return g01;
 }
 
-static std::optional<GCodeTaskBase::ptr> _make_coord_index(const json::object &jo) {
+static std::optional<GCodeTaskBase::ptr>
+_make_coord_index(const json::object &jo) {
     auto coord_index = jo.at("CoordinateIndex").as_integer();
 
     auto line_number = jo.at("LineNumber").as_integer();
 
-    auto coord_index_task = std::make_shared<GCodeTaskCoordinateIndex>(coord_index, line_number, -1);
+    auto coord_index_task = std::make_shared<GCodeTaskCoordinateIndex>(
+        coord_index, line_number, -1);
 
     return coord_index_task;
 }
@@ -141,7 +150,8 @@ static std::optional<GCodeTaskBase::ptr> _make_ele_set(const json::object &jo) {
 
     auto line_number = jo.at("LineNumber").as_integer();
 
-    auto ele_set = std::make_shared<GCodeTaskEleparamSet>(ele_index, line_number, -1);
+    auto ele_set =
+        std::make_shared<GCodeTaskEleparamSet>(ele_index, line_number, -1);
 
     return ele_set;
 }
@@ -172,20 +182,54 @@ static std::optional<GCodeTaskBase::ptr> _make_m00(const json::object &jo) {
     return m00;
 }
 
-static std::optional<GCodeTaskBase::ptr> _make_coord_mode(const json::object &jo) {
+static std::optional<GCodeTaskBase::ptr>
+_make_coord_mode(const json::object &jo) {
     auto line_number = jo.at("LineNumber").as_integer();
 
-    auto coord_mode = std::make_shared<GCodeTaskCoordinateMode>(line_number, -1);
+    auto coord_mode =
+        std::make_shared<GCodeTaskCoordinateMode>(line_number, -1);
 
     return coord_mode;
 }
 
-static std::optional<GCodeTaskBase::ptr> _make_feed_set(const json::object &jo) {
+static std::optional<GCodeTaskBase::ptr>
+_make_feed_set(const json::object &jo) {
     auto line_number = jo.at("LineNumber").as_integer();
 
     auto feed_set = std::make_shared<GCodeTaskFeedSpeedSet>(line_number, -1);
 
     return feed_set;
+}
+
+static std::optional<GCodeTaskBase::ptr>
+_make_coord_set_zero(const json::object &jo) {
+    auto line_number = jo.at("LineNumber").as_integer();
+
+    const auto &j_set_zero_axis_list = jo.at("SetZeroAxisList").as_array();
+    if (j_set_zero_axis_list.size() < 6) {
+        s_logger->error(
+            "GCodeTaskConverter _make_coord_set_zero: less than 6, {}",
+            j_set_zero_axis_list.size());
+        return std::nullopt;
+    }
+
+    std::vector<bool> set_zero_axis_list;
+    set_zero_axis_list.resize(6);
+    for (std::size_t i = 0; i < 6; ++i) {
+        if (j_set_zero_axis_list[i].is_boolean()) {
+            set_zero_axis_list[i] = j_set_zero_axis_list[i].as_boolean();
+        } else {
+            s_logger->error(
+                "GCodeTaskConverter _make_coord_set_zero: axis {} not boolean",
+                i);
+            return std::nullopt;
+        }
+    }
+
+    auto coord_set_zero = std::make_shared<GCodeTaskCoordSetZeroCommand>(
+        set_zero_axis_list, line_number, -1);
+
+    return coord_set_zero;
 }
 
 std::optional<GCodeTaskBase::ptr>
@@ -215,7 +259,7 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
     case GCodeTaskType::G01MotionCommand: {
         return _make_g01(jo);
     }
-    
+
     case GCodeTaskType::CoordinateIndexCommand: {
         return _make_coord_index(jo);
     }
@@ -235,17 +279,20 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
     case GCodeTaskType::PauseCommand: {
         return _make_m00(jo);
     }
+    case GCodeTaskType::CoordSetZeroCommand: {
+        return _make_coord_set_zero(jo);
+    }
 
     //! 以下命令虽然构造, 但是实际无操作
     // G90G91的设置记录在G00node中
-    // F值的设置也记录在G00node中 
+    // F值的设置也记录在G00node中
     case GCodeTaskType::CoordinateModeCommand: {
         return _make_coord_mode(jo);
     }
     case GCodeTaskType::FeedSpeedSetCommand: {
         return _make_feed_set(jo);
     }
-    
+
     default:
         s_logger->info("Ignore task: {}", type_str);
         return nullptr; // ignored
@@ -256,23 +303,27 @@ std::optional<std::vector<GCodeTaskBase::ptr>>
 GCodeTaskConverter::MakeGCodeTaskListFromJson(const json::value &j) {
 
     std::vector<GCodeTaskBase::ptr> gcode_task_list;
-    
+
     if (!j.is_array()) {
-        s_logger->error("MakeGCodeTaskListFromJson: j is not an array, type: {}", (int)j.type());
+        s_logger->error(
+            "MakeGCodeTaskListFromJson: j is not an array, type: {}",
+            (int)j.type());
         return std::nullopt;
     }
 
-    const auto& jarr = j.as_array();
+    const auto &jarr = j.as_array();
     if (jarr.empty()) {
         s_logger->error("MakeGCodeTaskListFromJson: jarr is empty");
         return std::nullopt;
     }
 
-    gcode_task_list.reserve(jarr.size()); // 预留空间, 会多出来, 有些node会被忽略
+    gcode_task_list.reserve(
+        jarr.size()); // 预留空间, 会多出来, 有些node会被忽略
 
     for (std::size_t i = 0; i < jarr.size(); ++i) {
         if (!jarr[i].is_object()) {
-            s_logger->error("MakeGCodeTaskListFromJson: jarr[{}] is not empty", i);
+            s_logger->error("MakeGCodeTaskListFromJson: jarr[{}] is not empty",
+                            i);
             return std::nullopt;
         }
 
@@ -280,7 +331,8 @@ GCodeTaskConverter::MakeGCodeTaskListFromJson(const json::value &j) {
             auto ret = _MakeGCodeTaskFromJsonObject(jarr[i].as_object());
             if (!ret) {
                 // failed
-                s_logger->error("MakeGCodeTaskListFromJson: process jarr[{}] failed", i);
+                s_logger->error(
+                    "MakeGCodeTaskListFromJson: process jarr[{}] failed", i);
                 return std::nullopt;
             }
 
@@ -289,8 +341,9 @@ GCodeTaskConverter::MakeGCodeTaskListFromJson(const json::value &j) {
                 gcode_task_list.push_back(*ret);
             }
 
-        } catch (const std::exception& e) {
-            s_logger->error("MakeGCodeTaskListFromJson exception: what(): {}", e.what());
+        } catch (const std::exception &e) {
+            s_logger->error("MakeGCodeTaskListFromJson exception: what(): {}",
+                            e.what());
             return std::nullopt;
         }
     }

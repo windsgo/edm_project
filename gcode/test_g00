@@ -6,6 +6,13 @@ i.f(100000)
 
 i.g00(x=0,y=0,z=0)
 
+i.g00(x=12,y=13,z=14)
+i.coord_set_all_zero()
+
+i.g00(x=1)
+
+i.m00()
+
 def touch_z_neg(feed, target_z):
     i.f(feed).g90()
     i.g00(z=target_z, touch=True)
@@ -15,6 +22,9 @@ def touch_z_neg(feed, target_z):
 
 touch_z_neg(1000, -50)
 touch_z_neg(100, -50)
+
+i.g04(t=1)
+i.coord_set_z_zero()
 
 i.m00()
 

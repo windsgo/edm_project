@@ -86,7 +86,12 @@ void CoordSettingPanel::slot_change_display_coord_index(
     }
     ui->comboBox_select_coord_index->setCurrentIndex(find_ret->second);
 
-    _change_display_coord_index(new_coord_index);
+    update_all_display();
+    // _change_display_coord_index(new_coord_index);
+}
+
+void CoordSettingPanel::slot_update_display() {
+    this->update_all_display();
 }
 
 void CoordSettingPanel::_init_label_arr() {
@@ -181,7 +186,7 @@ void CoordSettingPanel::_init_connection() {
         [&](int index) {
             auto coord_index =
                 ui->comboBox_select_coord_index->currentData().toUInt();
-            this->_change_display_coord_index(coord_index);
+            this->update_all_display();
         });
 }
 

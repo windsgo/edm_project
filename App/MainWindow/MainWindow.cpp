@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
+#include "CoordSettingPanel/CoordSettingPanel.h"
 #include "DataDisplayer/DataDisplayer.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
 #include "SystemSettings/SystemSettings.h"
@@ -143,6 +144,10 @@ void MainWindow::_init_members() {
 
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
+    connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
+            coord_setting_panel_, &CoordSettingPanel::slot_change_display_coord_index);
+    connect(task_manager_, &task::TaskManager::sig_coord_offset_changed,
+            coord_setting_panel_, &CoordSettingPanel::slot_update_display);
 
     // // test
     // auto test_data_displayer_layout = new QGridLayout(ui->tab_testdisplay);

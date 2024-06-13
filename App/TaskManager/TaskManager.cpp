@@ -75,6 +75,8 @@ void TaskManager::_init_connections() {
             &TaskManager::sig_autogcode_switched_to_line);
     connect(gcode_runner_, &GCodeRunner::sig_switch_coordindex, this,
             &TaskManager::sig_switch_coordindex);
+    connect(gcode_runner_, &GCodeRunner::sig_coord_offset_changed, this,
+            &TaskManager::sig_coord_offset_changed);  
 }
 
 bool TaskManager::_cmd_start_pointmove(

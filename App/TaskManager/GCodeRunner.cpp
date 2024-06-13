@@ -1,6 +1,9 @@
 #include "GCodeRunner.h"
 
+#include "Coordinate/Coordinate.h"
 #include "Logger/LogMacro.h"
+#include "TaskManager/GCodeTask.h"
+#include "Utils/Format/edm_format.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -688,7 +691,7 @@ void GCodeRunner::_state_running() {
                 std::static_pointer_cast<GCodeTaskG00Motion>(curr_gcode);
             if (local_info_cache_.TouchWarning()) {
                 if (g00_gcode->is_touch_motion()) {
-                    s_logger->info("touch over");
+                    s_logger->trace("touch over");
                     // 清错
                     auto ack_cmd = std::make_shared<
                         move::MotionCommandSettingClearWarning>(0);
@@ -698,11 +701,11 @@ void GCodeRunner::_state_running() {
                     auto ret = TaskHelper::WaitforCmdTobeAccepted(ack_cmd, 200);
                     if (!ret) {
                         _abort("Clear Warning Failed");
-                        return;
+                        break;
                     }
                 } else {
                     _abort("***Touch Warning !!");
-                    return;
+                    break;
                 }
             }
         }
@@ -763,6 +766,38 @@ void GCodeRunner::_state_running_non_motion(GCodeTaskBase::ptr curr_gcode) {
                                    es_gcode->eleparam_index()));
             break;
         }
+
+        // 紧接着下一个
+        _check_to_next_gcode();
+        break;
+    }
+    case GCodeTaskType::CoordSetZeroCommand: {
+        auto csz_gcode = std::static_pointer_cast<GCodeTaskCoordSetZeroCommand>(curr_gcode);
+
+        auto current_coord_index = this->shared_core_data_->get_coord_system()->get_current_coord_index();
+
+        auto original_coord_offset_opt = this->shared_core_data_->get_coord_system()->get_current_coord_offset();
+        if (!original_coord_offset_opt) {
+            _abort(EDM_FMT::format("abort: CoordSetZeroCommand: original offset get failed"));
+            break;
+        }
+
+        auto original_coord_offset = *original_coord_offset_opt;
+        auto new_coord_offset = original_coord_offset;
+        const auto& set_zero_axis_list = csz_gcode->set_zero_axis_list();
+        for (int i = 0; i < coord::Coordinate::Size; ++i) {
+            if (set_zero_axis_list[i]) {
+                new_coord_offset[i] = local_info_cache_.curr_cmd_axis_blu[i];
+            }
+        }
+
+        auto set_ret = this->shared_core_data_->get_coord_system()->set_current_coord_offset(new_coord_offset);
+        if (!set_ret) {
+            _abort(EDM_FMT::format("abort: CoordSetZeroCommand: set zero failed"));
+            break;
+        }
+
+        emit sig_coord_offset_changed(); // TODO
 
         // 紧接着下一个
         _check_to_next_gcode();

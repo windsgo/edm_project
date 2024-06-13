@@ -167,6 +167,22 @@ public:
     bool is_motion_task() const override { return true; }
 };
 
+class GCodeTaskCoordSetZeroCommand final : public GCodeTaskBase {
+public:
+    GCodeTaskCoordSetZeroCommand(const std::vector<bool> &set_zero_axis_list,
+                                 int line_number, int node_index = -1)
+        : GCodeTaskBase(GCodeTaskType::CoordSetZeroCommand, line_number,
+                        node_index), set_zero_axis_list_(set_zero_axis_list) {}
+    ~GCodeTaskCoordSetZeroCommand() noexcept override = default;
+
+    const auto& set_zero_axis_list() const { return set_zero_axis_list_; }
+
+    bool is_motion_task() const override { return false; }
+
+private:
+    std::vector<bool> set_zero_axis_list_;
+};
+
 } // namespace task
 
 } // namespace edm

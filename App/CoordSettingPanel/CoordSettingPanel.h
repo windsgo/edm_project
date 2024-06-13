@@ -35,6 +35,8 @@ public: // slots
     // 供外部切换编程坐标系时调用, 以同时切换显示坐标系
     void slot_change_display_coord_index(uint32_t new_coord_index);
 
+    void slot_update_display();
+
 private:
     void _init_label_arr();
     void _init_coord_indexes();

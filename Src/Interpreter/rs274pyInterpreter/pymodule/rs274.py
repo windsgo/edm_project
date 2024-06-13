@@ -28,6 +28,7 @@ class CommandType(Enum):
     EleparamSetCommand = 4 # e001
     FeedSpeedSetCommand = 5 # f1000
     DelayCommand = 6 # g04t5
+    CoordSetZeroCommand = 7 # coord_set_x_zero, coord_set_zero(x=True, z=True), coord_set_all_zero(), etc
     PauseCommand = 98 # m00
     ProgramEndCommand = 99 # m02
 
@@ -46,6 +47,7 @@ class CommandDictKey(Enum):
     DelayTime = 8
     M05IgnoreTouchDetect = 9
     G00Touch = 10
+    SetZeroAxisList = 11
 
 def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
     output = ""
@@ -243,6 +245,52 @@ class RS274Interpreter(object):
     def set_coord(self, index: int) -> RS274Interpreter:
         return self._command_set_coordinate_index(index)
     # TODO 其他坐标系指定
+    
+    # 当前坐标系原点设定
+    def _coord_set_zero(self, x : bool = False, y : bool = False, z : bool = False, b : bool = False, c : bool = False, a : bool = False) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        if (not isinstance(x, bool)):
+            raise InterpreterException(f"x type invalid: {type(x)} " + _get_stackmessage(2))
+        if (not isinstance(y, bool)):
+            raise InterpreterException(f"y type invalid: {type(y)} " + _get_stackmessage(2))
+        if (not isinstance(z, bool)):
+            raise InterpreterException(f"z type invalid: {type(z)} " + _get_stackmessage(2))
+        if (not isinstance(b, bool)):
+            raise InterpreterException(f"b type invalid: {type(b)} " + _get_stackmessage(2))
+        if (not isinstance(c, bool)):
+            raise InterpreterException(f"c type invalid: {type(c)} " + _get_stackmessage(2))
+        if (not isinstance(a, bool)):
+            raise InterpreterException(f"a type invalid: {type(a)} " + _get_stackmessage(2))
+
+        set_zero_axis_list = [x, y, z, b, c, a]
+        command = {
+            CommandDictKey.CommandType.name: CommandType.CoordSetZeroCommand.name,
+            CommandDictKey.SetZeroAxisList.name: set_zero_axis_list,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(2) # indirect call
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+    
+    def coord_set_zero(self, x : bool = False, y : bool = False, z : bool = False, b : bool = False, c : bool = False, a : bool = False) -> RS274Interpreter:
+        return self._coord_set_zero(x, y, z, b, c, a)
+    
+    def coord_set_x_zero(self) -> RS274Interpreter:
+        return self._coord_set_zero(x=True)
+    def coord_set_y_zero(self) -> RS274Interpreter:
+        return self._coord_set_zero(y=True)
+    def coord_set_z_zero(self) -> RS274Interpreter:
+        return self._coord_set_zero(z=True)
+    def coord_set_b_zero(self) -> RS274Interpreter:
+        return self._coord_set_zero(b=True)
+    def coord_set_c_zero(self) -> RS274Interpreter:
+        return self._coord_set_zero(c=True)
+    def coord_set_a_zero(self) -> RS274Interpreter:
+        return self._coord_set_zero(a=True)
+    def coord_set_all_zero(self) -> RS274Interpreter:
+        return self._coord_set_zero(x=True, y=True, z=True, b=True, c=True, a=True)
     
     # 程序结束指令
     def m02(self) -> RS274Interpreter:

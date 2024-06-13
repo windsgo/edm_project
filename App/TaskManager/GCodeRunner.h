@@ -49,6 +49,8 @@ signals:
 
     void sig_switch_coordindex(uint32_t coord_index);
 
+    void sig_coord_offset_changed();
+
 private:
     bool _cmd_auto_pause();
     bool _cmd_auto_resume();

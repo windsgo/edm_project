@@ -60,6 +60,8 @@ signals: // 提供给GUI界面的信号, 告知一些重要状态变化
     void sig_autogcode_switched_to_line(uint32_t line_num);
 
     void sig_switch_coordindex(uint32_t coord_index);
+    
+    void sig_coord_offset_changed();
 
 private:
     void _init_state();
