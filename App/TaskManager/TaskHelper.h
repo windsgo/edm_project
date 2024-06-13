@@ -2,10 +2,15 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <optional>
+#include <string>
 
+#include "Coordinate/Coordinate.h"
 #include "Coordinate/CoordinateSystem.h"
 #include "Motion/MotionThread/MotionCommand.h"
+#include "Motion/MoveDefines.h"
 #include "SystemSettings/SystemSettings.h"
+#include "Utils/Format/edm_format.h"
 #include "Utils/UnitConverter/UnitConverter.h"
 
 namespace edm {
@@ -69,8 +74,8 @@ public:
     // dir 需要是一个单位向量
     static move::unit_t
     GetMaxLengthOnCurrentDir(coord::CoordinateSystem::ptr coord_sys,
-                              const move::axis_t &dir,
-                              const move::axis_t &reference_pos) {
+                             const move::axis_t &dir,
+                             const move::axis_t &reference_pos) {
         const auto &pos_sl = coord_sys->get_pos_soft_limit();
         const auto &neg_sl = coord_sys->get_neg_soft_limit();
 

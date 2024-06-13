@@ -4,6 +4,7 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <memory>
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -281,7 +282,7 @@ void GCodeRunner::_run_once() {
         auto ret = this->pause();
         if (ret) {
             delay_pause_flag_ = false;
-        } 
+        }
     }
 }
 
@@ -683,9 +684,26 @@ void GCodeRunner::_state_running() {
 
         //! 检查G00接触感知报警
         if (curr_gcode->type() == GCodeTaskType::G00MotionCommand) {
+            auto g00_gcode =
+                std::static_pointer_cast<GCodeTaskG00Motion>(curr_gcode);
             if (local_info_cache_.TouchWarning()) {
-                _abort("***Touch Warning !!");
-                break;
+                if (g00_gcode->is_touch_motion()) {
+                    s_logger->info("touch over");
+                    // 清错
+                    auto ack_cmd = std::make_shared<
+                        move::MotionCommandSettingClearWarning>(0);
+                    this->shared_core_data_->get_motion_cmd_queue()
+                        ->push_command(ack_cmd);
+
+                    auto ret = TaskHelper::WaitforCmdTobeAccepted(ack_cmd, 200);
+                    if (!ret) {
+                        _abort("Clear Warning Failed");
+                        return;
+                    }
+                } else {
+                    _abort("***Touch Warning !!");
+                    return;
+                }
             }
         }
 

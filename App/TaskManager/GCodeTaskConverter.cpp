@@ -63,6 +63,8 @@ static std::optional<GCodeTaskBase::ptr> _make_g00(const json::object &jo) {
 
     auto m05 = jo.at("M05IgnoreTouchDetect").as_boolean();
 
+    auto touch = jo.at("G00Touch").as_boolean();
+
     auto feed_speed = jo.at("FeedSpeed").as_integer();
 
     const auto &coords = jo.at("Coordinates").as_array();
@@ -81,7 +83,7 @@ static std::optional<GCodeTaskBase::ptr> _make_g00(const json::object &jo) {
     }
 
     auto g00 = std::make_shared<GCodeTaskG00Motion>(
-        !m05, feed_speed, coord_index, coord_mode, values, line_number, -1);
+        !m05, touch, feed_speed, coord_index, coord_mode, values, line_number, -1);
 
     return g00;
 }

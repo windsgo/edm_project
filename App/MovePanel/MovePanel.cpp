@@ -245,13 +245,13 @@ void MovePanel::_le_start_pointmove() const {
         return; // log error inside the function
     }
 
-    {
-        std::stringstream ss;
-        for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
-            ss << mach_target_pos[i] << ", ";
-        }
-        // s_logger->debug("mach_target_pos: {}", ss.str());
-    }
+    // {
+    //     std::stringstream ss;
+    //     for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+    //         ss << mach_target_pos[i] << ", ";
+    //     }
+    //     // s_logger->debug("mach_target_pos: {}", ss.str());
+    // }
 
     if (move::MotionUtils::IsAxisTheSame(mach_start_pos, mach_target_pos)) {
         s_logger->error("start pointmove failed : start and target the same");

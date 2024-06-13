@@ -45,6 +45,7 @@ class CommandDictKey(Enum):
     FeedSpeed = 7
     DelayTime = 8
     M05IgnoreTouchDetect = 9
+    G00Touch = 10
 
 def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
     output = ""
@@ -354,7 +355,9 @@ class RS274Interpreter(object):
     
     # G00快速直线运动
     def g00(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None,
-            m05: bool = False) -> RS274Interpreter:
+            m05: bool = False, touch: bool = False) -> RS274Interpreter:
+        # m05: true=忽略接触感知
+        # touch: true=碰边, 强制m05=False; Touch行为在于接触感知后不会视为错误, 自动清错并接着执行后续代码
         if (self.__g_environment.is_program_end()): 
             return self
         
@@ -363,6 +366,11 @@ class RS274Interpreter(object):
         
         if (not isinstance(m05, bool)):
             raise InterpreterException(f"m05 Type Not Valid: {type(m05)} " + _get_stackmessage())
+        if (not isinstance(touch, bool)):
+            raise InterpreterException(f"touch Type Not Valid: {type(touch)} " + _get_stackmessage())
+
+        if (touch):
+            m05 = False # 碰边行为, 一定要开启接触感知
         
         command = {
             CommandDictKey.CommandType.name: CommandType.G00MotionCommand.name,
@@ -371,6 +379,7 @@ class RS274Interpreter(object):
             CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
             CommandDictKey.LineNumber.name: _get_caller_linenumber(),
             CommandDictKey.M05IgnoreTouchDetect.name: m05,
+            CommandDictKey.G00Touch.name: touch,
             CommandDictKey.FeedSpeed.name: self.__g_environment.get_feed_speed()
         }
         

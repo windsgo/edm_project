@@ -1,15 +1,22 @@
 i = RS274Interpreter()
 
 i.g54()
-i.g54()
-i.g54()
-i.g54()
-i.g54()
-i.g54()
 i.g90()
 i.f(100000)
 
 i.g00(x=0,y=0,z=0)
+
+def touch_z_neg(feed, target_z):
+    i.f(feed).g90()
+    i.g00(z=target_z, touch=True)
+    i.g04(t=1)
+    i.f(1000).g91()
+    i.g00(z=5, m05=True)
+
+touch_z_neg(1000, -50)
+touch_z_neg(100, -50)
+
+i.m00()
 
 i.g91()
 for j in range(100):

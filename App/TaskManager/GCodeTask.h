@@ -17,35 +17,40 @@ namespace task {
 
 class GCodeTaskG00Motion final : public GCodeTaskBase {
 public:
-    GCodeTaskG00Motion(bool touch_detect_enable, int feed_speed,
-                       int coord_index, GCodeCoordinateMode coord_mode,
+    GCodeTaskG00Motion(bool touch_detect_enable, bool is_touch_motion,
+                       int feed_speed, int coord_index,
+                       GCodeCoordinateMode coord_mode,
                        const std::vector<std::optional<double>> cmd_values,
                        int line_number, int node_index = -1)
         : GCodeTaskBase(GCodeTaskType::G00MotionCommand, line_number,
                         node_index),
-          touch_detect_enable_(touch_detect_enable), feed_speed_(feed_speed),
+          touch_detect_enable_(touch_detect_enable),
+          is_touch_motion_(is_touch_motion), feed_speed_(feed_speed),
           coord_index_(coord_index), coord_mode_(coord_mode),
           cmd_values_(cmd_values) {}
     ~GCodeTaskG00Motion() noexcept override = default;
 
     auto touch_detect_enable() const { return touch_detect_enable_; }
+    auto is_touch_motion() const { return is_touch_motion_; }
 
     auto feed_speed() const { return feed_speed_; }
     auto coord_index() const { return coord_index_; }
 
     auto coord_mode() const { return coord_mode_; }
 
-    const auto& cmd_values() const { return cmd_values_; }
+    const auto &cmd_values() const { return cmd_values_; }
 
     bool is_motion_task() const override { return true; }
 
 private:
     bool touch_detect_enable_; // 接触感知使能 (m05忽略接触感知)
+    bool is_touch_motion_;     // 是否是碰边动作 (touch=?)
     int feed_speed_;           // 在此之前设定的feed speed
     int coord_index_;          // 使用的坐标系序号
     GCodeCoordinateMode coord_mode_; // g90, g91
     std::vector<std::optional<double>>
-        cmd_values_; // g00()后面带的坐标值, 没有的以std::nullopt记录 (单位mm, 无需转换)
+        cmd_values_; // g00()后面带的坐标值, 没有的以std::nullopt记录 (单位mm,
+                     // 无需转换)
 };
 
 class GCodeTaskG01Motion final : public GCodeTaskBase {
@@ -63,7 +68,7 @@ public:
 
     auto coord_mode() const { return coord_mode_; }
 
-    const auto& cmd_values() const { return cmd_values_; }
+    const auto &cmd_values() const { return cmd_values_; }
 
     bool is_motion_task() const override { return true; }
 
@@ -156,8 +161,7 @@ public:
 class GCodeTaskPauseCommand final : public GCodeTaskBase {
 public:
     GCodeTaskPauseCommand(int line_number, int node_index = -1)
-        : GCodeTaskBase(GCodeTaskType::PauseCommand, line_number,
-                        node_index) {}
+        : GCodeTaskBase(GCodeTaskType::PauseCommand, line_number, node_index) {}
     ~GCodeTaskPauseCommand() noexcept override = default;
 
     bool is_motion_task() const override { return true; }
