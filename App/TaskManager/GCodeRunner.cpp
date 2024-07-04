@@ -2,11 +2,15 @@
 
 #include "Coordinate/Coordinate.h"
 #include "Logger/LogMacro.h"
+#include "Motion/MotionUtils/MotionUtils.h"
+#include "Motion/MoveDefines.h"
 #include "TaskManager/GCodeTask.h"
 #include "Utils/Format/edm_format.h"
+#include "config.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <cstddef>
 #include <memory>
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -472,13 +476,83 @@ void GCodeRunner::_state_current_node_initing() {
             break;
         }
 
-        move::axis_t motor_target_pos;
-        shared_core_data_->get_coord_system()->get_cm().machine_to_motor(
-            mach_target_pos, motor_target_pos);
-
         // 根据mach_target_pos, 判断软限位
         auto sl_check_ret = TaskHelper::CheckPosandnegSoftLimit(
             shared_core_data_->get_coord_system(), mach_target_pos);
+        if (!sl_check_ret) {
+            if (!g00_gcode->is_touch_motion()) {
+                _abort(EDM_FMT::format("abort: g00 softlimit reached"));
+                break;
+            } else {
+                // touch motion, 将各坐标数据按当前方向(target - start)折算到,
+                // 不超过软限位的最大长度的位置
+                auto curr_dir = move::MotionUtils::CalcAxisUnitVector(
+                    mach_start_pos, mach_target_pos);
+
+                const auto &pos_sl =
+                    shared_core_data_->get_coord_system()->get_pos_soft_limit();
+                const auto &neg_sl =
+                    shared_core_data_->get_coord_system()->get_neg_soft_limit();
+
+                // 计算当前方向上剩余的长度
+                move::unit_t min_scale =
+                    -1.0; // 对每个方向都计算单位向量方向上的剩余scale,
+                          // 并取最小的一个scale(这个最小的scale就是该方向上剩余的长度)
+                for (size_t i = 0; i < EDM_AXIS_NUM; ++i) {
+                    move::unit_t scale_left = 0.0;
+                    if (curr_dir[i] == 0.0) {
+                        continue;
+                    } else if (curr_dir[i] > 0.0) {
+                        scale_left =
+                            (pos_sl[i] - mach_start_pos[i]) / curr_dir[i];
+                        if (scale_left <= 0.0) {
+                            s_logger->warn(
+                                "abort: g00(touch) softlimit pos reached {}",
+                                i);
+                            _abort(EDM_FMT::format(
+                                "abort: g00(touch) softlimit pos reached {}",
+                                i));
+                            return;
+                        }
+                    } else if (curr_dir[i] < 0.0) {
+                        scale_left =
+                            (neg_sl[i] - mach_start_pos[i]) / curr_dir[i];
+                        if (scale_left <= 0.0) {
+                            s_logger->warn(
+                                "abort: g00(touch) softlimit neg reached {}",
+                                i);
+                            _abort(EDM_FMT::format(
+                                "abort: g00(touch) softlimit neg reached {}",
+                                i));
+                            return;
+                        }
+                    }
+                    s_logger->debug(
+                        "i: {}, min_scale: {}, scale_left: {}, pos_sl: {}, "
+                        "mach_start_pos: {}, mach_target_pos: {}",
+                        i, min_scale, scale_left, pos_sl[i], mach_start_pos[i],
+                        mach_target_pos[i]);
+                    if (min_scale < 0.0 || scale_left < min_scale) {
+                        min_scale = scale_left;
+                    }
+                }
+                if (min_scale <= 0.0) {
+                    _abort(
+                        EDM_FMT::format("abort: g00(touch) softlimit reached"));
+                    break;
+                }
+
+                for (size_t i = 0; i < EDM_AXIS_NUM; ++i) {
+                    mach_target_pos[i] =
+                        mach_start_pos[i] + curr_dir[i] * min_scale;
+                    s_logger->debug("target[{}]: {}", i, mach_target_pos[i]);
+                }
+            }
+        }
+
+        move::axis_t motor_target_pos;
+        shared_core_data_->get_coord_system()->get_cm().machine_to_motor(
+            mach_target_pos, motor_target_pos);
 
         auto speed = TaskHelper::GetDefaultSpeedparam();
         speed.cruise_v =
@@ -585,13 +659,17 @@ void GCodeRunner::_state_current_node_initing() {
             break;
         }
 
-        move::axis_t motor_target_pos;
-        shared_core_data_->get_coord_system()->get_cm().machine_to_motor(
-            mach_target_pos, motor_target_pos);
-
         // 根据mach_target_pos, 判断软限位
         auto sl_check_ret = TaskHelper::CheckPosandnegSoftLimit(
             shared_core_data_->get_coord_system(), mach_target_pos);
+        if (!sl_check_ret) {
+            _abort(EDM_FMT::format("abort: g01 softlimit reached"));
+            break;
+        }
+
+        move::axis_t motor_target_pos;
+        shared_core_data_->get_coord_system()->get_cm().machine_to_motor(
+            mach_target_pos, motor_target_pos);
 
         // 计算从开始点的最大抬刀距离
         move::axis_t jump_dir = move::MotionUtils::CalcAxisUnitVector(
@@ -772,28 +850,35 @@ void GCodeRunner::_state_running_non_motion(GCodeTaskBase::ptr curr_gcode) {
         break;
     }
     case GCodeTaskType::CoordSetZeroCommand: {
-        auto csz_gcode = std::static_pointer_cast<GCodeTaskCoordSetZeroCommand>(curr_gcode);
+        auto csz_gcode =
+            std::static_pointer_cast<GCodeTaskCoordSetZeroCommand>(curr_gcode);
 
-        auto current_coord_index = this->shared_core_data_->get_coord_system()->get_current_coord_index();
+        auto current_coord_index = this->shared_core_data_->get_coord_system()
+                                       ->get_current_coord_index();
 
-        auto original_coord_offset_opt = this->shared_core_data_->get_coord_system()->get_current_coord_offset();
+        auto original_coord_offset_opt =
+            this->shared_core_data_->get_coord_system()
+                ->get_current_coord_offset();
         if (!original_coord_offset_opt) {
-            _abort(EDM_FMT::format("abort: CoordSetZeroCommand: original offset get failed"));
+            _abort(EDM_FMT::format(
+                "abort: CoordSetZeroCommand: original offset get failed"));
             break;
         }
 
         auto original_coord_offset = *original_coord_offset_opt;
         auto new_coord_offset = original_coord_offset;
-        const auto& set_zero_axis_list = csz_gcode->set_zero_axis_list();
+        const auto &set_zero_axis_list = csz_gcode->set_zero_axis_list();
         for (int i = 0; i < coord::Coordinate::Size; ++i) {
             if (set_zero_axis_list[i]) {
                 new_coord_offset[i] = local_info_cache_.curr_cmd_axis_blu[i];
             }
         }
 
-        auto set_ret = this->shared_core_data_->get_coord_system()->set_current_coord_offset(new_coord_offset);
+        auto set_ret = this->shared_core_data_->get_coord_system()
+                           ->set_current_coord_offset(new_coord_offset);
         if (!set_ret) {
-            _abort(EDM_FMT::format("abort: CoordSetZeroCommand: set zero failed"));
+            _abort(
+                EDM_FMT::format("abort: CoordSetZeroCommand: set zero failed"));
             break;
         }
 
