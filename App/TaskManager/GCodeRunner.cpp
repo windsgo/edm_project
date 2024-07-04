@@ -509,10 +509,10 @@ void GCodeRunner::_state_current_node_initing() {
                             s_logger->warn(
                                 "abort: g00(touch) softlimit pos reached {}",
                                 i);
-                            _abort(EDM_FMT::format(
-                                "abort: g00(touch) softlimit pos reached {}",
-                                i));
-                            return;
+                            // _abort(EDM_FMT::format(
+                            //     "abort: g00(touch) softlimit pos reached {}",
+                            //     i));
+                            // return;
                         }
                     } else if (curr_dir[i] < 0.0) {
                         scale_left =
@@ -521,10 +521,10 @@ void GCodeRunner::_state_current_node_initing() {
                             s_logger->warn(
                                 "abort: g00(touch) softlimit neg reached {}",
                                 i);
-                            _abort(EDM_FMT::format(
-                                "abort: g00(touch) softlimit neg reached {}",
-                                i));
-                            return;
+                            // _abort(EDM_FMT::format(
+                            //     "abort: g00(touch) softlimit neg reached {}",
+                            //     i));
+                            // return;
                         }
                     }
                     s_logger->debug(
@@ -533,12 +533,16 @@ void GCodeRunner::_state_current_node_initing() {
                         i, min_scale, scale_left, pos_sl[i], mach_start_pos[i],
                         mach_target_pos[i]);
                     if (min_scale < 0.0 || scale_left < min_scale) {
-                        min_scale = scale_left;
+                        min_scale = scale_left > 0 ? scale_left : 0;
                     }
                 }
                 if (min_scale <= 0.0) {
-                    _abort(
-                        EDM_FMT::format("abort: g00(touch) softlimit reached"));
+                    // _abort(
+                    //     EDM_FMT::format("abort: g00(touch) softlimit reached"));
+                    // break;
+                    s_logger->warn(
+                        "g00 failed, next node : g00(touch) softlimit reached");
+                    _check_to_next_gcode();
                     break;
                 }
 
