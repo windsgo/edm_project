@@ -22,7 +22,8 @@
 #define NSEC_PER_SEC   (1000000000L)
 #define TIMESPEC2NS(T) ((uint64_t)(T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
 
-EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
+EDM_STATIC_LOGGER_NAME(s_logger, "motion");
+// EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 namespace edm {
 

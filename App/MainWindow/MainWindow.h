@@ -15,6 +15,7 @@
 #include "CoordSettingPanel/CoordSettingPanel.h"
 #include "SystemSettingPanel/SystemSettingPanel.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
+#include "LogListPanel/LogListPanel.h"
 
 #include "DataDisplayer/DataDisplayer.h"
 
@@ -68,6 +69,7 @@ private:
     CoordSettingPanel* coord_setting_panel_;
     SystemSettingPanel* system_setting_panel_;
     DataQueueRecordPanel* dqr_panel_;
+    LogListPanel* loglist_panel_;
 
     // DataDisplayer* test_data_displayer_;
     // int data_index0_;

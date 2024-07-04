@@ -3,6 +3,7 @@
 #include "CoordSettingPanel/CoordSettingPanel.h"
 #include "DataDisplayer/DataDisplayer.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
+#include "LogListPanel/LogListPanel.h"
 #include "SystemSettings/SystemSettings.h"
 #include "qwt_axis.h"
 #include "qwt_plot.h"
@@ -139,6 +140,10 @@ void MainWindow::_init_members() {
     auto dqr_panel_layout = new QGridLayout(ui->tab_record);
     dqr_panel_ = new DataQueueRecordPanel(shared_core_data_);
     dqr_panel_layout->addWidget(dqr_panel_);
+
+    auto loglist_panel_layout = new QGridLayout(ui->tab_log);
+    loglist_panel_ = new LogListPanel(shared_core_data_);
+    loglist_panel_layout->addWidget(loglist_panel_);
 
     _init_tab_monitor();
 

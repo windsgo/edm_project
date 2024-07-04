@@ -14,6 +14,7 @@
 #include <memory>
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
+EDM_STATIC_LOGGER_NAME(s_loglist, "loglist")
 
 namespace edm {
 
@@ -250,6 +251,7 @@ void GCodeRunner::_run_once() {
     case State::ReadyToStart: {
         _switch_to_state(State::CurrentNodeIniting);
         emit sig_auto_started();
+        s_loglist->info("GCodeRunner Start");
         break;
     }
     case State::CurrentNodeIniting: {
@@ -331,6 +333,7 @@ bool GCodeRunner::_check_gcode_list_at_first() {
 
 void GCodeRunner::_abort(std::string_view error_str) {
     s_logger->warn("GCodeRunner Abort: {}", error_str);
+    s_loglist->error("GCodeRunner Abort: {}", error_str);
 
     s_logger->info("Due to abort, emergency stopping motion");
     _cmd_emergency_stop();
@@ -342,6 +345,7 @@ void GCodeRunner::_abort(std::string_view error_str) {
 
 void GCodeRunner::_end() {
     s_logger->info("GCodeRunner End");
+    s_loglist->info("GCodeRunner End");
     _switch_to_state(State::Stopped);
 
     _reset_state();
@@ -385,6 +389,9 @@ void GCodeRunner::_state_current_node_initing() {
     assert(curr_gcode_num_ < gcode_list_.size());
     auto curr_gcode = gcode_list_[curr_gcode_num_];
     assert(curr_gcode);
+
+    s_loglist->trace("GCodeRunner switch node: {}, line: {}", curr_gcode_num_,
+                     curr_gcode->line_number());
 
     //! 可以在这里emit, 更好的是在 ++curr_gcode_num_ 的时候emit
     emit sig_autogcode_switched_to_line(curr_gcode->line_number());
@@ -690,6 +697,8 @@ void GCodeRunner::_state_current_node_initing() {
         }
 
         _switch_to_state(State::Running);
+
+        s_loglist->trace("GCodeRunner G01 Started");
 
         break;
     }

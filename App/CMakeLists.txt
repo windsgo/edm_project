@@ -34,6 +34,7 @@ set(APP_SOURCES
     CoordSettingPanel/CoordSettingPanel.cpp
     SystemSettingPanel/SystemSettingPanel.cpp
     DataQueueRecordPanel/DataQueueRecordPanel.cpp
+    LogListPanel/LogListPanel.cpp
     Resource/app_resource.qrc # qt resource
 )
 

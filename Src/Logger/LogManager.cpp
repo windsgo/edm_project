@@ -44,9 +44,9 @@ logger_ptr LogManager::get_logger(const std::string &logger_name) {
     if (auto logger = spdlog::get(logger_name)) {
         return logger;
     } else {
-        auto new_logger = spdlog::stdout_color_mt(logger_name);
+        auto new_logger = spdlog::stdout_color_mt(logger_name); // this method register logger automatically
         new_logger->set_level(spdlog::level::trace);
-        // spdlog::register_logger(new_logger);
+        // spdlog::register_logger(new_logger); // no need to register here
         spdlog::info("get_logger create new logger: {}", logger_name);
 
         return new_logger;

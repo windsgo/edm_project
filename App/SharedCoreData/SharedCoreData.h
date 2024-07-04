@@ -3,6 +3,7 @@
 #include <memory>
 #include <random>
 
+#include "Logger/LogDefine.h"
 #include "Utils/DataQueueRecorder/DataQueueRecorder.h"
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"
 #include "Utils/Filters/SlidingFilter/SlidingFilter.h"
@@ -37,6 +38,8 @@
 #include "SharedCoreData/Power/PowerManager.h"
 
 #include "Motion/MotionSharedData/MotionSharedData.h"
+
+#include "Logger/LogMacro.h"
 
 #include <QEvent>
 #include <QObject>
@@ -73,6 +76,9 @@ public:
 // slots
     // io板蜂鸣器响一下协议
     void send_ioboard_bz_once() const;
+
+    auto get_loglist_logger() const { return loglist_logger_; }
+    void set_loglist_logger(log::logger_ptr logger) { loglist_logger_ = logger; }
 
 signals:
     void sig_handbox_start_pointmove(const move::axis_t &dir,
@@ -124,6 +130,9 @@ private:
 private:
     std::function<void(bool)> cb_enable_votalge_gate_;
     std::function<void(bool)> cb_mach_on_;
+
+private:
+    log::logger_ptr loglist_logger_ {nullptr};
 
 private:
 #ifdef EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
