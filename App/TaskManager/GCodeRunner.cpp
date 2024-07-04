@@ -477,8 +477,10 @@ void GCodeRunner::_state_current_node_initing() {
         }
 
         // 根据mach_target_pos, 判断软限位
+        auto curr_dir = move::MotionUtils::CalcAxisUnitVector(mach_start_pos,
+                                                              mach_target_pos);
         auto sl_check_ret = TaskHelper::CheckPosandnegSoftLimit(
-            shared_core_data_->get_coord_system(), mach_target_pos);
+            shared_core_data_->get_coord_system(), mach_target_pos, curr_dir);
         if (!sl_check_ret) {
             if (!g00_gcode->is_touch_motion()) {
                 _abort(EDM_FMT::format("abort: g00 softlimit reached"));
@@ -486,8 +488,6 @@ void GCodeRunner::_state_current_node_initing() {
             } else {
                 // touch motion, 将各坐标数据按当前方向(target - start)折算到,
                 // 不超过软限位的最大长度的位置
-                auto curr_dir = move::MotionUtils::CalcAxisUnitVector(
-                    mach_start_pos, mach_target_pos);
 
                 const auto &pos_sl =
                     shared_core_data_->get_coord_system()->get_pos_soft_limit();
@@ -496,8 +496,9 @@ void GCodeRunner::_state_current_node_initing() {
 
                 // 计算当前方向上剩余的长度
                 move::unit_t min_scale =
-                    -1.0; // 对每个方向都计算单位向量方向上的剩余scale,
-                          // 并取最小的一个scale(这个最小的scale就是该方向上剩余的长度)
+                    0.0; // 对每个方向都计算单位向量方向上的剩余scale,
+                         // 并取最小的一个scale(这个最小的scale就是该方向上剩余的长度)
+                bool refreshed_scale = false;
                 for (size_t i = 0; i < EDM_AXIS_NUM; ++i) {
                     move::unit_t scale_left = 0.0;
                     if (curr_dir[i] == 0.0) {
@@ -509,10 +510,6 @@ void GCodeRunner::_state_current_node_initing() {
                             s_logger->warn(
                                 "abort: g00(touch) softlimit pos reached {}",
                                 i);
-                            // _abort(EDM_FMT::format(
-                            //     "abort: g00(touch) softlimit pos reached {}",
-                            //     i));
-                            // return;
                         }
                     } else if (curr_dir[i] < 0.0) {
                         scale_left =
@@ -521,10 +518,6 @@ void GCodeRunner::_state_current_node_initing() {
                             s_logger->warn(
                                 "abort: g00(touch) softlimit neg reached {}",
                                 i);
-                            // _abort(EDM_FMT::format(
-                            //     "abort: g00(touch) softlimit neg reached {}",
-                            //     i));
-                            // return;
                         }
                     }
                     s_logger->debug(
@@ -532,14 +525,12 @@ void GCodeRunner::_state_current_node_initing() {
                         "mach_start_pos: {}, mach_target_pos: {}",
                         i, min_scale, scale_left, pos_sl[i], mach_start_pos[i],
                         mach_target_pos[i]);
-                    if (min_scale < 0.0 || scale_left < min_scale) {
+                    if (!refreshed_scale || scale_left < min_scale) {
                         min_scale = scale_left > 0 ? scale_left : 0;
+                        refreshed_scale = true;
                     }
                 }
                 if (min_scale <= 0.0) {
-                    // _abort(
-                    //     EDM_FMT::format("abort: g00(touch) softlimit reached"));
-                    // break;
                     s_logger->warn(
                         "g00 failed, next node : g00(touch) softlimit reached");
                     _check_to_next_gcode();
@@ -664,8 +655,10 @@ void GCodeRunner::_state_current_node_initing() {
         }
 
         // 根据mach_target_pos, 判断软限位
+        auto curr_dir = move::MotionUtils::CalcAxisUnitVector(mach_start_pos,
+                                                              mach_target_pos);
         auto sl_check_ret = TaskHelper::CheckPosandnegSoftLimit(
-            shared_core_data_->get_coord_system(), mach_target_pos);
+            shared_core_data_->get_coord_system(), mach_target_pos, curr_dir);
         if (!sl_check_ret) {
             _abort(EDM_FMT::format("abort: g01 softlimit reached"));
             break;

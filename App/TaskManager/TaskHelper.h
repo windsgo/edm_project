@@ -41,12 +41,18 @@ public:
     }
 
     static bool CheckPosandnegSoftLimit(coord::CoordinateSystem::ptr coord_sys,
-                                        const move::axis_t &mach_pos) {
+                                        const move::axis_t &mach_pos, const move::axis_t& dir) {
         const auto &pos_sl = coord_sys->get_pos_soft_limit();
         const auto &neg_sl = coord_sys->get_neg_soft_limit();
 
         for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
-            if (mach_pos[i] > pos_sl[i] || mach_pos[i] < neg_sl[i]) {
+            if (dir[i] == 0.0) {
+                continue;
+            }
+
+            if (dir[i] > 0.0 && mach_pos[i] > pos_sl[i]) {
+                return false;
+            } else if (dir[i] < 0.0 && mach_pos[i] < neg_sl[i]) {
                 return false;
             }
         }
