@@ -43,6 +43,11 @@ axis_t MotionSharedData::get_act_axis() const {
     return this->global_cmd_axis_; // 离线, 返回指令位置
 #else                              // EDM_OFFLINE_RUN_NO_ECAT
     axis_t axis;
+    if (!ecat_manager_->is_ecat_connected()) 
+    {
+        move::MotionUtils::ClearAxis(axis);
+        return axis;
+    }
 
     for (int i = 0; i < axis.size(); ++i) {
         axis[i] = this->ecat_manager_->get_servo_actual_position(i);
@@ -52,14 +57,20 @@ axis_t MotionSharedData::get_act_axis() const {
 #endif                             // EDM_OFFLINE_RUN_NO_ECAT
 }
 
-void MotionSharedData::get_act_axis(axis_t &axis) const {
+bool MotionSharedData::get_act_axis(axis_t &axis) const {
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
     axis = this->global_cmd_axis_; // 离线, 返回指令位置
 #else                              // EDM_OFFLINE_RUN_NO_ECAT
+    if (!ecat_manager_->is_ecat_connected()) 
+    {
+        return false;
+    }
+
     for (int i = 0; i < axis.size(); ++i) {
         axis[i] = this->ecat_manager_->get_servo_actual_position(i);
     }
 #endif                             // EDM_OFFLINE_RUN_NO_ECAT
+    return true;
 }
 
 } // namespace move

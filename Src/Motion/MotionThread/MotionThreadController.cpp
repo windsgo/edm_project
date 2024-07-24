@@ -1,7 +1,10 @@
 #include "MotionThreadController.h"
 #include "EcatManager/ServoDevice.h"
 
+#include "Exception/exception.h"
 #include "Motion/MotionThread/MotionCommand.h"
+#include "Motion/MoveDefines.h"
+#include "Utils/Format/edm_format.h"
 #include "Utils/Time/TimeUseStatistic.h"
 #include <cstdint>
 #include <ctime>
@@ -504,7 +507,8 @@ void MotionThreadController::_threadstate_running() {
         /** Ecat Sync start*/
         _ecat_sync_wrapper(
             [this]() -> void {
-                const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
+                // const auto &cmd_axis = motion_state_machine_->get_cmd_axis();
+                const auto &cmd_axis = s_motion_shared->get_global_cmd_axis();
 
                 for (int i = 0; i < cmd_axis.size(); ++i) {
                     const auto device = ecat_manager_->get_servo_device(i);
@@ -551,7 +555,14 @@ void MotionThreadController::_threadstate_running() {
 void MotionThreadController::_ecat_state_switch_to_ready() {
     _switch_ecat_state(EcatState::EcatReady);
     motion_state_machine_->reset();
-    s_motion_shared->set_global_cmd_axis(s_motion_shared->get_act_axis());
+
+    axis_t act_axis;
+    auto ret = s_motion_shared->get_act_axis(act_axis);
+    if (!ret) {
+        throw exception(EDM_FMT::format("s_motion_shared->get_act_axis failed, in {}", __PRETTY_FUNCTION__));
+    }
+
+    s_motion_shared->set_global_cmd_axis(act_axis);
     motion_state_machine_->set_enable(true);
 
     // 重新统计数

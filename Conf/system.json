@@ -28,7 +28,7 @@
     },
     "log_config_file": "logdefine.json",
     "monitor_peroid_ms": 40,
-    "motion_cycle_us": 250,
+    "motion_cycle_us": 1000,
     "motion_settings": {
         "enable_g01_half_closed_loop": false,
         "enable_g01_run_each_servo_cmd": true

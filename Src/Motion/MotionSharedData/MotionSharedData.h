@@ -147,7 +147,7 @@ public:
     void set_global_cmd_axis(const axis_t &cmd_axis);
 
     axis_t get_act_axis() const;
-    void get_act_axis(axis_t& axis) const;
+    bool get_act_axis(axis_t& axis) const;
 
 private:
     axis_t global_cmd_axis_; // 全局共享指令位置,

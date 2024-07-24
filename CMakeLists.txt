@@ -58,7 +58,7 @@ set(Qt5_DIR $ENV{HOME}/Qt5.14.2/5.14.2/gcc_64/lib/cmake/Qt5)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-find_package(Qt5 COMPONENTS Core SerialBus Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Core SerialBus Widgets Network REQUIRED)
 
 ## Project
 set(PROJECT_SOURCES
@@ -100,6 +100,7 @@ set(PROJECT_SOURCES
     Src/SystemSettings/SystemSettings.cpp
     Src/CanReceiveBuffer/CanReceiveBuffer.cpp
     Src/HandboxConverter/HandboxConverter.cpp
+    Src/QtDependComponents/ZynqConnection/ZynqConnectController.cpp
 )
 
 # include_directories(${PROJECT_SOURCE_DIR}/Src)
@@ -115,7 +116,7 @@ target_link_libraries(edm PUBLIC
     Boost::python 
     Boost::boost
     Python3::Python
-    Qt5::Core Qt5::SerialBus
+    Qt5::Core Qt5::SerialBus Qt5::Network
     m # <math.h> or <cmath>
     pthread # <pthread.h>
     atomic

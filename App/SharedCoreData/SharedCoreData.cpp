@@ -2,10 +2,12 @@
 
 #include <QCoreApplication>
 
+#include <qhostaddress.h>
 #include <random>
 #include <thread>
 
 #include "Logger/LogMacro.h"
+#include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 namespace edm {
@@ -327,6 +329,11 @@ void SharedCoreData::_init_data() {
     // init power manager
     power_manager_ = new PowerManager(io_ctrler_, power_ctrler_,
                                       motion_cmd_queue_, 1000, this);
+    
+    // TODO
+    // FIXME
+    // test
+    zynq_connect_ctrler_ = std::make_shared<zynq::ZynqConnectController>(QHostAddress::LocalHost, 12345, 22222);
 
     // 获取运动线程中的记录器指针, 用于操作开始结束
     record_data1_queuerecorder_ =

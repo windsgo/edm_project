@@ -20,6 +20,7 @@
 #include "QtDependComponents/IOController/IOController.h"
 #include "QtDependComponents/InfoDispatcher/InfoDispatcher.h"
 #include "QtDependComponents/PowerController/PowerController.h"
+#include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 
 #include "Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.h"
 
@@ -126,6 +127,8 @@ private:
     InfoDispatcher *info_dispatcher_;
 
     PowerManager* power_manager_;
+
+    zynq::ZynqConnectController::ptr zynq_connect_ctrler_;
 
 private:
     std::function<void(bool)> cb_enable_votalge_gate_;
