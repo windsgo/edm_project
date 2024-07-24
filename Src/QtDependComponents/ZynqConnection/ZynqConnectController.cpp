@@ -76,14 +76,14 @@ void ZynqTcpWorker::slot_start_work() {
 
     // debug log
     connect(tcp_socket_, &QTcpSocket::connected, this, [this]() {
-        s_logger->debug("tcp connected");
+        s_logger->info("zynq tcp server connected");
 
         // const char *testmsg = "hi server";
         // QByteArray ba = QByteArray::fromRawData(testmsg, strlen(testmsg));
         // tcp_socket_->write(ba);
     });
     connect(tcp_socket_, &QTcpSocket::disconnected, this,
-            [this]() { s_logger->debug("tcp disconnected"); });
+            [this]() { s_logger->warn("zynq tcp server disconnected"); });
 
     tcp_socket_->connectToHost(server_ip_, server_port_);
 
@@ -122,6 +122,8 @@ void ZynqTcpWorker::_slot_data_received() {
 void ZynqTcpWorker::_slot_do_reconnect() {
     if (tcp_socket_->state() == QTcpSocket::SocketState::UnconnectedState) {
         tcp_socket_->connectToHost(server_ip_, server_port_);
+
+        s_logger->trace("zynq tcp server reconnecting ...");
     }
 }
 
@@ -130,6 +132,11 @@ ZynqConnectController::ZynqConnectController(
     uint16_t udp_port)
     : zynq_tcpserver_ip_(zynq_tcpserver_ip),
       zynq_tcpserver_port_(zynq_tcpserver_port), udp_port_(udp_port) {
+    
+    if (zynq_tcpserver_ip_.isNull()) {
+        throw exception{EDM_FMT::format("invalid tcpserver ip: {}", zynq_tcpserver_ip_.toString().toStdString())};
+    }
+
     _init_worker_and_thread();
 }
 

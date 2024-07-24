@@ -34,5 +34,10 @@
         "enable_g01_run_each_servo_cmd": true
     },
     "power_database_file": "power.db",
-    "qss_file": "gui.qss"
+    "qss_file": "gui.qss",
+    "zynq_settings": {
+        "zynq_tcp_server_ip": "127.0.0.1",
+        "zynq_tcp_server_port": 12345,
+        "zynq_udp_local_port": 12365
+    }
 }

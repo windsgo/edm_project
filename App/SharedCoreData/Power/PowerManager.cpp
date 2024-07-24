@@ -36,14 +36,14 @@ PowerManager::PowerManager(io::IOController::ptr io_ctrler,
     // 初始化一个电参数
     auto default_ele = power_db_->get_one_valid_eleparam();
     if (default_ele) {
-        s_logger->debug("hi");
+        // s_logger->debug("hi");
         this->set_current_eleparam(*default_ele);
     }
 
     // test
     power::EleParam_dkd_t p;
     bool ret = power_db_->get_eleparam_from_index(1, p);
-    s_logger->debug("hi2: {}", ret);
+    // s_logger->debug("hi2: {}", ret);
     auto strs = power::PowerController::eleparam_to_string(p);
     for (const auto &s : strs) {
         s_logger->trace(s);

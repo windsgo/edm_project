@@ -16,6 +16,9 @@
 #include <qtimer.h>
 #include <qudpsocket.h>
 
+// ZynqConnectController Controlls One Thread,
+// A TcpWorker and a UdpWorker work in this thread
+
 namespace edm {
 namespace zynq {
 

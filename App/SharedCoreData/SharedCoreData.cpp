@@ -329,11 +329,15 @@ void SharedCoreData::_init_data() {
     // init power manager
     power_manager_ = new PowerManager(io_ctrler_, power_ctrler_,
                                       motion_cmd_queue_, 1000, this);
-    
+
     // TODO
     // FIXME
     // test
-    zynq_connect_ctrler_ = std::make_shared<zynq::ZynqConnectController>(QHostAddress::LocalHost, 12345, 22222);
+    zynq_connect_ctrler_ = std::make_shared<zynq::ZynqConnectController>(
+        QHostAddress{QString::fromStdString(
+            sys_settings_.get_zynq_settings().zynq_tcp_server_ip)},
+        sys_settings_.get_zynq_settings().zynq_tcp_server_port,
+        sys_settings_.get_zynq_settings().zynq_udp_local_port);
 
     // 获取运动线程中的记录器指针, 用于操作开始结束
     record_data1_queuerecorder_ =

@@ -122,7 +122,7 @@ EcatManager::~EcatManager() {
 
 #ifdef EDM_ECAT_DRIVER_IGH
     if (igh_master_) {
-        s_logger->info("in ~EcatManager, release igh_master_");
+        s_logger->trace("in ~EcatManager, release igh_master_");
         ecrt_release_master(igh_master_);
     }
 #endif // EDM_ECAT_DRIVER_IGH

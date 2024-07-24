@@ -14,11 +14,11 @@
             "sinks": [
                 {
                     "type": "file",
-                    "level": "warn",
+                    "level": "info",
                     "filename": "motion.log",
                     "multi_thread": false,
                     "max_size": 10485760,
-                    "max_files": 10,
+                    "max_files": 15,
                     "rotate_on_open": true
                 },
                 {
@@ -45,7 +45,7 @@
                 },
                 {
                     "type": "stdout",
-                    "level": "info",
+                    "level": "trace",
                     "multi_thread": true
                 }
             ]
@@ -67,7 +67,7 @@
                 },
                 {
                     "type": "stdout",
-                    "level": "info",
+                    "level": "trace",
                     "multi_thread": false
                 }
             ]

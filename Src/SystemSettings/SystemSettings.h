@@ -58,6 +58,15 @@ struct _motion_settings {
                     MEO_OPT enable_g01_half_closed_loop);
 };
 
+struct _zynq_settings {
+    std::string zynq_tcp_server_ip{"192.168.1.130"};
+    uint32_t zynq_tcp_server_port{12355};
+    uint32_t zynq_udp_local_port{12365};
+
+    MEO_JSONIZATION(MEO_OPT zynq_tcp_server_ip, MEO_OPT zynq_tcp_server_port,
+                    MEO_OPT zynq_udp_local_port);
+};
+
 class _SystemSettingsData final {
 public:
     _SystemSettingsData() noexcept = default;
@@ -76,7 +85,7 @@ public: // settings
         "Src/Interpreter/rs274pyInterpreter/pymodule/"};
     uint32_t info_dispatcher_peroid_ms{20};
     _jump_param jump_param;
-    std::string datasave_dir {"Data/"};
+    std::string datasave_dir{"Data/"};
     uint32_t motion_cycle_us{1000};
     uint32_t monitor_peroid_ms{50};
     uint32_t ecat_sync0_shift_time_ns{90000};
@@ -84,6 +93,8 @@ public: // settings
     uint32_t igh_op_wait_count_max{10000};
 
     _motion_settings motion_settings;
+
+    _zynq_settings zynq_settings;
 
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
@@ -94,7 +105,7 @@ public: // settings
                     MEO_OPT datasave_dir, MEO_OPT motion_cycle_us,
                     MEO_OPT monitor_peroid_ms, MEO_OPT ecat_sync0_shift_time_ns,
                     MEO_OPT dc_filter_cnt, MEO_OPT igh_op_wait_count_max,
-                    MEO_OPT motion_settings);
+                    MEO_OPT motion_settings, MEO_OPT zynq_settings);
 };
 
 }; // namespace _sys
@@ -196,8 +207,12 @@ public:
         return data_.motion_settings.enable_g01_half_closed_loop;
     }
 
+    inline const auto& get_zynq_settings() const {
+        return data_.zynq_settings;
+    }
+
 public:
-    // TODO change settings and save to local file
+    // you should save to local file manually
     inline void set_fastmove_max_acc_um_s2(double v) {
         data_.fast_move_param.max_acc_um_s2 = v;
     }
