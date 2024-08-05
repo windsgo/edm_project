@@ -4,6 +4,7 @@
 #include "QtDependComponents/CanController/CanController.h"
 #include "QtDependComponents/IOController/IOController.h"
 
+#include "QtDependComponents/PowerController/EleparamDecoder.h"
 #include "Utils/Format/edm_format.h"
 #include <chrono>
 #include <cstdint>
@@ -27,8 +28,10 @@ PowerController::PowerController(can::CanController::ptr can_ctrler,
                                  int can_device_index)
     : can_ctrler_(can_ctrler), io_ctrler_{io_ctrler},
       can_device_index_(can_device_index) {
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     memset(&servo_setting_, 0, sizeof(servo_setting_));
     memset(&ioboard_eleparam_, 0, sizeof(ioboard_eleparam_));
+#endif
 
     memset(&curr_eleparam_, 0, sizeof(curr_eleparam_));
 }
@@ -41,6 +44,7 @@ void PowerController::set_highpower_on(bool on) {
 
 bool PowerController::is_highpower_on() const { return highpower_on_flag_; }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void PowerController::set_machbit_on(bool on) {
     machpower_flag_ = on;
     update_eleparam_and_send(); // machbit发到电源
@@ -87,20 +91,27 @@ void PowerController::_trigger_send_canbuffer() {
     QCanBusFrame frame2{POWERCAN_TXID, curr_result_->can_buffer()[1]};
     can_ctrler_->send_frame(can_device_index_, frame2);
 }
+#endif
 
 void PowerController::_trigger_send_io_value() {
     if (!curr_result_)
         return;
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     io_ctrler_->set_can_machineio_1_withmask(
         curr_result_->io_1(), EleparamDecodeResult::get_io_1_mask());
     io_ctrler_->set_can_machineio_2_withmask(
         curr_result_->io_2(), EleparamDecodeResult::get_io_2_mask());
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+    io_ctrler_->set_can_machineio_output_withmask(
+        curr_result_->io(), EleparamDecodeResult::get_io_mask());
+#endif
 
     // 让IO控制器强制发送一次IO
     io_ctrler_->trigger_send_current_io();
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void PowerController::_trigger_send_ioboard_eleparam() {
     if (!eleparam_inited_)
         return;
@@ -121,6 +132,7 @@ void PowerController::_trigger_send_ioboard_eleparam() {
     // 发送
     can_ctrler_->send_frame(can_device_index_, frame);
 }
+#endif
 
 void PowerController::_update_eleparam_and_send(
     const EleParam_dkd_t &eleparam) {
@@ -130,17 +142,25 @@ void PowerController::_update_eleparam_and_send(
         s_logger->trace(s);
     }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     // 心跳处理
     _add_canframe_pulse_value();
+
     // 构造输入
     auto input = std::make_shared<EleparamDecodeInput>(
         eleparam, highpower_on_flag_, machpower_flag_, canframe_pulse_value_);
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+    auto input =
+        std::make_shared<EleparamDecodeInput>(eleparam, highpower_on_flag_);
+#endif
 
     // 获取decode输出
     curr_result_ = EleparamDecoder::decode(input);
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     // 发送can buffer
     _trigger_send_canbuffer();
+#endif
 
     // 触发设置io
     _trigger_send_io_value();
@@ -153,6 +173,7 @@ void PowerController::_handle_servo_settings() {
     if (!eleparam_inited_)
         return;
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     uint8_t bz_enable = _is_bz_enable();
 
     //! 防止CAN丢包导致伺服设定没发下去, 这里定时发
@@ -160,7 +181,8 @@ void PowerController::_handle_servo_settings() {
     static int64_t last_send_time = 0;
     bool forced = false;
     int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
     if (now - last_send_time > 5) {
         // 平均5s发一次
         last_send_time = now;
@@ -197,8 +219,12 @@ void PowerController::_handle_servo_settings() {
         // 发送 frame
         can_ctrler_->send_frame(can_device_index_, frame);
     }
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+        // TODO
+#endif
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 bool PowerController::_is_bz_enable() {
     //! 要注意这里的嵌套加锁情况
     // TODO
@@ -211,6 +237,7 @@ void PowerController::_add_canframe_pulse_value() {
         canframe_pulse_value_ = 0x9C00;
     }
 }
+#endif
 
 // PowerController *PowerController::instance() {
 //     static PowerController instance;
@@ -270,6 +297,7 @@ void PowerController::update_eleparam_and_send() {
     _update_eleparam_and_send(curr_eleparam_);
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void PowerController::trigger_send_eleparam() {
     if (!curr_result_)
         return;
@@ -283,6 +311,7 @@ void PowerController::trigger_send_eleparam() {
     // 检查伺服参数设定, 如果变化, 重新发送
     _handle_servo_settings();
 }
+#endif
 
 void PowerController::trigger_send_contactors_io() {
     s_logger->trace("PowerController::trigger_send_contactors_io");
@@ -290,9 +319,11 @@ void PowerController::trigger_send_contactors_io() {
     _trigger_send_io_value();
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void PowerController::trigger_send_ioboard_eleparam() {
     _trigger_send_ioboard_eleparam();
 }
+#endif
 
 } // namespace power
 

@@ -1,6 +1,7 @@
 #include "EleparamDecoder.h"
 
 #include "Logger/LogMacro.h"
+#include "QtDependComponents/PowerController/EleparamDefine.h"
 
 #include <array>
 #include <unordered_map>
@@ -13,12 +14,13 @@ namespace edm {
 
 namespace power {
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 // 用于计算IO1Mask, 将需要以IO1控制的继电器IO枚举值填入
 static constexpr const std::array<uint32_t, 13> s_contactors_io_1_arr{
-    EleContactorOut_V1_JV1,   EleContactorOut_V2_JV2,  EleContactorOut_C0_JC0,
-    EleContactorOut_C1_JC1,   EleContactorOut_C2_JC2,  EleContactorOut_C3_JC3,
-    EleContactorOut_C4_JC4,   EleContactorOut_C5_JC5,  EleContactorOut_C6_JC6,
-    EleContactorOut_C7_JC7,   EleContactorOut_C8_JC8,  EleContactorOut_C9_JC9,
+    EleContactorOut_V1_JV1,   EleContactorOut_V2_JV2, EleContactorOut_C0_JC0,
+    EleContactorOut_C1_JC1,   EleContactorOut_C2_JC2, EleContactorOut_C3_JC3,
+    EleContactorOut_C4_JC4,   EleContactorOut_C5_JC5, EleContactorOut_C6_JC6,
+    EleContactorOut_C7_JC7,   EleContactorOut_C8_JC8, EleContactorOut_C9_JC9,
     EleContactorOut_MACH_JF0, /* EleContactorOut_PWON_JF1 */};
 
 // 用于计算IO2Mask, 将需要以IO2控制的继电器IO枚举值填入 (>32)
@@ -66,6 +68,36 @@ static uint32_t _CalcCanIO2Mask() {
 const uint32_t EleparamDecodeResult::io_1_mask = _CalcCanIO1Mask();
 const uint32_t EleparamDecodeResult::io_2_mask = _CalcCanIO2Mask();
 
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+
+static constexpr const std::array<uint32_t, 17> s_power_io_arr{
+    ZHONGGU_IOOut_IOOUT2_NEG,  ZHONGGU_IOOut_IOOUT3_MACH,
+    ZHONGGU_IOOut_IOOUT11_HP1, ZHONGGU_IOOut_IOOUT12_HP2,
+    ZHONGGU_IOOut_TON1,        ZHONGGU_IOOut_TON2,
+    ZHONGGU_IOOut_TON4,        ZHONGGU_IOOut_TON8,
+    ZHONGGU_IOOut_TON16,       ZHONGGU_IOOut_TOFF1,
+    ZHONGGU_IOOut_TOFF2,       ZHONGGU_IOOut_TOFF4,
+    ZHONGGU_IOOut_TOFF8,       ZHONGGU_IOOut_IP1,
+    ZHONGGU_IOOut_IP2,         ZHONGGU_IOOut_IP4,
+    ZHONGGU_IOOut_IP8};
+
+static uint32_t _CalcCanIOMask() {
+    uint32_t mask = 0x00;
+    for (const auto &io_index : s_power_io_arr) {
+        if (io_index == 0 || io_index > 32) {
+            continue;
+        }
+
+        mask |= 1 << (io_index - 1);
+    }
+
+    return mask;
+}
+
+const uint32_t EleparamDecodeResult::io_mask = _CalcCanIOMask();
+
+#endif
+
 EleparamDecodeResult::ptr
 EleparamDecoder::decode(EleparamDecodeInput::ptr input) {
     auto decoder = EleparamDecoder();
@@ -82,14 +114,24 @@ void EleparamDecoder::_decode(EleparamDecodeInput::ptr input) {
 
     // start step by step decode
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     _fill_can_buffer();
 
     _fill_io_settings();
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+    _zhonggu_handle_on();
+    _zhonggu_handle_off();
+    _zhonggu_handle_ip();
+    _zhonggu_handle_neg();
+    _zhonggu_handle_hp();
+    _zhonggu_handle_mach();
+#endif
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void EleparamDecoder::_fill_can_buffer() {
     _canframe_fill_fixedbytes();
-    
+
     _canframe_handle_on();
     _canframe_handle_off();
     _canframe_handle_up_and_on();
@@ -145,7 +187,7 @@ void EleparamDecoder::_canframe_handle_on() {
     } else if (param_on < 64) {
         // pulse_on |= 0x40; // 第6位设为 1
         // pulse_on &= 0x7F; // 第7位设为 0
-        pulse_on |= 0xC0; //第6,7位设为 1
+        pulse_on |= 0xC0; // 第6,7位设为 1
     } else if (param_on >= 100 && param_on <= 107) {
         pulse_on -= 100;  // 100-107按0-7
         pulse_on &= 0xBF; // 第6位设为0
@@ -244,7 +286,7 @@ void EleparamDecoder::_canframe_handle_ip() {
         // ip 不含 0.5A
         AND_EQUAL(CAN_BUFFER[1][2], 0xFD);
     }
-#endif 
+#endif
 }
 
 void EleparamDecoder::_canframe_handle_hp() {
@@ -268,7 +310,7 @@ void EleparamDecoder::_canframe_handle_hp() {
 }
 
 void EleparamDecoder::_canframe_handle_ma() {
-    AND_EQUAL(CAN_BUFFER[1][3], 0xF0);                   // 清空低4位
+    AND_EQUAL(CAN_BUFFER[1][3], 0xF0); // 清空低4位
     OR_EQUAL(CAN_BUFFER[1][3], (input_->ele_param().ma) & 0x0F); // 低4位设定ma
 }
 
@@ -276,8 +318,8 @@ void EleparamDecoder::_canframe_handle_sv() {
     // sv 伺服电压 (应当由伺服采样模块(目前为IO采样板)处理, 不需要发送给电源)
     // TODO 外部要将sv值通过can发送给采样板
 
-    AND_EQUAL(CAN_BUFFER[1][3], 0x0F);                        // 清空高4位
-    OR_EQUAL(CAN_BUFFER[1][3], 0x50); // 高4位设定sv //! 给固定值
+    AND_EQUAL(CAN_BUFFER[1][3], 0x0F); // 清空高4位
+    OR_EQUAL(CAN_BUFFER[1][3], 0x50);  // 高4位设定sv //! 给固定值
 
     // if (input_->ele_param().sv < 10) {
     //     OR_EQUAL(CAN_BUFFER[1][3], input_->ele_param().sv << 4);
@@ -301,12 +343,12 @@ void EleparamDecoder::_canframe_handle_al() {
 }
 
 void EleparamDecoder::_canframe_handle_ld() {
-    AND_EQUAL(CAN_BUFFER[1][5], 0xF0);                   // 清空低4位
+    AND_EQUAL(CAN_BUFFER[1][5], 0xF0); // 清空低4位
     OR_EQUAL(CAN_BUFFER[1][5], (input_->ele_param().ld) & 0x0F); // 低4位设定ld
 }
 
 void EleparamDecoder::_canframe_handle_oc() {
-    AND_EQUAL(CAN_BUFFER[1][5], 0x0F);                        // 清空高4位
+    AND_EQUAL(CAN_BUFFER[1][5], 0x0F);                       // 清空高4位
     OR_EQUAL(CAN_BUFFER[1][5], input_->ele_param().oc << 4); // 高4位设定oc
 }
 
@@ -378,7 +420,7 @@ void EleparamDecoder::_set_contactor_io_NOW(bool enable) {
 
     //! NOW 反逻辑 enable(吸合) 为 0
     if (!enable) {
-        result_->io_2() |= now_io; 
+        result_->io_2() |= now_io;
     } else {
         result_->io_2() &= ~now_io;
     }
@@ -389,7 +431,7 @@ void EleparamDecoder::_set_contactor_io_PK(bool enable) {
 
     //! PK 反逻辑 enable(吸合) 为 0
     if (!enable) {
-        result_->io_2() |= pk_io; 
+        result_->io_2() |= pk_io;
     } else {
         result_->io_2() &= ~pk_io;
     }
@@ -399,7 +441,7 @@ void EleparamDecoder::_set_contactor_io_MON(bool enable) {
     static const uint32_t mon_io = 1 << (EleContactorOut_MON_JF4 - 33);
 
     if (enable) {
-        result_->io_2() |= mon_io; 
+        result_->io_2() |= mon_io;
     } else {
         result_->io_2() &= ~mon_io;
     }
@@ -409,7 +451,7 @@ void EleparamDecoder::_set_contactor_io_HON(bool enable) {
     static const uint32_t hon_io = 1 << (EleContactorOut_HON_JF3 - 33);
 
     if (enable) {
-        result_->io_2() |= hon_io; 
+        result_->io_2() |= hon_io;
     } else {
         result_->io_2() &= ~hon_io;
     }
@@ -420,7 +462,7 @@ void EleparamDecoder::_set_contactor_io_IP0(bool enable) {
 
     //! IP0 反逻辑 enable(吸合) 为 0
     if (!enable) {
-        result_->io_2() |= ip0_io; 
+        result_->io_2() |= ip0_io;
     } else {
         result_->io_2() &= ~ip0_io;
     }
@@ -430,7 +472,7 @@ void EleparamDecoder::_set_contactor_io_IP7(bool enable) {
     static const uint32_t ip7_io = 1 << (EleContactorOut_IP7_JFC - 33);
 
     if (enable) {
-        result_->io_2() |= ip7_io; 
+        result_->io_2() |= ip7_io;
     } else {
         result_->io_2() &= ~ip7_io;
     }
@@ -440,7 +482,7 @@ void EleparamDecoder::_set_contactor_io_IP15(bool enable) {
     static const uint32_t ip15_io = 1 << (EleContactorOut_IP15_JFF - 33);
 
     if (enable) {
-        result_->io_2() |= ip15_io; 
+        result_->io_2() |= ip15_io;
     } else {
         result_->io_2() &= ~ip15_io;
     }
@@ -450,7 +492,7 @@ void EleparamDecoder::_set_contactor_io_LV1(bool enable) {
     static const uint32_t lv1_io = 1 << (EleContactorOut_V1_JV1 - 1);
 
     if (enable) {
-        result_->io_1() |= lv1_io; 
+        result_->io_1() |= lv1_io;
     } else {
         result_->io_1() &= ~lv1_io;
     }
@@ -460,7 +502,7 @@ void EleparamDecoder::_set_contactor_io_LV2(bool enable) {
     static const uint32_t lv2_io = 1 << (EleContactorOut_V2_JV2 - 1);
 
     if (enable) {
-        result_->io_1() |= lv2_io; 
+        result_->io_1() |= lv2_io;
     } else {
         result_->io_1() &= ~lv2_io;
     }
@@ -470,7 +512,7 @@ void EleparamDecoder::_set_contactor_io_RVNM(bool enable) {
     static const uint32_t rvnm_io = 1 << (EleContactorOut_RVNM_JF8 - 33);
 
     if (enable) {
-        result_->io_2() |= rvnm_io; 
+        result_->io_2() |= rvnm_io;
     } else {
         result_->io_2() &= ~rvnm_io;
     }
@@ -480,7 +522,7 @@ void EleparamDecoder::_set_contactor_io_MACH(bool enable) {
     static const uint32_t mach_io = 1 << (EleContactorOut_MACH_JF0 - 1);
 
     if (enable) {
-        result_->io_1() |= mach_io; 
+        result_->io_1() |= mach_io;
     } else {
         result_->io_1() &= ~mach_io;
     }
@@ -493,9 +535,9 @@ void EleparamDecoder::_set_contactor_io_Cx(uint32_t x, bool enable) {
     }
 
     uint32_t cx_io = 1 << (EleContactorOut_C0_JC0 + x - 1);
-    
+
     if (enable) {
-        result_->io_1() |= cx_io; 
+        result_->io_1() |= cx_io;
     } else {
         result_->io_1() &= ~cx_io;
     }
@@ -503,13 +545,13 @@ void EleparamDecoder::_set_contactor_io_Cx(uint32_t x, bool enable) {
 
 void EleparamDecoder::_iosettings_handle_NOW() {
     // 先处理特殊条件 C901 C902
-    auto upper_index =  input_->ele_param().upper_index;
+    auto upper_index = input_->ele_param().upper_index;
     if (upper_index == 901 || upper_index == 902) {
         _set_contactor_io_NOW(false); // 不吸合
         return;
     }
 
-    // 处理特殊 IP > 7 
+    // 处理特殊 IP > 7
     if (input_->ele_param().ip > 70) {
         _set_contactor_io_NOW(true); // 吸合
         return;
@@ -552,7 +594,7 @@ void EleparamDecoder::_iosettings_handle_IPx() {
     auto upper_index = input_->ele_param().upper_index;
     // 特殊情况 C901, C902, 全部关断S
 
-    if (ip == 0/* || upper_index == 901 || upper_index == 902*/) {
+    if (ip == 0 /* || upper_index == 901 || upper_index == 902*/) {
         _set_contactor_io_IP0(false);
         _set_contactor_io_IP7(false);
         _set_contactor_io_IP15(false);
@@ -612,7 +654,7 @@ void EleparamDecoder::_iosettings_handle_MACH() {
 }
 
 void EleparamDecoder::_iosettings_handle_PK() {
-    auto upper_index =  input_->ele_param().upper_index;
+    auto upper_index = input_->ele_param().upper_index;
     if (upper_index == 901 || upper_index == 902) {
         _set_contactor_io_PK(false); // 不吸合 (只有901, 902不吸合)
     } else {
@@ -631,6 +673,167 @@ void EleparamDecoder::_iosettings_handle_CAPx() {
     // 再设置对应电容继电器开启
     _set_contactor_io_Cx(c, true);
 }
+
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+
+void EleparamDecoder::_set_io_mach(bool enable) {
+    static const uint32_t mach_io = 1 << (ZHONGGU_IOOut_IOOUT3_MACH - 1);
+
+    if (enable) {
+        result_->io() |= mach_io;
+    } else {
+        result_->io() &= ~mach_io;
+    }
+}
+
+void EleparamDecoder::_set_io_neg(bool enable) {
+    static const uint32_t neg_io = 1 << (ZHONGGU_IOOut_IOOUT2_NEG - 1);
+
+    if (enable) { // enable 为允许负极性
+        result_->io() |= neg_io;
+    } else {
+        result_->io() &= ~neg_io;
+    }
+}
+
+void EleparamDecoder::_set_io_hp1(bool enable) {
+    static const uint32_t hp1_io = 1 << (ZHONGGU_IOOut_IOOUT11_HP1 - 1);
+
+    if (enable) {
+        result_->io() |= hp1_io;
+    } else {
+        result_->io() &= ~hp1_io;
+    }
+}
+
+void EleparamDecoder::_set_io_hp2(bool enable) {
+    static const uint32_t hp2_io = 1 << (ZHONGGU_IOOut_IOOUT12_HP2 - 1);
+
+    if (enable) {
+        result_->io() |= hp2_io;
+    } else {
+        result_->io() &= ~hp2_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_on() {
+    static const uint32_t on1_io = 1 << (ZHONGGU_IOOut_TON1 - 1);
+    static const uint32_t on2_io = 1 << (ZHONGGU_IOOut_TON2 - 1);
+    static const uint32_t on4_io = 1 << (ZHONGGU_IOOut_TON4 - 1);
+    static const uint32_t on8_io = 1 << (ZHONGGU_IOOut_TON8 - 1);
+    static const uint32_t on16_io = 1 << (ZHONGGU_IOOut_TON16 - 1);
+
+    uint8_t on = input_->ele_param().pulse_on;
+
+    if (on & 0x01) {
+        result_->io() |= on1_io;
+    }
+
+    if (on & 0x02) {
+        result_->io() |= on2_io;
+    }
+
+    if (on & 0x04) {
+        result_->io() |= on4_io;
+    }
+
+    if (on & 0x08) {
+        result_->io() |= on8_io;
+    }
+
+    if (on & 0x10) {
+        result_->io() |= on16_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_off() {
+    static const uint32_t off1_io = 1 << (ZHONGGU_IOOut_TOFF1 - 1);
+    static const uint32_t off2_io = 1 << (ZHONGGU_IOOut_TOFF2 - 1);
+    static const uint32_t off4_io = 1 << (ZHONGGU_IOOut_TOFF4 - 1);
+    static const uint32_t off8_io = 1 << (ZHONGGU_IOOut_TOFF8 - 1);
+
+    uint8_t off = input_->ele_param().pulse_off;
+
+    if (off & 0x01) {
+        result_->io() |= off1_io;
+    }
+
+    if (off & 0x02) {
+        result_->io() |= off2_io;
+    }
+
+    if (off & 0x04) {
+        result_->io() |= off4_io;
+    }
+
+    if (off & 0x08) {
+        result_->io() |= off8_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_ip() {
+    static const uint32_t ip1_io = 1 << (ZHONGGU_IOOut_IP1 - 1);
+    static const uint32_t ip2_io = 1 << (ZHONGGU_IOOut_IP2 - 1);
+    static const uint32_t ip4_io = 1 << (ZHONGGU_IOOut_IP4 - 1);
+    static const uint32_t ip8_io = 1 << (ZHONGGU_IOOut_IP8 - 1);
+
+    uint16_t ip = input_->ele_param().ip;
+
+    if (ip & 0x01) {
+        result_->io() |= ip1_io;
+    }
+
+    if (ip & 0x02) {
+        result_->io() |= ip2_io;
+    }
+
+    if (ip & 0x04) {
+        result_->io() |= ip4_io;
+    }
+
+    if (ip & 0x08) {
+        result_->io() |= ip8_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_neg() {
+    uint8_t pl = input_->ele_param().pl;
+
+    if (pl == 0) { /* pl = 0 (对应上位机发的是 (+), 正极性) */
+        _set_io_neg(false);
+    } else { /* pl = 1 (对应上位机发的是 (-), 负极性) */
+        _set_io_neg(true);
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_hp() {
+    uint8_t hp = input_->ele_param().hp;
+
+    _set_io_hp1(false);
+    _set_io_hp2(false);
+
+    // hp = x1
+    if (hp % 10 == 1) {
+        _set_io_hp1(true);
+    }
+
+    // hp = 1x
+    if ((hp / 10) % 10 == 1) {
+        _set_io_hp2(true);
+    }
+
+    // e.g: hp = 00 -> hp1 off, hp2 off
+    // hp = 01 -> hp1 on, hp2 off
+    // hp = 10 -> hp1 off, hp2 on
+    // hp = 11 -> hp1 on, hp2 on
+}
+
+void EleparamDecoder::_zhonggu_handle_mach() {
+    bool mach_on = input_->highpower_flag();
+    _set_io_mach(mach_on);
+}
+
+#endif
 
 } // namespace power
 

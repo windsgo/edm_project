@@ -2,12 +2,15 @@
 
 #include <QGridLayout>
 #include <QPushButton>
-#include <QWidget>
 #include <QString>
+#include <QWidget>
 
+#include <qpushbutton.h>
 #include <unordered_map>
 
 #include "SharedCoreData/SharedCoreData.h"
+
+#include "config.h"
 
 namespace Ui {
 class IOPanel;
@@ -32,10 +35,14 @@ private:
     // 初始化io按钮布局和回调
     void _init_common_io_buttons();
 
-    void _add_button_to_gridlayout(const QString &button_name,
-                                   uint32_t out_num, int row, int col);
+    QPushButton *_make_button_at_gridlayout(const QString &button_name, int row,
+                                            int col);
 
-    void _layout_button_columes_priority(uint32_t col_nums);
+    void _set_button_output(QPushButton *pb, uint32_t out_num);
+
+    void _set_button_input(QPushButton *pb, uint32_t out_num);
+
+    void _layout_button_rows_priority(uint32_t row_nums);
 
     void _init_handbox_pump_signal();
 
@@ -58,7 +65,12 @@ private:
     // io 按钮布局
     QGridLayout *io_button_layout_{nullptr};
 
-    QTimer* update_io_timer_;
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+    // INPUT 按钮io对应
+    std::unordered_map<uint32_t, QPushButton *> map_inputio_to_dispbtn_;
+#endif
+
+    QTimer *update_io_timer_;
 };
 
 } // namespace app

@@ -19,6 +19,13 @@ PowerPanel::PowerPanel(SharedCoreData *shared_core_data, QWidget *parent)
     connect(update_io_timer_, &QTimer::timeout, this, &PowerPanel::slot_update_io_display);
     update_io_timer_->start(350);
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)    
+    ui->pb_power_on->setChecked(false);
+    ui->pb_power_on->setEnabled(false);
+    ui->pb_mach_bit->setChecked(false);
+    ui->pb_mach_bit->setEnabled(false);
+#endif
+
     _init_update_slots();
     _init_button_slots();
 
@@ -38,9 +45,13 @@ void PowerPanel::slot_update_io_display() {
 }
 
 void PowerPanel::_update_io_display() {
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     ui->pb_power_on->setChecked(pm_->is_power_on());
     ui->pb_mach_on->setChecked(pm_->is_highpower_on());
     ui->pb_mach_bit->setChecked(pm_->is_machbit_on());
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+    ui->pb_mach_on->setChecked(pm_->is_highpower_on());
+#endif
 }
 
 void PowerPanel::_update_eleparam_display(
@@ -118,17 +129,21 @@ void PowerPanel::_init_button_slots() {
         this->shared_core_data_->get_power_manager()->show_database_ui();
     });
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     connect(ui->pb_mach_bit, &QPushButton::clicked, this, [this](bool checked) {
         pm_->set_machbit_on(checked);
     });
+#endif
 
     connect(ui->pb_mach_on, &QPushButton::clicked, this, [this](bool checked) {
         pm_->set_highpower_on(checked);
     });
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     connect(ui->pb_power_on, &QPushButton::clicked, this, [this](bool checked) {
         pm_->set_power_on(checked);
     });
+#endif
 
     connect(ui->pb_set_param, &QPushButton::clicked, this, &PowerPanel::_set_param_from_ui);
     // TODO

@@ -132,8 +132,10 @@ bool PowerManager::set_current_eleparam(const power::EleParam_dkd_t &eleparam) {
 }
 
 void PowerManager::_ele_cycle_timer_slot() {
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     power_ctrler_->trigger_send_eleparam();
     power_ctrler_->trigger_send_ioboard_eleparam();
+#endif
     io_ctrler_->trigger_send_current_io();
 }
 

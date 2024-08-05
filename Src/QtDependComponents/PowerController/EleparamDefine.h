@@ -3,10 +3,13 @@
 #include <cstdint>
 #include <memory>
 
+#include "config.h"
+
 namespace edm {
 
 namespace power {
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 #define DEC_LV0_CONTACTORS      0
 #define DEC_LV1_CONTACTORS      2
 #define DEC_LV2_CONTACTORS      3
@@ -97,6 +100,53 @@ enum EleContactorsOut {
 /* 继电器开关定义 */
 #define CONTACTOR_DISABLE 0 // 断开继电器
 #define CONTACTOR_ENABLE  1 // 吸合继电器
+
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+enum ZHONGGU_IOOut {
+    // 407 IO
+    ZHONGGU_IOOut_IOOUT1_FULD = 1,
+    ZHONGGU_IOOut_IOOUT2_NEG = 2,
+    ZHONGGU_IOOut_IOOUT3_MACH = 3,
+    ZHONGGU_IOOut_IOOUT4_BZ = 4,
+
+    // 103 IO
+    ZHONGGU_IOOut_IOOUT5_LIGHT = 5,
+    ZHONGGU_IOOut_IOOUT6_RED = 6,
+    ZHONGGU_IOOut_IOOUT7_YELLOW = 7,
+    ZHONGGU_IOOut_IOOUT8_GREEN = 8,
+    ZHONGGU_IOOut_IOOUT9_TOOL_FIXTURE = 9,
+    ZHONGGU_IOOut_IOOUT10_WORK_FIXTURE = 10,
+    ZHONGGU_IOOut_IOOUT11_HP1 = 11,
+    ZHONGGU_IOOut_IOOUT12_HP2 = 12,
+
+    ZHONGGU_IOOut_TON1 = 13,
+    ZHONGGU_IOOut_TON2 = 14,
+    ZHONGGU_IOOut_TON4 = 15,
+    ZHONGGU_IOOut_TON8 = 16,
+    ZHONGGU_IOOut_TON16 = 17,
+
+    ZHONGGU_IOOut_TOFF1 = 18,
+    ZHONGGU_IOOut_TOFF2 = 19,
+    ZHONGGU_IOOut_TOFF4 = 20,
+    ZHONGGU_IOOut_TOFF8 = 21,
+
+    ZHONGGU_IOOut_IP1 = 22,
+    ZHONGGU_IOOut_IP2 = 23,
+    ZHONGGU_IOOut_IP4 = 24,
+    ZHONGGU_IOOut_IP8 = 25,
+};
+
+enum ZHONGGU_IOIn {
+    ZHONGGU_IOIn_IOIN1_PRESSURE = 1,
+    ZHONGGU_IOIn_IOIN2 = 2,
+    ZHONGGU_IOIn_IOIN5_TOOL_FIX_BTN = 5,
+    ZHONGGU_IOIn_IOIN6_WORK_FIX_BTN = 6,
+    ZHONGGU_IOIn_IOIN12_TOOL_EXIST = 12,
+    ZHONGGU_IOIn_IOIN13_WORK_EXIST = 13,
+    ZHONGGU_IOIn_IOIN14_TOOL_PRESSURE = 14,
+    ZHONGGU_IOIn_IOIN15_WORK_PRESSURE = 15,
+};
+#endif
 
 /* 电参数结构体 */
 struct EleParam_dkd_t /* 前缀为__的变量表示尚未用到 */

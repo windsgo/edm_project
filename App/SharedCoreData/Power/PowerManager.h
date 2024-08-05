@@ -52,6 +52,7 @@ public:
         return power_ctrler_->is_highpower_on();
     }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     inline void set_machbit_on(bool on) {
         power_ctrler_->set_machbit_on(on);
         emit sig_power_flag_changed();
@@ -63,6 +64,7 @@ public:
         emit sig_power_flag_changed();
     }
     inline bool is_power_on() const { return power_ctrler_->is_power_on(); }
+#endif
 
     inline const auto &get_current_eleparam() const {
         return power_ctrler_->get_current_param();
