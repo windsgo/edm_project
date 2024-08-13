@@ -81,6 +81,8 @@
 #error "EDM_POWER_TYPE not valid"
 #endif
 
+#define EDM_USE_ZYNQ_SERVOBOARD
+
 // DataQueueRecorder Cache
 #define EDM_DATAQUEUERECORDER_ENABLE_CACHE // 使能cache缓存
 
@@ -116,12 +118,21 @@
 #define EDM_OFFLINE_RUN_TYPE_6 \
     6 // 连接ECAT, 2个CAN互连, 模拟测试压力, 但是不取CAN返回值
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_5 //! Choose an OFFLINE type
+// 20240813后新增 // TODO
+#define EDM_OFFLINE_RUN_TYPE_7 \
+    7 // 不连接ECAT, 不连接CAN, 不连接ZYNQ
+#define EDM_OFFLINE_RUN_TYPE_8 \
+    8 // 不连接ECAT, 不连接CAN, 连接ZYNQ, 采用ZYNQ返回的伺服信息
+#define EDM_OFFLINE_RUN_TYPE_9 \
+    9 // 不连接ECAT, 连接CAN(操作中谷IO), 连接ZYNQ(伺服信息)
+
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_8 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 
 #define EDM_OFFLINE_RUN_NO_ECAT         // 离线不连接ecat, 不发送ecat指令
 #define EDM_OFFLINE_RUN_NO_CAN          // 离线不连接CAN设备
+#define EDM_OFFLINE_RUN_NO_ZYNQ         // 离线不连接ZYNQ设备
 #define EDM_OFFLINE_MANUAL_TOUCH_DETECT // 离线手动按钮标志接触感知
 #define EDM_OFFLINE_MANUAL_SERVO_CMD    // 离线手动按钮/滑动条标志伺服速度
 #define EDM_OFFLINE_MANUAL_VOLTAGE      // 离线手动电压(调试电压实时显示)
@@ -144,6 +155,15 @@
 #undef EDM_OFFLINE_RUN_NO_CAN
 #define EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE // 离线测试时, 连接两个CAN设备,
                                               // 用于保持正常的can通信链路
+
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_7)
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_8)
+    #undef EDM_OFFLINE_RUN_NO_ZYNQ
+    #undef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    #undef EDM_OFFLINE_MANUAL_SERVO_CMD
+    #undef EDM_OFFLINE_MANUAL_VOLTAGE
+#elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_9)
+
 #else
 #error "No EDM_OFFLINE_RUN_TYPE defined"
 #endif // EDM_OFFLINE_RUN_TYPE value

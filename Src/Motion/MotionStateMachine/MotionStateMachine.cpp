@@ -31,10 +31,17 @@ MotionStateMachine::MotionStateMachine(
         throw exception("no signal_buffer_");
     }
     
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    auto physical_touch_detect_cb = [this]() -> bool {
+        return s_motion_shared->cached_udp_message().realtime_voltage <= 3;
+    };
+    touch_detect_handler_ = std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
+#else
     auto physical_touch_detect_cb = [this]() -> bool {
         return s_motion_shared->cached_servo_data().touch_detected;
     };
     touch_detect_handler_ = std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
+#endif
 
     // cb_get_jump_param_ =
     //     std::bind_front(&MotionStateMachine::_get_jump_param, this);
@@ -53,8 +60,12 @@ MotionStateMachine::MotionStateMachine(
 }
 
 void MotionStateMachine::run_once() {
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    s_motion_shared->update_zynq_udpmessage_holder();
+#else
     //! 状态机每周期开始更新can buffer缓存到本地
     s_motion_shared->update_can_buffer_cache();
+#endif
 
     if (s_motion_shared->is_data_recorder_running()) {
         //! 每周期开始, 将记录数据缓存清空
@@ -75,12 +86,21 @@ void MotionStateMachine::run_once() {
         }
 #endif // EDM_OFFLINE_RUN_NO_ECATs
         // 记录已经更新的放电信息反馈
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+        const auto& csd = s_motion_shared->cached_udp_message();
+        rd1.average_voltage = csd.averaged_voltage;
+        rd1.current = 0; // TODO
+        rd1.normal_charge_rate = 0; // TODO
+        rd1.short_charge_rate = 0; // TODO
+        rd1.open_charge_rate = 0; // TODO
+#else
         auto& csd = s_motion_shared->cached_servo_data();
         rd1.average_voltage = csd.average_voltage;
         rd1.current = csd.current;
         rd1.normal_charge_rate = csd.normal_rate;
         rd1.short_charge_rate = csd.short_rate;
         rd1.open_charge_rate = csd.open_rate;
+#endif
     }
 
     if (!enabled_) {

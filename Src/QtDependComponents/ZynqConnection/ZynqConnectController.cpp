@@ -132,9 +132,11 @@ ZynqConnectController::ZynqConnectController(
     uint16_t udp_port)
     : zynq_tcpserver_ip_(zynq_tcpserver_ip),
       zynq_tcpserver_port_(zynq_tcpserver_port), udp_port_(udp_port) {
-    
+
     if (zynq_tcpserver_ip_.isNull()) {
-        throw exception{EDM_FMT::format("invalid tcpserver ip: {}", zynq_tcpserver_ip_.toString().toStdString())};
+        throw exception{
+            EDM_FMT::format("invalid tcpserver ip: {}",
+                            zynq_tcpserver_ip_.toString().toStdString())};
     }
 
     _init_worker_and_thread();
@@ -183,6 +185,40 @@ void ZynqConnectController::_init_worker_and_thread() {
 
     // start workers
     emit _sig_workers_start();
+}
+
+QByteArray ZynqConnectController::MakeTcpPackage(uint8_t frame_id,
+                                                 const void *data_ptr,
+                                                 std::size_t data_size) {
+    if (data_size > 250) {
+        s_logger->warn("in {}: data_size ({}) > {}", __FUNCTION__, data_size,
+                       250);
+        data_size = 250;
+    }
+
+    if (data_ptr == nullptr && data_size != 0) {
+        s_logger->warn("in {}: data_size ({}) != 0, while data_ptr is nullptr",
+                       __FUNCTION__, data_size);
+        data_size = 0;
+    }
+
+    uint8_t buffer[256];
+    buffer[0] = 0x7E;
+    buffer[1] = 6 + data_size; // total length
+    buffer[2] = frame_id;
+    buffer[3] = 0x00;
+
+    if (data_ptr != nullptr) {
+        memcpy(&buffer[4], data_ptr, data_size);
+    }
+
+    uint16_t crc = util::tcp_crc_table_calc(&buffer[1], buffer[1] - 3);
+    buffer[buffer[1] - 2] = crc >> 8;
+    buffer[buffer[1] - 1] = crc & 0xFF;
+
+    QByteArray ba{(const char *)buffer, buffer[1]};
+
+    return ba;
 }
 
 } // namespace zynq

@@ -48,8 +48,12 @@ public:
         MotionSignalQueue::ptr motion_signal_queue,
         const std::function<void(bool)> &cb_enable_voltage_gate,
         const std::function<void(bool)> &cb_mach_on,
-        CanReceiveBuffer::ptr can_recv_buffer, uint32_t iomap_size,
-        uint32_t servo_num, uint32_t io_num = 0);
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+        zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder,
+#else
+        CanReceiveBuffer::ptr can_recv_buffer,
+#endif
+        uint32_t iomap_size, uint32_t servo_num, uint32_t io_num = 0);
     ~MotionThreadController();
 
     MotionThreadController(const MotionThreadController &) = delete;
@@ -174,7 +178,7 @@ private: // Data
         SystemSettings::instance().get_motion_cycle_us() * 1000}; // 周期(ns)
 #ifdef EDM_ECAT_DRIVER_SOEM
     int64_t toff_{0}; // 每周期cycletime的修正量(ns) (基于DC同步)
-#endif // EDM_ECAT_DRIVER_SOEM
+#endif                // EDM_ECAT_DRIVER_SOEM
 
     int32_t latency_target_fd_{-1};
     const int32_t latency_target_value_{0}; // 消除系统时钟偏移(禁止电源休眠)
@@ -250,8 +254,6 @@ private: // 外部的一些回调
 
     // 高频操作回调
     std::function<void(bool)> cb_mach_on_;
-
-    CanReceiveBuffer::ptr can_recv_buffer_;
 };
 
 } // namespace move

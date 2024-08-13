@@ -7,7 +7,9 @@
 #include <QThread>
 #include <QTimer>
 
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <qhostaddress.h>
@@ -15,6 +17,8 @@
 #include <qthread.h>
 #include <qtimer.h>
 #include <qudpsocket.h>
+
+#include <Utils/Crc/crc.h>
 
 // ZynqConnectController Controlls One Thread,
 // A TcpWorker and a UdpWorker work in this thread
@@ -107,7 +111,17 @@ private:
     QHostAddress zynq_tcpserver_ip_;
     uint16_t zynq_tcpserver_port_ {0};
     uint16_t udp_port_ {0};
+
+public:
+    static QByteArray MakeTcpPackage(uint8_t frame_id, const void* data_ptr, std::size_t data_size);
+
+    template<typename T>
+    static QByteArray MakeTcpPackage(uint8_t frame_id, const T& data)
+    {
+        return MakeTcpPackage(frame_id, &data, sizeof(T));
+    }
 };
+
 
 } // namespace zynq
 } // namespace edm

@@ -4,6 +4,7 @@
 #include "DataDisplayer/DataDisplayer.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
 #include "LogListPanel/LogListPanel.h"
+#include "QtDependComponents/ZynqConnection/UdpMessageDefine.h"
 #include "SystemSettings/SystemSettings.h"
 #include "qwt_axis.h"
 #include "qwt_plot.h"
@@ -150,7 +151,8 @@ void MainWindow::_init_members() {
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
-            coord_setting_panel_, &CoordSettingPanel::slot_change_display_coord_index);
+            coord_setting_panel_,
+            &CoordSettingPanel::slot_change_display_coord_index);
     connect(task_manager_, &task::TaskManager::sig_coord_offset_changed,
             coord_setting_panel_, &CoordSettingPanel::slot_update_display);
 
@@ -214,9 +216,6 @@ void MainWindow::_init_tab_monitor() {
     vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "I", Qt::green);
     vol_cur_displayer_->set_axis_scale(QwtPlot::yRight, 0, 30);
 
-    mach_rate_displayer_->set_axis_title(QwtPlot::yLeft, "Rate", Qt::black);
-    mach_rate_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 100);
-
     desc.data_max_points = -1;
     // vol
     desc.data_name = "V";
@@ -225,26 +224,34 @@ void MainWindow::_init_tab_monitor() {
     monitor_voltage_index_ = vol_cur_displayer_->add_data_item(desc);
 
     // cur
-    desc.data_name = "I";
-    desc.yAxis = QwtPlot::yRight;
-    desc.preferred_color = Qt::green;
-    monitor_current_index_ = vol_cur_displayer_->add_data_item(desc);
+    // desc.data_name = "I";
+    // desc.yAxis = QwtPlot::yRight;
+    // desc.preferred_color = Qt::green;
+    // monitor_current_index_ = vol_cur_displayer_->add_data_item(desc);
 
     // mach rate
     desc.yAxis = QwtPlot::yLeft;
     desc.data_max_points = -1;
+    mach_rate_displayer_->set_axis_title(QwtPlot::yLeft, "Speed", Qt::black);
+    mach_rate_displayer_->set_axis_scale(QwtPlot::yLeft, -30, 30);
     // normal
-    desc.data_name = "normal";
+    desc.data_name = "sv speed";
     desc.preferred_color = Qt::green;
-    monitor_normal_rate_index_ = mach_rate_displayer_->add_data_item(desc);
-    // short
-    desc.data_name = "short";
-    desc.preferred_color = Qt::red;
-    monitor_short_rate_index_ = mach_rate_displayer_->add_data_item(desc);
-    // normal
-    desc.data_name = "open";
-    desc.preferred_color = Qt::yellow;
-    monitor_open_rate_index_ = mach_rate_displayer_->add_data_item(desc);
+    sv_speed_index_ = mach_rate_displayer_->add_data_item(desc);
+    // // short
+    // desc.data_name = "short";
+    // desc.preferred_color = Qt::red;
+    // monitor_short_rate_index_ = mach_rate_displayer_->add_data_item(desc);
+    // // normal
+    // desc.data_name = "open";
+    // desc.preferred_color = Qt::yellow;
+    // monitor_open_rate_index_ = mach_rate_displayer_->add_data_item(desc);
+
+    // init dial and dial's needle
+    dial_needle_ = new QwtDialSimpleNeedle(QwtDialSimpleNeedle::Style::Arrow,
+                                           true, Qt::green, Qt::gray);
+    dial_needle_->setWidth(10);
+    ui->Dial_Voltage->setNeedle(dial_needle_);
 
     // init timer
     monitor_timer_ = new QTimer(this);
@@ -272,6 +279,21 @@ void MainWindow::_init_status_bar_palette_and_connection() {
 }
 
 void MainWindow::_slot_monitor_timer_doit() {
+#ifdef EDM_USE_ZYNQ_SERVOBOARD // use zynq board to do servo things
+    zynq::servo_return_data_t sd;
+    shared_core_data_->get_zynq_udpmessage_holder()->get_udp_message(sd);
+
+    vol_cur_displayer_->push_data(monitor_voltage_index_,
+                                  (double)sd.averaged_voltage);
+    vol_cur_displayer_->update_display();
+
+    mach_rate_displayer_->push_data(
+        sv_speed_index_,
+        (double)sd.servo_calced_speed_mm_min_times_1000 / 1000.0);
+    mach_rate_displayer_->update_display();
+
+    ui->Dial_Voltage->setValue((double)sd.averaged_voltage);
+#else
     // TODO
     Can1IOBoard407ServoData sd;
     shared_core_data_->get_can_recv_buffer()->load_servo_data(sd);
@@ -286,11 +308,8 @@ void MainWindow::_slot_monitor_timer_doit() {
     mach_rate_displayer_->push_data(monitor_open_rate_index_, sd.open_rate);
     mach_rate_displayer_->update_display();
 
-    auto needle = new QwtDialSimpleNeedle(QwtDialSimpleNeedle::Style::Arrow,
-                                          true, Qt::green, Qt::gray);
-    needle->setWidth(10);
-    ui->Dial_Voltage->setNeedle(needle);
     ui->Dial_Voltage->setValue((double)sd.average_voltage);
+#endif
 }
 
 void MainWindow::slot_info_message(const QString &str, int timeout) {

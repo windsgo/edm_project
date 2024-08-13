@@ -2,12 +2,14 @@
 
 #include <QCoreApplication>
 
+#include <memory>
 #include <qhostaddress.h>
 #include <random>
 #include <thread>
 
 #include "Logger/LogMacro.h"
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
+#include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 namespace edm {
@@ -305,9 +307,20 @@ void SharedCoreData::_init_data() {
     power_ctrler_ = std::make_shared<power::PowerController>(
         can_ctrler_, io_ctrler_, can_device_index_);
 
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    zynq_connect_ctrler_ = std::make_shared<zynq::ZynqConnectController>(
+        QHostAddress{QString::fromStdString(
+            sys_settings_.get_zynq_settings().zynq_tcp_server_ip)},
+        sys_settings_.get_zynq_settings().zynq_tcp_server_port,
+        sys_settings_.get_zynq_settings().zynq_udp_local_port);
+
+    zynq_udpmessage_holder_ =
+        std::make_shared<zynq::ZynqUdpMessageHolder>(zynq_connect_ctrler_);
+#else
     // init servodata and adcinfo receive-holder
     can_recv_buffer_ =
         std::make_shared<CanReceiveBuffer>(can_ctrler_, can_device_index_);
+#endif
 
     _init_handbox_converter(can_device_index_);
 
@@ -321,7 +334,12 @@ void SharedCoreData::_init_data() {
     motion_thread_ctrler_ = std::make_shared<move::MotionThreadController>(
         sys_settings_.get_ecat_netif_name(), motion_cmd_queue_,
         motion_signal_queue_, cb_enable_votalge_gate_, cb_mach_on_,
-        can_recv_buffer_, sys_settings_.get_ecat_iomap_size(), EDM_SERVO_NUM);
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+        zynq_udpmessage_holder_,
+#else
+        can_recv_buffer_,
+#endif
+        sys_settings_.get_ecat_iomap_size(), EDM_SERVO_NUM);
 
     // init info dispatcher
     info_dispatcher_ =
@@ -331,15 +349,6 @@ void SharedCoreData::_init_data() {
     // init power manager
     power_manager_ = new PowerManager(io_ctrler_, power_ctrler_,
                                       motion_cmd_queue_, 1000, this);
-
-    // TODO
-    // FIXME
-    // test
-    zynq_connect_ctrler_ = std::make_shared<zynq::ZynqConnectController>(
-        QHostAddress{QString::fromStdString(
-            sys_settings_.get_zynq_settings().zynq_tcp_server_ip)},
-        sys_settings_.get_zynq_settings().zynq_tcp_server_port,
-        sys_settings_.get_zynq_settings().zynq_udp_local_port);
 
     // 获取运动线程中的记录器指针, 用于操作开始结束
     record_data1_queuerecorder_ =

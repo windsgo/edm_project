@@ -21,6 +21,7 @@
 #include "QtDependComponents/InfoDispatcher/InfoDispatcher.h"
 #include "QtDependComponents/PowerController/PowerController.h"
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
+#include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
 #include "Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.h"
 
@@ -68,11 +69,18 @@ public:
     inline auto get_motion_cmd_queue() const { return motion_cmd_queue_; }
     inline auto get_motion_thread_ctrler() const { return motion_thread_ctrler_; }
 
+#ifndef EDM_USE_ZYNQ_SERVOBOARD
     inline auto get_can_recv_buffer() const { return can_recv_buffer_; }
+#endif // EDM_USE_ZYNQ_SERVOBOARD
 
     inline auto get_info_dispatcher() const { return info_dispatcher_; }
 
     inline auto get_power_manager() const { return power_manager_; }
+
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    inline auto get_zynq_connect_ctrler() const { return zynq_connect_ctrler_; }
+    inline auto get_zynq_udpmessage_holder() const { return zynq_udpmessage_holder_; }
+#endif
 
 // slots
     // io板蜂鸣器响一下协议
@@ -117,7 +125,10 @@ private:
     io::IOController::ptr io_ctrler_;
     power::PowerController::ptr power_ctrler_;
 
+#ifndef EDM_USE_ZYNQ_SERVOBOARD
     CanReceiveBuffer::ptr can_recv_buffer_;
+#endif // EDM_USE_ZYNQ_SERVOBOARD
+
     HandboxConverter::ptr handbox_converter_;
 
     move::MotionSignalQueue::ptr motion_signal_queue_;
@@ -128,7 +139,10 @@ private:
 
     PowerManager* power_manager_;
 
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
     zynq::ZynqConnectController::ptr zynq_connect_ctrler_;
+    zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder_;
+#endif
 
 private:
     std::function<void(bool)> cb_enable_votalge_gate_;

@@ -5,11 +5,14 @@
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
 
+#include "QtDependComponents/ZynqConnection/UdpMessageDefine.h"
 #include "SystemSettings/SystemSettings.h"
 #include "Utils/DataQueueRecorder/DataQueueRecorder.h"
 
 #include "EcatManager/EcatManager.h"
 #include <cstdint>
+
+#include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
 namespace edm {
 
@@ -32,9 +35,15 @@ public:
 
 public:
     //! 必要的设定
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    inline void set_zynq_udpmessage_holder(zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder) {
+        zynq_udpmessage_holder_ = zynq_udpmessage_holder;
+    }
+#else
     inline void set_can_recv_buffer(CanReceiveBuffer::ptr can_recv_buffer) {
         can_recv_buffer_ = can_recv_buffer;
     }
+#endif
 
     inline void set_ecat_manager(ecat::EcatManager::ptr ecat_manager) {
         ecat_manager_ = ecat_manager;
@@ -44,6 +53,17 @@ public:
     inline auto get_ecat_manager() { return ecat_manager_; }
 
 public:
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    inline const auto zynq_udpmessage_holder() const {
+        return zynq_udpmessage_holder_;
+    }
+    inline const auto cached_udp_message() const { return cached_udp_message_; }
+    inline void update_zynq_udpmessage_holder() {
+        if (zynq_udpmessage_holder_) [[likely]] {
+            zynq_udpmessage_holder_->get_udp_message(cached_udp_message_);
+        }
+    }
+#else
     // Can 接收与缓存相关
     inline auto &can_recv_buffer() {
         return can_recv_buffer_;
@@ -59,6 +79,7 @@ public:
 #endif // EDM_IOBOARD_NEW_SERVODATA_1MS
         }
     }
+#endif
 
 public: // 数据记录相关, 一个周期内可能需要在不同地方记录多个数据,
         // 统一设置在这里, 周期结束时push入记录队列
@@ -154,10 +175,15 @@ private:
                              // 简化指令坐标在各级之间传递的逻辑, 防止指令突变
 
 private: // Can 接收与缓存相关数据
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder_;
+    zynq::servo_return_data_t cached_udp_message_;
+#else
     CanReceiveBuffer::ptr can_recv_buffer_;
     Can1IOBoard407ServoData
         cached_servo_data_; // 状态机每次开始时从can_recv_buffer_缓存一次
     Can1IOBoard407ADCInfo cached_adc_info_;
+#endif 
 
 private:
     RecordData1 record_data1_cache_;

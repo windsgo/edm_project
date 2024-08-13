@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.h"
 #include <cstdint>
 
 // define UDP message struct received from ZYNQ board
@@ -8,28 +9,18 @@ namespace edm {
 
 namespace zynq {
 
-struct adc_data {
-    uint16_t original_data_0_1023; // 原始AD采样数字数据 0~1023
-    int16_t voltage_5v_times_1000; // 从原始AD采样转化到的-5~5V的AD板输入电压
-    int32_t voltage_real_times_1000; // 转化为分压板输入的真实极间电压
-};
+// UDP返回结构体
+typedef struct {
+    // PL端回传的滤波后的电压(可视作实时电压, 可用于接触感知等)
+    int16_t realtime_voltage;
 
-struct servo_msg {
-    struct adc_data realtime_adc_data; // 获取数据时PL端实时采集到的瞬时电压
-    struct adc_data pl_filtered_adc_data; // PL端(ns~us级别)滤波的电压
-    struct adc_data ps_filtered_adc_data; // PS端(宏观ms级)滤波的电压
-    
-    // TODO
-};
+    // PS端滑动滤波之后的平均电压
+    int16_t averaged_voltage;
 
+    // 计算出的伺服进给速度(mm/min) * 1000 返回  (负数表示回退)
+    int32_t servo_calced_speed_mm_min_times_1000;
+} servo_return_data_t;
 
-// The Total Udp Message
-struct udp_message {
-    uint32_t input_io; // TODO, if there is input io
+} // namespace zynq
 
-    // TODO other udp contents
-};
-
-}
-
-}
+} // namespace edm

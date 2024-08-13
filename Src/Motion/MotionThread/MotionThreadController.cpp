@@ -4,6 +4,7 @@
 #include "Exception/exception.h"
 #include "Motion/MotionThread/MotionCommand.h"
 #include "Motion/MoveDefines.h"
+#include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 #include "Utils/Format/edm_format.h"
 #include "Utils/Time/TimeUseStatistic.h"
 #include <cstdint>
@@ -34,12 +35,15 @@ MotionThreadController::MotionThreadController(
     MotionSignalQueue::ptr motion_signal_queue,
     const std::function<void(bool)> &cb_enable_voltage_gate,
     const std::function<void(bool)> &cb_mach_on,
-    CanReceiveBuffer::ptr can_recv_buffer, uint32_t iomap_size,
-    uint32_t servo_num, uint32_t io_num)
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder,
+#else
+    CanReceiveBuffer::ptr can_recv_buffer,
+#endif
+    uint32_t iomap_size, uint32_t servo_num, uint32_t io_num)
     : motion_cmd_queue_(motion_cmd_queue),
       motion_signal_queue_(motion_signal_queue),
-      cb_enable_votalge_gate_(cb_enable_voltage_gate), cb_mach_on_(cb_mach_on),
-      can_recv_buffer_(can_recv_buffer) {
+      cb_enable_votalge_gate_(cb_enable_voltage_gate), cb_mach_on_(cb_mach_on) {
     //! 需要注意的是, 构造函数中的代码运行在Caller线程, 不运行在新的线程
     //! 所以线程要最后创建, 防止数据竞争, 和使用未初始化成员变量的问题
 
@@ -53,7 +57,11 @@ MotionThreadController::MotionThreadController(
     signal_buffer_ = std::make_shared<SignalBuffer>();
 
     //! 初始化公共数据的can buffer, ecat_manager_
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    s_motion_shared->set_zynq_udpmessage_holder(zynq_udpmessage_holder);
+#else
     s_motion_shared->set_can_recv_buffer(can_recv_buffer);
+#endif
     s_motion_shared->set_ecat_manager(ecat_manager_);
 
     //! 创建motion状态机
@@ -559,7 +567,9 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
     axis_t act_axis;
     auto ret = s_motion_shared->get_act_axis(act_axis);
     if (!ret) {
-        throw exception(EDM_FMT::format("s_motion_shared->get_act_axis failed, in {}", __PRETTY_FUNCTION__));
+        throw exception(
+            EDM_FMT::format("s_motion_shared->get_act_axis failed, in {}",
+                            __PRETTY_FUNCTION__));
     }
 
     s_motion_shared->set_global_cmd_axis(act_axis);
@@ -802,7 +812,8 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         auto set_motion_settings_cmd =
             std::static_pointer_cast<MotionCommandSettingMotionSettings>(cmd);
 
-        s_motion_shared->set_settings(set_motion_settings_cmd->motion_settings());
+        s_motion_shared->set_settings(
+            set_motion_settings_cmd->motion_settings());
 
         accept_cmd_flag = true;
         break;

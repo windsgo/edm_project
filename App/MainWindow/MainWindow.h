@@ -23,6 +23,7 @@
 
 // SharedData
 #include "SharedCoreData/SharedCoreData.h"
+#include "qwt_dial_needle.h"
 
 namespace Ui {
 class MainWindow;
@@ -93,6 +94,9 @@ private: // monitor
     int monitor_normal_rate_index_;
     int monitor_short_rate_index_;
     int monitor_open_rate_index_;
+    int sv_speed_index_;
+
+    QwtDialSimpleNeedle* dial_needle_;
 
     QTimer* monitor_timer_;
 };

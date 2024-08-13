@@ -1,6 +1,7 @@
 #include "G01AutoTask.h"
 
 #include "Logger/LogMacro.h"
+#include "Utils/UnitConverter/UnitConverter.h"
 #include <chrono>
 
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
@@ -535,6 +536,7 @@ bool G01AutoTask::_servoing_do_servothings() {
     double servo_cmd =
         _get_servo_cmd_from_shared(); // return value's unit is blu
 
+#ifndef EDM_USE_ZYNQ_SERVOBOARD
     if (s_motion_shared->get_settings().enable_g01_run_each_servo_cmd)
         [[unlikely]] {
         if (s_motion_shared->can_recv_buffer()->is_servo_data_new()) {
@@ -544,6 +546,7 @@ bool G01AutoTask::_servoing_do_servothings() {
             return false; //! No need to continue
         }
     }
+#endif
 
     // 记录数据
     if (s_motion_shared->is_data_recorder_running()) {
@@ -644,6 +647,13 @@ bool G01AutoTask::_check_and_validate_jump_height() {
 }
 
 double G01AutoTask::_get_servo_cmd_from_shared() {
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    auto sv_speed = (double)s_motion_shared->cached_udp_message()
+                        .servo_calced_speed_mm_min_times_1000 /
+                    1000.0;
+
+    return util::UnitConverter::mm_min2blu_p(sv_speed);
+#else
     int dir = s_motion_shared->cached_servo_data().servo_direction;
     double dis_blu = util::UnitConverter::um2blu(
         (double)(s_motion_shared->cached_servo_data().servo_distance_0_001um) /
@@ -656,6 +666,7 @@ double G01AutoTask::_get_servo_cmd_from_shared() {
     } else {
         return -dis_blu;
     }
+#endif
 }
 
 } // namespace move

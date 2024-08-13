@@ -74,6 +74,7 @@ set(PROJECT_SOURCES
     Src/Utils/Netif/netif_utils.cpp
     Src/Utils/UnitConverter/UnitConverter.cpp
     Src/Utils/DataQueueRecorder/DataQueueRecorder.cpp
+    Src/Utils/Crc/crc.cpp
     Src/Motion/Moveruntime/Moveruntime.cpp
     Src/Motion/MoveruntimeWrapper/MoveruntimeWrapper.cpp
     Src/Motion/PointMoveHandler/PointMoveHandler.cpp
@@ -101,6 +102,7 @@ set(PROJECT_SOURCES
     Src/CanReceiveBuffer/CanReceiveBuffer.cpp
     Src/HandboxConverter/HandboxConverter.cpp
     Src/QtDependComponents/ZynqConnection/ZynqConnectController.cpp
+    Src/QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.cpp
 )
 
 # include_directories(${PROJECT_SOURCE_DIR}/Src)
