@@ -30,6 +30,8 @@ private:
 
     bool _set_motion_settings_to_motion_thread();
 
+    void _set_adc_settings_to_zynq();
+
 private:
     Ui::SystemSettingPanel *ui;
 

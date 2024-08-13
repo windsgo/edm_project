@@ -35,8 +35,13 @@
     },
     "power_database_file": "power.db",
     "qss_file": "gui.qss",
+    "zynq_adc_settings": {
+        "adc_gain": 60.000000,
+        "adc_offset": 0.000000,
+        "voltage_filter_window_time_us": 10000
+    },
     "zynq_settings": {
-        "zynq_tcp_server_ip": "192.168.21.163",
+        "zynq_tcp_server_ip": "192.168.1.133",
         "zynq_tcp_server_port": 12315,
         "zynq_udp_local_port": 12345
     }

@@ -1,5 +1,7 @@
 #include "SystemSettingPanel.h"
 #include "Motion/MotionThread/MotionCommand.h"
+#include "QtDependComponents/ZynqConnection/TcpMessageDefine.h"
+#include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "TaskManager/TaskHelper.h"
 #include "ui_SystemSettingPanel.h"
 
@@ -33,9 +35,7 @@ void SystemSettingPanel::_init_button_cb() {
     connect(ui->pb_save, &QPushButton::clicked, this, [this]() { _do_save(); });
 
     connect(ui->pb_enable_g01_half_closed_loop, &QPushButton::clicked, this,
-            [this](bool checked [[maybe_unused]]) {
-                _do_save();
-            });
+            [this](bool checked [[maybe_unused]]) { _do_save(); });
     connect(ui->pb_enable_g01_run_each_servo_cmd, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
 }
@@ -45,7 +45,8 @@ void SystemSettingPanel::_do_save() {
     if (!ret) {
         QMessageBox::critical(this, "save failed", "save to file failed");
     } else {
-        emit shared_core_data_->sig_info_message("Save System Settings Success", 5000);
+        emit shared_core_data_->sig_info_message("Save System Settings Success",
+                                                 5000);
     }
 
     _update_ui();
@@ -68,6 +69,13 @@ void SystemSettingPanel::_update_ui() {
         s_sys_setting.get_enable_g01_run_each_servo_cmd());
     ui->pb_enable_g01_half_closed_loop->setChecked(
         s_sys_setting.get_enable_g01_half_closed_loop());
+
+    // adc
+    ui->dsb_adc_gain->setValue(s_sys_setting.get_zynq_adc_settings().adc_gain);
+    ui->dsb_adc_offset->setValue(
+        s_sys_setting.get_zynq_adc_settings().adc_offset);
+    ui->sb_adc_filter_time_us->setValue(
+        s_sys_setting.get_zynq_adc_settings().voltage_filter_window_time_us);
 }
 
 bool SystemSettingPanel::_save() {
@@ -87,6 +95,16 @@ bool SystemSettingPanel::_save() {
         ui->pb_enable_g01_run_each_servo_cmd->isChecked()); // TODO
     s_sys_setting.set_enable_g01_half_closed_loop(
         ui->pb_enable_g01_half_closed_loop->isChecked()); // TODO
+
+    struct _sys::_zynq_adc_settings adc_s;
+    adc_s.adc_offset = ui->dsb_adc_offset->value();
+    adc_s.adc_gain = ui->dsb_adc_gain->value();
+    adc_s.voltage_filter_window_time_us =
+        (uint32_t)(ui->sb_adc_filter_time_us->value());
+
+    s_sys_setting.set_zynq_adc_settings(adc_s);
+
+    _set_adc_settings_to_zynq();
 
     auto set_ret = _set_motion_settings_to_motion_thread();
     if (!set_ret) {
@@ -118,6 +136,22 @@ bool SystemSettingPanel::_set_motion_settings_to_motion_thread() {
     mcq->push_command(motion_settings_cmd);
 
     return task::TaskHelper::WaitforCmdTobeAccepted(motion_settings_cmd, 200);
+}
+
+void SystemSettingPanel::_set_adc_settings_to_zynq() {
+    zynq::upper_adc_settings_t adc_settings;
+
+    const auto &sys_adc_settings = s_sys_setting.get_zynq_adc_settings();
+
+    adc_settings.adc_gain = (int16_t)(sys_adc_settings.adc_gain);
+    adc_settings.adc_offset = (int16_t)(sys_adc_settings.adc_offset);
+    adc_settings.voltage_filter_window_time_us =
+        sys_adc_settings.voltage_filter_window_time_us;
+
+    auto pkg = zynq::ZynqConnectController::MakeTcpPackage(
+        zynq::COMM_FRAME_SET_ADC_SETTINGS, adc_settings);
+
+    shared_core_data_->get_zynq_connect_ctrler()->send_tcp_bytearray(pkg);
 }
 
 } // namespace app

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>676</width>
+    <width>882</width>
     <height>332</height>
    </rect>
   </property>
@@ -43,6 +43,19 @@
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="5" column="1">
+       <widget class="QSpinBox" name="sb_pb_mfr1">
+        <property name="maximum">
+         <number>90000</number>
+        </property>
+        <property name="singleStep">
+         <number>1000</number>
+        </property>
+        <property name="value">
+         <number>60</number>
+        </property>
+       </widget>
+      </item>
       <item row="7" column="1">
        <widget class="QSpinBox" name="sb_pb_mfr3">
         <property name="maximum">
@@ -50,6 +63,46 @@
         </property>
         <property name="singleStep">
          <number>1000</number>
+        </property>
+        <property name="value">
+         <number>60</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
+       <widget class="QPushButton" name="pb_enable_g01_run_each_servo_cmd">
+        <property name="text">
+         <string>G01精确伺服指令</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>最大加速度(um/s^2)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="4">
+       <widget class="QPushButton" name="pb_enable_g01_half_closed_loop">
+        <property name="text">
+         <string>G01半闭环</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QSpinBox" name="sb_jump_nacc">
+        <property name="maximum">
+         <number>500</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
         </property>
         <property name="value">
          <number>60</number>
@@ -69,30 +122,10 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="3">
-       <widget class="QSpinBox" name="sb_jump_nacc">
-        <property name="maximum">
-         <number>500</number>
-        </property>
-        <property name="singleStep">
-         <number>10</number>
-        </property>
-        <property name="value">
-         <number>60</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="4">
-       <widget class="QLabel" name="label_12">
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_7">
         <property name="text">
-         <string>MotionSettings</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>抬刀固定参数</string>
+         <string>MFR2(um/s)</string>
         </property>
        </widget>
       </item>
@@ -100,59 +133,6 @@
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>MFR3(um/s)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1">
-       <widget class="QSpinBox" name="sb_pb_mfr2">
-        <property name="maximum">
-         <number>90000</number>
-        </property>
-        <property name="singleStep">
-         <number>1000</number>
-        </property>
-        <property name="value">
-         <number>60</number>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>NACC(ms)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>最大加速度(um/s^2)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QSpinBox" name="sb_pb_mfr0">
-        <property name="maximum">
-         <number>90000</number>
-        </property>
-        <property name="singleStep">
-         <number>1000</number>
-        </property>
-        <property name="value">
-         <number>60</number>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="3">
-       <widget class="QSpinBox" name="sb_jump_buffer">
-        <property name="maximum">
-         <number>500</number>
-        </property>
-        <property name="singleStep">
-         <number>10</number>
-        </property>
-        <property name="value">
-         <number>60</number>
         </property>
        </widget>
       </item>
@@ -169,17 +149,23 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>NACC(ms)</string>
+      <item row="6" column="1">
+       <widget class="QSpinBox" name="sb_pb_mfr2">
+        <property name="maximum">
+         <number>90000</number>
+        </property>
+        <property name="singleStep">
+         <number>1000</number>
+        </property>
+        <property name="value">
+         <number>60</number>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_5">
+      <item row="0" column="4">
+       <widget class="QLabel" name="label_12">
         <property name="text">
-         <string>MFR0(um/s)</string>
+         <string>MotionSettings</string>
         </property>
        </widget>
       </item>
@@ -190,8 +176,56 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
-       <widget class="QSpinBox" name="sb_pb_mfr1">
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>抬刀固定参数</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>NACC(ms)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>最大加速度(um/s^2)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>MFR0(um/s)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QSpinBox" name="sb_pb_nacc">
+        <property name="maximum">
+         <number>500</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
+        </property>
+        <property name="value">
+         <number>60</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>ADC设定</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="sb_pb_mfr0">
         <property name="maximum">
          <number>90000</number>
         </property>
@@ -210,8 +244,8 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QSpinBox" name="sb_pb_nacc">
+      <item row="4" column="3">
+       <widget class="QSpinBox" name="sb_jump_buffer">
         <property name="maximum">
          <number>500</number>
         </property>
@@ -223,23 +257,6 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>MFR2(um/s)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="4">
-       <widget class="QPushButton" name="pb_enable_g01_run_each_servo_cmd">
-        <property name="text">
-         <string>G01精确伺服指令</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
       <item row="4" column="2">
        <widget class="QLabel" name="label_11">
         <property name="text">
@@ -247,20 +264,73 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QLabel" name="label_9">
+      <item row="4" column="5">
+       <widget class="QLabel" name="label_16">
         <property name="text">
-         <string>最大加速度(um/s^2)</string>
+         <string>滤波时间(us)</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="4">
-       <widget class="QPushButton" name="pb_enable_g01_half_closed_loop">
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>G01半闭环</string>
+         <string>NACC(ms)</string>
         </property>
-        <property name="checkable">
-         <bool>true</bool>
+       </widget>
+      </item>
+      <item row="1" column="5">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>adc_offset</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="5">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>adc_gain</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="6">
+       <widget class="QSpinBox" name="sb_adc_filter_time_us">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>100000</number>
+        </property>
+        <property name="singleStep">
+         <number>1000</number>
+        </property>
+        <property name="value">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="6">
+       <widget class="QDoubleSpinBox" name="dsb_adc_gain">
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="minimum">
+         <double>-500.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>500.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>60.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="6">
+       <widget class="QDoubleSpinBox" name="dsb_adc_offset">
+        <property name="minimum">
+         <double>-500.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>500.000000000000000</double>
         </property>
        </widget>
       </item>

@@ -67,6 +67,15 @@ struct _zynq_settings {
                     MEO_OPT zynq_udp_local_port);
 };
 
+struct _zynq_adc_settings {
+    double adc_offset;
+    double adc_gain;
+    uint32_t voltage_filter_window_time_us;
+
+    MEO_JSONIZATION(MEO_OPT adc_offset, MEO_OPT adc_gain,
+                    MEO_OPT voltage_filter_window_time_us);
+};
+
 class _SystemSettingsData final {
 public:
     _SystemSettingsData() noexcept = default;
@@ -96,6 +105,8 @@ public: // settings
 
     _zynq_settings zynq_settings;
 
+    _zynq_adc_settings zynq_adc_settings;
+
     MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
                     MEO_OPT qss_file, MEO_OPT can_device_name,
                     MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param,
@@ -105,7 +116,8 @@ public: // settings
                     MEO_OPT datasave_dir, MEO_OPT motion_cycle_us,
                     MEO_OPT monitor_peroid_ms, MEO_OPT ecat_sync0_shift_time_ns,
                     MEO_OPT dc_filter_cnt, MEO_OPT igh_op_wait_count_max,
-                    MEO_OPT motion_settings, MEO_OPT zynq_settings);
+                    MEO_OPT motion_settings, MEO_OPT zynq_settings,
+                    MEO_OPT zynq_adc_settings);
 };
 
 }; // namespace _sys
@@ -207,9 +219,9 @@ public:
         return data_.motion_settings.enable_g01_half_closed_loop;
     }
 
-    inline const auto& get_zynq_settings() const {
-        return data_.zynq_settings;
-    }
+    inline const auto &get_zynq_settings() const { return data_.zynq_settings; }
+
+    inline const auto &get_zynq_adc_settings() const { return data_.zynq_adc_settings; }
 
 public:
     // you should save to local file manually
@@ -248,6 +260,11 @@ public:
     }
     inline void set_enable_g01_half_closed_loop(bool v) {
         data_.motion_settings.enable_g01_half_closed_loop = v;
+    }
+
+    // zynq adc settings change
+    inline void set_zynq_adc_settings(const _sys::_zynq_adc_settings& zynq_adc_settings) {
+        data_.zynq_adc_settings = zynq_adc_settings;
     }
 
 public:

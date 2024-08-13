@@ -439,7 +439,7 @@ BIT</string>
          </size>
         </property>
         <property name="maximum">
-         <number>9</number>
+         <number>255</number>
         </property>
        </widget>
       </item>
@@ -747,7 +747,7 @@ BIT</string>
          </size>
         </property>
         <property name="text">
-         <string>Vol1</string>
+         <string>Vol1(档)</string>
         </property>
        </widget>
       </item>
@@ -1087,7 +1087,7 @@ BIT</string>
          </size>
         </property>
         <property name="text">
-         <string>Vol2(档)</string>
+         <string>Vol2</string>
         </property>
        </widget>
       </item>

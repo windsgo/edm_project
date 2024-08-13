@@ -5,9 +5,12 @@
 #include "QtDependComponents/IOController/IOController.h"
 
 #include "QtDependComponents/PowerController/EleparamDecoder.h"
+#include "QtDependComponents/ZynqConnection/TcpMessageDefine.h"
+#include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "Utils/Format/edm_format.h"
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 
 namespace edm {
 
@@ -25,8 +28,14 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 PowerController::PowerController(can::CanController::ptr can_ctrler,
                                  io::IOController::ptr io_ctrler,
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+                                 zynq::ZynqConnectController::ptr zynq_ctrler,
+#endif
                                  int can_device_index)
     : can_ctrler_(can_ctrler), io_ctrler_{io_ctrler},
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+      zynq_ctrler_(zynq_ctrler),
+#endif
       can_device_index_(can_device_index) {
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     memset(&servo_setting_, 0, sizeof(servo_setting_));
@@ -220,7 +229,38 @@ void PowerController::_handle_servo_settings() {
         can_ctrler_->send_frame(can_device_index_, frame);
     }
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
-        // TODO
+    // TODO
+
+    static zynq::upper_servo_settings_t prev_servo_s;
+
+    zynq::upper_servo_settings_t servo_s;
+
+    servo_s.servo_speed = curr_eleparam_.servo_speed;
+    servo_s.servo_ref_voltage = curr_eleparam_.sv;
+    servo_s.servo_voltage_diff_level = curr_eleparam_.UpperThreshold;
+    servo_s.servo_sensitivity = curr_eleparam_.servo_sensitivity;
+
+    static int64_t last_send_time = 0;
+    bool forced = false;
+    int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
+    if (now - last_send_time > 5) {
+        // 平均5s发一次
+        last_send_time = now;
+        forced = true;
+    }
+
+    if (forced ||
+        memcmp(&prev_servo_s, &servo_s, sizeof(zynq::upper_servo_settings_t))) {
+        auto pkg = zynq::ZynqConnectController::MakeTcpPackage(
+            zynq::COMM_FRAME_SET_SERVO_SETTINGS, servo_s);
+
+        zynq_ctrler_->send_tcp_bytearray(pkg);
+
+        prev_servo_s = servo_s;
+    }
+
 #endif
 }
 

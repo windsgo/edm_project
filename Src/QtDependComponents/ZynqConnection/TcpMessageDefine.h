@@ -50,13 +50,13 @@ typedef struct {
 } upper_servo_settings_t;
 
 // 主要参数设定(上位机下发)
-typedef struct {
-    // adc回归设定 -> 用于从-5~5V计算真实的电压
-    upper_adc_settings_t adc_settings;
+// typedef struct {
+//     // adc回归设定 -> 用于从-5~5V计算真实的电压
+//     upper_adc_settings_t adc_settings;
 
-    // 伺服设定
-    upper_servo_settings_t servo_settings;
-} upper_settings_t;
+//     // 伺服设定
+//     upper_servo_settings_t servo_settings;
+// } upper_settings_t;
 
 } // namespace zynq
 

@@ -304,9 +304,6 @@ void SharedCoreData::_init_data() {
     io_ctrler_ =
         std::make_shared<io::IOController>(can_ctrler_, can_device_index_);
 
-    power_ctrler_ = std::make_shared<power::PowerController>(
-        can_ctrler_, io_ctrler_, can_device_index_);
-
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     zynq_connect_ctrler_ = std::make_shared<zynq::ZynqConnectController>(
         QHostAddress{QString::fromStdString(
@@ -321,6 +318,13 @@ void SharedCoreData::_init_data() {
     can_recv_buffer_ =
         std::make_shared<CanReceiveBuffer>(can_ctrler_, can_device_index_);
 #endif
+
+    power_ctrler_ =
+        std::make_shared<power::PowerController>(can_ctrler_, io_ctrler_,
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+                                                 zynq_connect_ctrler_,
+#endif
+                                                 can_device_index_);
 
     _init_handbox_converter(can_device_index_);
 

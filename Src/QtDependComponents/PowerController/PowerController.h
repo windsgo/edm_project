@@ -13,6 +13,7 @@
 
 #include "QtDependComponents/CanController/CanController.h"
 #include "QtDependComponents/IOController/IOController.h"
+#include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 
 namespace edm {
 
@@ -23,20 +24,25 @@ public:
     // static PowerController *instance();
 
     static std::array<std::string, 3>
-    eleparam_to_string(const EleParam_dkd_t& ele_param);
+    eleparam_to_string(const EleParam_dkd_t &ele_param);
 
 public:
     using ptr = std::shared_ptr<PowerController>;
     PowerController(can::CanController::ptr can_ctrler,
-                    io::IOController::ptr io_ctrler, int can_device_index);
+                    io::IOController::ptr io_ctrler,
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+                    zynq::ZynqConnectController::ptr zynq_ctrler,
+#endif
+                    int can_device_index);
     ~PowerController() noexcept = default;
 
     // void init(int can_device_index);
 
     // 更新电参数缓冲区, 设置标志位之后需要重新调用
     // 根据电参数结构体、高频等标志位，设定缓冲区报文、缓冲区io
-    void update_eleparam_and_send(const EleParam_dkd_t& new_eleparam);
-    void update_eleparam_and_send(EleParam_dkd_t::ptr new_eleparam); // deprecated
+    void update_eleparam_and_send(const EleParam_dkd_t &new_eleparam);
+    void
+    update_eleparam_and_send(EleParam_dkd_t::ptr new_eleparam); // deprecated
     void update_eleparam_and_send(); // no input, use current eleparam
 
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
@@ -73,16 +79,16 @@ public:
     bool is_finishing_cut_flag_on() const;
 #endif
 
-    const auto& get_current_param() const { return curr_eleparam_; }
+    const auto &get_current_param() const { return curr_eleparam_; }
 
 private:
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     void _trigger_send_canbuffer(); // 内部函数, 无锁, 不会操作心跳值
     void _trigger_send_ioboard_eleparam(); // 内部函数, 无锁
-#endif 
-    void _trigger_send_io_value();         // 内部函数, 无锁
+#endif
+    void _trigger_send_io_value(); // 内部函数, 无锁
 
-    void _update_eleparam_and_send(const EleParam_dkd_t& eleparam);
+    void _update_eleparam_and_send(const EleParam_dkd_t &eleparam);
 
 private:
     // 向伺服IO板发送 伺服参数 (如果发生变化)
@@ -91,11 +97,15 @@ private:
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     bool _is_bz_enable();
     void _add_canframe_pulse_value();
-#endif 
+#endif
 
 private:
     can::CanController::ptr can_ctrler_;
     io::IOController::ptr io_ctrler_;
+
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    zynq::ZynqConnectController::ptr zynq_ctrler_;
+#endif
 
     int can_device_index_ = -1; // used to send can frames by can::CanController
 
@@ -119,7 +129,7 @@ private:
 
     //! decode 缓存
     // 存储当前的电参数 参数结构体
-    bool eleparam_inited_ {false};
+    bool eleparam_inited_{false};
     EleParam_dkd_t curr_eleparam_;
 
     // 存储当前的 decode 结果缓存
