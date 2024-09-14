@@ -32,8 +32,8 @@ typedef enum {
 // ADC回归参数, 从-5~5V回归到真实电压
 // v_real = gain * v_sample + offset
 typedef struct {
-    int16_t adc_offset;
-    int16_t adc_gain;
+    int32_t adc_offset_times_1000;
+    int32_t adc_gain_times_1000;
     uint32_t voltage_filter_window_time_us; // 平均电压滤波时间(us) ->
                                             // 会折算到滤波窗口大小
 } upper_adc_settings_t;

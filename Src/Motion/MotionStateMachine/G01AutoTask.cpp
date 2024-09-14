@@ -649,8 +649,7 @@ bool G01AutoTask::_check_and_validate_jump_height() {
 double G01AutoTask::_get_servo_cmd_from_shared() {
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     auto sv_speed = (double)s_motion_shared->cached_udp_message()
-                        .servo_calced_speed_mm_min_times_1000 /
-                    1000.0;
+                        .servo_calced_speed_mm_min;
 
     return util::UnitConverter::mm_min2blu_p(sv_speed);
 #else

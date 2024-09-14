@@ -138,6 +138,7 @@ void PowerManager::_ele_cycle_timer_slot() {
     power_ctrler_->trigger_send_eleparam();
     power_ctrler_->trigger_send_ioboard_eleparam();
 #endif
+    power_ctrler_->update_eleparam_and_send();
     io_ctrler_->trigger_send_current_io();
 }
 

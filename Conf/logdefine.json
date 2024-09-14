@@ -23,7 +23,7 @@
                 },
                 {
                     "type": "stdout",
-                    "level": "info",
+                    "level": "trace",
                     "multi_thread": false
                 }
             ]

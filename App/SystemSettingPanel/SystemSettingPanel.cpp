@@ -11,6 +11,8 @@
 #include <memory>
 #include <qpushbutton.h>
 
+EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
+
 namespace edm {
 namespace app {
 
@@ -21,6 +23,12 @@ SystemSettingPanel::SystemSettingPanel(SharedCoreData *shared_core_data,
     : QWidget(parent), ui(new Ui::SystemSettingPanel),
       shared_core_data_(shared_core_data) {
     ui->setupUi(this);
+
+    connect(shared_core_data_->get_zynq_connect_ctrler().get(),
+            &zynq::ZynqConnectController::sig_zynq_tcp_connected, this,
+            [this]() { this->_set_adc_settings_to_zynq(); 
+                s_logger->info("zynq reconnected, send adc settings immediately");
+            });
 
     _init_button_cb();
     _update_ui();
@@ -143,8 +151,8 @@ void SystemSettingPanel::_set_adc_settings_to_zynq() {
 
     const auto &sys_adc_settings = s_sys_setting.get_zynq_adc_settings();
 
-    adc_settings.adc_gain = (int16_t)(sys_adc_settings.adc_gain);
-    adc_settings.adc_offset = (int16_t)(sys_adc_settings.adc_offset);
+    adc_settings.adc_gain_times_1000 = (int32_t)round(sys_adc_settings.adc_gain * 1000.0);
+    adc_settings.adc_offset_times_1000 = (int32_t)round(sys_adc_settings.adc_offset * 1000.0);
     adc_settings.voltage_filter_window_time_us =
         sys_adc_settings.voltage_filter_window_time_us;
 

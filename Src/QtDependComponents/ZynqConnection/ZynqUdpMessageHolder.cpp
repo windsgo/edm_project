@@ -28,13 +28,19 @@ void ZynqUdpMessageHolder::_udp_listener_cb(const QByteArray &ba) {
     auto udp_message_ptr =
         reinterpret_cast<const servo_return_data_t *>(ba.data() + 4);
 
+    // do convert
+    servo_return_converted_data_t temp;
+    temp.averaged_voltage = (double)udp_message_ptr->averaged_voltage_times_10 / 10.0;
+    temp.realtime_voltage = (double)udp_message_ptr->realtime_voltage_times_10 / 10.0;
+    temp.servo_calced_speed_mm_min = (double)udp_message_ptr->servo_calced_speed_mm_min_times_1000 / 1000.0;
+
     // atomic operation
-    at_udp_message_cached_.store(*udp_message_ptr);
+    at_udp_message_converted_cached_.store(temp);
 }
 
-void ZynqUdpMessageHolder::get_udp_message(servo_return_data_t &output) const {
+void ZynqUdpMessageHolder::get_udp_message(servo_return_converted_data_t &output) const {
     // atomic operation
-    output = at_udp_message_cached_.load();
+    output = at_udp_message_converted_cached_.load();
 }
 
 } // namespace zynq

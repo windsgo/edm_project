@@ -64,9 +64,12 @@ ec_sync_info_t slave_0_syncs[] = {
 // 不同的松下驱动器也有不同的product_code
 static std::vector<std::pair<uint32_t, uint32_t>>
     s_slave_vendor_and_product_code_vec = {
-        {0x0000066f, 0x60380006}, // X
-        {0x0000066f, 0x60380006}, // Y
+        {0x0000066f, 0x613C0007}, // X
+        {0x0000066f, 0x613C0007}, // Y
         {0x0000066f, 0x60380007}, // Z
+        {0x0000066f, 0x60380006}, // B
+        {0x0000066f, 0x60380006}, // C
+        {0x0000066f, 0x60380004}, // A
 };
 #endif // EDM_ECAT_DRIVER_IGH
 
@@ -781,20 +784,29 @@ bool EcatManager::servo_all_disabled() const {
 }
 
 void EcatManager::clear_fault_cycle_run_once() {
+
     for (auto &servo : servo_devices_) {
-            if (servo->sw_fault()) {
+        servo->set_operation_mode(OM_CSP);
+
+        if (servo->sw_fault()) {
+            // s_logger->debug("sw_fault");
             servo->cw_fault_reset();
         } else if (servo->sw_switch_on_disabled()) {
+            // s_logger->debug("sw_switch_on_disabled");
             servo->cw_shut_down();
         } else if (servo->sw_ready_to_switch_on()) {
+            // s_logger->debug("sw_ready_to_switch_on");
             servo->cw_switch_on();
         } else if (servo->sw_switched_on() || servo->sw_operational_enabled()) {
+            // s_logger->debug("sw_switched_on: {}, sw_operational_enabled: {}", servo->sw_switched_on(), servo->sw_operational_enabled());
             servo->cw_enable_operation();
             servo->sync_actual_position_to_target_position(); // to ensure the
                                                               // servo would not
                                                               // move suddenly
                                                               // or die again
         }
+
+        // EDM_CYCLIC_LOG(s_logger->debug, 2000, "sw: {0:x}, {0:b}, fault: {1}", servo->get_status_word(), servo->sw_fault());
     }
 }
 

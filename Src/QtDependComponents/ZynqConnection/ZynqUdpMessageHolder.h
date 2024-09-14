@@ -15,7 +15,7 @@ public:
 public:
     ZynqUdpMessageHolder(ZynqConnectController::ptr zynq_ctrler);
 
-    void get_udp_message(servo_return_data_t& output) const;
+    void get_udp_message(servo_return_converted_data_t& output) const;
 
 private:
     void _init_udp_listener();
@@ -25,7 +25,7 @@ private:
 private:
     ZynqConnectController::ptr zynq_ctrler_;
 
-    std::atomic<servo_return_data_t> at_udp_message_cached_;
+    std::atomic<servo_return_converted_data_t> at_udp_message_converted_cached_;
 };
 
 }

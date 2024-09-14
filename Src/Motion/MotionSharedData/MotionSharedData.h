@@ -57,7 +57,7 @@ public:
     inline const auto zynq_udpmessage_holder() const {
         return zynq_udpmessage_holder_;
     }
-    inline const auto cached_udp_message() const { return cached_udp_message_; }
+    inline const auto& cached_udp_message() const { return cached_udp_message_; }
     inline void update_zynq_udpmessage_holder() {
         if (zynq_udpmessage_holder_) [[likely]] {
             zynq_udpmessage_holder_->get_udp_message(cached_udp_message_);
@@ -177,7 +177,7 @@ private:
 private: // Can 接收与缓存相关数据
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder_;
-    zynq::servo_return_data_t cached_udp_message_;
+    zynq::servo_return_converted_data_t cached_udp_message_;
 #else
     CanReceiveBuffer::ptr can_recv_buffer_;
     Can1IOBoard407ServoData

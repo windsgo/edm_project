@@ -4,7 +4,7 @@
 #define EDM_SYSTEM_SETTINGS_CONFIG_FILE EDM_CONFIG_DIR "system.json"
 
 // 坐标轴(=驱动器)数目
-#define EDM_SERVO_NUM                   1
+#define EDM_SERVO_NUM                   3
 #define EDM_AXIS_NUM                    EDM_SERVO_NUM
 
 #define EDM_AXIS_MAX_NUM                6 // const, 最多6轴
@@ -14,6 +14,7 @@
 
 // 单位定义, um分辨率
 #define EDM_BLU_PER_UM 10 // blu定义, 1blu为0.1um, 1um为10个blu
+// #define EDM_BLU_PER_UM 1 // blu定义, 1blu为0.1um, 1um为10个blu
 
 // 运动周期
 // #define EDM_SERVO_PEROID_US                         1000 // 1000 us 周期
@@ -105,7 +106,7 @@
 #define EDM_IOBOARD_NEW_SERVODATA_1MS
 
 // OFFLINE DEFINE
-#define EDM_OFFLINE_RUN
+// #define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程
@@ -126,7 +127,7 @@
 #define EDM_OFFLINE_RUN_TYPE_9 \
     9 // 不连接ECAT, 连接CAN(操作中谷IO), 连接ZYNQ(伺服信息)
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_8 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_9 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 
@@ -163,7 +164,11 @@
     #undef EDM_OFFLINE_MANUAL_SERVO_CMD
     #undef EDM_OFFLINE_MANUAL_VOLTAGE
 #elif (EDM_OFFLINE_RUN_TYPE == EDM_OFFLINE_RUN_TYPE_9)
-
+    #undef EDM_OFFLINE_RUN_NO_CAN
+    #undef EDM_OFFLINE_RUN_NO_ZYNQ
+    #undef EDM_OFFLINE_MANUAL_TOUCH_DETECT
+    #undef EDM_OFFLINE_MANUAL_SERVO_CMD
+    #undef EDM_OFFLINE_MANUAL_VOLTAGE
 #else
 #error "No EDM_OFFLINE_RUN_TYPE defined"
 #endif // EDM_OFFLINE_RUN_TYPE value

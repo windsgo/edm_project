@@ -60,6 +60,9 @@ signals:
     void sig_tcp_msg_received(QByteArray);
     // TODO tcp connected/disconnected signal
 
+    // connected signal, to send settings to zynq
+    void sig_tcp_connected();
+
 private: // friend ZynqConnectController call
     void slot_start_work(); // start reconnect timer
     void slot_send(const QByteArray& ba); // send tcp message
@@ -93,6 +96,9 @@ public:
     void add_tcp_listener(const std::function<void(const QByteArray &)> listener_cb);
 
     void send_tcp_bytearray(const QByteArray& ba);
+
+signals:
+    void sig_zynq_tcp_connected();
 
 private:
     void _init_worker_and_thread();

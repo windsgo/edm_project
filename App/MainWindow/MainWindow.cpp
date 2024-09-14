@@ -280,7 +280,7 @@ void MainWindow::_init_status_bar_palette_and_connection() {
 
 void MainWindow::_slot_monitor_timer_doit() {
 #ifdef EDM_USE_ZYNQ_SERVOBOARD // use zynq board to do servo things
-    zynq::servo_return_data_t sd;
+    zynq::servo_return_converted_data_t sd;
     shared_core_data_->get_zynq_udpmessage_holder()->get_udp_message(sd);
 
     vol_cur_displayer_->push_data(monitor_voltage_index_,
@@ -289,7 +289,7 @@ void MainWindow::_slot_monitor_timer_doit() {
 
     mach_rate_displayer_->push_data(
         sv_speed_index_,
-        (double)sd.servo_calced_speed_mm_min_times_1000 / 1000.0);
+        (double)sd.servo_calced_speed_mm_min);
     mach_rate_displayer_->update_display();
 
     ui->Dial_Voltage->setValue((double)sd.averaged_voltage);

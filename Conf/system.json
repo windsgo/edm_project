@@ -6,7 +6,7 @@
     "dc_filter_cnt": 1024,
     "ecat": {
         "ecat_iomap_size": 4096,
-        "ecat_netif_name": "enp3s0"
+        "ecat_netif_name": "enp1s0"
     },
     "ecat_sync0_shift_time_ns": 125000,
     "fast_move_param": {
@@ -28,7 +28,7 @@
     },
     "log_config_file": "logdefine.json",
     "monitor_peroid_ms": 40,
-    "motion_cycle_us": 1000,
+    "motion_cycle_us": 500,
     "motion_settings": {
         "enable_g01_half_closed_loop": false,
         "enable_g01_run_each_servo_cmd": true
@@ -36,7 +36,7 @@
     "power_database_file": "power.db",
     "qss_file": "gui.qss",
     "zynq_adc_settings": {
-        "adc_gain": 60.000000,
+        "adc_gain": 60.940000,
         "adc_offset": 0.000000,
         "voltage_filter_window_time_us": 10000
     },

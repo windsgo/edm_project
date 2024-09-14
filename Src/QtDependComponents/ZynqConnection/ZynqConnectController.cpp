@@ -73,6 +73,8 @@ void ZynqTcpWorker::slot_start_work() {
     tcp_socket_ = new QTcpSocket(this);
     connect(tcp_socket_, &QTcpSocket::readyRead, this,
             &ZynqTcpWorker::_slot_data_received);
+    connect(tcp_socket_, &QTcpSocket::connected, this,
+            &ZynqTcpWorker::sig_tcp_connected);
 
     // debug log
     connect(tcp_socket_, &QTcpSocket::connected, this, [this]() {
@@ -172,6 +174,8 @@ void ZynqConnectController::_init_worker_and_thread() {
             &ZynqTcpWorker::slot_start_work);
     connect(this, &ZynqConnectController::_sig_tcp_write, tcp_worker_,
             &ZynqTcpWorker::slot_send);
+    connect(tcp_worker_, &ZynqTcpWorker::sig_tcp_connected, this,
+            &ZynqConnectController::sig_zynq_tcp_connected);
 
     udp_worker_ = new ZynqUdpWorker(udp_port_);
     udp_worker_->moveToThread(worker_thread_);
