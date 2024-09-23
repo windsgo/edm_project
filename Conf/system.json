@@ -10,8 +10,8 @@
     },
     "ecat_sync0_shift_time_ns": 125000,
     "fast_move_param": {
-        "max_acc_um_s2": 300000.000000,
-        "nacc_ms": 90,
+        "max_acc_um_s2": 200000.000000,
+        "nacc_ms": 100,
         "speed_0_um_s": 33000.000000,
         "speed_1_um_s": 6600.000000,
         "speed_2_um_s": 330.000000,
@@ -36,8 +36,8 @@
     "power_database_file": "power.db",
     "qss_file": "gui.qss",
     "zynq_adc_settings": {
-        "adc_gain": 60.940000,
-        "adc_offset": 0.000000,
+        "adc_gain": 58.275000,
+        "adc_offset": -295.400000,
         "voltage_filter_window_time_us": 10000
     },
     "zynq_settings": {

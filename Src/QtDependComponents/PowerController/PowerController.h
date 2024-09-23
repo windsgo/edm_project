@@ -45,10 +45,8 @@ public:
     update_eleparam_and_send(EleParam_dkd_t::ptr new_eleparam); // deprecated
     void update_eleparam_and_send(); // no input, use current eleparam
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     // 将缓冲区can报文进行心跳与校验设置，并发送出去
     void trigger_send_eleparam();
-#endif
 
     // 将缓冲区io再发送一遍
     void trigger_send_contactors_io();

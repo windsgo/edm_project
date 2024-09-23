@@ -337,21 +337,21 @@ void PowerController::update_eleparam_and_send() {
     _update_eleparam_and_send(curr_eleparam_);
 }
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void PowerController::trigger_send_eleparam() {
     if (!curr_result_)
         return;
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     _add_canframe_pulse_value();
     curr_result_->set_pulse_count(canframe_pulse_value_);
 
     // 发送can buffer
     _trigger_send_canbuffer();
+#endif
 
     // 检查伺服参数设定, 如果变化, 重新发送
     _handle_servo_settings();
 }
-#endif
 
 void PowerController::trigger_send_contactors_io() {
     s_logger->trace("PowerController::trigger_send_contactors_io");
