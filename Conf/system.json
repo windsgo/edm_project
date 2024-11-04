@@ -36,8 +36,8 @@
     "power_database_file": "power.db",
     "qss_file": "gui.qss",
     "zynq_adc_settings": {
-        "adc_gain": 58.275000,
-        "adc_offset": -295.400000,
+        "adc_gain": 60.763000,
+        "adc_offset": -306.560000,
         "voltage_filter_window_time_us": 10000
     },
     "zynq_settings": {

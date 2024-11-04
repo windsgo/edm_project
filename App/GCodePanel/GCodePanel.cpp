@@ -437,6 +437,8 @@ void GCodePanel::_slot_ack() {
     auto ack_cmd =
         std::make_shared<edm::move::MotionCommandSettingClearWarning>(0);
 
+    shared_core_data_->send_ioboard_bz_once();
+
     shared_core_data_->get_motion_cmd_queue()->push_command(ack_cmd);
 
     bool ret = task::TaskHelper::WaitforCmdTobeAccepted(ack_cmd, 200);

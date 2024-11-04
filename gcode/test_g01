@@ -7,8 +7,10 @@ def func():
     i.g00(x=5,y=5,m05=True)
     i.g00(x=-5,y=-5,m05=True)
 
-for j in range(5):
-    func()
-    i.g04(0.5)
+i.g01(z=-5)
+
+#for j in range(5):
+#    func()
+#    i.g04(0.5)
 
 i.m02()

@@ -8,6 +8,8 @@
 #include <thread>
 
 #include "Logger/LogMacro.h"
+#include "QtDependComponents/IOController/IOController.h"
+#include "QtDependComponents/PowerController/EleparamDefine.h"
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -150,6 +152,17 @@ SharedCoreData::~SharedCoreData() {
 }
 
 void SharedCoreData::send_ioboard_bz_once() const {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) 
+    uint32_t io_bit = 1 << (power::ZHONGGU_IOOut_IOOUT4_BZ - 1);
+    this->io_ctrler_->set_can_machineio_output_withmask(io_bit, io_bit);
+
+    // 响1下, 600ms后关闭
+    QTimer::singleShot(600, this, [io_bit, this]() {
+        this->io_ctrler_->set_can_machineio_output_withmask(0, io_bit);
+    });
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN) 
     power::CanIOBoardCommonMessageStrc ms;
     ms.message_type =
         power::CommonMessageType_t::CommomMessageType_BZOnceNotify;
@@ -159,6 +172,7 @@ void SharedCoreData::send_ioboard_bz_once() const {
                        QByteArray((const char *)(&ms), 8));
     can_ctrler_->send_frame(can_device_index_, frame);
 #endif // EDM_OFFLINE_RUN_NO_CAN
+#endif
 }
 
 void SharedCoreData::customEvent(QEvent *e) {
