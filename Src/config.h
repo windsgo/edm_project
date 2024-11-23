@@ -3,9 +3,23 @@
 #define EDM_CONFIG_DIR                  EDM_ROOT_DIR "Conf/"
 #define EDM_SYSTEM_SETTINGS_CONFIG_FILE EDM_CONFIG_DIR "system.json"
 
+
+// 电柜使用定义
+#define EDM_POWER_DIMEN                             1
+#define EDM_POWER_ZHONGGU                           2
+#define EDM_POWER_DRILL                             3
+#define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
+#ifndef EDM_POWER_TYPE
+#error "EDM_POWER_TYPE not valid"
+#endif
+
 // 坐标轴(=驱动器)数目
-#define EDM_SERVO_NUM                   3
-#define EDM_AXIS_NUM                    EDM_SERVO_NUM
+#define EDM_AXIS_NUM                    6
+#if (EDM_POWER_TYPE == EDM_POWER_DRILL)
+#define EDM_SERVO_NUM                   EDM_AXIS_NUM + 1 // 多一个主轴
+#else 
+#define EDM_SERVO_NUM                   EDM_AXIS_NUM
+#endif // EDM_POWER_TYPE
 
 #define EDM_AXIS_MAX_NUM                6 // const, 最多6轴
 #if (EDM_AXIS_NUM > EDM_AXIS_MAX_NUM)
@@ -13,8 +27,8 @@
 #endif
 
 // 单位定义, um分辨率
-#define EDM_BLU_PER_UM 10 // blu定义, 1blu为0.1um, 1um为10个blu
-// #define EDM_BLU_PER_UM 1 // blu定义, 1blu为0.1um, 1um为10个blu
+// #define EDM_BLU_PER_UM 10 // blu定义, 1blu为0.1um, 1um为10个blu
+#define EDM_BLU_PER_UM 1 // blu定义, 1blu为0.1um, 1um为10个blu
 
 // 运动周期
 // #define EDM_SERVO_PEROID_US                         1000 // 1000 us 周期
@@ -74,14 +88,6 @@
 #define EDM_CAN_ZHONGGU_IO_OUTPUT_TXID              0x601 // 407,103统一的IO发送ID
 #define EDM_CAN_ZHONGGU_IO_INPUT_RXID              0x701 // 103 返回INPUT IO
 
-// 电柜使用定义
-#define EDM_POWER_DIMEN                             1
-#define EDM_POWER_ZHONGGU                           2
-#define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
-#ifndef EDM_POWER_TYPE
-#error "EDM_POWER_TYPE not valid"
-#endif
-
 #define EDM_USE_ZYNQ_SERVOBOARD
 
 // DataQueueRecorder Cache
@@ -106,7 +112,7 @@
 #define EDM_IOBOARD_NEW_SERVODATA_1MS
 
 // OFFLINE DEFINE
-// #define EDM_OFFLINE_RUN
+#define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程
@@ -127,7 +133,7 @@
 #define EDM_OFFLINE_RUN_TYPE_9 \
     9 // 不连接ECAT, 连接CAN(操作中谷IO), 连接ZYNQ(伺服信息)
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_9 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_2 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 
