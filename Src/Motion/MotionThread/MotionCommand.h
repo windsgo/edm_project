@@ -84,11 +84,14 @@ enum MotionCommandType {
     MotionCommandSetting_MotionSettings,
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    // 设置主轴
+    // 设置主轴旋转
     MotionCommand_SetSpindleState,
+
+    // 设置主轴参数
+    MMotionCommand_SetSpindleParam
 #endif // EDM_POWER_TYPE
 
-    MotionCommand_Max
+        MotionCommand_Max
 };
 
 // Motion命令基类
@@ -335,6 +338,22 @@ public:
 
 private:
     bool start_{false};
+};
+
+class MotionCommandSetSpindleParam final : public MotionCommandBase {
+public:
+    MotionCommandSetSpindleParam(
+        unit_t speed_blu_ms, std::optional<unit_t> acc_blu_ms = std::nullopt)
+        : MotionCommandBase(MMotionCommand_SetSpindleParam),
+          speed_blu_ms_(speed_blu_ms), acc_blu_ms_(acc_blu_ms) {}
+    ~MotionCommandSetSpindleParam() noexcept override = default;
+
+    auto speed_blu_ms() const { return speed_blu_ms_; }
+    auto acc_blu_ms() const { return acc_blu_ms_; }
+
+private:
+    unit_t speed_blu_ms_{0};
+    std::optional<unit_t> acc_blu_ms_;
 };
 #endif
 

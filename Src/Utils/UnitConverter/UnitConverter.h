@@ -59,6 +59,10 @@ public:
         return um_ms * um2blu_ / ms2p_;
     }
 
+    static inline move::unit_t blu_ms2blu_p(move::unit_t blu_ms) {
+        return blu_ms / ms2p_;
+    }
+
     // TODO
 };
 

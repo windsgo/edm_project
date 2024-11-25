@@ -95,6 +95,7 @@ set(PROJECT_SOURCES
     Src/Motion/MotionSharedData/MotionSharedData.cpp
     Src/Motion/MotionSharedData/DataRecordInstance1.cpp
     # Src/Motion/MotionSharedData/DataRecordInstance2.cpp
+    Src/Motion/MotionSharedData/SpindleControl.cpp
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
     Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
     Src/Coordinate/Coordinate.cpp

@@ -126,6 +126,12 @@ void MotionStateMachine::run_once() {
         break;
     }
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // 主轴控制
+    auto spindle_control = s_motion_shared->get_spindle_controller();
+    spindle_control->run_once();
+#endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+
     if (data_record_instance1->is_data_recorder_running()) {
         data_record_instance1->get_record_data_ref().new_cmd_axis = s_motion_shared->get_global_cmd_axis();
 
