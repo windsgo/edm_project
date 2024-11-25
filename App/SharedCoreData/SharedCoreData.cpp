@@ -369,8 +369,8 @@ void SharedCoreData::_init_data() {
                                       motion_cmd_queue_, 1000, this);
 
     // 获取运动线程中的记录器指针, 用于操作开始结束
-    record_data1_queuerecorder_ =
-        move::MotionSharedData::instance()->get_record_data1_queuerecorder();
+    // record_data1_queuerecorder_ =
+    //     move::MotionSharedData::instance()->get_record_data1_queuerecorder();
 }
 
 void SharedCoreData::_init_handbox_converter(uint32_t can_index) {

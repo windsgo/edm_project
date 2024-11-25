@@ -14,6 +14,8 @@
 
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
+#include "DataRecordInstance1.h"
+
 namespace edm {
 
 namespace move {
@@ -36,7 +38,8 @@ public:
 public:
     //! 必要的设定
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
-    inline void set_zynq_udpmessage_holder(zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder) {
+    inline void set_zynq_udpmessage_holder(
+        zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder) {
         zynq_udpmessage_holder_ = zynq_udpmessage_holder;
     }
 #else
@@ -57,7 +60,9 @@ public:
     inline const auto zynq_udpmessage_holder() const {
         return zynq_udpmessage_holder_;
     }
-    inline const auto& cached_udp_message() const { return cached_udp_message_; }
+    inline const auto &cached_udp_message() const {
+        return cached_udp_message_;
+    }
     inline void update_zynq_udpmessage_holder() {
         if (zynq_udpmessage_holder_) [[likely]] {
             zynq_udpmessage_holder_->get_udp_message(cached_udp_message_);
@@ -83,68 +88,72 @@ public:
 
 public: // 数据记录相关, 一个周期内可能需要在不同地方记录多个数据,
         // 统一设置在这里, 周期结束时push入记录队列
-    struct RecordData1 {
-        // 本地us时间
-        uint64_t thread_tick_us{0};
+    // struct RecordData1 {
+    //     // 本地us时间
+    //     uint64_t thread_tick_us{0};
 
-        // move::axis_t last_cmd_axis; // 周期开始时(上一周期的指令位置)
+    //     // move::axis_t last_cmd_axis; // 周期开始时(上一周期的指令位置)
 
-        // 周期结束时新的指令位置
-        move::axis_t new_cmd_axis{0.0};
+    //     // 周期结束时新的指令位置
+    //     move::axis_t new_cmd_axis{0.0};
 
-        // 周期开始时获取的实际位置(上一周期给出指令后的执行状态)
-        move::axis_t act_axis{0.0};
+    //     // 周期开始时获取的实际位置(上一周期给出指令后的执行状态)
+    //     move::axis_t act_axis{0.0};
 
-        // 周期开始时获取驱动器返回的跟随误差值
-        move::axis_t following_error_axis{0.0};
+    //     // 周期开始时获取驱动器返回的跟随误差值
+    //     move::axis_t following_error_axis{0.0};
 
-        // TODO 后续速度辅助控制, 速度值返回等记录
+    //     // TODO 后续速度辅助控制, 速度值返回等记录
 
-        // 是否为G01直线伺服加工(排除抬刀等状态)
-        bool is_g01_normal_servoing{false};
+    //     // 是否为G01直线伺服加工(排除抬刀等状态)
+    //     bool is_g01_normal_servoing{false};
 
-        // 当前周期g01伺服指令值 (默认Z轴负方向加工)
-        move::unit_t g01_servo_cmd{0.0};
+    //     // 当前周期g01伺服指令值 (默认Z轴负方向加工)
+    //     move::unit_t g01_servo_cmd{0.0};
 
-        // 放电状态数据
-        uint8_t normal_charge_rate{0};
-        uint8_t short_charge_rate{0};
-        uint8_t open_charge_rate{0};
-        uint8_t current{0}; // 电流
-        uint16_t average_voltage{0};
+    //     // 放电状态数据
+    //     uint8_t normal_charge_rate{0};
+    //     uint8_t short_charge_rate{0};
+    //     uint8_t open_charge_rate{0};
+    //     uint8_t current{0}; // 电流
+    //     uint16_t average_voltage{0};
 
-        inline void clear() {
-            new_cmd_axis.fill(0.0);
-            act_axis.fill(0.0);
-            following_error_axis.fill(0.0);
-            is_g01_normal_servoing = false;
-            g01_servo_cmd = 0.0;
+    //     inline void clear() {
+    //         new_cmd_axis.fill(0.0);
+    //         act_axis.fill(0.0);
+    //         following_error_axis.fill(0.0);
+    //         is_g01_normal_servoing = false;
+    //         g01_servo_cmd = 0.0;
 
-            normal_charge_rate = 0;
-            short_charge_rate = 0;
-            open_charge_rate = 0;
-            current = 0;
-            average_voltage = 0;
-        }
-    };
+    //         normal_charge_rate = 0;
+    //         short_charge_rate = 0;
+    //         open_charge_rate = 0;
+    //         current = 0;
+    //         average_voltage = 0;
+    //     }
+    // };
 
-    inline void clear_data_record() { record_data1_cache_.clear(); }
-    inline auto &get_record_data1_ref() { return record_data1_cache_; }
+    // inline void clear_data_record() { record_data1_cache_.clear(); }
+    // inline auto &get_record_data1_ref() { return record_data1_cache_; }
 
-    // 判断记录器是否在运行(使能), 如果未使能可以不记录或push数据
-    inline bool is_data_recorder_running() const {
-        return record_data1_queuerecorder_->is_running();
-    }
+    // // 判断记录器是否在运行(使能), 如果未使能可以不记录或push数据
+    // inline bool is_data_recorder_running() const {
+    //     return record_data1_queuerecorder_->is_running();
+    // }
 
-    // 将这一周期缓存的所有记录数据丢给记录器队列(线程)
-    inline void push_data_to_recorder() {
-        record_data1_queuerecorder_->push_data(record_data1_cache_);
-    }
+    // // 将这一周期缓存的所有记录数据丢给记录器队列(线程)
+    // inline void push_data_to_recorder() {
+    //     record_data1_queuerecorder_->push_data(record_data1_cache_);
+    // }
 
-    // 获取记录器指针(上层获取, 记录器线程安全, 直接在上层开始、结束,
-    // 运动线程只需要判断是否running即可)
-    inline auto get_record_data1_queuerecorder() const {
-        return record_data1_queuerecorder_;
+    // // 获取记录器指针(上层获取, 记录器线程安全, 直接在上层开始、结束,
+    // // 运动线程只需要判断是否running即可)
+    // inline auto get_record_data1_queuerecorder() const {
+    //     return record_data1_queuerecorder_;
+    // }
+
+    inline auto get_data_record_instance1() const {
+        return data_record_instance1_;
     }
 
 public:
@@ -160,15 +169,17 @@ public:
         settings_ = settings;
     }
 
-    inline void set_jump_param(const JumpParam& jump_param) { jump_param_ = jump_param; }
-    const auto& get_jump_param() const { return jump_param_; }
+    inline void set_jump_param(const JumpParam &jump_param) {
+        jump_param_ = jump_param;
+    }
+    const auto &get_jump_param() const { return jump_param_; }
 
 public:
     inline const auto &get_global_cmd_axis() const { return global_cmd_axis_; }
     void set_global_cmd_axis(const axis_t &cmd_axis);
 
     axis_t get_act_axis() const;
-    bool get_act_axis(axis_t& axis) const;
+    bool get_act_axis(axis_t &axis) const;
 
 private:
     axis_t global_cmd_axis_; // 全局共享指令位置,
@@ -183,11 +194,12 @@ private: // Can 接收与缓存相关数据
     Can1IOBoard407ServoData
         cached_servo_data_; // 状态机每次开始时从can_recv_buffer_缓存一次
     Can1IOBoard407ADCInfo cached_adc_info_;
-#endif 
+#endif
 
 private:
-    RecordData1 record_data1_cache_;
-    util::DataQueueRecorder<RecordData1>::ptr record_data1_queuerecorder_;
+    // RecordData1 record_data1_cache_;
+    // util::DataQueueRecorder<RecordData1>::ptr record_data1_queuerecorder_;
+    DataRecordInstance1::ptr data_record_instance1_;
 
 private:
     // 共享ecat manager, 便于获取数据和设定(如速度偏置控制)
@@ -206,9 +218,15 @@ private:
         SystemSettings::instance().get_motion_cycle_us();
 
 private:
-    MotionSharedData()
-        : record_data1_queuerecorder_(
-              std::make_shared<util::DataQueueRecorder<RecordData1>>()) {
+    // MotionSharedData()
+    //     : record_data1_queuerecorder_(
+    //           std::make_shared<util::DataQueueRecorder<RecordData1>>()) {
+    //     MotionUtils::ClearAxis(global_cmd_axis_);
+    // }
+    MotionSharedData() {
+        data_record_instance1_ = std::make_shared<DataRecordInstance1>(
+              RecordData1BinDir, RecordData1DecodeDir);
+
         MotionUtils::ClearAxis(global_cmd_axis_);
     }
 
@@ -216,6 +234,14 @@ private:
     MotionSharedData(MotionSharedData &&) = delete;
     MotionSharedData &operator=(const MotionSharedData &) = delete;
     MotionSharedData &operator=(MotionSharedData &&) = delete;
+
+public:
+    const QString DataSaveRootDir =
+        QString::fromStdString(SystemSettings::instance().get_datasave_dir());
+    const QString RecordData1BinDir =
+        DataSaveRootDir + "/MotionRecordData/Bin/";
+    const QString RecordData1DecodeDir =
+        DataSaveRootDir + "/MotionRecordData/Decode/";
 };
 
 } // namespace move

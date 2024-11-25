@@ -42,11 +42,17 @@ static void _check_and_create_dir(const QString &dir_str) {
 
 void DataQueueRecordPanel::_init_dirs() {
     // init dir
-    _check_and_create_dir(DataSaveRootDir);
-    _check_and_create_dir(RecordData1BinDir);
-    _check_and_create_dir(RecordData1DecodeDir);
+    _check_and_create_dir(move::MotionSharedData::instance()->DataSaveRootDir);
+    _check_and_create_dir(
+        move::MotionSharedData::instance()->RecordData1BinDir);
+    _check_and_create_dir(
+        move::MotionSharedData::instance()->RecordData1DecodeDir);
+    // _check_and_create_dir(DataSaveRootDir);
+    // _check_and_create_dir(RecordData1BinDir);
+    // _check_and_create_dir(RecordData1DecodeDir);
 }
 
+#if 0
 void DataQueueRecordPanel::_init_record_data1() {
     // 获取数据1记录器指针, 用于启动停止
     motion_record_data1_recorder_ =
@@ -171,28 +177,86 @@ void DataQueueRecordPanel::_init_record_data1() {
         }
     });
 }
+#else
+void DataQueueRecordPanel::_init_record_data1() {
+    connect(ui->pb_start_record_1, &QPushButton::clicked, this,
+            [this](bool checked) {
+                if (checked) {
+                    auto ret = move::MotionSharedData::instance()
+                                   ->get_data_record_instance1()
+                                   ->start_record();
+
+                    if (ret) {
+                        emit shared_core_data_->sig_info_message(
+                            "Start Record Success");
+                    } else {
+                        emit shared_core_data_->sig_error_message(
+                            "Start Record Failed");
+                        ui->pb_start_record_1->setChecked(false);
+                    }
+
+                } else {
+                    // stop and wait for stopped
+                    move::MotionSharedData::instance()
+                        ->get_data_record_instance1()
+                        ->stop_record(true);
+
+                    emit shared_core_data_->sig_info_message(
+                        "Stop Record Success");
+                }
+            });
+
+    connect(ui->pb_decode_1, &QPushButton::clicked, this, [this]() {
+        // get input files
+        auto bin_filenames = QFileDialog::getOpenFileNames(
+            this, tr("Select Bin Files"),
+            move::MotionSharedData::instance()->RecordData1BinDir);
+
+        for (const auto &bin_filename : bin_filenames) {
+            auto decode_filename =
+                move::MotionSharedData::instance()
+                    ->get_data_record_instance1()
+                    ->decode_one_file(bin_filename,
+                                      ui->cb_include_header_1->isChecked());
+
+            if (decode_filename) {
+                emit shared_core_data_->sig_info_message(
+                    QString{"Decode Success, saved to: %0"}.arg(
+                        *decode_filename));
+            } else {
+                emit shared_core_data_->sig_error_message(
+                    QString{"Decode Failed, file: %0"}.arg(bin_filename));
+            }
+        }
+    });
+
+    connect(ui->pb_print_header_1, &QPushButton::clicked, this, [this]() {
+        auto header_filename = move::MotionSharedData::instance()
+                                   ->get_data_record_instance1()
+                                   ->header_filename();
+
+        auto ret = _save_data1_header_to_file(header_filename.toStdString());
+
+        if (ret) {
+            emit shared_core_data_->sig_info_message(
+                QString{"Print Header Success, saved to: %0"}.arg(
+                    header_filename));
+        } else {
+            emit shared_core_data_->sig_warn_message(
+                QString{"Print Header Failed, file: %0"}.arg(header_filename));
+        }
+    });
+}
+#endif
 
 std::string DataQueueRecordPanel::_generate_data1_header() const {
-    std::stringstream ss;
-
-    ss << "tick_us" << '\t';
-
-    for (int i = 0; i < EDM_AXIS_NUM; ++i) {
-        ss << "cmd" << i << '\t';
-    }
-    for (int i = 0; i < EDM_AXIS_NUM; ++i) {
-        ss << "act" << i << '\t';
-    }
-    for (int i = 0; i < EDM_AXIS_NUM; ++i) {
-        ss << "err" << i << '\t';
-    }
-    ss << "servocmd" << '\t' << "isg01" << '\t' << "avgvol" << '\t' << "current"
-       << '\t' << "normal" << '\t' << "short" << '\t' << "open";
-
-    return ss.str();
+    return move::MotionSharedData::instance()
+        ->get_data_record_instance1()
+        ->generate_data_header();
 }
 
-bool DataQueueRecordPanel::_save_data1_header_to_file(const std::string& filename) const {
+bool DataQueueRecordPanel::_save_data1_header_to_file(
+    const std::string &filename) const {
     auto header_str = _generate_data1_header();
 
     std::ofstream ofs(filename);

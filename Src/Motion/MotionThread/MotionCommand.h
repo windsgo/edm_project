@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "config.h"
+
 #include "Motion/JumpDefines.h"
 #include "Motion/MotionSharedData/MotionSharedData.h"
 #include "Motion/MotionUtils/MotionUtils.h"
@@ -80,6 +82,11 @@ enum MotionCommandType {
 
     // Motion Settings设置
     MotionCommandSetting_MotionSettings,
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // 设置主轴
+    MotionCommand_SetSpindleState,
+#endif // EDM_POWER_TYPE
 
     MotionCommand_Max
 };
@@ -316,6 +323,20 @@ public:
         : MotionCommandBase(MotionCommandSetting_ClearStatData) {}
     ~MotionCommandSettingClearStatData() noexcept override = default;
 };
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+class MotionCommandSetSpindleState final : public MotionCommandBase {
+public:
+    MotionCommandSetSpindleState(bool start)
+        : MotionCommandBase(MotionCommand_SetSpindleState), start_(start) {}
+    ~MotionCommandSetSpindleState() noexcept override = default;
+
+    bool start() const { return start_; }
+
+private:
+    bool start_{false};
+};
+#endif
 
 // class MotionCommandStartLinearServoMove final
 //     : public MotionCommandSimpleMoveBase {

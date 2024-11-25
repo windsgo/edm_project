@@ -7,7 +7,7 @@
 // 电柜使用定义
 #define EDM_POWER_DIMEN                             1
 #define EDM_POWER_ZHONGGU                           2
-#define EDM_POWER_DRILL                             3
+#define EDM_POWER_ZHONGGU_DRILL                     3
 #define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
 #ifndef EDM_POWER_TYPE
 #error "EDM_POWER_TYPE not valid"
@@ -15,8 +15,10 @@
 
 // 坐标轴(=驱动器)数目
 #define EDM_AXIS_NUM                    6
-#if (EDM_POWER_TYPE == EDM_POWER_DRILL)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 #define EDM_SERVO_NUM                   EDM_AXIS_NUM + 1 // 多一个主轴
+#define EDM_DRILL_S_AXIS_IDX            EDM_AXIS_NUM - 1 // S轴编号(0开始, 5)
+#define EDM_DRILL_SPINDLE_AXIS_IDX      EDM_AXIS_NUM // 主轴旋转编号(0开始, 6)
 #else 
 #define EDM_SERVO_NUM                   EDM_AXIS_NUM
 #endif // EDM_POWER_TYPE
@@ -26,9 +28,16 @@
 #error "EDM_AXIS_NUM > EDM_AXIS_MAX_NUM"
 #endif
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+// 做一些覆盖性质定义
+#define EDM_BLU_PER_UM 1
+#endif // EDM_POWER_TYPE
+
 // 单位定义, um分辨率
 // #define EDM_BLU_PER_UM 10 // blu定义, 1blu为0.1um, 1um为10个blu
-#define EDM_BLU_PER_UM 1 // blu定义, 1blu为0.1um, 1um为10个blu
+#ifndef EDM_BLU_PER_UM
+#define EDM_BLU_PER_UM 10 // blu定义, 1blu为0.1um, 1um为10个blu
+#endif // EDM_BLU_PER_UM
 
 // 运动周期
 // #define EDM_SERVO_PEROID_US                         1000 // 1000 us 周期

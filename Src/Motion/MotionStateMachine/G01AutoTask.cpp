@@ -549,9 +549,10 @@ bool G01AutoTask::_servoing_do_servothings() {
 #endif
 
     // 记录数据
-    if (s_motion_shared->is_data_recorder_running()) {
-        s_motion_shared->get_record_data1_ref().g01_servo_cmd = servo_cmd;
-        s_motion_shared->get_record_data1_ref().is_g01_normal_servoing = true;
+    auto data_record_instance1 = s_motion_shared->get_data_record_instance1();
+    if (data_record_instance1->is_data_recorder_running()) {
+        data_record_instance1->get_record_data_ref().g01_servo_cmd = servo_cmd;
+        data_record_instance1->get_record_data_ref().is_g01_normal_servoing = true;
     }
 
     if (servo_cmd > 0.0) {

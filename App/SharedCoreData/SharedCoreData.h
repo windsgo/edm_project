@@ -159,7 +159,7 @@ private:
 #endif // EDM_OFFLINE_RUN_MANUAL_TWO_CAN_DEVICE
 
 public:
-    util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr record_data1_queuerecorder_;
+    // util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr record_data1_queuerecorder_;
 };
 
 } // namespace app

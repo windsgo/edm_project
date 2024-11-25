@@ -311,6 +311,8 @@ void MainWindow::_slot_monitor_timer_doit() {
     mach_rate_displayer_->update_display();
 
     ui->Dial_Voltage->setValue((double)sd.average_voltage);
+    ui->sb_show_test_voltage->setValue((int)sd.average_voltage);
+    ui->dsb_show_test_voltage->setValue(sd.average_voltage);
 #endif
 }
 

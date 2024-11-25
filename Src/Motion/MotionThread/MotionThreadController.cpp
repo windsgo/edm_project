@@ -818,6 +818,20 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         accept_cmd_flag = true;
         break;
     }
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    case MotionCommand_SetSpindleState: {
+        s_logger->trace("Handle MotionCmd: SetSpindleState");
+
+        auto set_spindle_state_cmd =
+            std::static_pointer_cast<MotionCommandSetSpindleState>(cmd);
+
+        // auto ret = motion_state_machine_->set_spindle_state(
+        //     set_spindle_state_cmd->spindle_state());
+
+        accept_cmd_flag = ret;
+        break;
+    }
+#endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     default:
         s_logger->warn("Unsupported MotionCommandType: {}", (int)cmd->type());
         cmd->ignore();

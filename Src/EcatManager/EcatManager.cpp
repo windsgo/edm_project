@@ -62,6 +62,7 @@ ec_sync_info_t slave_0_syncs[] = {
     {0xff}};
 
 // 不同的松下驱动器也有不同的product_code
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
 static std::vector<std::pair<uint32_t, uint32_t>>
     s_slave_vendor_and_product_code_vec = {
         {0x0000066f, 0x613C0007}, // X
@@ -71,6 +72,18 @@ static std::vector<std::pair<uint32_t, uint32_t>>
         {0x0000066f, 0x60380006}, // C
         {0x0000066f, 0x60380004}, // A
 };
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+static std::vector<std::pair<uint32_t, uint32_t>> //! TODO 
+    s_slave_vendor_and_product_code_vec = {
+        {0x0000066f, 0x613C0007}, // X
+        {0x0000066f, 0x613C0007}, // Y
+        {0x0000066f, 0x60380007}, // Z
+        {0x0000066f, 0x60380006}, // B
+        {0x0000066f, 0x60380006}, // C
+        {0x0000066f, 0x60380004}, // S
+        {0x0000066f, 0x60380004}, // 主轴旋转 
+};
+#endif // EDM_POWER_TYPE
 #endif // EDM_ECAT_DRIVER_IGH
 
 EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,

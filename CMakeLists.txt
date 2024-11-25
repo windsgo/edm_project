@@ -93,6 +93,8 @@ set(PROJECT_SOURCES
     Src/Motion/Trajectory/TrajectorySegement.cpp
     Src/Motion/Trajectory/TrajectoryList.cpp
     Src/Motion/MotionSharedData/MotionSharedData.cpp
+    Src/Motion/MotionSharedData/DataRecordInstance1.cpp
+    # Src/Motion/MotionSharedData/DataRecordInstance2.cpp
     Src/GlobalCommandQueue/GlobalCommandQueue.cpp
     Src/QtDependComponents/InfoDispatcher/InfoDispatcher.cpp
     Src/Coordinate/Coordinate.cpp

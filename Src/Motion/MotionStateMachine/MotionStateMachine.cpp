@@ -67,12 +67,13 @@ void MotionStateMachine::run_once() {
     s_motion_shared->update_can_buffer_cache();
 #endif
 
-    if (s_motion_shared->is_data_recorder_running()) {
+    auto data_record_instance1 = s_motion_shared->get_data_record_instance1();
+    if (data_record_instance1->is_data_recorder_running()) {
         //! 每周期开始, 将记录数据缓存清空
-        s_motion_shared->clear_data_record();
+        data_record_instance1->clear_data_record();
 
         // 记录周期开始时驱动器返回的数据: 实际位置, 跟随误差
-        auto& rd1 = s_motion_shared->get_record_data1_ref();
+        auto& rd1 = data_record_instance1->get_record_data_ref();
 
         rd1.thread_tick_us = s_motion_shared->get_thread_tick_us();
 
@@ -125,10 +126,10 @@ void MotionStateMachine::run_once() {
         break;
     }
 
-    if (s_motion_shared->is_data_recorder_running()) {
-        s_motion_shared->get_record_data1_ref().new_cmd_axis = s_motion_shared->get_global_cmd_axis();
+    if (data_record_instance1->is_data_recorder_running()) {
+        data_record_instance1->get_record_data_ref().new_cmd_axis = s_motion_shared->get_global_cmd_axis();
 
-        s_motion_shared->push_data_to_recorder();
+        data_record_instance1->push_data_to_recorder();
     }
 }
 

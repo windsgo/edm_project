@@ -37,12 +37,12 @@ private:
 
     SharedCoreData* shared_core_data_;
 
-    const QString DataSaveRootDir = QString::fromStdString(SystemSettings::instance().get_datasave_dir());
-    const QString RecordData1BinDir = DataSaveRootDir + "/MotionRecordData/Bin/";
-    const QString RecordData1DecodeDir = DataSaveRootDir + "/MotionRecordData/Decode/";
+    // const QString DataSaveRootDir = QString::fromStdString(SystemSettings::instance().get_datasave_dir());
+    // const QString RecordData1BinDir = DataSaveRootDir + "/MotionRecordData/Bin/";
+    // const QString RecordData1DecodeDir = DataSaveRootDir + "/MotionRecordData/Decode/";
 
-    util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr motion_record_data1_recorder_;
-    const QString data1_header_file_ = RecordData1DecodeDir + "data1_header.txt";
+    // util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr motion_record_data1_recorder_;
+    // const QString data1_header_file_ = RecordData1DecodeDir + "data1_header.txt";
 };
 
 
