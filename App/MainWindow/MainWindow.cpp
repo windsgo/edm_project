@@ -293,6 +293,8 @@ void MainWindow::_slot_monitor_timer_doit() {
     mach_rate_displayer_->update_display();
 
     ui->Dial_Voltage->setValue((double)sd.averaged_voltage);
+    ui->sb_show_test_voltage->setValue((int)sd.averaged_voltage);
+    ui->dsb_show_test_voltage->setValue(sd.averaged_voltage);
 #else
     // TODO
     Can1IOBoard407ServoData sd;

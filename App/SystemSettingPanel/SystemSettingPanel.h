@@ -2,6 +2,8 @@
 
 #include <QWidget>
 
+#include "ADCCalcPanel/ADCCalcPanel.h"
+
 #include "SharedCoreData/SharedCoreData.h"
 
 namespace Ui {
@@ -36,6 +38,8 @@ private:
     Ui::SystemSettingPanel *ui;
 
     SharedCoreData* shared_core_data_;
+
+    ADCCalcPanel* adc_calc_panel_;
 };
 
 } // namespace app

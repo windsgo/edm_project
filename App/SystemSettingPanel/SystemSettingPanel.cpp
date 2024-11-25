@@ -1,4 +1,5 @@
 #include "SystemSettingPanel.h"
+#include "ADCCalcPanel/ADCCalcPanel.h"
 #include "Motion/MotionThread/MotionCommand.h"
 #include "QtDependComponents/ZynqConnection/TcpMessageDefine.h"
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
@@ -24,17 +25,37 @@ SystemSettingPanel::SystemSettingPanel(SharedCoreData *shared_core_data,
       shared_core_data_(shared_core_data) {
     ui->setupUi(this);
 
+    adc_calc_panel_ = new ADCCalcPanel(nullptr);
+    adc_calc_panel_->setWindowFlags(adc_calc_panel_->windowFlags() | Qt::Tool);
+    connect(adc_calc_panel_, &ADCCalcPanel::sig_result_applied, this,
+            [this](const ADCCalcPanel::ADCCalcResult &result) {
+                ui->dsb_adc_gain->setValue(result.new_k);
+                ui->dsb_adc_offset->setValue(result.new_b);
+            });
+
     connect(shared_core_data_->get_zynq_connect_ctrler().get(),
             &zynq::ZynqConnectController::sig_zynq_tcp_connected, this,
             [this]() { this->_set_adc_settings_to_zynq(); 
                 s_logger->info("zynq reconnected, send adc settings immediately");
             });
+    
+    connect(ui->pb_open_adccalc, &QPushButton::clicked, this, [this]() {
+        adc_calc_panel_->slot_set_current_k_and_b_to_ui(ui->dsb_adc_gain->value(),
+                                                        ui->dsb_adc_offset->value());
+
+        adc_calc_panel_->show();
+    });
 
     _init_button_cb();
     _update_ui();
 }
 
-SystemSettingPanel::~SystemSettingPanel() { delete ui; }
+SystemSettingPanel::~SystemSettingPanel() { 
+    adc_calc_panel_->hide();
+    delete adc_calc_panel_;
+
+    delete ui; 
+}
 
 void SystemSettingPanel::_init_button_cb() {
     connect(ui->pb_update, &QPushButton::clicked, this,

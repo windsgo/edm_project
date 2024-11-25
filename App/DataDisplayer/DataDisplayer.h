@@ -69,6 +69,8 @@ private:
     void _set_datainput_enable(bool enable) { data_input_enable_ = enable; }
     void _set_plot_enable(bool enable) { plot_enable_ = enable; }
 
+    void _update_label_data(); // 刷新当前选择的数据的标签显示
+
     void _clear();
 
     // 重新绘图: 从各个data的vec更新curve的sample, 并重新绘图

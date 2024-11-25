@@ -8,6 +8,7 @@
 #include "qwt_scale_widget.h"
 #include "qwt_text.h"
 #include "ui_DataDisplayer.h"
+#include <QButtonGroup>
 #include <cassert>
 #include <qabstractbutton.h>
 #include <qcolor.h>
@@ -17,7 +18,6 @@
 #include <qpushbutton.h>
 #include <qslider.h>
 #include <qvector.h>
-#include <QButtonGroup>
 
 #include "qwt_plot_grid.h"
 
@@ -32,9 +32,9 @@ DataDisplayer::DataDisplayer(int x_points, QWidget *parent)
     ui->qwtPlot->enableAxis(QwtPlot::xBottom);
     ui->qwtPlot->enableAxis(QwtPlot::yLeft);
     ui->qwtPlot->enableAxis(QwtPlot::yRight);
-//    ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "x");
-//    ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "y");
-//    ui->qwtPlot->setAxisTitle(QwtPlot::yRight, "y");
+    //    ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "x");
+    //    ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "y");
+    //    ui->qwtPlot->setAxisTitle(QwtPlot::yRight, "y");
     ui->qwtPlot->setAxisAutoScale(QwtPlot::xBottom, true);
 
     // init legend
@@ -80,7 +80,8 @@ int DataDisplayer::add_data_item(const DisplayedDataDesc &data_desc) {
     if (data.data_desc.visible) {
         data.curve->attach(ui->qwtPlot);
         data.curve->setYAxis(data.data_desc.yAxis);
-        data.curve->setPen(data.data_desc.preferred_color, data.data_desc.line_width);
+        data.curve->setPen(data.data_desc.preferred_color,
+                           data.data_desc.line_width);
     }
 
     // set curve init samples
@@ -185,8 +186,8 @@ void DataDisplayer::_init_buttons() {
 
                 _replot();
             });
-    
-    QButtonGroup* yleft_yright_group = new QButtonGroup(this);
+
+    QButtonGroup *yleft_yright_group = new QButtonGroup(this);
     yleft_yright_group->addButton(ui->pb_select_yleft);
     yleft_yright_group->addButton(ui->pb_select_yright);
     yleft_yright_group->setExclusive(true);
@@ -247,7 +248,7 @@ void DataDisplayer::_set_yleft_scale(double min, double max) {
         left_y_min_ = min;
         left_y_max_ = max;
     }
-    
+
     ui->sb_left_ymin->setValue(left_y_min_);
     ui->sb_left_ymax->setValue(left_y_max_);
 
@@ -260,11 +261,24 @@ void DataDisplayer::_set_yright_scale(double min, double max) {
         right_y_min_ = min;
         right_y_max_ = max;
     }
-    
+
     ui->sb_right_ymin->setValue(right_y_min_);
     ui->sb_right_ymax->setValue(right_y_max_);
 
     ui->qwtPlot->setAxisScale(QwtPlot::yRight, right_y_min_, right_y_max_);
+}
+
+void DataDisplayer::_update_label_data() {
+    auto index = ui->comboBox_item_select->currentIndex();
+    if (index < 0) {
+        return;
+    }
+
+    auto &data = datas_[index];
+    
+    auto last_data = data.raw_data_vec.back();
+
+    ui->lb_show_data->setText(QString::number(last_data));
 }
 
 void DataDisplayer::_clear() {
@@ -285,6 +299,8 @@ void DataDisplayer::_replot() {
 
         _update_curve_from_vec(data);
     }
+
+    _update_label_data();
 
     ui->qwtPlot->replot();
 }

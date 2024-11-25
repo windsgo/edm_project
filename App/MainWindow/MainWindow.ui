@@ -134,7 +134,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>7</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_power">
        <attribute name="title">
@@ -479,33 +479,72 @@
          </item>
         </layout>
        </widget>
-       <widget class="QwtDial" name="Dial_Voltage">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>510</x>
+          <x>390</x>
           <y>210</y>
-          <width>200</width>
-          <height>200</height>
+          <width>361</width>
+          <height>201</height>
          </rect>
         </property>
-        <property name="upperBound">
-         <double>400.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>50.000000000000000</double>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="lineWidth">
-         <number>4</number>
-        </property>
-        <property name="minScaleArc">
-         <double>60.000000000000000</double>
-        </property>
-        <property name="maxScaleArc">
-         <double>300.000000000000000</double>
-        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="sb_show_test_voltage">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="minimum">
+            <number>-10000</number>
+           </property>
+           <property name="maximum">
+            <number>100000</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>电压值</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2" rowspan="3">
+          <widget class="QwtDial" name="Dial_Voltage">
+           <property name="upperBound">
+            <double>400.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>50.000000000000000</double>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="lineWidth">
+            <number>4</number>
+           </property>
+           <property name="minScaleArc">
+            <double>60.000000000000000</double>
+           </property>
+           <property name="maxScaleArc">
+            <double>300.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="dsb_show_test_voltage">
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="minimum">
+            <double>-999999.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>9999999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
       <widget class="QWidget" name="tab_coord_setting">
