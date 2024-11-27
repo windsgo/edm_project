@@ -130,6 +130,9 @@ void MotionStateMachine::run_once() {
     // 主轴控制
     auto spindle_control = s_motion_shared->get_spindle_controller();
     spindle_control->run_once();
+
+    // 设置主轴位置
+    
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
     if (data_record_instance1->is_data_recorder_running()) {

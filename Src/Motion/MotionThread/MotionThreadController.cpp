@@ -521,10 +521,22 @@ void MotionThreadController::_threadstate_running() {
                 for (int i = 0; i < cmd_axis.size(); ++i) {
                     const auto device = ecat_manager_->get_servo_device(i);
                     device->set_target_position(
-                        static_cast<int32_t>(std::lround(cmd_axis[i])));
+                        static_cast<int32_t>(
+                            std::lround(cmd_axis[i]) * s_motion_shared->gear_ratios()[i]
+                            ));
                     device->cw_enable_operation();
                     device->set_operation_mode(OM_CSP);
                 }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+                const auto spindle_device 
+                    = ecat_manager_->get_servo_device(EDM_DRILL_SPINDLE_AXIS_IDX);
+                spindle_device->set_target_position(
+                    static_cast<int32_t>(
+                        s_motion_shared->get_spindle_controller()->current_axis()));
+                spindle_device->cw_enable_operation();
+                spindle_device->set_operation_mode(OM_CSP);
+#endif
             },
             true);
 
@@ -876,6 +888,10 @@ void MotionThreadController::_copy_info_cache() {
 
     info_cache_.curr_cmd_axis_blu = s_motion_shared->get_global_cmd_axis();
     s_motion_shared->get_act_axis(info_cache_.curr_act_axis_blu);
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    info_cache_.spindle_axis_blu = s_motion_shared->get_spindle_controller()->current_axis();
+#endif
 
     info_cache_.main_mode = motion_state_machine_->main_mode();
     info_cache_.auto_state = motion_state_machine_->auto_state();

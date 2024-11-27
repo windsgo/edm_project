@@ -59,6 +59,10 @@ struct MotionInfo {
                                    // 但如果后续加入坐标处理等算法, 就不一定了
     axis_t curr_act_axis_blu{0.0}; // 当前周期编码器实际位置
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    unit_t spindle_axis_blu {0.0};
+#endif
+
     MotionMainMode main_mode{MotionMainMode::Idle};       // 当前主模式
     MotionAutoState auto_state{MotionAutoState::Stopped}; // auto模式下的state
 
