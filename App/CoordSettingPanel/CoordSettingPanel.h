@@ -5,8 +5,12 @@
 #include <QWidget>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPushButton>
 
 #include <array>
+#include <cstddef>
+#include <qpushbutton.h>
+#include <unordered_map>
 
 #include "SharedCoreData/SharedCoreData.h"
 
@@ -56,7 +60,13 @@ private:
     edm::coord::CoordinateSystem::ptr coord_sys_;
 
     std::array<QLabel*, EDM_AXIS_MAX_NUM> offsetaxisname_label_arr_;
-    
+
+    std::array<QPushButton*, EDM_AXIS_MAX_NUM> set_coordaxis_to_given_value_pb_arr;
+    std::unordered_map<QPushButton*, std::size_t> set_coordaxis_to_given_value_pb_index_map_;
+
+    std::array<QPushButton*, EDM_AXIS_MAX_NUM> set_coordaxis_to_zero_pb_arr;
+    std::unordered_map<QPushButton*, std::size_t> set_coordaxis_to_zero_pb_index_map_;
+
     std::array<QLineEdit*, EDM_AXIS_MAX_NUM> coord_offset_le_arr_;
     std::array<QLineEdit*, EDM_AXIS_MAX_NUM> global_offset_le_arr_;
 

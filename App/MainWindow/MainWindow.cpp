@@ -129,6 +129,7 @@ void MainWindow::_init_members() {
     // test_panel_ = new TestPanel(shared_core_data_);
     // testpanel_layout->addWidget(test_panel_);
     test_panel_ = new TestPanel(shared_core_data_);
+    test_panel_->setWindowFlags(test_panel_->windowFlags() | Qt::Tool);
     test_panel_->show();
     test_panel_->hide();
     connect(ui->pb_testpanel, &QPushButton::clicked, this,

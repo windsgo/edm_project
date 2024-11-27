@@ -32,6 +32,7 @@ set(APP_SOURCES
     codeeditor/highlighter.cpp
     DataDisplayer/DataDisplayer.cpp
     CoordSettingPanel/CoordSettingPanel.cpp
+    CoordSettingPanel/CoordSetToGivenValueDialog.cpp
     SystemSettingPanel/SystemSettingPanel.cpp
     DataQueueRecordPanel/DataQueueRecordPanel.cpp
     LogListPanel/LogListPanel.cpp

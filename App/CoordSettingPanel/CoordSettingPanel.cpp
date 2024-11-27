@@ -1,11 +1,17 @@
 #include "CoordSettingPanel.h"
+#include "Motion/MoveDefines.h"
+#include "Utils/UnitConverter/UnitConverter.h"
 #include "ui_CoordSettingPanel.h"
 
 #include <QMessageBox>
+#include <cstddef>
+#include <qstyleoption.h>
 
 #include "Logger/LogMacro.h"
 
 #include "InputHelper/InputHelper.h"
+
+#include "CoordSetToGivenValueDialog.h"
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -90,9 +96,7 @@ void CoordSettingPanel::slot_change_display_coord_index(
     // _change_display_coord_index(new_coord_index);
 }
 
-void CoordSettingPanel::slot_update_display() {
-    this->update_all_display();
-}
+void CoordSettingPanel::slot_update_display() { this->update_all_display(); }
 
 void CoordSettingPanel::_init_label_arr() {
     offsetaxisname_label_arr_.at(0) = ui->lb_ofs_x;
@@ -101,6 +105,37 @@ void CoordSettingPanel::_init_label_arr() {
     offsetaxisname_label_arr_.at(3) = ui->lb_ofs_b;
     offsetaxisname_label_arr_.at(4) = ui->lb_ofs_c;
     offsetaxisname_label_arr_.at(5) = ui->lb_ofs_a;
+
+    set_coordaxis_to_given_value_pb_arr.at(0) =
+        ui->pb_set_coord_axis_to_given_value_0;
+    set_coordaxis_to_given_value_pb_arr.at(1) =
+        ui->pb_set_coord_axis_to_given_value_1;
+    set_coordaxis_to_given_value_pb_arr.at(2) =
+        ui->pb_set_coord_axis_to_given_value_2;
+    set_coordaxis_to_given_value_pb_arr.at(3) =
+        ui->pb_set_coord_axis_to_given_value_3;
+    set_coordaxis_to_given_value_pb_arr.at(4) =
+        ui->pb_set_coord_axis_to_given_value_4;
+    set_coordaxis_to_given_value_pb_arr.at(5) =
+        ui->pb_set_coord_axis_to_given_value_5;
+
+    for (std::size_t i = 0; i < set_coordaxis_to_given_value_pb_arr.size();
+         ++i) {
+        set_coordaxis_to_given_value_pb_index_map_.emplace(
+            set_coordaxis_to_given_value_pb_arr.at(i), i);
+    }
+
+    set_coordaxis_to_zero_pb_arr.at(0) = ui->pb_set_coord_axis_to_zero_0;
+    set_coordaxis_to_zero_pb_arr.at(1) = ui->pb_set_coord_axis_to_zero_1;
+    set_coordaxis_to_zero_pb_arr.at(2) = ui->pb_set_coord_axis_to_zero_2;
+    set_coordaxis_to_zero_pb_arr.at(3) = ui->pb_set_coord_axis_to_zero_3;
+    set_coordaxis_to_zero_pb_arr.at(4) = ui->pb_set_coord_axis_to_zero_4;
+    set_coordaxis_to_zero_pb_arr.at(5) = ui->pb_set_coord_axis_to_zero_5;
+
+    for (std::size_t i = 0; i < set_coordaxis_to_zero_pb_arr.size(); ++i) {
+        set_coordaxis_to_zero_pb_index_map_.emplace(
+            set_coordaxis_to_zero_pb_arr.at(i), i);
+    }
 
     coord_offset_le_arr_.at(0) = ui->le_coord_offset_x;
     coord_offset_le_arr_.at(1) = ui->le_coord_offset_y;
@@ -150,7 +185,10 @@ void CoordSettingPanel::_init_label_arr() {
     for (std::size_t i = coord::Coordinate::Size;
          i < softlimit_neg_le_arr_.size(); ++i) {
         offsetaxisname_label_arr_.at(i)->setEnabled(false);
-        
+
+        set_coordaxis_to_given_value_pb_arr.at(i)->setEnabled(false);
+        set_coordaxis_to_zero_pb_arr.at(i)->setEnabled(false);
+
         coord_offset_le_arr_.at(i)->setEnabled(false);
         coord_offset_le_arr_.at(i)->setText("null");
         global_offset_le_arr_.at(i)->setEnabled(false);
@@ -301,6 +339,97 @@ void CoordSettingPanel::_init_offset_button_cb() {
 
                 this->update_all_display();
             });
+
+    for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+        connect(set_coordaxis_to_given_value_pb_arr.at(i),
+                &QPushButton::clicked, this, [this]() {
+                    CoordSetToGivenValueDialog dialog;
+                    auto ret = dialog.exec();
+
+                    if (ret != QDialog::Accepted) {
+                        return;
+                    }
+
+                    auto sender =
+                        qobject_cast<QPushButton *>(QObject::sender());
+
+                    auto find_ret =
+                        set_coordaxis_to_given_value_pb_index_map_.find(sender);
+                    if (find_ret ==
+                        set_coordaxis_to_given_value_pb_index_map_.end()) {
+                        s_logger->error(
+                            "set_coordaxis_to_given_value_pb_index_map_ "
+                            "find failed");
+                        return;
+                    }
+                    std::size_t axis_index = find_ret->second;
+
+                    uint32_t selected_coord_index =
+                        ui->comboBox_select_coord_index->currentData().toUInt();
+
+                    // 获取当前坐标系的偏置
+                    auto offset_opt =
+                        this->coord_sys_->get_cm().get_coord_offset(
+                            selected_coord_index);
+                    if (!offset_opt) {
+                        s_logger->error("get_coord_offset failed");
+                        return;
+                    }
+                    coord::coord_offset_t offsets = *offset_opt;
+
+                    // 获取当前机床坐标系下的坐标值
+                    const auto &curr_mach_cmd_axis =
+                        this->coord_sys_->get_current_machine_axis();
+
+                    // 将偏执设定为机床坐标系值 - 给定值, 达到设给定值效果
+                    offsets[axis_index] =
+                        curr_mach_cmd_axis[axis_index] -
+                        util::UnitConverter::mm2blu(dialog.value());
+                    this->coord_sys_->set_coord_offset(selected_coord_index,
+                                                       offsets);
+
+                    this->update_all_display();
+                });
+
+        connect(set_coordaxis_to_zero_pb_arr.at(i), &QPushButton::clicked, this,
+                [this, i]() {
+                    auto sender =
+                        qobject_cast<QPushButton *>(QObject::sender());
+
+                    auto find_ret =
+                        set_coordaxis_to_zero_pb_index_map_.find(sender);
+                    if (find_ret == set_coordaxis_to_zero_pb_index_map_.end()) {
+                        s_logger->error("set_coordaxis_to_zero_pb_index_map_ "
+                                        "find failed");
+                        return;
+                    }
+                    std::size_t axis_index = find_ret->second;
+
+                    uint32_t selected_coord_index =
+                        ui->comboBox_select_coord_index->currentData().toUInt();
+
+                    // 获取当前坐标系的偏置
+                    auto offset_opt =
+                        this->coord_sys_->get_cm().get_coord_offset(
+                            selected_coord_index);
+                    if (!offset_opt) {
+                        s_logger->error("get_coord_offset failed");
+                        return;
+                    }
+                    coord::coord_offset_t offsets = *offset_opt;
+
+                    // 获取当前机床坐标系下的坐标值
+                    const auto &curr_mach_cmd_axis =
+                        this->coord_sys_->get_current_machine_axis();
+
+                    // 将偏执设定为机床坐标系值, 达到设0效果
+                    offsets[axis_index] = curr_mach_cmd_axis[axis_index];
+                    this->coord_sys_->set_coord_offset(selected_coord_index,
+                                                       offsets);
+
+                    this->update_all_display();
+                });
+    }
 }
 
 void CoordSettingPanel::_init_softlimit_button_cb() {
