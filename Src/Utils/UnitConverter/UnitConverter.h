@@ -35,6 +35,10 @@ private:
                                                 um2blu_}; // mm/min -> blu/s
     static const double mm_min2blu_p_; // mm/min -> blu/周期
 
+    static const double blu_p2mm_min_; // blu/周期 -> mm/min
+
+    constexpr static const double um_ms2mm_min_{60.0}; // um/ms -> mm/min
+
 public:
     static inline move::unit_t um2blu(move::unit_t um) { return um * um2blu_; }
     static inline move::unit_t mm2blu(move::unit_t mm) { return mm * mm2blu_; }
@@ -61,6 +65,10 @@ public:
 
     static inline move::unit_t blu_ms2blu_p(move::unit_t blu_ms) {
         return blu_ms / ms2p_;
+    }
+
+    static inline move::unit_t um_ms2mm_min(move::unit_t um_ms) {
+        return um_ms * um_ms2mm_min_;
     }
 
     // TODO

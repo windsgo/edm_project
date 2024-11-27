@@ -15,6 +15,8 @@ const double UnitConverter::mm_min2blu_p_{
     1000.0 / 60.0 * UnitConverter::um2blu_ / UnitConverter::s2ms_ /
     UnitConverter::ms2p_};
 
+const double UnitConverter::blu_p2mm_min_{1.0/UnitConverter::mm_min2blu_p_};
+
 } // namespace util
 
 } // namespace edm

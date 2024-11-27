@@ -33,7 +33,7 @@ MotionStateMachine::MotionStateMachine(
     
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     auto physical_touch_detect_cb = [this]() -> bool {
-        return s_motion_shared->cached_udp_message().realtime_voltage <= 3;
+        return s_motion_shared->cached_udp_message().touch_detected;
     };
     touch_detect_handler_ = std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
 #else

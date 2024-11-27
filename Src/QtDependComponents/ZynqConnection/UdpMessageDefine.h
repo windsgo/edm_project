@@ -27,6 +27,8 @@ typedef struct {
     double averaged_voltage;
 
     double servo_calced_speed_mm_min;
+
+    bool touch_detected; // calc locally
 } servo_return_converted_data_t;
 
 } // namespace zynq

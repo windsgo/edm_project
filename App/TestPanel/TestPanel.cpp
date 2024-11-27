@@ -38,6 +38,9 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
         dir[0] = 1.0;
         dir[1] = 1.0;
         dir[2] = 0.0;
+        for (std::size_t i = 3; i < dir.size(); ++i) {
+            dir[i] = 0.0;
+        }
 
         uint32_t speed_level = 0;
         bool touch_detect_enable = true;
@@ -59,6 +62,9 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
         dir[0] = 0.0;
         dir[1] = -1.0;
         dir[2] = -1.0;
+        for (std::size_t i = 3; i < dir.size(); ++i) {
+            dir[i] = 0.0;
+        }
 
         uint32_t speed_level = 0;
         bool touch_detect_enable = true;
@@ -77,30 +83,36 @@ TestPanel::~TestPanel() { delete ui; }
 
 void TestPanel::_update_phy_touchdetect() {
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-#ifndef EDM_USE_ZYNQ_SERVOBOARD
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    shared_core_data_->get_zynq_udpmessage_holder()->set_manual_touch_detect_flag(
+#else
     shared_core_data_->get_can_recv_buffer()->set_manual_touch_detect_flag(
-        ui->pb_phy_detected->isChecked());
 #endif // !EDM_USE_ZYNQ_SERVOBOARD
+        ui->pb_phy_detected->isChecked());
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 }
 
 void TestPanel::_update_servo() {
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
-#ifndef EDM_USE_ZYNQ_SERVOBOARD
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    shared_core_data_->get_zynq_udpmessage_holder()->set_manual_servo_cmd(
+#else
     shared_core_data_->get_can_recv_buffer()->set_manual_servo_cmd(
+#endif // EDM_USE_ZYNQ_SERVOBOARD
         (double)ui->horizontalSlider_servo->value() / 100.0,
         util::UnitConverter::um_ms2blu_p(
             (double)ui->horizontalSlider_servo_2->value() / 100.0));
-#endif // !EDM_USE_ZYNQ_SERVOBOARD
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 }
 
 void TestPanel::_update_manual_voltage() {
 #ifdef EDM_OFFLINE_MANUAL_VOLTAGE
-#ifndef EDM_USE_ZYNQ_SERVOBOARD
+#ifdef EDM_USE_ZYNQ_SERVOBOARD
+    shared_core_data_->get_zynq_udpmessage_holder()->set_manual_voltage(
+#else
     shared_core_data_->get_can_recv_buffer()->set_manual_voltage(
+#endif // EDM_USE_ZYNQ_SERVOBOARD
         ui->horizontalSlider_voltage->value());
-#endif // !EDM_USE_ZYNQ_SERVOBOARD
 #endif // EDM_OFFLINE_MANUAL_VOLTAGE
 }
 
