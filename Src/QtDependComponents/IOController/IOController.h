@@ -34,7 +34,7 @@ public:
     // 带演码设定io, 以达到只覆盖一部分io的目的 // TODO
     void set_can_machineio_1_withmask(uint32_t part_of_can_io_1, uint32_t mask);
     void set_can_machineio_2_withmask(uint32_t part_of_can_io_2, uint32_t mask);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     void set_can_machineio_output(uint32_t can_io_output);
     void set_can_machineio_output_withmask(uint32_t part_of_can_io_output, uint32_t mask);
 #endif
@@ -52,7 +52,7 @@ public:
     // get with lock, safer
     uint32_t get_can_machineio_1_safe() const;
     uint32_t get_can_machineio_2_safe() const;
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     uint32_t get_can_machineio_output() const { return can_machineio_output_; }
     uint32_t get_can_machineio_input() const { return can_machineio_input_.load(); }
 
@@ -66,12 +66,12 @@ private:
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     bool _set_can_machineio_1_no_lock_no_trigger(uint32_t can_io_1);
     bool _set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     bool _set_can_machineio_output_no_lock_no_trigger(uint32_t can_io_output);
 #endif
 
 private:
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // input io listener
     void _input_io_listener(const QCanBusFrame& frame);
 #endif
@@ -85,7 +85,7 @@ private:
     void _trigger_send_io_2(uint32_t io_2);
 
     void _calc_endcheck(QByteArray &bytearray);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     void _trigger_send_io_output(uint32_t io_output);
 #endif
 
@@ -95,7 +95,7 @@ private:
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     uint32_t can_machineio_1_{0x0};
     uint32_t can_machineio_2_{0x0};
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     uint32_t can_machineio_output_{0x0};
     std::atomic_uint32_t can_machineio_input_{0x0}; // can listener modify , safe atomic
 #endif
@@ -112,7 +112,7 @@ private:
 
     static const uint8_t canio1_raw_bytes_[8];
     static const uint8_t canio2_raw_bytes_[8];
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     constexpr static const int CANIO_OUTPUT_TXID = EDM_CAN_ZHONGGU_IO_OUTPUT_TXID;
     constexpr static const int CANIO_INPUT_RXID = EDM_CAN_ZHONGGU_IO_INPUT_RXID;
 

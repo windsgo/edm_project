@@ -96,6 +96,32 @@ static uint32_t _CalcCanIOMask() {
 
 const uint32_t EleparamDecodeResult::io_mask = _CalcCanIOMask();
 
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+
+static constexpr const std::array<uint32_t, 19> s_power_io_arr{
+    ZHONGGU_IOOut_IOOUT3_MACH, ZHONGGU_IOOut_CAP1,  ZHONGGU_IOOut_CAP2,
+    ZHONGGU_IOOut_CAP4,        ZHONGGU_IOOut_CAP8,  ZHONGGU_IOOut_TON1,
+    ZHONGGU_IOOut_TON2,        ZHONGGU_IOOut_TON4,  ZHONGGU_IOOut_TON8,
+    ZHONGGU_IOOut_TOFF1,       ZHONGGU_IOOut_TOFF2, ZHONGGU_IOOut_TOFF4,
+    ZHONGGU_IOOut_TOFF8,       ZHONGGU_IOOut_IP1,   ZHONGGU_IOOut_IP2,
+    ZHONGGU_IOOut_IP4,         ZHONGGU_IOOut_IP8,   ZHONGGU_IOOut_WORK,
+    ZHONGGU_IOOut_TOOL};
+
+static uint32_t _CalcCanIOMask() {
+    uint32_t mask = 0x00;
+    for (const auto &io_index : s_power_io_arr) {
+        if (io_index == 0 || io_index > 32) {
+            continue;
+        }
+
+        mask |= 1 << (io_index - 1);
+    }
+
+    return mask;
+}
+
+const uint32_t EleparamDecodeResult::io_mask = _CalcCanIOMask();
+
 #endif
 
 EleparamDecodeResult::ptr
@@ -124,6 +150,13 @@ void EleparamDecoder::_decode(EleparamDecodeInput::ptr input) {
     _zhonggu_handle_ip();
     _zhonggu_handle_neg();
     _zhonggu_handle_hp();
+    _zhonggu_handle_mach();
+#elif  (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    _zhonggu_handle_cap();
+    _zhonggu_handle_on();
+    _zhonggu_handle_off();
+    _zhonggu_handle_ip();
+
     _zhonggu_handle_mach();
 #endif
 }
@@ -831,6 +864,145 @@ void EleparamDecoder::_zhonggu_handle_hp() {
 void EleparamDecoder::_zhonggu_handle_mach() {
     bool mach_on = input_->highpower_flag();
     _set_io_mach(mach_on);
+}
+
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+
+void EleparamDecoder::_set_io_mach(bool enable) {
+    static const uint32_t mach_io = 1 << (ZHONGGU_IOOut_IOOUT3_MACH - 1);
+
+    if (enable) {
+        result_->io() |= mach_io;
+    } else {
+        result_->io() &= ~mach_io;
+    }
+}
+
+void EleparamDecoder::_set_io_work(bool enable) {
+    static const uint32_t work_io = 1 << (ZHONGGU_IOOut_WORK - 1);
+
+    if (enable) {
+        result_->io() |= work_io;
+    } else {
+        result_->io() &= ~work_io;
+    }
+}
+
+void EleparamDecoder::_set_io_tool(bool enable) {
+    static const uint32_t tool_io = 1 << (ZHONGGU_IOOut_TOOL - 1);
+
+    if (enable) {
+        result_->io() |= tool_io;
+    } else {
+        result_->io() &= ~tool_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_cap() {
+    static const uint32_t cap1_io = 1 << (ZHONGGU_IOOut_CAP1 - 1);
+    static const uint32_t cap2_io = 1 << (ZHONGGU_IOOut_CAP2 - 1);
+    static const uint32_t cap4_io = 1 << (ZHONGGU_IOOut_CAP4 - 1);
+    static const uint32_t cap8_io = 1 << (ZHONGGU_IOOut_CAP8 - 1);
+
+    uint8_t cap = input_->ele_param().c;
+
+    if (cap & 0x01) {
+        result_->io() |= cap1_io;
+    }
+
+    if (cap & 0x02) {
+        result_->io() |= cap2_io;
+    }
+
+    if (cap & 0x04) {
+        result_->io() |= cap4_io;
+    }
+
+    if (cap & 0x08) {
+        result_->io() |= cap8_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_on() {
+    static const uint32_t on1_io = 1 << (ZHONGGU_IOOut_TON1 - 1);
+    static const uint32_t on2_io = 1 << (ZHONGGU_IOOut_TON2 - 1);
+    static const uint32_t on4_io = 1 << (ZHONGGU_IOOut_TON4 - 1);
+    static const uint32_t on8_io = 1 << (ZHONGGU_IOOut_TON8 - 1);
+
+    uint8_t on = input_->ele_param().pulse_on;
+
+    if (on & 0x01) {
+        result_->io() |= on1_io;
+    }
+
+    if (on & 0x02) {
+        result_->io() |= on2_io;
+    }
+
+    if (on & 0x04) {
+        result_->io() |= on4_io;
+    }
+
+    if (on & 0x08) {
+        result_->io() |= on8_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_off() {
+    static const uint32_t off1_io = 1 << (ZHONGGU_IOOut_TOFF1 - 1);
+    static const uint32_t off2_io = 1 << (ZHONGGU_IOOut_TOFF2 - 1);
+    static const uint32_t off4_io = 1 << (ZHONGGU_IOOut_TOFF4 - 1);
+    static const uint32_t off8_io = 1 << (ZHONGGU_IOOut_TOFF8 - 1);
+
+    uint8_t off = input_->ele_param().pulse_off;
+
+    if (off & 0x01) {
+        result_->io() |= off1_io;
+    }
+
+    if (off & 0x02) {
+        result_->io() |= off2_io;
+    }
+
+    if (off & 0x04) {
+        result_->io() |= off4_io;
+    }
+
+    if (off & 0x08) {
+        result_->io() |= off8_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_ip() {
+    static const uint32_t ip1_io = 1 << (ZHONGGU_IOOut_IP1 - 1);
+    static const uint32_t ip2_io = 1 << (ZHONGGU_IOOut_IP2 - 1);
+    static const uint32_t ip4_io = 1 << (ZHONGGU_IOOut_IP4 - 1);
+    static const uint32_t ip8_io = 1 << (ZHONGGU_IOOut_IP8 - 1);
+
+    uint16_t ip = input_->ele_param().ip;
+
+    if (ip & 0x01) {
+        result_->io() |= ip1_io;
+    }
+
+    if (ip & 0x02) {
+        result_->io() |= ip2_io;
+    }
+
+    if (ip & 0x04) {
+        result_->io() |= ip4_io;
+    }
+
+    if (ip & 0x08) {
+        result_->io() |= ip8_io;
+    }
+}
+
+void EleparamDecoder::_zhonggu_handle_mach() {
+    bool mach_on = input_->highpower_flag();
+    _set_io_mach(mach_on);
+
+    _set_io_work(mach_on); // 小孔机特有
 }
 
 #endif

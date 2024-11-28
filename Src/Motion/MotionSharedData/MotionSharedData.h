@@ -172,7 +172,7 @@ private:
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 private:
-    SpindleControl::ptr spindle_control_;
+    SpindleController::ptr spindle_control_;
 
     // 打孔和加工时自动开关主轴和水泵标志位
     bool auto_set_spindle_and_pump_{true};
@@ -192,7 +192,7 @@ private:
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
         gear_ratios_[EDM_DRILL_S_AXIS_IDX] = 100.0; // S轴100倍
 
-        spindle_control_ = std::make_shared<SpindleControl>();
+        spindle_control_ = std::make_shared<SpindleController>();
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     }
 

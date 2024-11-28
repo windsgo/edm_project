@@ -99,6 +99,71 @@ static inline std::optional<QString> _get_io_input_name(uint32_t io) {
     return ioname;
 }
 
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+static std::unordered_map<uint32_t, QString> s_io_names_map = {
+    {power::ZHONGGU_IOOut_IOOUT1_OPUMP, QObject::tr("外冲")},
+    {power::ZHONGGU_IOOut_IOOUT2_IPUMP, QObject::tr("内冲")},
+    {power::ZHONGGU_IOOut_IOOUT3_MACH, "MACH"},
+    {power::ZHONGGU_IOOut_IOOUT4_BZ, "BZ"},
+    {power::ZHONGGU_IOOut_CAP1, "CAP1"},
+    {power::ZHONGGU_IOOut_CAP2, "CAP2"},
+    {power::ZHONGGU_IOOut_CAP4, "CAP4"},
+    {power::ZHONGGU_IOOut_CAP8, "CAP8"},
+    {power::ZHONGGU_IOOut_IOOUT5_LIGHT, "LIGHT"},
+    {power::ZHONGGU_IOOut_IOOUT6_RED, "RED"},
+    {power::ZHONGGU_IOOut_IOOUT7_YELLOW, "YELLOW"},
+    {power::ZHONGGU_IOOut_IOOUT8_GREEN, "GREEN"},
+    {power::ZHONGGU_IOOut_IOOUT9_TOOL_FIXTURE, QObject::tr("松电极")},
+    {power::ZHONGGU_IOOut_IOOUT10_FUSI_IN, QObject::tr("扶丝入")},
+    {power::ZHONGGU_IOOut_IOOUT11_FUSI_OUT, QObject::tr("扶丝出")},
+    {power::ZHONGGU_IOOut_IOOUT12_WORK_FIXTURE, QObject::tr("松工件")},
+    {power::ZHONGGU_IOOut_TON1, "TON1"},
+    {power::ZHONGGU_IOOut_TON2, "TON2"},
+    {power::ZHONGGU_IOOut_TON4, "TON4"},
+    {power::ZHONGGU_IOOut_TON8, "TON8"},
+    {power::ZHONGGU_IOOut_TOFF1, "TOFF1"},
+    {power::ZHONGGU_IOOut_TOFF2, "TOFF2"},
+    {power::ZHONGGU_IOOut_TOFF4, "TOFF4"},
+    {power::ZHONGGU_IOOut_TOFF8, "TOFF8"},
+    {power::ZHONGGU_IOOut_IP1, "IP1"},
+    {power::ZHONGGU_IOOut_IP2, "IP2"},
+    {power::ZHONGGU_IOOut_IP4, "IP4"},
+    {power::ZHONGGU_IOOut_IP8, "IP8"},
+    {power::ZHONGGU_IOOut_WORK, QObject::tr("WORK")},
+    {power::ZHONGGU_IOOut_TOOL, QObject::tr("TOOL")} //! TODO 待测试反极性，先不开放
+};
+
+static std::unordered_map<uint32_t, QString> s_io_input_names_map = {
+    {power::ZHONGGU_IOIn_IOIN1_TOTAL_PRESSURE, QObject::tr("总气压")},
+    {power::ZHONGGU_IOIn_IOIN2_WATER_PRESSURE, QObject::tr("水压")},
+    {power::ZHONGGU_IOIn_IOIN3_WATER_QUALITY, QObject::tr("水质")},
+    {power::ZHONGGU_IOIn_IOIN4_WATER_LEVEL, QObject::tr("水位")},
+    {power::ZHONGGU_IOIn_IOIN5_TOOL_FIX_BTN, QObject::tr("松电极按钮")},
+    {power::ZHONGGU_IOIn_IOIN6_PROTECT_DOOR, QObject::tr("防护门")},
+    {power::ZHONGGU_IOIn_IOIN7_FUSI_IN, QObject::tr("扶丝收")},
+    {power::ZHONGGU_IOIn_IOIN8_FUSI_OUT, QObject::tr("扶丝出")},
+    {power::ZHONGGU_IOIn_IOIN9_DIRECTORT_LEFT, QObject::tr("导向左")},
+    {power::ZHONGGU_IOIn_IOIN10_DIRECTORT_RIGHT, QObject::tr("导向右")},
+    {power::ZHONGGU_IOIn_IOIN11_DIRECTORT_ZERO, QObject::tr("原点")},
+    {power::ZHONGGU_IOIn_IOIN12_TOOL_EXIST, QObject::tr("电极检测")},
+    {power::ZHONGGU_IOIn_IOIN13_WORK_EXIST, QObject::tr("工件检测")},
+    {power::ZHONGGU_IOIn_IOIN14_TOOL_PRESSURE, QObject::tr("电极气压")},
+    {power::ZHONGGU_IOIn_IOIN15_WORK_PRESSURE, QObject::tr("工件气压")},
+    {power::ZHONGGU_IOIn_IOIN16_H_WARN, QObject::tr("H报警")},
+    {power::ZHONGGU_IOIn_IOIN17_H_ZERO, QObject::tr("H原点")},
+};
+
+static inline std::optional<QString> _get_io_input_name(uint32_t io) {
+    std::optional<QString> ioname{std::nullopt};
+
+    auto ret = s_io_input_names_map.find(io);
+    if (ret != s_io_input_names_map.end()) {
+        ioname = ret->second;
+    }
+
+    return ioname;
+}
+
 #endif
 
 static inline std::optional<QString> _get_io_name(uint32_t io) {
@@ -119,7 +184,7 @@ void IOPanel::_init_common_io_buttons() {
 
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     map_io_to_button_[power::EleContactorOut_BZ_JF2]->setEnabled(false);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) 
     // map_io_to_button_[power::ZHONGGU_IOOut_IOOUT4_BZ]->setEnabled(false);
 #endif
 

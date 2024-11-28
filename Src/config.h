@@ -8,7 +8,8 @@
 #define EDM_POWER_DIMEN                             1
 #define EDM_POWER_ZHONGGU                           2
 #define EDM_POWER_ZHONGGU_DRILL                     3
-#define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
+// #define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
+#define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU_DRILL
 #ifndef EDM_POWER_TYPE
 #error "EDM_POWER_TYPE not valid"
 #endif

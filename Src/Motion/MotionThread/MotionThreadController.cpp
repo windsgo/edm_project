@@ -520,20 +520,18 @@ void MotionThreadController::_threadstate_running() {
 
                 for (int i = 0; i < cmd_axis.size(); ++i) {
                     const auto device = ecat_manager_->get_servo_device(i);
-                    device->set_target_position(
-                        static_cast<int32_t>(
-                            std::lround(cmd_axis[i]) * s_motion_shared->gear_ratios()[i]
-                            ));
+                    device->set_target_position(static_cast<int32_t>(
+                        std::lround(cmd_axis[i]) *
+                        s_motion_shared->gear_ratios()[i]));
                     device->cw_enable_operation();
                     device->set_operation_mode(OM_CSP);
                 }
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-                const auto spindle_device 
-                    = ecat_manager_->get_servo_device(EDM_DRILL_SPINDLE_AXIS_IDX);
-                spindle_device->set_target_position(
-                    static_cast<int32_t>(
-                        s_motion_shared->get_spindle_controller()->current_axis()));
+                const auto spindle_device =
+                    ecat_manager_->get_servo_device(EDM_DRILL_SPINDLE_AXIS_IDX);
+                spindle_device->set_target_position(static_cast<int32_t>(
+                    s_motion_shared->get_spindle_controller()->current_axis()));
                 spindle_device->cw_enable_operation();
                 spindle_device->set_operation_mode(OM_CSP);
 #endif
@@ -837,10 +835,32 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         auto set_spindle_state_cmd =
             std::static_pointer_cast<MotionCommandSetSpindleState>(cmd);
 
-        // auto ret = motion_state_machine_->set_spindle_state(
-        //     set_spindle_state_cmd->spindle_state());
+        if (set_spindle_state_cmd->spindle_start()) {
+            s_motion_shared->get_spindle_controller()->start_spindle();
+        } else {
+            s_motion_shared->get_spindle_controller()->stop_spindle();
+        }
 
-        accept_cmd_flag = ret;
+        accept_cmd_flag = true;
+        break;
+    }
+    case MMotionCommand_SetSpindleParam: {
+        s_logger->trace("Handle MotionCmd: SetSpindleParam");
+
+        auto set_spindle_param_cmd =
+            std::static_pointer_cast<MotionCommandSetSpindleParam>(cmd);
+
+        s_motion_shared->get_spindle_controller()
+            ->set_spindle_target_speed_blu_ms(
+                set_spindle_param_cmd->speed_blu_ms());
+
+        if (set_spindle_param_cmd->acc_blu_ms_opt()) {
+            s_motion_shared->get_spindle_controller()
+                ->set_spindle_max_acc_blu_ms(
+                    set_spindle_param_cmd->acc_blu_ms_opt().value());
+        }
+
+        accept_cmd_flag = true;
         break;
     }
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
@@ -890,7 +910,8 @@ void MotionThreadController::_copy_info_cache() {
     s_motion_shared->get_act_axis(info_cache_.curr_act_axis_blu);
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    info_cache_.spindle_axis_blu = s_motion_shared->get_spindle_controller()->current_axis();
+    info_cache_.spindle_axis_blu =
+        s_motion_shared->get_spindle_controller()->current_axis();
 #endif
 
     info_cache_.main_mode = motion_state_machine_->main_mode();

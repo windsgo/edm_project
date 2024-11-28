@@ -88,10 +88,10 @@ enum MotionCommandType {
     MotionCommand_SetSpindleState,
 
     // 设置主轴参数
-    MMotionCommand_SetSpindleParam
+    MMotionCommand_SetSpindleParam,
 #endif // EDM_POWER_TYPE
 
-        MotionCommand_Max
+    MotionCommand_Max
 };
 
 // Motion命令基类
@@ -334,7 +334,7 @@ public:
         : MotionCommandBase(MotionCommand_SetSpindleState), start_(start) {}
     ~MotionCommandSetSpindleState() noexcept override = default;
 
-    bool start() const { return start_; }
+    bool spindle_start() const { return start_; }
 
 private:
     bool start_{false};
@@ -343,17 +343,18 @@ private:
 class MotionCommandSetSpindleParam final : public MotionCommandBase {
 public:
     MotionCommandSetSpindleParam(
-        unit_t speed_blu_ms, std::optional<unit_t> acc_blu_ms = std::nullopt)
+        unit_t speed_blu_ms,
+        std::optional<unit_t> acc_blu_ms_opt = std::nullopt)
         : MotionCommandBase(MMotionCommand_SetSpindleParam),
-          speed_blu_ms_(speed_blu_ms), acc_blu_ms_(acc_blu_ms) {}
+          speed_blu_ms_(speed_blu_ms), acc_blu_ms_opt_(acc_blu_ms_opt) {}
     ~MotionCommandSetSpindleParam() noexcept override = default;
 
     auto speed_blu_ms() const { return speed_blu_ms_; }
-    auto acc_blu_ms() const { return acc_blu_ms_; }
+    auto acc_blu_ms_opt() const { return acc_blu_ms_opt_; }
 
 private:
     unit_t speed_blu_ms_{0};
-    std::optional<unit_t> acc_blu_ms_;
+    std::optional<unit_t> acc_blu_ms_opt_;
 };
 #endif
 

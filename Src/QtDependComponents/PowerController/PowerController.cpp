@@ -158,7 +158,7 @@ void PowerController::_update_eleparam_and_send(
     // 构造输入
     auto input = std::make_shared<EleparamDecodeInput>(
         eleparam, highpower_on_flag_, machpower_flag_, canframe_pulse_value_);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     auto input =
         std::make_shared<EleparamDecodeInput>(eleparam, highpower_on_flag_);
 #endif
@@ -228,7 +228,7 @@ void PowerController::_handle_servo_settings() {
         // 发送 frame
         can_ctrler_->send_frame(can_device_index_, frame);
     }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // TODO
 
     static zynq::upper_servo_settings_t prev_servo_s;

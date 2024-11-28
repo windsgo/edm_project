@@ -15,7 +15,7 @@ const uint8_t IOController::canio1_raw_bytes_[8] = {0xED, 0x00, 0xDE, 0x00,
                                                     0,    0,    0,    0};
 const uint8_t IOController::canio2_raw_bytes_[8] = {0xDE, 0x00, 0xED, 0x00,
                                                     0,    0,    0,    0};
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 const uint8_t IOController::canio_output_raw_bytes_[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
@@ -47,7 +47,7 @@ IOController::IOController(can::CanController::ptr can_ctrler,
 #endif
 }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 // input io listener
 void IOController::_input_io_listener(const QCanBusFrame& frame) {
     if (frame.frameId() == CANIO_INPUT_RXID) {
@@ -132,7 +132,7 @@ void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
 
     _trigger_send_io_2(new_io_2);
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 void IOController::set_can_machineio_output(uint32_t can_io_output) {
     {
         std::lock_guard guard(mutex_can_io_);
@@ -186,7 +186,7 @@ void IOController::trigger_send_current_io() {
     // s_logger->trace(
     //     "IOController::trigger_send_current_io: 1: {:032B}, 2: {:032B}", io1,
     //     io2);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     uint32_t io_output;
     {
         std::lock_guard guard(mutex_can_io_);
@@ -207,7 +207,7 @@ uint32_t IOController::get_can_machineio_2_safe() const {
     std::lock_guard guard(mutex_can_io_);
     return can_machineio_2_;
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 uint32_t IOController::get_can_machineio_output_safe() const {
     std::lock_guard guard(mutex_can_io_);
     return can_machineio_output_;
@@ -232,7 +232,7 @@ bool IOController::_set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2) {
     can_machineio_2_ = can_io_2;
     return true;
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 bool IOController::_set_can_machineio_output_no_lock_no_trigger(
     uint32_t can_io_output) {
     if (can_io_output == can_machineio_output_) {
@@ -283,7 +283,7 @@ void IOController::_calc_endcheck(QByteArray &bytearray) {
 
     bytearray[7] = static_cast<uint8_t>(end_check);
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 void IOController::_trigger_send_io_output(uint32_t io_output) {
     // construct bytearray
     QByteArray bytearray(
