@@ -152,7 +152,7 @@ SharedCoreData::~SharedCoreData() {
 }
 
 void SharedCoreData::send_ioboard_bz_once() const {
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)  || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     uint32_t io_bit = 1 << (power::ZHONGGU_IOOut_IOOUT4_BZ - 1);
     this->io_ctrler_->set_can_machineio_output_withmask(io_bit, io_bit);
 

@@ -19,7 +19,7 @@ PowerPanel::PowerPanel(SharedCoreData *shared_core_data, QWidget *parent)
     connect(update_io_timer_, &QTimer::timeout, this, &PowerPanel::slot_update_io_display);
     update_io_timer_->start(350);
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)    
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     ui->pb_power_on->setChecked(false);
     ui->pb_power_on->setEnabled(false);
     ui->pb_mach_bit->setChecked(false);
@@ -49,7 +49,7 @@ void PowerPanel::_update_io_display() {
     ui->pb_power_on->setChecked(pm_->is_power_on());
     ui->pb_mach_on->setChecked(pm_->is_highpower_on());
     ui->pb_mach_bit->setChecked(pm_->is_machbit_on());
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     ui->pb_mach_on->setChecked(pm_->is_highpower_on());
 #endif
 }

@@ -65,7 +65,7 @@ private:
     // io 按钮布局
     QGridLayout *io_button_layout_{nullptr};
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // INPUT 按钮io对应
     std::unordered_map<uint32_t, QPushButton *> map_inputio_to_dispbtn_;
 #endif

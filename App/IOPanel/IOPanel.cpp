@@ -186,6 +186,8 @@ void IOPanel::_init_common_io_buttons() {
     map_io_to_button_[power::EleContactorOut_BZ_JF2]->setEnabled(false);
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) 
     // map_io_to_button_[power::ZHONGGU_IOOut_IOOUT4_BZ]->setEnabled(false);
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    map_io_to_button_[power::ZHONGGU_IOOut_TOOL]->setEnabled(false); //! TODO 待测试反极性，先不开放
 #endif
 
     ui->groupBox_io->setLayout(io_button_layout_);
@@ -235,6 +237,8 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
     constexpr static const uint32_t total_io_num = 48;
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
     constexpr static const uint32_t total_io_num = power::ZHONGGU_IOOut_IP8;
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    constexpr static const uint32_t total_io_num = power::ZHONGGU_IOOut_TOOL;
 #endif
     // qDebug() << "col_nums:" << col_nums << "row_nums:" << row_nums;
 
@@ -253,7 +257,7 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
         _set_button_output(pb, io);
     }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // INPUT display
     uint32_t input_io_count = 1;
     const uint32_t output_io_cols = std::ceil((double)total_io_num / (double)row_nums); 
@@ -287,9 +291,12 @@ void IOPanel::_init_handbox_pump_signal() {
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
                 auto btn =
                     this->map_io_to_button_[power::ZHONGGU_IOOut_IOOUT1_FULD];
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+                auto btn =
+                    this->map_io_to_button_[power::ZHONGGU_IOOut_IOOUT1_OPUMP]; // 小孔机控制外冲液
+#endif
                 btn->setChecked(pump_on);
                 emit btn->clicked(pump_on);
-#endif
             });
 }
 
@@ -309,7 +316,7 @@ void IOPanel::_update_all_io_display() {
             btn->setChecked(!!(io_2 & io_bit));
         }
     }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     auto io_output = io_ctrler_->get_can_machineio_output_safe();
     auto io_input = io_ctrler_->get_can_machineio_input();
 
@@ -346,7 +353,7 @@ void IOPanel::_button_clicked(uint32_t io_num, bool checked) {
             io_ctrler_->set_can_machineio_2_withmask(0x00, io_bit);
         }
     }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     if (io_num <= 32) {
         uint32_t io_bit = 1 << (io_num - 1);
         if (checked) {

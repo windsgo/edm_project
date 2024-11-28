@@ -39,7 +39,7 @@ IOController::IOController(can::CanController::ptr can_ctrler,
     // canio2_bytearray_[0] = 0xDE;
     // canio2_bytearray_[1] = 0x00;
     // canio2_bytearray_[2] = 0xED;
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // register input io listener
     can_ctrler_->add_frame_received_listener(
         can_device_index_,

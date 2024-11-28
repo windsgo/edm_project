@@ -111,7 +111,7 @@ void PowerController::_trigger_send_io_value() {
         curr_result_->io_1(), EleparamDecodeResult::get_io_1_mask());
     io_ctrler_->set_can_machineio_2_withmask(
         curr_result_->io_2(), EleparamDecodeResult::get_io_2_mask());
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     io_ctrler_->set_can_machineio_output_withmask(
         curr_result_->io(), EleparamDecodeResult::get_io_mask());
 #endif
