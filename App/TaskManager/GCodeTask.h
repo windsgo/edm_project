@@ -183,6 +183,30 @@ private:
     std::vector<bool> set_zero_axis_list_;
 };
 
+class GCodeTaskDrillMotion final : public GCodeTaskBase {
+public:
+    GCodeTaskDrillMotion(double depth_mm, int holdtime_ms, bool touch,
+                         bool breakout, int line_number, int node_index = -1)
+        : GCodeTaskBase(GCodeTaskType::DrillMotionCommand, line_number,
+                        node_index),
+          depth_mm_(depth_mm), holdtime_ms_(holdtime_ms), touch_(touch),
+          breakout_(breakout) {}
+    ~GCodeTaskDrillMotion() noexcept override = default;
+
+    auto depth_mm() const { return depth_mm_; }
+    auto holdtime_ms() const { return holdtime_ms_; }
+    auto touch() const { return touch_; }
+    auto breakout() const { return breakout_; }
+
+    bool is_motion_task() const override { return true; }
+
+private:
+    double depth_mm_{0.0};
+    int holdtime_ms_{0};
+    bool touch_{false};
+    bool breakout_{false};
+};
+
 } // namespace task
 
 } // namespace edm

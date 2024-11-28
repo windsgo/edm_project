@@ -33,6 +33,7 @@ enum class GCodeTaskType {
     FeedSpeedSetCommand = 5,    // f1000 //! 忽略
     DelayCommand = 6,           // g04t5
     CoordSetZeroCommand = 7,    // coord_set_x_zero, coord_set_zero(x=True, z=True), coord_set_all_zero(), etc
+    DrillMotionCommand = 8,     // 打孔指令
     PauseCommand = 98,          // m00 //! 先忽略, 后面可以给motion发送一个假的auto命令, 在Motion那边直接进入Auto-Paused状态
     ProgramEndCommand = 99,     // m02 //! 忽略 或 退出都可
 };

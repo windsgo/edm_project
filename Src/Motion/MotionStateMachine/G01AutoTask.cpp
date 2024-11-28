@@ -505,7 +505,7 @@ bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
 
     // 检查抬刀间隔, 如果到了就尝试规划一次抬刀
     auto now_ms = GetCurrentTimeMs();
-    assert(now_ms > last_jump_end_time_ms_);
+    assert(now_ms >= last_jump_end_time_ms_);
     if (now_ms - last_jump_end_time_ms_ <= (int64_t)jumping_param_.dn_ms) {
         return false; // 间隔未到
     }

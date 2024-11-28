@@ -844,7 +844,7 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         accept_cmd_flag = true;
         break;
     }
-    case MMotionCommand_SetSpindleParam: {
+    case MotionCommand_SetSpindleParam: {
         s_logger->trace("Handle MotionCmd: SetSpindleParam");
 
         auto set_spindle_param_cmd =
@@ -859,6 +859,19 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
                 ->set_spindle_max_acc_blu_ms(
                     set_spindle_param_cmd->acc_blu_ms_opt().value());
         }
+
+        accept_cmd_flag = true;
+        break;
+    }
+    case MotionCommandAuto_StartDrillMove: {
+        s_logger->trace("Handle MotionCmd: Auto_StartDrillMove");
+
+        auto drill_cmd =
+            std::static_pointer_cast<MotionCommandAutoStartDrillMove>(cmd);
+
+        // TODO 开启实际的打孔任务
+        s_logger->debug("打孔了哦, depth_blu: {}, holdtime_ms: {}, touch: {}, breakout: {}", 
+            drill_cmd->depth_blu(), drill_cmd->holdtime_ms(), drill_cmd->touch(), drill_cmd->breakout());
 
         accept_cmd_flag = true;
         break;

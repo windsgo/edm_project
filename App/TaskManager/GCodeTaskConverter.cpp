@@ -32,7 +32,8 @@ static const std::unordered_map<std::string, GCodeTaskType> s_type_map = {
     XX_(DelayCommand),
     XX_(PauseCommand),
     XX_(ProgramEndCommand),
-    XX_(CoordSetZeroCommand)
+    XX_(CoordSetZeroCommand),
+    XX_(DrillMotionCommand)
 
 #undef XX_
 
@@ -232,6 +233,25 @@ _make_coord_set_zero(const json::object &jo) {
     return coord_set_zero;
 }
 
+static std::optional<GCodeTaskBase::ptr>
+_make_drill(const json::object &jo) {
+    auto line_number = jo.at("LineNumber").as_integer();
+
+    auto depth = jo.at("DrillDepth").as_double();
+    auto holdtime = jo.at("DrillHoldTime").as_integer();
+    auto touch = jo.at("DrillTouch").as_boolean();
+    auto breakout = jo.at("DrillBreakout").as_boolean();
+
+    auto drill = std::make_shared<GCodeTaskDrillMotion>(
+        depth, holdtime, touch, breakout, line_number, -1);
+
+    s_logger->debug("GCodeTaskConverter: make drill: depth: {}, holdtime: {}, "
+                    "touch: {}, breakout: {}",
+                    depth, holdtime, touch, breakout);
+
+    return drill;
+}
+
 std::optional<GCodeTaskBase::ptr>
 GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
 
@@ -283,6 +303,13 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
         return _make_coord_set_zero(jo);
     }
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // 不是小孔时, 忽略此条
+    case GCodeTaskType::DrillMotionCommand: {
+        return _make_drill(jo);
+    }
+#endif 
+
     //! 以下命令虽然构造, 但是实际无操作
     // G90G91的设置记录在G00node中
     // F值的设置也记录在G00node中
@@ -294,7 +321,7 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
     }
 
     default:
-        s_logger->info("Ignore task: {}", type_str);
+        s_logger->warn("Ignore task: {}", type_str);
         return nullptr; // ignored
     }
 }

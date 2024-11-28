@@ -88,7 +88,11 @@ enum MotionCommandType {
     MotionCommand_SetSpindleState,
 
     // 设置主轴参数
-    MMotionCommand_SetSpindleParam,
+    MotionCommand_SetSpindleParam,
+
+    // 打孔指令
+    MotionCommandAuto_StartDrillMove,
+
 #endif // EDM_POWER_TYPE
 
     MotionCommand_Max
@@ -345,7 +349,7 @@ public:
     MotionCommandSetSpindleParam(
         unit_t speed_blu_ms,
         std::optional<unit_t> acc_blu_ms_opt = std::nullopt)
-        : MotionCommandBase(MMotionCommand_SetSpindleParam),
+        : MotionCommandBase(MotionCommand_SetSpindleParam),
           speed_blu_ms_(speed_blu_ms), acc_blu_ms_opt_(acc_blu_ms_opt) {}
     ~MotionCommandSetSpindleParam() noexcept override = default;
 
@@ -355,6 +359,27 @@ public:
 private:
     unit_t speed_blu_ms_{0};
     std::optional<unit_t> acc_blu_ms_opt_;
+};
+
+class MotionCommandAutoStartDrillMove final : public MotionCommandBase {
+public:
+    MotionCommandAutoStartDrillMove(double depth_blu, int holdtime_ms, bool touch,
+                                    bool breakout)
+        : MotionCommandBase(MotionCommandAuto_StartDrillMove),
+          depth_blu_(depth_blu), holdtime_ms_(holdtime_ms), touch_(touch),
+          breakout_(breakout) {}
+    ~MotionCommandAutoStartDrillMove() noexcept override = default;
+
+    auto depth_blu() const { return depth_blu_; }
+    auto holdtime_ms() const { return holdtime_ms_; }
+    auto touch() const { return touch_; }
+    auto breakout() const { return breakout_; }
+
+private:
+    double depth_blu_{0.0}; // 注意是blu单位
+    int holdtime_ms_{0};
+    bool touch_{false};
+    bool breakout_{false};
 };
 #endif
 

@@ -5,7 +5,9 @@
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
 #include "TaskManager/GCodeTask.h"
+#include "TaskManager/GCodeTaskBase.h"
 #include "Utils/Format/edm_format.h"
+#include "Utils/UnitConverter/UnitConverter.h"
 #include "config.h"
 
 #include <QCoreApplication>
@@ -737,7 +739,36 @@ void GCodeRunner::_state_current_node_initing() {
         break;
     }
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    case GCodeTaskType::DrillMotionCommand: {
+        auto drill_gcode =
+            std::static_pointer_cast<GCodeTaskDrillMotion>(curr_gcode);
+
+        // make cmd and send to motion_cmd_queue
+        auto drill_cmd = std::make_shared<move::MotionCommandAutoStartDrillMove>(
+            util::UnitConverter::mm2blu( drill_gcode->depth_mm() ), 
+            drill_gcode->holdtime_ms(), 
+            drill_gcode->touch(), 
+            drill_gcode->breakout()
+        );
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(drill_cmd);
+
+        // 等待命令被接收
+        if (!TaskHelper::WaitforCmdTobeAccepted(drill_cmd, 1000)) {
+            _abort("abort: start drill failed, cmd not accepted by motion or "
+                   "timeout");
+            break;
+        }
+
+        _switch_to_state(State::Running);
+        break;
+    }
+#endif
+
     default:
+        s_logger->error("GCodeRunner: unknown gcode type: {}",
+                        (int)curr_gcode->type());
         assert(false);
         break;
     }

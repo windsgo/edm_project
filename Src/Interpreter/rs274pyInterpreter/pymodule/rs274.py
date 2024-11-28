@@ -5,6 +5,11 @@ from inspect import stack
 
 __all__ = ["InterpreterException", "RS274Interpreter"]
 
+# TODO G01Nodes类, 用于存储连续的G01指令的坐标点, 合成一个运动指令, 可以支持跨段回退, 或跨段抬刀等
+class G01Nodes(object):
+    def __init__(self) -> None:
+        self.__nodes = []
+
 @unique
 class CoordinateMode(Enum):
     Undefined = -1
@@ -16,6 +21,7 @@ class MotionMode(Enum):
     Undefined = -1
     G00 = 0
     G01 = 1
+    DRILL = 2
 
 # 指令类型枚举
 @unique
@@ -29,6 +35,7 @@ class CommandType(Enum):
     FeedSpeedSetCommand = 5 # f1000
     DelayCommand = 6 # g04t5
     CoordSetZeroCommand = 7 # coord_set_x_zero, coord_set_zero(x=True, z=True), coord_set_all_zero(), etc
+    DrillMotionCommand = 8 # 打孔指令
     PauseCommand = 98 # m00
     ProgramEndCommand = 99 # m02
 
@@ -48,6 +55,10 @@ class CommandDictKey(Enum):
     M05IgnoreTouchDetect = 9
     G00Touch = 10
     SetZeroAxisList = 11
+    DrillDepth = 12
+    DrillHoldTime = 13
+    DrillTouch = 14
+    DrillBreakout = 15
 
 def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
     output = ""
@@ -454,6 +465,47 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.FeedSpeedSetCommand.name,
             CommandDictKey.FeedSpeed.name: speed,
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        self.__g_command_list.append(command)
+        return self
+    
+    # 穿透检测参数设定(数据库方法) TODO
+    
+    # 打孔代码
+    def drill(self, depth: float, holdtime: int = 1000, touch: bool = False, breakout: bool = False) -> RS274Interpreter:
+        # depth: 打孔深度 毫米
+        # holdtime: 打孔结束保持时间 毫秒
+        # touch: 打孔前碰边
+        # breakout: 打孔时穿透检测
+        
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        if (not isinstance(depth, (int, float))):
+            raise InterpreterException(f"Drill Depth Type Not Valid: {type(depth)} " + _get_stackmessage())
+        if (depth <= 0):
+            raise InterpreterException(f"Drill Depth Value ({depth}) Out of Range " + _get_stackmessage())
+        
+        if (not isinstance(holdtime, int)):
+            raise InterpreterException(f"Drill Holdtime Type Not Valid: {type(holdtime)} " + _get_stackmessage())
+        if (holdtime < 0):
+            raise InterpreterException(f"Drill Holdtime Value ({holdtime}) Out of Range " + _get_stackmessage())
+        
+        if (not isinstance(touch, bool)):
+            raise InterpreterException(f"Drill Touch Type Not Valid: {type(touch)} " + _get_stackmessage())
+        
+        if (not isinstance(breakout, bool)):
+            raise InterpreterException(f"Drill Breakout Type Not Valid: {type(breakout)} " + _get_stackmessage())
+        
+        command = {
+            CommandDictKey.CommandType.name: CommandType.DrillMotionCommand.name,
+            CommandDictKey.MotionMode.name: MotionMode.DRILL.name,
+            CommandDictKey.DrillDepth.name: depth,
+            CommandDictKey.DrillHoldTime.name: holdtime,
+            CommandDictKey.DrillTouch.name: touch,
+            CommandDictKey.DrillBreakout.name: breakout,
             CommandDictKey.LineNumber.name: _get_caller_linenumber()
         }
         
