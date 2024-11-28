@@ -3,9 +3,13 @@
 #include "Coordinate/CoordinateManager.h"
 #include "Coordinate/CoordinateSystem.h"
 #include "Motion/MoveDefines.h"
+#include "TaskManager/TaskHelper.h"
 #include "ui_TestPanel.h"
 
 #include <QSlider>
+
+#include "Logger/LogMacro.h"
+EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
 namespace edm {
 namespace app {
@@ -18,6 +22,46 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
     _update_phy_touchdetect();
     _update_servo();
     _update_manual_voltage();
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    connect(shared_core_data_->get_info_dispatcher(),
+            &InfoDispatcher::info_updated, this,
+            [this](const edm::move::MotionInfo &info) {
+                ui->dsb_show_spindle_blu->setValue(info.spindle_axis_blu);
+            });
+
+    connect(ui->pb_start_spindle, &QPushButton::clicked, this, [this]() {
+        auto cmd = std::make_shared<move::MotionCommandSetSpindleState>(true);
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+
+        auto ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 1000);
+        if (!ret) {
+            s_logger->error("start spindle failed");
+        }
+    });
+
+    connect(ui->pb_stop_spindle, &QPushButton::clicked, this, [this]() {
+        auto cmd = std::make_shared<move::MotionCommandSetSpindleState>(false);
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+
+        auto ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 1000);
+        if (!ret) {
+            s_logger->error("stop spindle failed");
+        }
+    });
+
+    connect(ui->pb_set_spindle_param, &QPushButton::clicked, this, [this]() {
+        auto cmd = std::make_shared<move::MotionCommandSetSpindleParam>(
+            ui->dsb_spindle_speed->value(),
+            ui->dsb_spindle_acc->value());
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+
+        auto ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 1000);
+        if (!ret) {
+            s_logger->error("set spindle param failed");
+        }
+    });
+#endif
 
     connect(
         ui->pb_phy_detected, &QPushButton::clicked, this,
@@ -32,7 +76,8 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
     connect(ui->pb_test_xy_posmove, &QPushButton::pressed, this, [this]() {
 #ifdef EDM_OFFLINE_RUN
-        if (coord::Coordinate::Size < 3) return; 
+        if (coord::Coordinate::Size < 3)
+            return;
 
         move::axis_t dir;
         dir[0] = 1.0;
@@ -44,8 +89,9 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
         uint32_t speed_level = 0;
         bool touch_detect_enable = true;
-        
-        emit shared_core_data_->sig_handbox_start_pointmove(dir, speed_level, touch_detect_enable);
+
+        emit shared_core_data_->sig_handbox_start_pointmove(
+            dir, speed_level, touch_detect_enable);
 #endif
     });
     connect(ui->pb_test_xy_posmove, &QPushButton::released, this, [this]() {
@@ -53,10 +99,11 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
         emit shared_core_data_->sig_handbox_stop_pointmove();
 #endif
     });
-    
+
     connect(ui->pb_test_yz_negmove, &QPushButton::pressed, this, [this]() {
 #ifdef EDM_OFFLINE_RUN
-        if (coord::Coordinate::Size < 3) return; 
+        if (coord::Coordinate::Size < 3)
+            return;
 
         move::axis_t dir;
         dir[0] = 0.0;
@@ -68,8 +115,9 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
         uint32_t speed_level = 0;
         bool touch_detect_enable = true;
-        
-        emit shared_core_data_->sig_handbox_start_pointmove(dir, speed_level, touch_detect_enable);
+
+        emit shared_core_data_->sig_handbox_start_pointmove(
+            dir, speed_level, touch_detect_enable);
 #endif
     });
     connect(ui->pb_test_yz_negmove, &QPushButton::released, this, [this]() {
@@ -84,11 +132,12 @@ TestPanel::~TestPanel() { delete ui; }
 void TestPanel::_update_phy_touchdetect() {
 #ifdef EDM_OFFLINE_MANUAL_TOUCH_DETECT
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
-    shared_core_data_->get_zynq_udpmessage_holder()->set_manual_touch_detect_flag(
+    shared_core_data_->get_zynq_udpmessage_holder()
+        ->set_manual_touch_detect_flag(
 #else
     shared_core_data_->get_can_recv_buffer()->set_manual_touch_detect_flag(
 #endif // !EDM_USE_ZYNQ_SERVOBOARD
-        ui->pb_phy_detected->isChecked());
+            ui->pb_phy_detected->isChecked());
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 }
 
