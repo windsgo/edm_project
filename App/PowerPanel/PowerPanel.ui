@@ -559,7 +559,7 @@ BIT</string>
          </size>
         </property>
         <property name="maximum">
-         <number>9</number>
+         <number>255</number>
         </property>
        </widget>
       </item>

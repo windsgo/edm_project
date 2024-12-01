@@ -3,6 +3,7 @@
 #include "Exception/exception.h"
 #include "Logger/LogMacro.h"
 #include "Motion/MotionUtils/MotionUtils.h"
+#include "Motion/MoveDefines.h"
 
 #include <cassert>
 
@@ -16,14 +17,16 @@ static auto s_motion_shared = MotionSharedData::instance();
 
 MotionStateMachine::MotionStateMachine(
     SignalBuffer::ptr signal_buffer,
-    const std::function<void(bool)> &cb_enable_votalge_gate,
-    const std::function<void(bool)> &cb_mach_on)
-    : signal_buffer_(signal_buffer), 
-      cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on) {
+    const MotionCallbacks& cbs
+    // const std::function<void(bool)> &cb_enable_votalge_gate,
+    // const std::function<void(bool)> &cb_mach_on
+    )
+    : signal_buffer_(signal_buffer), cbs_(cbs)
+    //   cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on)
+       {
 
     //! use assert more than exception is better
-
-    if (!cb_enable_votalge_gate_) {
+    if (!cbs_.cb_enable_voltage_gate) {
         throw exception("no cb_enable_votalge_gate_");
     }
 
@@ -254,7 +257,7 @@ bool MotionStateMachine::start_auto_g01(const axis_t &target_pos,
 
     auto new_g01_auto_task = std::make_shared<G01AutoTask>(
         g01_line_traj, max_jump_height_from_begin,
-        this->cb_enable_votalge_gate_, this->cb_mach_on_);
+        this->cbs_.cb_enable_voltage_gate, this->cbs_.cb_mach_on);
 
     if (new_g01_auto_task->is_over()) {
         return false;

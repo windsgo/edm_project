@@ -46,8 +46,9 @@ public:
     MotionThreadController(
         std::string_view ifname, MotionCommandQueue::ptr motion_cmd_queue,
         MotionSignalQueue::ptr motion_signal_queue,
-        const std::function<void(bool)> &cb_enable_voltage_gate,
-        const std::function<void(bool)> &cb_mach_on,
+        const MotionCallbacks& cbs,
+        // const std::function<void(bool)> &cb_enable_voltage_gate,
+        // const std::function<void(bool)> &cb_mach_on,
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
         zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder,
 #else
@@ -250,10 +251,12 @@ private: // 运动状态机
 private: // 外部的一些回调
     // 抬刀使能电源位, 该函数应当创建一个操作PowerController的命令,
     // 并push入全局命令列表执行
-    std::function<void(bool)> cb_enable_votalge_gate_; // TODO, 外部传入初始化
+    // std::function<void(bool)> cb_enable_votalge_gate_; // TODO, 外部传入初始化
 
     // 高频操作回调
-    std::function<void(bool)> cb_mach_on_;
+    // std::function<void(bool)> cb_mach_on_;
+
+    MotionCallbacks cbs_;
 };
 
 } // namespace move

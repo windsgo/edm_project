@@ -83,6 +83,8 @@
 
 #define EDM_CUSTOM_QTEVENT_TYPE_MotionVoltageEnable 1010
 #define EDM_CUSTOM_QTEVENT_TYPE_MotionMachOn        1011
+#define EDM_CUSTOM_QTEVENT_TYPE_MotionOPumpOn       1012
+#define EDM_CUSTOM_QTEVENT_TYPE_MotionIPumpOn       1013
 
 // CAN TxID 集合 (DIMEN)
 #define EDM_CAN_TXID_POWER                          0x0010

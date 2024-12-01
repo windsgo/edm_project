@@ -231,7 +231,7 @@ bool PowerDatabase::_create_table_with_default_params() {
                                    "E_PP"	INTEGER NOT NULL DEFAULT 10 CHECK("E_PP" >= 0 AND "E_PP" < 256),
                                    "E_S"	INTEGER NOT NULL DEFAULT 2 CHECK("E_S" >= 0 AND "E_S" < 256),
                                    "E_PL"	INTEGER NOT NULL DEFAULT 0 CHECK("E_PL" >= 0 AND "E_PL" <= 1),
-                                   "E_C"	INTEGER NOT NULL DEFAULT 0 CHECK("E_C" >= 0 AND "E_C" < 10),
+                                   "E_C"	INTEGER NOT NULL DEFAULT 0 CHECK("E_C" >= 0 AND "E_C" < 256),
                                    "E_LV"	INTEGER NOT NULL DEFAULT 1 CHECK("E_LV" >= 0 AND "E_LV" <= 2),
                                    "E_JS"	INTEGER NOT NULL DEFAULT 14435 CHECK("E_JS" >= 0 AND "E_JS" < 99999),
                                    "E_SV_SENS"	INTEGER NOT NULL DEFAULT 100 CHECK("E_SV_SENS" >= 0 AND "E_SV_SENS" < 256),

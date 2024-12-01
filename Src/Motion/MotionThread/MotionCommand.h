@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 #include "config.h"
 
@@ -347,27 +348,30 @@ private:
 class MotionCommandSetSpindleParam final : public MotionCommandBase {
 public:
     MotionCommandSetSpindleParam(
-        unit_t speed_blu_ms,
+        std::optional<unit_t> speed_blu_ms_opt,
         std::optional<unit_t> acc_blu_ms_opt = std::nullopt)
         : MotionCommandBase(MotionCommand_SetSpindleParam),
-          speed_blu_ms_(speed_blu_ms), acc_blu_ms_opt_(acc_blu_ms_opt) {}
+          speed_blu_ms_opt_(speed_blu_ms_opt), acc_blu_ms_opt_(acc_blu_ms_opt) {
+    }
     ~MotionCommandSetSpindleParam() noexcept override = default;
 
-    auto speed_blu_ms() const { return speed_blu_ms_; }
+    auto speed_blu_ms_opt() const { return speed_blu_ms_opt_; }
     auto acc_blu_ms_opt() const { return acc_blu_ms_opt_; }
 
 private:
-    unit_t speed_blu_ms_{0};
+    std::optional<unit_t> speed_blu_ms_opt_{0};
     std::optional<unit_t> acc_blu_ms_opt_;
 };
 
 class MotionCommandAutoStartDrillMove final : public MotionCommandBase {
 public:
-    MotionCommandAutoStartDrillMove(double depth_blu, int holdtime_ms, bool touch,
-                                    bool breakout)
+    MotionCommandAutoStartDrillMove(
+        double depth_blu, int holdtime_ms, bool touch, bool breakout,
+        std::optional<double> spindle_speed_blu_ms_opt = std::nullopt)
         : MotionCommandBase(MotionCommandAuto_StartDrillMove),
           depth_blu_(depth_blu), holdtime_ms_(holdtime_ms), touch_(touch),
-          breakout_(breakout) {}
+          breakout_(breakout),
+          spindle_speed_blu_ms_opt_(spindle_speed_blu_ms_opt) {}
     ~MotionCommandAutoStartDrillMove() noexcept override = default;
 
     auto depth_blu() const { return depth_blu_; }
@@ -375,11 +379,17 @@ public:
     auto touch() const { return touch_; }
     auto breakout() const { return breakout_; }
 
+    const auto &spindle_speed_blu_ms_opt() const {
+        return spindle_speed_blu_ms_opt_;
+    }
+
 private:
     double depth_blu_{0.0}; // 注意是blu单位
     int holdtime_ms_{0};
     bool touch_{false};
     bool breakout_{false};
+
+    std::optional<double> spindle_speed_blu_ms_opt_;
 };
 #endif
 

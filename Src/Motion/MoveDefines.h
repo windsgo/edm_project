@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+#include <functional>
 
 #include "config.h"
 
@@ -138,6 +139,16 @@ struct RecordMotionData1 {
     axis_t act;
 
     unit_t servo_cmd;
+};
+
+struct MotionCallbacks {
+    std::function<void(bool)> cb_enable_voltage_gate;
+    std::function<void(bool)> cb_mach_on;
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL || 1) // to compile
+    std::function<void(bool)> cb_opump_on;
+    std::function<void(bool)> cb_ipump_on;
+#endif
 };
 
 } // namespace move

@@ -242,8 +242,16 @@ _make_drill(const json::object &jo) {
     auto touch = jo.at("DrillTouch").as_boolean();
     auto breakout = jo.at("DrillBreakout").as_boolean();
 
+    std::optional<double> spindle_speed;
+    const auto& jv_spindle_speed = jo.at("DrillSpindleSpeed");
+    if (jv_spindle_speed.is_null()) {
+        spindle_speed = std::nullopt;
+    } else {
+        spindle_speed = jv_spindle_speed.as_double();
+    }
+
     auto drill = std::make_shared<GCodeTaskDrillMotion>(
-        depth, holdtime, touch, breakout, line_number, -1);
+        depth, holdtime, touch, breakout, line_number, spindle_speed, -1);
 
     s_logger->debug("GCodeTaskConverter: make drill: depth: {}, holdtime: {}, "
                     "touch: {}, breakout: {}",

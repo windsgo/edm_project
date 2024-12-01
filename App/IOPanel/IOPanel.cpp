@@ -250,7 +250,7 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
 
         auto io_name_opt = _get_io_name(io);
         QString button_name = io_name_opt
-                                ? QString{"OUT%0:%1"}.arg(io).arg(*io_name_opt)
+                                ? QString{"OUT%0:\n%1"}.arg(io).arg(*io_name_opt)
                                 : QString{"OUT%0"}.arg(io);
 
         auto pb = _make_button_at_gridlayout(button_name, row, col);
@@ -271,7 +271,7 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
         auto io_name_opt = _get_io_input_name(io);
 
         if (io_name_opt) {
-            QString button_name = QString{"IN%0:%1"}.arg(io).arg(*io_name_opt);
+            QString button_name = QString{"IN%0:\n%1"}.arg(io).arg(*io_name_opt);
 
             auto pb = _make_button_at_gridlayout(button_name, row, col);
             _set_button_input(pb, io);

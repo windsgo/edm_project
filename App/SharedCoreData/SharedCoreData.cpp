@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 
 #include <memory>
+#include <qcoreapplication.h>
 #include <qhostaddress.h>
 #include <random>
 #include <thread>
@@ -44,6 +45,32 @@ public:
 private:
     bool mach_on_;
 };
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+class MotionEventOPumpOn : public QEvent {
+public:
+    MotionEventOPumpOn(bool on) : QEvent(type), on_(on) {}
+    constexpr static const QEvent::Type type =
+        QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_MotionOPumpOn);
+
+    auto on() const { return on_; }
+
+private:
+    bool on_;
+};
+
+class MotionEventIPumpOn : public QEvent {
+public:
+    MotionEventIPumpOn(bool on) : QEvent(type), on_(on) {}
+    constexpr static const QEvent::Type type =
+        QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_MotionIPumpOn);
+
+    auto on() const { return on_; }
+
+private:
+    bool on_;
+};
+#endif
 
 class HandBoxEventStartPointMove : public QEvent {
 public:
@@ -152,7 +179,8 @@ SharedCoreData::~SharedCoreData() {
 }
 
 void SharedCoreData::send_ioboard_bz_once() const {
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)  || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     uint32_t io_bit = 1 << (power::ZHONGGU_IOOut_IOOUT4_BZ - 1);
     this->io_ctrler_->set_can_machineio_output_withmask(io_bit, io_bit);
 
@@ -162,7 +190,7 @@ void SharedCoreData::send_ioboard_bz_once() const {
     });
 #endif
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN) 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     power::CanIOBoardCommonMessageStrc ms;
     ms.message_type =
         power::CommonMessageType_t::CommomMessageType_BZOnceNotify;
@@ -237,6 +265,28 @@ void SharedCoreData::customEvent(QEvent *e) {
         e->accept();
         break;
     }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    case MotionEventOPumpOn::type: {
+        auto opump_on_event = static_cast<MotionEventOPumpOn *>(e);
+        this->io_ctrler_->set_can_machineio_output_withmask(
+            opump_on_event->on() ? 1 << (power::ZHONGGU_IOOut_IOOUT1_OPUMP - 1)
+                                 : 0,
+            1 << (power::ZHONGGU_IOOut_IOOUT1_OPUMP - 1));
+        e->accept();
+        break;
+    }
+
+    case MotionEventIPumpOn::type: {
+        auto ipump_on_event = static_cast<MotionEventIPumpOn *>(e);
+        this->io_ctrler_->set_can_machineio_output_withmask(
+            ipump_on_event->on() ? 1 << (power::ZHONGGU_IOOut_IOOUT2_IPUMP - 1)
+                                 : 0,
+            1 << (power::ZHONGGU_IOOut_IOOUT2_IPUMP - 1));
+        e->accept();
+        break;
+    }
+#endif
 
     default:
         break;
@@ -351,7 +401,7 @@ void SharedCoreData::_init_data() {
 
     motion_thread_ctrler_ = std::make_shared<move::MotionThreadController>(
         sys_settings_.get_ecat_netif_name(), motion_cmd_queue_,
-        motion_signal_queue_, cb_enable_votalge_gate_, cb_mach_on_,
+        motion_signal_queue_, motion_cbs_,
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
         zynq_udpmessage_holder_,
 #else
@@ -420,7 +470,7 @@ void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
 }
 
 void SharedCoreData::_init_motionthread_cb() {
-    cb_enable_votalge_gate_ = [this](bool arg) -> void {
+    motion_cbs_.cb_enable_voltage_gate = [this](bool arg) -> void {
         s_logger->debug("push voltage gate command: {}", arg);
 
         // postevent本身可能会耗时较多但是线程安全,
@@ -438,7 +488,7 @@ void SharedCoreData::_init_motionthread_cb() {
         this->global_cmd_queue_->push_command(run_cmd);
     };
 
-    cb_mach_on_ = [this](bool arg) -> void {
+    motion_cbs_.cb_mach_on = [this](bool arg) -> void {
         auto run_cmd = global::CommandCommonFunctionFactory::bind(
             [this](bool _mach_on) {
                 QCoreApplication::postEvent(this,
@@ -448,6 +498,32 @@ void SharedCoreData::_init_motionthread_cb() {
 
         // thread safe call
         this->global_cmd_queue_->push_command(run_cmd);
+    };
+
+    motion_cbs_.cb_opump_on = [this](bool on) -> void {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+        auto run_cmd = global::CommandCommonFunctionFactory::bind(
+            [this](bool _on) {
+                QCoreApplication::postEvent(this, new MotionEventOPumpOn(_on));
+            },
+            on);
+
+        // thread safe call
+        this->global_cmd_queue_->push_command(run_cmd);
+#endif
+    };
+
+    motion_cbs_.cb_ipump_on = [this](bool on) -> void {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+        auto run_cmd = global::CommandCommonFunctionFactory::bind(
+            [this](bool _on) {
+                QCoreApplication::postEvent(this, new MotionEventIPumpOn(_on));
+            },
+            on);
+
+        // thread safe call
+        this->global_cmd_queue_->push_command(run_cmd);
+#endif
     };
 }
 

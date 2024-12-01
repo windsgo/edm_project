@@ -172,10 +172,11 @@ public:
     GCodeTaskCoordSetZeroCommand(const std::vector<bool> &set_zero_axis_list,
                                  int line_number, int node_index = -1)
         : GCodeTaskBase(GCodeTaskType::CoordSetZeroCommand, line_number,
-                        node_index), set_zero_axis_list_(set_zero_axis_list) {}
+                        node_index),
+          set_zero_axis_list_(set_zero_axis_list) {}
     ~GCodeTaskCoordSetZeroCommand() noexcept override = default;
 
-    const auto& set_zero_axis_list() const { return set_zero_axis_list_; }
+    const auto &set_zero_axis_list() const { return set_zero_axis_list_; }
 
     bool is_motion_task() const override { return false; }
 
@@ -186,17 +187,20 @@ private:
 class GCodeTaskDrillMotion final : public GCodeTaskBase {
 public:
     GCodeTaskDrillMotion(double depth_mm, int holdtime_ms, bool touch,
-                         bool breakout, int line_number, int node_index = -1)
+                         bool breakout, int line_number,
+                         std::optional<double> spindle_speed_opt = std::nullopt,
+                         int node_index = -1)
         : GCodeTaskBase(GCodeTaskType::DrillMotionCommand, line_number,
                         node_index),
           depth_mm_(depth_mm), holdtime_ms_(holdtime_ms), touch_(touch),
-          breakout_(breakout) {}
+          breakout_(breakout), spindle_speed_opt_(spindle_speed_opt) {}
     ~GCodeTaskDrillMotion() noexcept override = default;
 
     auto depth_mm() const { return depth_mm_; }
     auto holdtime_ms() const { return holdtime_ms_; }
     auto touch() const { return touch_; }
     auto breakout() const { return breakout_; }
+    const auto &spindle_speed_opt() const { return spindle_speed_opt_; }
 
     bool is_motion_task() const override { return true; }
 
@@ -205,6 +209,8 @@ private:
     int holdtime_ms_{0};
     bool touch_{false};
     bool breakout_{false};
+
+    std::optional<double> spindle_speed_opt_;
 };
 
 } // namespace task

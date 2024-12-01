@@ -4,6 +4,6 @@ i.g54()
 i.g91()
 i.f(1000)
 i.drill(depth=2.0, holdtime=1000, \
-    touch=True)
+    touch=True, spindle_speed=10.1)
 
 i.m02()

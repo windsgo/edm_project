@@ -5,6 +5,7 @@
 #include <random>
 
 #include "Logger/LogDefine.h"
+#include "Motion/MoveDefines.h"
 #include "Utils/DataQueueRecorder/DataQueueRecorder.h"
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"
 #include "Utils/Filters/SlidingFilter/SlidingFilter.h"
@@ -146,8 +147,9 @@ private:
 #endif
 
 private:
-    std::function<void(bool)> cb_enable_votalge_gate_;
-    std::function<void(bool)> cb_mach_on_;
+    move::MotionCallbacks motion_cbs_;
+    // std::function<void(bool)> cb_enable_votalge_gate_;
+    // std::function<void(bool)> cb_mach_on_;
 
 private:
     log::logger_ptr loglist_logger_ {nullptr};
