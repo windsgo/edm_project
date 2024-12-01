@@ -34,6 +34,7 @@ DrillAutoTask::DrillAutoTask(const DrillStartParams &start_params,
         runtime_.mach_target_pos =
             runtime_.mach_start_pos -
             util::UnitConverter::um2blu(start_params_.depth_um);
+        runtime_.mach_over_back_return_pos = runtime_.mach_start_pos;
         _drillstate_changeto(DrillState::PrepareDrill);
     }
 
@@ -170,6 +171,7 @@ void DrillAutoTask::_drillstate_touched_backing() {
         CURRENT_POS = target_back_pos;
         s_logger->debug("DrillAutoTask, Touched Backing Over: {}", CURRENT_POS);
         runtime_.mach_start_pos = CURRENT_POS; // 重新给出mach start pos
+        runtime_.mach_over_back_return_pos = runtime_.mach_start_pos;
 
         _drillstate_changeto(DrillState::PrepareDrill);
     }
@@ -241,7 +243,7 @@ void DrillAutoTask::_drillstate_prepare_back_delaying() {
 }
 
 void DrillAutoTask::_drillstate_return_backing() {
-    double target_back_pos = runtime_.touched_pos;
+    double target_back_pos = runtime_.mach_over_back_return_pos;
 
     CURRENT_POS = CURRENT_POS + 5; // TODO, 目前固定速度回退
 

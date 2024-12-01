@@ -150,7 +150,7 @@ void TestPanel::_update_servo() {
 #endif // EDM_USE_ZYNQ_SERVOBOARD
         (double)ui->horizontalSlider_servo->value() / 100.0,
         util::UnitConverter::um_ms2blu_p(
-            (double)ui->horizontalSlider_servo_2->value() / 100.0));
+            (double)ui->horizontalSlider_servo_2->value() / 10.0));
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 }
 

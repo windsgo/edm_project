@@ -108,6 +108,8 @@ private:
         // 加工目标位置(如果是M66M70, 该位置会在碰边后设定)
         double mach_target_pos;
 
+        double mach_over_back_return_pos; // 加工结束后回退位置
+
         uint32_t delay_end_time_ms; // 结束延时时间(绝对时钟)
 
         // 穿透检测用的记录
@@ -128,6 +130,7 @@ private:
             touched_pos = 0;
             mach_start_pos = 0;
             mach_target_pos = 0;
+            mach_over_back_return_pos = 0;
             delay_end_time_ms = 0;
             start_breakthrough_detect = 0;
             detect_state = 0;

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>216</width>
+    <width>259</width>
     <height>506</height>
    </rect>
   </property>
@@ -123,7 +123,7 @@ Detected</string>
    <item row="5" column="0" colspan="2">
     <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Speed (0.00-1)(um/ms)</string>
+      <string>Speed (0.00-10)(um/ms)</string>
      </property>
     </widget>
    </item>

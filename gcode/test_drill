@@ -3,8 +3,9 @@ i = RS274Interpreter()
 i.g54()
 i.g91()
 i.f(1000)
+i.g00(a=-1.0)
 i.drill(depth=2.0, holdtime=1000, \
-    touch=True, back=True, \
+    touch=False, back=True, \
     breakout=False, spindle_speed=None)
 
 i.m02()
