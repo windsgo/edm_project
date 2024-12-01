@@ -2,7 +2,10 @@
 
 #include "Motion/MoveDefines.h"
 #include "MotionAutoTask.h"
+#include <chrono>
 #include <optional>
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
 namespace edm {
 namespace move {
@@ -25,29 +28,25 @@ public:
         PrepareBackDelaying,
         ReturnBacking,
     };
-public:
-    struct StartParams {
-        double depth_blu;
-        int holdtime_ms;
-        bool touch;
-        bool breakout;
-        std::optional<double> spindle_speed_blu_ms_opt;
-    };
 
 public:
-    DrillAutoTask(const StartParams &start_params, const MotionCallbacks &cbs);
+    DrillAutoTask(const DrillStartParams &start_params, const MotionCallbacks &cbs);
 
 public:
     bool pause() override;
     bool resume() override;
     bool stop(bool immediate = false) override;
 
-    bool is_normal_running() const override { return !pause_flag_ && (drill_state_ != DrillState::Idle); }
+    bool is_normal_running() const override {
+        return !pause_flag_ && (drill_state_ != DrillState::Idle);
+    }
     bool is_pausing() const override { return false; }
     bool is_paused() const override { return pause_flag_; }
     bool is_resuming() const override { return false; }
     bool is_stopping() const override { return false; }
-    bool is_stopped() const override { return drill_state_ == DrillState::Idle; }
+    bool is_stopped() const override {
+        return drill_state_ == DrillState::Idle;
+    }
     bool is_over() const override { return is_stopped(); }
 
     void run_once() override;
@@ -72,15 +71,31 @@ private:
     void _all_pump_and_spindle_on(bool on);
     void _mach_on(bool on);
 
-    static const char* GetDrillStateStr(DrillState s);
+    static const char *GetDrillStateStr(DrillState s);
     void _drillstate_changeto(DrillState new_s);
 
     void _clear_all_status();
 
 private:
     MotionCallbacks cbs_;
-    DrillState drill_state_ {DrillState::Idle};
-    bool pause_flag_ {false};
+    DrillState drill_state_{DrillState::Idle};
+    bool pause_flag_{false};
+
+    DrillStartParams start_params_;
+
+private: // simple timer
+    std::chrono::high_resolution_clock::time_point timer_start_time_;
+    int delay_time_ms_{1000};
+    inline void _start_timer(int delay_ms) {
+        delay_time_ms_ = delay_ms;
+        timer_start_time_ = std::chrono::high_resolution_clock::now();
+    }
+    inline bool _is_timer_timeout() {
+        auto now = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                   now - timer_start_time_)
+                   .count() >= delay_time_ms_;
+    }
 
 private:
     struct _Runtime_t {
@@ -126,3 +141,5 @@ private:
 
 } // namespace move
 } // namespace edm
+
+#endif

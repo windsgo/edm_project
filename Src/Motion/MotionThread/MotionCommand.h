@@ -365,31 +365,15 @@ private:
 
 class MotionCommandAutoStartDrillMove final : public MotionCommandBase {
 public:
-    MotionCommandAutoStartDrillMove(
-        double depth_blu, int holdtime_ms, bool touch, bool breakout,
-        std::optional<double> spindle_speed_blu_ms_opt = std::nullopt)
+    MotionCommandAutoStartDrillMove(const DrillStartParams &start_params)
         : MotionCommandBase(MotionCommandAuto_StartDrillMove),
-          depth_blu_(depth_blu), holdtime_ms_(holdtime_ms), touch_(touch),
-          breakout_(breakout),
-          spindle_speed_blu_ms_opt_(spindle_speed_blu_ms_opt) {}
+          start_params_(start_params) {}
     ~MotionCommandAutoStartDrillMove() noexcept override = default;
 
-    auto depth_blu() const { return depth_blu_; }
-    auto holdtime_ms() const { return holdtime_ms_; }
-    auto touch() const { return touch_; }
-    auto breakout() const { return breakout_; }
-
-    const auto &spindle_speed_blu_ms_opt() const {
-        return spindle_speed_blu_ms_opt_;
-    }
+    const auto &start_params() const { return start_params_; }
 
 private:
-    double depth_blu_{0.0}; // 注意是blu单位
-    int holdtime_ms_{0};
-    bool touch_{false};
-    bool breakout_{false};
-
-    std::optional<double> spindle_speed_blu_ms_opt_;
+    DrillStartParams start_params_;
 };
 #endif
 

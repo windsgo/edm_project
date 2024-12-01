@@ -85,6 +85,7 @@ set(PROJECT_SOURCES
     Src/Motion/MotionStateMachine/MotionAutoTask.cpp
     Src/Motion/MotionStateMachine/G00AutoTask.cpp
     Src/Motion/MotionStateMachine/G01AutoTask.cpp
+    Src/Motion/MotionStateMachine/DrillAutoTask.cpp
     Src/Motion/MotionStateMachine/MotionAutoTaskRunner.cpp
     Src/Motion/PauseMoveController/AxisRecorder.cpp
     Src/Motion/PauseMoveController/PauseMoveController.cpp

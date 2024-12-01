@@ -32,10 +32,9 @@ static auto s_motion_shared = MotionSharedData::instance();
 
 MotionThreadController::MotionThreadController(
     std::string_view ifname, MotionCommandQueue::ptr motion_cmd_queue,
-    MotionSignalQueue::ptr motion_signal_queue,
-    const MotionCallbacks& cbs,
-    // const std::function<void(bool)> &cb_enable_voltage_gate,
-    // const std::function<void(bool)> &cb_mach_on,
+    MotionSignalQueue::ptr motion_signal_queue, const MotionCallbacks &cbs,
+// const std::function<void(bool)> &cb_enable_voltage_gate,
+// const std::function<void(bool)> &cb_mach_on,
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     zynq::ZynqUdpMessageHolder::ptr zynq_udpmessage_holder,
 #else
@@ -43,10 +42,9 @@ MotionThreadController::MotionThreadController(
 #endif
     uint32_t iomap_size, uint32_t servo_num, uint32_t io_num)
     : motion_cmd_queue_(motion_cmd_queue),
-      motion_signal_queue_(motion_signal_queue),
-      cbs_(cbs)
-    //   cb_enable_votalge_gate_(cb_enable_voltage_gate), cb_mach_on_(cb_mach_on)
-       {
+      motion_signal_queue_(motion_signal_queue), cbs_(cbs)
+//   cb_enable_votalge_gate_(cb_enable_voltage_gate), cb_mach_on_(cb_mach_on)
+{
     //! 需要注意的是, 构造函数中的代码运行在Caller线程, 不运行在新的线程
     //! 所以线程要最后创建, 防止数据竞争, 和使用未初始化成员变量的问题
 
@@ -69,8 +67,8 @@ MotionThreadController::MotionThreadController(
 
     //! 创建motion状态机
 
-    motion_state_machine_ = std::make_shared<MotionStateMachine>(
-        signal_buffer_, cbs_);
+    motion_state_machine_ =
+        std::make_shared<MotionStateMachine>(signal_buffer_, cbs_);
     if (!motion_state_machine_) {
         s_logger->critical("MotionStateMachine create failed");
         throw exception("MotionStateMachine create failed");
@@ -874,21 +872,25 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         auto drill_cmd =
             std::static_pointer_cast<MotionCommandAutoStartDrillMove>(cmd);
 
-        if (drill_cmd->spindle_speed_blu_ms_opt()) {
+        const auto &start_param = drill_cmd->start_params();
+        if (start_param.spindle_speed_blu_ms_opt) {
             s_motion_shared->get_spindle_controller()
                 ->set_spindle_target_speed_blu_ms(
-                    drill_cmd->spindle_speed_blu_ms_opt().value());
+                    start_param.spindle_speed_blu_ms_opt.value());
             s_logger->debug("***** Spindle Speed Set: {}",
-                            drill_cmd->spindle_speed_blu_ms_opt().value());
+                            start_param.spindle_speed_blu_ms_opt.value());
         }
 
         // TODO 开启实际的打孔任务
-        s_logger->debug(
-            "打孔了哦, depth_blu: {}, holdtime_ms: {}, touch: {}, breakout: {}",
-            drill_cmd->depth_blu(), drill_cmd->holdtime_ms(),
-            drill_cmd->touch(), drill_cmd->breakout());
+        s_logger->debug("打孔了哦, depth_um: {}, holdtime_ms: {}, touch: {}, "
+                        "breakout: {}, back: {}",
+                        start_param.depth_um, start_param.holdtime_ms,
+                        start_param.touch, start_param.breakout,
+                        start_param.back);
+        
+        bool ret = motion_state_machine_->start_auto_drill(drill_cmd->start_params());
 
-        accept_cmd_flag = true;
+        accept_cmd_flag = ret;
         break;
     }
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
@@ -940,6 +942,10 @@ void MotionThreadController::_copy_info_cache() {
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     info_cache_.spindle_axis_blu =
         s_motion_shared->get_spindle_controller()->current_axis();
+    info_cache_.drill_total_blu =
+        s_motion_shared->get_current_drill_total_blu();
+    info_cache_.drill_remaining_blu =
+        s_motion_shared->get_current_drill_remaining_blu();
 #endif
 
     info_cache_.main_mode = motion_state_machine_->main_mode();

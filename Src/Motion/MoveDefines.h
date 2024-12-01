@@ -2,8 +2,9 @@
 
 #include <array>
 #include <cstdint>
-#include <vector>
 #include <functional>
+#include <vector>
+#include <optional>
 
 #include "config.h"
 
@@ -61,7 +62,10 @@ struct MotionInfo {
     axis_t curr_act_axis_blu{0.0}; // 当前周期编码器实际位置
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    unit_t spindle_axis_blu {0.0};
+    unit_t spindle_axis_blu{0.0};
+
+    unit_t drill_total_blu{0.0};     // 打孔总深度
+    unit_t drill_remaining_blu{0.0}; // 打孔剩余深度
 #endif
 
     MotionMainMode main_mode{MotionMainMode::Idle};       // 当前主模式
@@ -145,36 +149,46 @@ struct MotionCallbacks {
     std::function<void(bool)> cb_enable_voltage_gate;
     std::function<void(bool)> cb_mach_on;
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL || 1) // to compile
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     std::function<void(bool)> cb_opump_on;
     std::function<void(bool)> cb_ipump_on;
 #endif
 };
 
-
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 struct DrillBreakOutParams {
-    uint32_t voltage_filter_window_size {200};
-    uint32_t stderr_filter_window_size {200};
-    uint32_t kn_sc_window_size {300};
-    double kn_valid_threshold {20};
-    double kn_valid_rate_threshold {0.01};
-    uint32_t kn_valid_rate_ok_cnt_threshold {320};
-    uint32_t kn_valid_rate_ok_cnt_maximum {600};
+    uint32_t voltage_filter_window_size{200};
+    uint32_t stderr_filter_window_size{200};
+    uint32_t kn_sc_window_size{300};
+    double kn_valid_threshold{20};
+    double kn_valid_rate_threshold{0.01};
+    uint32_t kn_valid_rate_ok_cnt_threshold{320};
+    uint32_t kn_valid_rate_ok_cnt_maximum{600};
 
-    double max_move_um_after_breakout_start_detected {200};
-    double breakout_start_detect_length_percent {0.25};
-    double speed_rate_after_breakout_start_detected {0.8};
-    uint32_t wait_time_ms_after_breakout_end_judged {1000};
+    double max_move_um_after_breakout_start_detected{200};
+    double breakout_start_detect_length_percent{0.25};
+    double speed_rate_after_breakout_start_detected{0.8};
+    uint32_t wait_time_ms_after_breakout_end_judged{1000};
 
-    uint32_t ctrl_flags {0};
+    uint32_t ctrl_flags{0};
 };
 
 struct DrillParams {
-    double touch_return_um {500}; // 碰边后返回距离
-    double touch_speed_um_ms {2}; // 碰边速度
+    double touch_return_um{500}; // 碰边后返回距离
+    double touch_speed_um_ms{2}; // 碰边速度
 
     DrillBreakOutParams breakout_params; // 穿透参数
 };
+
+struct DrillStartParams {
+    double depth_um;
+    int holdtime_ms;
+    bool touch;
+    bool breakout;
+    bool back;
+    std::optional<double> spindle_speed_blu_ms_opt;
+};
+#endif
 
 } // namespace move
 

@@ -1,4 +1,5 @@
 #include "CoordPanel.h"
+#include "Utils/UnitConverter/UnitConverter.h"
 #include "ui_CoordPanel.h"
 
 #include <QMessageBox>
@@ -28,9 +29,7 @@ CoordPanel::CoordPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
 CoordPanel::~CoordPanel() { delete ui; }
 
-void CoordPanel::update_all_display() {
-    update_axis_display();
-}
+void CoordPanel::update_all_display() { update_axis_display(); }
 
 void CoordPanel::update_axis_display() {
     // 直接从 coord_sys_ 的缓存中取坐标数据
@@ -61,6 +60,19 @@ void CoordPanel::update_axis_display() {
             InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
                 util::UnitConverter::blu2mm(act_mach_axis[i])));
     }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    const auto &info = shared_core_data_->get_info_dispatcher()->get_info();
+    ui->lb_spindle_cmd_axis->setText(
+        InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+            util::UnitConverter::blu2mm(info.spindle_axis_blu)));
+    ui->lb_drill_remain_depth_value->setText(
+        InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+            util::UnitConverter::blu2mm(info.drill_remaining_blu)));
+    ui->lb_drill_total_depth_value->setText(
+        InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+            util::UnitConverter::blu2mm(info.drill_total_blu)));
+#endif
 }
 
 void CoordPanel::slot_change_display_coord_index(uint32_t new_coord_index) {
@@ -125,6 +137,14 @@ void CoordPanel::_init_label_arr() {
         mach_act_axis_label_arr_.at(i)->setText("null");
         mach_act_axis_label_arr_.at(i)->setEnabled(false);
     }
+
+#if !(EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    ui->lb_spindle_cmd_axis->hide();
+    ui->lb_drill_remain_depth->hide();
+    ui->lb_drill_total_depth->hide();
+    ui->lb_drill_remain_depth_value->hide();
+    ui->lb_drill_total_depth_value->hide();
+#endif
 }
 
 void CoordPanel::_init_coord_indexes() {

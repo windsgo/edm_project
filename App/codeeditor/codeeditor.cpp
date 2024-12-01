@@ -69,7 +69,7 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     QFont font;
     font.setFamily("Monospace");
     // font.setFixedPitch(true);
-    // font.setPointSize(20);
+    // font.setPointSize(10);
     this->setFont(font);
 
     this->setTabStopDistance(4 * fontMetrics().horizontalAdvance(' '));

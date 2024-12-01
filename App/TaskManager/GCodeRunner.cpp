@@ -745,23 +745,23 @@ void GCodeRunner::_state_current_node_initing() {
             std::static_pointer_cast<GCodeTaskDrillMotion>(curr_gcode);
 
         // check soft limit of drill axis
-        double depth_blu = util::UnitConverter::mm2blu( drill_gcode->depth_mm() );
-        double current_drill_axis_blu = local_info_cache_.curr_cmd_axis_blu[EDM_DRILL_S_AXIS_IDX];
+        double depth_blu =
+            util::UnitConverter::um2blu(drill_gcode->start_params().depth_um);
+        double current_drill_axis_blu =
+            local_info_cache_.curr_cmd_axis_blu[EDM_DRILL_S_AXIS_IDX];
         double target_drill_axis_blu = current_drill_axis_blu - depth_blu;
 
-        if (target_drill_axis_blu < shared_core_data_->get_coord_system()->get_neg_soft_limit()[EDM_DRILL_S_AXIS_IDX]) {
+        if (target_drill_axis_blu <
+            shared_core_data_->get_coord_system()
+                ->get_neg_soft_limit()[EDM_DRILL_S_AXIS_IDX]) {
             _abort("abort: drill depth out of soft limit");
             break;
         }
 
         // make cmd and send to motion_cmd_queue
-        auto drill_cmd = std::make_shared<move::MotionCommandAutoStartDrillMove>(
-            depth_blu,
-            drill_gcode->holdtime_ms(), 
-            drill_gcode->touch(), 
-            drill_gcode->breakout(),
-            drill_gcode->spindle_speed_opt()
-        );
+        auto drill_cmd =
+            std::make_shared<move::MotionCommandAutoStartDrillMove>(
+                drill_gcode->start_params());
 
         shared_core_data_->get_motion_cmd_queue()->push_command(drill_cmd);
 

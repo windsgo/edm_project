@@ -96,3 +96,7 @@ background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:1, y2:1,
                         stop:0 rgba(188,208,197, 255), stop:1 rgba(66,168,129, 255));
 border-width:2px;
 }
+
+QPlainTextEdit {
+font-size: 9pt;
+}

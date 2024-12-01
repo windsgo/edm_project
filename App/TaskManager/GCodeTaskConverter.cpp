@@ -4,8 +4,10 @@
 #include <optional>
 #include <unordered_map>
 
+#include "Motion/MoveDefines.h"
 #include "TaskManager/GCodeTask.h"
 #include "TaskManager/GCodeTaskBase.h"
+#include "Utils/UnitConverter/UnitConverter.h"
 #include "common/utils.hpp"
 #include "config.h"
 
@@ -233,32 +235,32 @@ _make_coord_set_zero(const json::object &jo) {
     return coord_set_zero;
 }
 
-static std::optional<GCodeTaskBase::ptr>
-_make_drill(const json::object &jo) {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+static std::optional<GCodeTaskBase::ptr> _make_drill(const json::object &jo) {
+    move::DrillStartParams start_params;
+
     auto line_number = jo.at("LineNumber").as_integer();
 
-    auto depth = jo.at("DrillDepth").as_double();
-    auto holdtime = jo.at("DrillHoldTime").as_integer();
-    auto touch = jo.at("DrillTouch").as_boolean();
-    auto breakout = jo.at("DrillBreakout").as_boolean();
+    start_params.depth_um =
+        util::UnitConverter::mm2um(jo.at("DrillDepth").as_double());
+    start_params.holdtime_ms = jo.at("DrillHoldTime").as_integer();
+    start_params.touch = jo.at("DrillTouch").as_boolean();
+    start_params.breakout = jo.at("DrillBreakout").as_boolean();
+    start_params.back = jo.at("DrillBack").as_boolean();
 
-    std::optional<double> spindle_speed;
-    const auto& jv_spindle_speed = jo.at("DrillSpindleSpeed");
+    const auto &jv_spindle_speed = jo.at("DrillSpindleSpeed");
     if (jv_spindle_speed.is_null()) {
-        spindle_speed = std::nullopt;
+        start_params.spindle_speed_blu_ms_opt = std::nullopt;
     } else {
-        spindle_speed = jv_spindle_speed.as_double();
+        start_params.spindle_speed_blu_ms_opt = jv_spindle_speed.as_double();
     }
 
-    auto drill = std::make_shared<GCodeTaskDrillMotion>(
-        depth, holdtime, touch, breakout, line_number, spindle_speed, -1);
-
-    s_logger->debug("GCodeTaskConverter: make drill: depth: {}, holdtime: {}, "
-                    "touch: {}, breakout: {}",
-                    depth, holdtime, touch, breakout);
+    auto drill =
+        std::make_shared<GCodeTaskDrillMotion>(start_params, line_number, -1);
 
     return drill;
 }
+#endif
 
 std::optional<GCodeTaskBase::ptr>
 GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
@@ -316,7 +318,7 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
     case GCodeTaskType::DrillMotionCommand: {
         return _make_drill(jo);
     }
-#endif 
+#endif
 
     //! 以下命令虽然构造, 但是实际无操作
     // G90G91的设置记录在G00node中

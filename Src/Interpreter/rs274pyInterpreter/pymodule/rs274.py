@@ -59,7 +59,8 @@ class CommandDictKey(Enum):
     DrillHoldTime = 13
     DrillTouch = 14
     DrillBreakout = 15
-    DrillSpindleSpeed = 16
+    DrillBack = 16
+    DrillSpindleSpeed = 17
 
 def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
     output = ""
@@ -475,11 +476,12 @@ class RS274Interpreter(object):
     # 穿透检测参数设定(数据库方法) TODO
     
     # 打孔代码
-    def drill(self, depth: float, holdtime: int = 1000, touch: bool = False, breakout: bool = False, spindle_speed: float = None) -> RS274Interpreter:
+    def drill(self, depth: float, holdtime: int = 1000, touch: bool = False, breakout: bool = False, back: bool = False, spindle_speed: float = None) -> RS274Interpreter:
         # depth: 打孔深度 毫米
         # holdtime: 打孔结束保持时间 毫秒
         # touch: 打孔前碰边
         # breakout: 打孔时穿透检测
+        # back: 打孔后抬起到加工开始位置
         # spindle_speed: 主轴转速
         
         if (self.__g_environment.is_program_end()): 
@@ -501,6 +503,9 @@ class RS274Interpreter(object):
         if (not isinstance(breakout, bool)):
             raise InterpreterException(f"Drill Breakout Type Not Valid: {type(breakout)} " + _get_stackmessage())
         
+        if (not isinstance(back, bool)):
+            raise InterpreterException(f"Drill Back Type Not Valid: {type(back)} " + _get_stackmessage())
+        
         if (not isinstance(spindle_speed, (int, float, type(None))) ):
             raise InterpreterException(f"Drill Spindle Speed Type Not Valid: {type(spindle_speed)} " + _get_stackmessage())
         
@@ -511,6 +516,7 @@ class RS274Interpreter(object):
             CommandDictKey.DrillHoldTime.name: holdtime,
             CommandDictKey.DrillTouch.name: touch,
             CommandDictKey.DrillBreakout.name: breakout,
+            CommandDictKey.DrillBack.name: back,
             CommandDictKey.DrillSpindleSpeed.name: spindle_speed,
             CommandDictKey.LineNumber.name: _get_caller_linenumber()
         }

@@ -122,6 +122,7 @@ public:
 
 public:
     inline const auto &get_global_cmd_axis() const { return global_cmd_axis_; }
+    inline auto& get_global_cmd_axis() { return global_cmd_axis_; }
     void set_global_cmd_axis(const axis_t &cmd_axis);
 
     axis_t get_act_axis() const;
@@ -130,9 +131,22 @@ public:
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 public:
     auto get_spindle_controller() const { return spindle_control_; }
+
+    const auto& get_current_drill_total_blu() const {
+        return current_drill_total_blu_;
+    }
+    void set_current_drill_total_blu(double total_blu) {
+        current_drill_total_blu_ = total_blu;
+    }
+    const auto& get_current_drill_remaining_blu() const {
+        return current_drill_remaining_blu_;
+    }
+    void set_current_drill_remaining_blu(double remaining_blu) {
+        current_drill_remaining_blu_ = remaining_blu;
+    }
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL || 1)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     const auto &get_drill_params() const { return drill_params_; }
     auto& get_drill_params() { return drill_params_; }
     void set_drill_params(const DrillParams &drill_params) {
@@ -184,9 +198,12 @@ private:
 
     // 打孔和加工时自动开关主轴和水泵标志位
     bool auto_set_spindle_and_pump_{true}; // TODO
+
+    double current_drill_total_blu_{0.0}; // 打孔总深度
+    double current_drill_remaining_blu_{0.0}; // 打孔剩余深度
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL || 1)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     DrillParams drill_params_;
 #endif 
 

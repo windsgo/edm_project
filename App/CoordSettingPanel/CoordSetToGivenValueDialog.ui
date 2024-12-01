@@ -46,7 +46,7 @@
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>设定为 (毫米 mm)</string>
+      <string>设定为 (毫米 mm/度)</string>
      </property>
     </widget>
    </item>

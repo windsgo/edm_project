@@ -76,6 +76,10 @@ public: // operate interfaces
     bool start_auto_g04(double deley_s);
 
     bool start_auto_m00fake();
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    bool start_auto_drill(const DrillStartParams &start_params);
+#endif
 //! auto task end
 
     bool pause_auto();

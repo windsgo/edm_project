@@ -343,13 +343,6 @@ void CoordSettingPanel::_init_offset_button_cb() {
     for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
         connect(set_coordaxis_to_given_value_pb_arr.at(i),
                 &QPushButton::clicked, this, [this]() {
-                    CoordSetToGivenValueDialog dialog;
-                    auto ret = dialog.exec();
-
-                    if (ret != QDialog::Accepted) {
-                        return;
-                    }
-
                     auto sender =
                         qobject_cast<QPushButton *>(QObject::sender());
 
@@ -363,6 +356,13 @@ void CoordSettingPanel::_init_offset_button_cb() {
                         return;
                     }
                     std::size_t axis_index = find_ret->second;
+
+                    CoordSetToGivenValueDialog dialog;
+                    auto ret = dialog.exec();
+
+                    if (ret != QDialog::Accepted) {
+                        return;
+                    }
 
                     uint32_t selected_coord_index =
                         ui->comboBox_select_coord_index->currentData().toUInt();

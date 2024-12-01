@@ -145,11 +145,11 @@ void PowerController::_trigger_send_ioboard_eleparam() {
 
 void PowerController::_update_eleparam_and_send(
     const EleParam_dkd_t &eleparam) {
-    s_logger->trace("update_eleparam_and_send:");
-    auto strs = eleparam_to_string(eleparam);
-    for (const auto &s : strs) {
-        s_logger->trace(s);
-    }
+    // s_logger->trace("update_eleparam_and_send:");
+    // auto strs = eleparam_to_string(eleparam);
+    // for (const auto &s : strs) {
+    //     s_logger->trace(s);
+    // }
 
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     // 心跳处理

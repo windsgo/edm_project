@@ -7,6 +7,7 @@
 #include "G01AutoTask.h"
 #include "G04AutoTask.h"
 #include "M00FakeAutoTask.h"
+#include "DrillAutoTask.h"
 
 #include "Motion/SignalBuffer/SignalBuffer.h"
 

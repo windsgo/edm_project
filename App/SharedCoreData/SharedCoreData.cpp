@@ -206,7 +206,7 @@ void SharedCoreData::send_ioboard_bz_once() const {
 void SharedCoreData::customEvent(QEvent *e) {
     auto type = e->type();
 
-    s_logger->debug("{}, event: {}", __PRETTY_FUNCTION__, (int)type);
+    s_logger->trace("{}, event: {}", __PRETTY_FUNCTION__, (int)type);
 
     switch (type) {
     case HandBoxEventStartPointMove::type: {
@@ -500,8 +500,8 @@ void SharedCoreData::_init_motionthread_cb() {
         this->global_cmd_queue_->push_command(run_cmd);
     };
 
-    motion_cbs_.cb_opump_on = [this](bool on) -> void {
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    motion_cbs_.cb_opump_on = [this](bool on) -> void {
         auto run_cmd = global::CommandCommonFunctionFactory::bind(
             [this](bool _on) {
                 QCoreApplication::postEvent(this, new MotionEventOPumpOn(_on));
@@ -510,11 +510,9 @@ void SharedCoreData::_init_motionthread_cb() {
 
         // thread safe call
         this->global_cmd_queue_->push_command(run_cmd);
-#endif
     };
 
     motion_cbs_.cb_ipump_on = [this](bool on) -> void {
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
         auto run_cmd = global::CommandCommonFunctionFactory::bind(
             [this](bool _on) {
                 QCoreApplication::postEvent(this, new MotionEventIPumpOn(_on));
@@ -523,8 +521,8 @@ void SharedCoreData::_init_motionthread_cb() {
 
         // thread safe call
         this->global_cmd_queue_->push_command(run_cmd);
-#endif
     };
+#endif
 }
 
 } // namespace app

@@ -226,7 +226,7 @@ void PauseMoveController::_manual_pointmoving() {
                                pm_handler_.get_speed_param());
 
         for (int i = 0; i < EDM_AXIS_NUM; ++i) {
-            s_logger->debug("record[{}]: {} -> {}", i,
+            s_logger->trace("record[{}]: {} -> {}", i,
                             pm_handler_.get_start_pos()[i],
                             pm_handler_.get_current_pos()[i]);
         }
