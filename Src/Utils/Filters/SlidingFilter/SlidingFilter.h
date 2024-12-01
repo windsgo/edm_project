@@ -17,7 +17,8 @@ public:
     using stderr_type = double;
 
     SlidingFilter(std::size_t size)
-        : overflowed_loopback_(false), cursor_(0), sum_((value_type)0) {
+        : overflowed_loopback_(false), cursor_(0), sum_((sum_value_type)0),
+          sq_sum_((sum_value_type)0) {
         if (size == 0) {
             size = 1; // size cannot be zero
         }
@@ -28,7 +29,8 @@ public:
     void clear() {
         overflowed_loopback_ = false;
         cursor_ = 0;
-        sum_ = (value_type)0;
+        sum_ = (sum_value_type)0;
+        sq_sum_ = (sum_value_type)0;
     }
 
     void push_back(const value_type &new_value) {
@@ -62,7 +64,9 @@ public:
 
     std::size_t size() const noexcept { return data_.size(); }
 
-    average_type average() const noexcept { return (average_type)sum_ / data_.size(); }
+    average_type average() const noexcept {
+        return (average_type)sum_ / data_.size();
+    }
 
     stderr_type stderr() const noexcept {
         average_type sq_avg = (average_type)sq_sum_ / data_.size();
