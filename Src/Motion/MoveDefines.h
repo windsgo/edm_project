@@ -151,6 +151,31 @@ struct MotionCallbacks {
 #endif
 };
 
+
+struct DrillBreakOutParams {
+    uint32_t voltage_filter_window_size {200};
+    uint32_t stderr_filter_window_size {200};
+    uint32_t kn_sc_window_size {300};
+    double kn_valid_threshold {20};
+    double kn_valid_rate_threshold {0.01};
+    uint32_t kn_valid_rate_ok_cnt_threshold {320};
+    uint32_t kn_valid_rate_ok_cnt_maximum {600};
+
+    double max_move_um_after_breakout_start_detected {200};
+    double breakout_start_detect_length_percent {0.25};
+    double speed_rate_after_breakout_start_detected {0.8};
+    uint32_t wait_time_ms_after_breakout_end_judged {1000};
+
+    uint32_t ctrl_flags {0};
+};
+
+struct DrillParams {
+    double touch_return_um {500}; // 碰边后返回距离
+    double touch_speed_um_ms {2}; // 碰边速度
+
+    DrillBreakOutParams breakout_params; // 穿透参数
+};
+
 } // namespace move
 
 } // namespace edm

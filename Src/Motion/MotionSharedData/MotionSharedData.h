@@ -132,6 +132,14 @@ public:
     auto get_spindle_controller() const { return spindle_control_; }
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL || 1)
+    const auto &get_drill_params() const { return drill_params_; }
+    auto& get_drill_params() { return drill_params_; }
+    void set_drill_params(const DrillParams &drill_params) {
+        drill_params_ = drill_params;
+    }
+#endif
+
 private:
     axis_t global_cmd_axis_; // 全局共享指令位置,
                              // 简化指令坐标在各级之间传递的逻辑, 防止指令突变
@@ -175,8 +183,12 @@ private:
     SpindleController::ptr spindle_control_;
 
     // 打孔和加工时自动开关主轴和水泵标志位
-    bool auto_set_spindle_and_pump_{true};
+    bool auto_set_spindle_and_pump_{true}; // TODO
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL || 1)
+    DrillParams drill_params_;
+#endif 
 
 private:
     MotionSharedData() {

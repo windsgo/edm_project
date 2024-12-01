@@ -9,6 +9,23 @@ namespace move {
 
 class DrillAutoTask : public AutoTask {
 public:
+    enum class DrillState {
+        Idle,
+
+        PrepareTouch,
+        PrepareTouchDelaying,
+        Touching,
+        TouchedBacking,
+
+        PrepareDrill,
+        PrepareDrillDelaying,
+        Drilling,
+
+        PrepareBack,
+        PrepareBackDelaying,
+        ReturnBacking,
+    };
+public:
     struct StartParams {
         double depth_blu;
         int holdtime_ms;
@@ -20,12 +37,50 @@ public:
 public:
     DrillAutoTask(const StartParams &start_params, const MotionCallbacks &cbs);
 
+public:
+    bool pause() override;
+    bool resume() override;
+    bool stop(bool immediate = false) override;
+
+    bool is_normal_running() const override { return !pause_flag_ && (drill_state_ != DrillState::Idle); }
+    bool is_pausing() const override { return false; }
+    bool is_paused() const override { return pause_flag_; }
+    bool is_resuming() const override { return false; }
+    bool is_stopping() const override { return false; }
+    bool is_stopped() const override { return drill_state_ == DrillState::Idle; }
+    bool is_over() const override { return is_stopped(); }
+
+    void run_once() override;
+
+private:
+    void _drillstate_idle();
+
+    void _drillstate_prepare_touch();
+    void _drillstate_prepare_touch_delaying();
+    void _drillstate_touching();
+    void _drillstate_touched_backing();
+
+    void _drillstate_prepare_drill();
+    void _drillstate_prepare_drill_delaying();
+    void _drillstate_drilling();
+
+    void _drillstate_prepare_back();
+    void _drillstate_prepare_back_delaying();
+    void _drillstate_return_backing();
+
 private:
     void _all_pump_and_spindle_on(bool on);
     void _mach_on(bool on);
 
+    static const char* GetDrillStateStr(DrillState s);
+    void _drillstate_changeto(DrillState new_s);
+
+    void _clear_all_status();
+
 private:
     MotionCallbacks cbs_;
+    DrillState drill_state_ {DrillState::Idle};
+    bool pause_flag_ {false};
 
 private:
     struct _Runtime_t {
