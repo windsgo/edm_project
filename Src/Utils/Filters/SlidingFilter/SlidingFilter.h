@@ -1,13 +1,21 @@
 #pragma once
 
+#include <cmath>
+#include <cstdio>
+#include <typeinfo>
 #include <vector>
 
 namespace edm {
 
 namespace util {
 
-template <typename value_type> class SlidingFilter {
+class SlidingFilter {
 public:
+    using value_type = int32_t;
+    using sum_value_type = int64_t;
+    using average_type = double;
+    using stderr_type = double;
+
     SlidingFilter(std::size_t size)
         : overflowed_loopback_(false), cursor_(0), sum_((value_type)0) {
         if (size == 0) {
@@ -24,7 +32,7 @@ public:
     }
 
     void push_back(const value_type &new_value) {
-        value_type old_value = (value_type) 0;
+        value_type old_value = (value_type)0;
         if (overflowed_loopback_) {
             old_value = data_[cursor_];
         }
@@ -37,9 +45,13 @@ public:
         }
 
         sum_ = sum_ + new_value - old_value;
+
+        sum_value_type new_value2 = new_value * new_value;
+        sum_value_type old_value2 = old_value * old_value;
+        sq_sum_ = sq_sum_ + new_value2 - old_value2;
     }
 
-    void resize(std::size_t size) { 
+    void resize(std::size_t size) {
         if (size == data_.size() || size == 0) {
             return;
         }
@@ -48,12 +60,20 @@ public:
         data_.resize(size);
     }
 
-    std::size_t size() const noexcept {
-        return data_.size();
-    }
+    std::size_t size() const noexcept { return data_.size(); }
 
-    value_type average() const noexcept {
-        return sum_ / data_.size();
+    average_type average() const noexcept { return (average_type)sum_ / data_.size(); }
+
+    stderr_type stderr() const noexcept {
+        average_type sq_avg = (average_type)sq_sum_ / data_.size();
+        average_type avg = (average_type)sum_ / data_.size();
+
+        stderr_type D2 = sq_avg - avg * avg; // 方差 ED^2 = E(X^2) - E(X)^2
+        if (D2 < 0) {
+            D2 = 0;
+        }
+
+        return (stderr_type)std::sqrt(D2);
     }
 
 private:
@@ -61,7 +81,9 @@ private:
     bool overflowed_loopback_;
     std::size_t cursor_;
 
-    value_type sum_;
+    sum_value_type sum_;
+
+    sum_value_type sq_sum_; // 平方和
 };
 
 } // namespace util

@@ -8,7 +8,6 @@
 #include "Motion/MoveDefines.h"
 #include "Utils/DataQueueRecorder/DataQueueRecorder.h"
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"
-#include "Utils/Filters/SlidingFilter/SlidingFilter.h"
 #include "Utils/Format/edm_format.h"
 #include "Utils/UnitConverter/UnitConverter.h"
 

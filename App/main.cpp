@@ -4,14 +4,16 @@
 #include <QObject>
 #include <QWidget>
 
-#include <sched.h>
 #include <pthread.h>
-#include <unistd.h>
+#include <sched.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "CanReceiveBuffer/CanReceiveBuffer.h"
 
 #include "MainWindow/MainWindow.h"
+
+#include "Utils/Filters/SlidingFilter/SlidingFilter.h"
 
 #include "Logger/LogMacro.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -33,7 +35,8 @@ static void print_sys_start() {
     s_logger->info("-----------------------------------------");
     s_logger->info("------------ System Started -------------");
     s_logger->info("-----------------------------------------");
-    s_logger->info("sizeof(Can1IOBoard407ServoData): {}", sizeof(edm::Can1IOBoard407ServoData));
+    s_logger->info("sizeof(Can1IOBoard407ServoData): {}",
+                   sizeof(edm::Can1IOBoard407ServoData));
 }
 
 static void init_mainthread_cpu_affinity() {
@@ -41,7 +44,8 @@ static void init_mainthread_cpu_affinity() {
     CPU_ZERO(&mask);
     CPU_SET(4, &mask);
     if (sched_setaffinity(0, sizeof(mask), &mask)) {
-        s_logger->error("set main thread affinity failed: pid: {}", (unsigned int)pthread_self());
+        s_logger->error("set main thread affinity failed: pid: {}",
+                        (unsigned int)pthread_self());
     }
 }
 

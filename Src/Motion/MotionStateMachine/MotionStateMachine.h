@@ -3,8 +3,6 @@
 #include <functional>
 #include <memory>
 
-#include "Utils/Filters/SlidingFilter/SlidingFilter.h"
-
 #include "Motion/JumpDefines.h"
 #include "Motion/MoveDefines.h"
 #include "Motion/MoveruntimeWrapper/MoveruntimeWrapper.h"
