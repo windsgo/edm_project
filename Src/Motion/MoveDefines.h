@@ -66,6 +66,14 @@ struct MotionInfo {
 
     unit_t drill_total_blu{0.0};     // 打孔总深度
     unit_t drill_remaining_blu{0.0}; // 打孔剩余深度
+
+    struct BreakoutData {
+        int realtime_voltage{0};
+        int averaged_voltage{0};
+        double kn{0};
+        double kn_valid_rate{0};
+        int kn_cnt{0};
+    } breakout_data;
 #endif
 
     MotionMainMode main_mode{MotionMainMode::Idle};       // 当前主模式
@@ -157,10 +165,10 @@ struct MotionCallbacks {
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 struct DrillBreakOutParams {
-    uint32_t voltage_filter_window_size{200};
+    uint32_t voltage_average_filter_window_size{200};
     uint32_t stderr_filter_window_size{200};
-    uint32_t kn_sc_window_size{300};
     double kn_valid_threshold{20};
+    uint32_t kn_sc_window_size{300};
     double kn_valid_rate_threshold{0.01};
     uint32_t kn_valid_rate_ok_cnt_threshold{320};
     uint32_t kn_valid_rate_ok_cnt_maximum{600};

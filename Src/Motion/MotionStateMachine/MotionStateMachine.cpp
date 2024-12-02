@@ -16,14 +16,13 @@ namespace move {
 static auto s_motion_shared = MotionSharedData::instance();
 
 MotionStateMachine::MotionStateMachine(
-    SignalBuffer::ptr signal_buffer,
-    const MotionCallbacks& cbs
+    SignalBuffer::ptr signal_buffer, const MotionCallbacks &cbs
     // const std::function<void(bool)> &cb_enable_votalge_gate,
     // const std::function<void(bool)> &cb_mach_on
     )
     : signal_buffer_(signal_buffer), cbs_(cbs)
-    //   cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on)
-       {
+//   cb_enable_votalge_gate_(cb_enable_votalge_gate), cb_mach_on_(cb_mach_on)
+{
 
     //! use assert more than exception is better
     if (!cbs_.cb_enable_voltage_gate) {
@@ -33,17 +32,19 @@ MotionStateMachine::MotionStateMachine(
     if (!signal_buffer_) {
         throw exception("no signal_buffer_");
     }
-    
+
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     auto physical_touch_detect_cb = [this]() -> bool {
         return s_motion_shared->cached_udp_message().touch_detected;
     };
-    touch_detect_handler_ = std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
+    touch_detect_handler_ =
+        std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
 #else
     auto physical_touch_detect_cb = [this]() -> bool {
         return s_motion_shared->cached_servo_data().touch_detected;
     };
-    touch_detect_handler_ = std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
+    touch_detect_handler_ =
+        std::make_shared<TouchDetectHandler>(physical_touch_detect_cb);
 #endif
 
     // cb_get_jump_param_ =
@@ -65,6 +66,12 @@ MotionStateMachine::MotionStateMachine(
 void MotionStateMachine::run_once() {
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     s_motion_shared->update_zynq_udpmessage_holder();
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // 穿透检测滤波器
+    s_motion_shared->get_breakout_filter()->push_back_realtime_voltage(
+        (int)s_motion_shared->cached_udp_message().realtime_voltage);
+#endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 #else
     //! 状态机每周期开始更新can buffer缓存到本地
     s_motion_shared->update_can_buffer_cache();
@@ -76,7 +83,7 @@ void MotionStateMachine::run_once() {
         data_record_instance1->clear_data_record();
 
         // 记录周期开始时驱动器返回的数据: 实际位置, 跟随误差
-        auto& rd1 = data_record_instance1->get_record_data_ref();
+        auto &rd1 = data_record_instance1->get_record_data_ref();
 
         rd1.thread_tick_us = s_motion_shared->get_thread_tick_us();
 
@@ -89,16 +96,16 @@ void MotionStateMachine::run_once() {
             rd1.following_error_axis[i] = d->get_following_error();
         }
 #endif // EDM_OFFLINE_RUN_NO_ECATs
-        // 记录已经更新的放电信息反馈
+       // 记录已经更新的放电信息反馈
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
-        const auto& csd = s_motion_shared->cached_udp_message();
+        const auto &csd = s_motion_shared->cached_udp_message();
         rd1.average_voltage = csd.averaged_voltage;
-        rd1.current = 0; // TODO
+        rd1.current = 0;            // TODO
         rd1.normal_charge_rate = 0; // TODO
-        rd1.short_charge_rate = 0; // TODO
-        rd1.open_charge_rate = 0; // TODO
+        rd1.short_charge_rate = 0;  // TODO
+        rd1.open_charge_rate = 0;   // TODO
 #else
-        auto& csd = s_motion_shared->cached_servo_data();
+        auto &csd = s_motion_shared->cached_servo_data();
         rd1.average_voltage = csd.average_voltage;
         rd1.current = csd.current;
         rd1.normal_charge_rate = csd.normal_rate;
@@ -135,11 +142,12 @@ void MotionStateMachine::run_once() {
     spindle_control->run_once();
 
     // 设置主轴位置
-    
+
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
     if (data_record_instance1->is_data_recorder_running()) {
-        data_record_instance1->get_record_data_ref().new_cmd_axis = s_motion_shared->get_global_cmd_axis();
+        data_record_instance1->get_record_data_ref().new_cmd_axis =
+            s_motion_shared->get_global_cmd_axis();
 
         data_record_instance1->push_data_to_recorder();
     }
@@ -174,7 +182,8 @@ bool MotionStateMachine::start_manual_pointmove(
     switch (main_mode_) {
     case MotionMainMode::Idle: {
         s_logger->trace("{}: idle mode.", __PRETTY_FUNCTION__);
-        auto ret = pm_handler_.start(speed_param, s_motion_shared->get_global_cmd_axis(), target_pos);
+        auto ret = pm_handler_.start(
+            speed_param, s_motion_shared->get_global_cmd_axis(), target_pos);
         if (ret) {
             _mainmode_switch_to(MotionMainMode::Manual);
             signal_buffer_->set_signal(MotionSignal_ManualPointMoveStarted);
@@ -189,8 +198,8 @@ bool MotionStateMachine::start_manual_pointmove(
         return false;
     case MotionMainMode::Auto:
         s_logger->trace("{}: in auto mode", __PRETTY_FUNCTION__);
-        return auto_task_runner_->start_manual_pointmove(speed_param, s_motion_shared->get_global_cmd_axis(),
-                                                         target_pos);
+        return auto_task_runner_->start_manual_pointmove(
+            speed_param, s_motion_shared->get_global_cmd_axis(), target_pos);
         // 处理暂停点动的启动.
         break;
     default:
@@ -227,8 +236,7 @@ bool MotionStateMachine::start_auto_g00(
     }
 
     auto new_g00_auto_task = std::make_shared<G00AutoTask>(
-        target_pos, speed_param, enable_touch_detect,
-        touch_detect_handler_);
+        target_pos, speed_param, enable_touch_detect, touch_detect_handler_);
 
     if (new_g00_auto_task->is_over()) {
         return false;
@@ -252,8 +260,8 @@ bool MotionStateMachine::start_auto_g01(const axis_t &target_pos,
         return false;
     }
 
-    auto g01_line_traj =
-        std::make_shared<TrajectoryLinearSegement>(s_motion_shared->get_global_cmd_axis(), target_pos);
+    auto g01_line_traj = std::make_shared<TrajectoryLinearSegement>(
+        s_motion_shared->get_global_cmd_axis(), target_pos);
 
     auto new_g01_auto_task = std::make_shared<G01AutoTask>(
         g01_line_traj, max_jump_height_from_begin,
@@ -319,14 +327,16 @@ bool MotionStateMachine::start_auto_m00fake() {
     return true;
 }
 
-bool MotionStateMachine::start_auto_drill(const DrillStartParams &start_params) {
+bool MotionStateMachine::start_auto_drill(
+    const DrillStartParams &start_params) {
     s_logger->trace("{}", __PRETTY_FUNCTION__);
 
     if (main_mode_ != MotionMainMode::Idle) {
         return false;
     }
 
-    auto new_drill_auto_task = std::make_shared<DrillAutoTask>(start_params, cbs_);
+    auto new_drill_auto_task =
+        std::make_shared<DrillAutoTask>(start_params, cbs_);
 
     if (new_drill_auto_task->is_over()) {
         return false;

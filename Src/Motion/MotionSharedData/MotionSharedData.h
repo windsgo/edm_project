@@ -13,6 +13,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
@@ -22,6 +23,7 @@
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 #include "SpindleControl.h"
+#include "Utils/Breakout/BreakoutFilter.h"
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
 namespace edm {
@@ -144,14 +146,15 @@ public:
     void set_current_drill_remaining_blu(double remaining_blu) {
         current_drill_remaining_blu_ = remaining_blu;
     }
-#endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     const auto &get_drill_params() const { return drill_params_; }
-    auto& get_drill_params() { return drill_params_; }
     void set_drill_params(const DrillParams &drill_params) {
         drill_params_ = drill_params;
+
+        breakout_filter_->set_breakout_params(drill_params_.breakout_params);
     }
+
+    auto get_breakout_filter() const { return breakout_filter_; }
 #endif
 
 private:
@@ -201,10 +204,10 @@ private:
 
     double current_drill_total_blu_{0.0}; // 打孔总深度
     double current_drill_remaining_blu_{0.0}; // 打孔剩余深度
-#endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     DrillParams drill_params_;
+
+    util::BreakoutFilter::ptr breakout_filter_;
 #endif 
 
 private:
@@ -222,6 +225,9 @@ private:
         gear_ratios_[EDM_DRILL_S_AXIS_IDX] = 100.0; // S轴100倍
 
         spindle_control_ = std::make_shared<SpindleController>();
+
+        breakout_filter_ = std::make_shared<util::BreakoutFilter>();
+        breakout_filter_->set_breakout_params(drill_params_.breakout_params);
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     }
 

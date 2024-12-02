@@ -880,17 +880,54 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
             s_logger->debug("***** Spindle Speed Set: {}",
                             start_param.spindle_speed_blu_ms_opt.value());
         }
-
-        // TODO 开启实际的打孔任务
         s_logger->debug("打孔了哦, depth_um: {}, holdtime_ms: {}, touch: {}, "
                         "breakout: {}, back: {}",
                         start_param.depth_um, start_param.holdtime_ms,
                         start_param.touch, start_param.breakout,
                         start_param.back);
-        
-        bool ret = motion_state_machine_->start_auto_drill(drill_cmd->start_params());
+
+        // 开启打孔任务
+        bool ret =
+            motion_state_machine_->start_auto_drill(drill_cmd->start_params());
 
         accept_cmd_flag = ret;
+        break;
+    }
+    case MotionCommand_SetDrillParams: {
+        s_logger->trace("Handle MotionCmd: SetDrillParams");
+
+        auto set_drill_params_cmd =
+            std::static_pointer_cast<MotionCommandSetDrillParams>(cmd);
+
+        s_motion_shared->set_drill_params(set_drill_params_cmd->drill_params());
+
+        s_logger->debug("***** DrillParams Received");
+        const DrillParams &params = set_drill_params_cmd->drill_params();
+        s_logger->debug("DrillParams: touch_return_um={}, touch_speed_um_ms={}",
+                        params.touch_return_um, params.touch_speed_um_ms);
+        s_logger->debug(
+            "DrillBreakOutParams: voltage_average_filter_window_size={}, "
+            "stderr_filter_window_size={}, kn_valid_threshold={}, "
+            "kn_sc_window_size={}, kn_valid_rate_threshold={}, "
+            "kn_valid_rate_ok_cnt_threshold={}, "
+            "kn_valid_rate_ok_cnt_maximum={}, "
+            "max_move_um_after_breakout_start_detected={}, "
+            "breakout_start_detect_length_percent={}, "
+            "speed_rate_after_breakout_start_detected={}, "
+            "wait_time_ms_after_breakout_end_judged={}, ctrl_flags={}",
+            params.breakout_params.voltage_average_filter_window_size,
+            params.breakout_params.stderr_filter_window_size,
+            params.breakout_params.kn_valid_threshold,
+            params.breakout_params.kn_sc_window_size,
+            params.breakout_params.kn_valid_rate_threshold,
+            params.breakout_params.kn_valid_rate_ok_cnt_threshold,
+            params.breakout_params.kn_valid_rate_ok_cnt_maximum,
+            params.breakout_params.max_move_um_after_breakout_start_detected,
+            params.breakout_params.breakout_start_detect_length_percent,
+            params.breakout_params.speed_rate_after_breakout_start_detected,
+            params.breakout_params.wait_time_ms_after_breakout_end_judged,
+            params.breakout_params.ctrl_flags);
+        accept_cmd_flag = true;
         break;
     }
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
@@ -946,6 +983,16 @@ void MotionThreadController::_copy_info_cache() {
         s_motion_shared->get_current_drill_total_blu();
     info_cache_.drill_remaining_blu =
         s_motion_shared->get_current_drill_remaining_blu();
+
+    const auto breakout_filter = s_motion_shared->get_breakout_filter();
+    info_cache_.breakout_data.realtime_voltage =
+        breakout_filter->get_last_realtime_voltage();
+    info_cache_.breakout_data.averaged_voltage =
+        breakout_filter->get_last_averaged_voltage();
+    info_cache_.breakout_data.kn = breakout_filter->get_last_stderr();
+    info_cache_.breakout_data.kn_valid_rate =
+        breakout_filter->get_last_kn_sliding_counter_valid_rate();
+    info_cache_.breakout_data.kn_cnt = breakout_filter->get_last_kn_cnt();
 #endif
 
     info_cache_.main_mode = motion_state_machine_->main_mode();

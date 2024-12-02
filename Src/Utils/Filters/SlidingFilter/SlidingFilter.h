@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <typeinfo>
 #include <vector>
+#include <memory>
 
 namespace edm {
 
@@ -11,6 +12,8 @@ namespace util {
 
 class SlidingFilter {
 public:
+    using ptr = std::shared_ptr<SlidingFilter>;
+
     using value_type = int32_t;
     using sum_value_type = int64_t;
     using average_type = double;
@@ -68,7 +71,7 @@ public:
         return (average_type)sum_ / data_.size();
     }
 
-    stderr_type stderr() const noexcept {
+    stderr_type get_stderr() const noexcept {
         average_type sq_avg = (average_type)sq_sum_ / data_.size();
         average_type avg = (average_type)sum_ / data_.size();
 

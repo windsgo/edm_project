@@ -1,6 +1,7 @@
 #include "SystemSettingPanel.h"
 #include "ADCCalcPanel/ADCCalcPanel.h"
 #include "Motion/MotionThread/MotionCommand.h"
+#include "Motion/MoveDefines.h"
 #include "QtDependComponents/ZynqConnection/TcpMessageDefine.h"
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "TaskManager/TaskHelper.h"
@@ -33,28 +34,33 @@ SystemSettingPanel::SystemSettingPanel(SharedCoreData *shared_core_data,
                 ui->dsb_adc_offset->setValue(result.new_b);
             });
 
-    connect(shared_core_data_->get_zynq_connect_ctrler().get(),
-            &zynq::ZynqConnectController::sig_zynq_tcp_connected, this,
-            [this]() { this->_set_adc_settings_to_zynq(); 
-                s_logger->info("zynq reconnected, send adc settings immediately");
-            });
-    
+    connect(
+        shared_core_data_->get_zynq_connect_ctrler().get(),
+        &zynq::ZynqConnectController::sig_zynq_tcp_connected, this, [this]() {
+            this->_set_adc_settings_to_zynq();
+            s_logger->info("zynq reconnected, send adc settings immediately");
+        });
+
     connect(ui->pb_open_adccalc, &QPushButton::clicked, this, [this]() {
-        adc_calc_panel_->slot_set_current_k_and_b_to_ui(ui->dsb_adc_gain->value(),
-                                                        ui->dsb_adc_offset->value());
+        adc_calc_panel_->slot_set_current_k_and_b_to_ui(
+            ui->dsb_adc_gain->value(), ui->dsb_adc_offset->value());
 
         adc_calc_panel_->show();
     });
+
+#if !(EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    ui->tab_drill->hide();
+#endif
 
     _init_button_cb();
     _update_ui();
 }
 
-SystemSettingPanel::~SystemSettingPanel() { 
+SystemSettingPanel::~SystemSettingPanel() {
     adc_calc_panel_->hide();
     delete adc_calc_panel_;
 
-    delete ui; 
+    delete ui;
 }
 
 void SystemSettingPanel::_init_button_cb() {
@@ -105,6 +111,38 @@ void SystemSettingPanel::_update_ui() {
         s_sys_setting.get_zynq_adc_settings().adc_offset);
     ui->sb_adc_filter_time_us->setValue(
         s_sys_setting.get_zynq_adc_settings().voltage_filter_window_time_us);
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // drill
+    const auto &drill_settings = s_sys_setting.get_drill_settings();
+    ui->dsb_drill_touch_return_length->setValue(drill_settings.touch_return_um);
+    ui->dsb_drill_touch_speed->setValue(drill_settings.touch_speed_um_ms);
+
+    const auto &bo_settings = drill_settings.breakout_params;
+    ui->sb_drill_voltage_average_window->setValue(
+        bo_settings.voltage_average_filter_window_size);
+    ui->sb_drill_kn_calc_window->setValue(
+        bo_settings.stderr_filter_window_size);
+    ui->dsb_drill_kn_valid_threshold->setValue(bo_settings.kn_valid_threshold);
+    ui->sb_drill_kn_sc_window->setValue(bo_settings.kn_sc_window_size);
+    ui->dsb_drill_kn_valid_rate_threshold->setValue(
+        bo_settings.kn_valid_rate_threshold);
+    ui->sb_drill_kn_cnt_threshold->setValue(
+        bo_settings.kn_valid_rate_ok_cnt_threshold);
+    ui->sb_drill_kc_cnt_maximum->setValue(
+        bo_settings.kn_valid_rate_ok_cnt_maximum);
+
+    ui->dsb_drill_max_move_length_after_breakout_start_detected->setValue(
+        bo_settings.max_move_um_after_breakout_start_detected);
+    ui->dsb_drill_breakout_detect_enable_percent->setValue(
+        bo_settings.breakout_start_detect_length_percent);
+    ui->dsb_drill_speed_rate_after_breakout_start_detected->setValue(
+        bo_settings.speed_rate_after_breakout_start_detected);
+    ui->sb_drill_wait_time_ms_after_breakout_end_judged->setValue(
+        bo_settings.wait_time_ms_after_breakout_end_judged);
+
+    ui->sb_drill_ctrl_flags->setValue(bo_settings.ctrl_flags);
+#endif
 }
 
 bool SystemSettingPanel::_save() {
@@ -135,6 +173,49 @@ bool SystemSettingPanel::_save() {
 
     _set_adc_settings_to_zynq();
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // drill
+    struct _sys::_drill_settings drill_settings;
+
+    drill_settings.touch_return_um = ui->dsb_drill_touch_return_length->value();
+    drill_settings.touch_speed_um_ms = ui->dsb_drill_touch_speed->value();
+
+    struct _sys::_breakout_settings bo_settings;
+    bo_settings.voltage_average_filter_window_size =
+        ui->sb_drill_voltage_average_window->value();
+    bo_settings.stderr_filter_window_size =
+        ui->sb_drill_kn_calc_window->value();
+    bo_settings.kn_valid_threshold = ui->dsb_drill_kn_valid_threshold->value();
+    bo_settings.kn_sc_window_size = ui->sb_drill_kn_sc_window->value();
+    bo_settings.kn_valid_rate_threshold =
+        ui->dsb_drill_kn_valid_rate_threshold->value();
+    bo_settings.kn_valid_rate_ok_cnt_threshold =
+        ui->sb_drill_kn_cnt_threshold->value();
+    bo_settings.kn_valid_rate_ok_cnt_maximum =
+        ui->sb_drill_kc_cnt_maximum->value();
+
+    bo_settings.max_move_um_after_breakout_start_detected =
+        ui->dsb_drill_max_move_length_after_breakout_start_detected->value();
+    bo_settings.breakout_start_detect_length_percent =
+        ui->dsb_drill_breakout_detect_enable_percent->value();
+    bo_settings.speed_rate_after_breakout_start_detected =
+        ui->dsb_drill_speed_rate_after_breakout_start_detected->value();
+    bo_settings.wait_time_ms_after_breakout_end_judged =
+        ui->sb_drill_wait_time_ms_after_breakout_end_judged->value();
+
+    bo_settings.ctrl_flags = ui->sb_drill_ctrl_flags->value();
+
+    drill_settings.breakout_params = bo_settings;
+
+    s_sys_setting.set_drill_settings(drill_settings);
+
+    auto drill_set_ret = _set_drill_settings_to_motion_thread();
+    if (!drill_set_ret) {
+        emit shared_core_data_->sig_error_message(
+            QString{"Set Drill Settings Failed!"});
+    }
+#endif
+
     auto set_ret = _set_motion_settings_to_motion_thread();
     if (!set_ret) {
         emit shared_core_data_->sig_error_message(
@@ -148,6 +229,57 @@ bool SystemSettingPanel::_save() {
 
     return save_ret;
 }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+bool SystemSettingPanel::_set_drill_settings_to_motion_thread() {
+    auto mcq = shared_core_data_->get_motion_cmd_queue();
+
+    move::DrillParams drill_params;
+
+    const auto &sys_drill_settings = s_sys_setting.get_drill_settings();
+
+    drill_params.touch_return_um = sys_drill_settings.touch_return_um;
+    drill_params.touch_speed_um_ms = sys_drill_settings.touch_speed_um_ms;
+
+    drill_params.breakout_params.voltage_average_filter_window_size =
+        sys_drill_settings.breakout_params.voltage_average_filter_window_size;
+    drill_params.breakout_params.stderr_filter_window_size =
+        sys_drill_settings.breakout_params.stderr_filter_window_size;
+
+    drill_params.breakout_params.kn_valid_threshold =
+        sys_drill_settings.breakout_params.kn_valid_threshold;
+    drill_params.breakout_params.kn_sc_window_size =
+        sys_drill_settings.breakout_params.kn_sc_window_size;
+    drill_params.breakout_params.kn_valid_rate_threshold =
+        sys_drill_settings.breakout_params.kn_valid_rate_threshold;
+    drill_params.breakout_params.kn_valid_rate_ok_cnt_threshold =
+        sys_drill_settings.breakout_params.kn_valid_rate_ok_cnt_threshold;
+    drill_params.breakout_params.kn_valid_rate_ok_cnt_maximum =
+        sys_drill_settings.breakout_params.kn_valid_rate_ok_cnt_maximum;
+
+    drill_params.breakout_params.max_move_um_after_breakout_start_detected =
+        sys_drill_settings.breakout_params
+            .max_move_um_after_breakout_start_detected;
+    drill_params.breakout_params.breakout_start_detect_length_percent =
+        sys_drill_settings.breakout_params.breakout_start_detect_length_percent;
+    drill_params.breakout_params.speed_rate_after_breakout_start_detected =
+        sys_drill_settings.breakout_params
+            .speed_rate_after_breakout_start_detected;
+    drill_params.breakout_params.wait_time_ms_after_breakout_end_judged =
+        sys_drill_settings.breakout_params
+            .wait_time_ms_after_breakout_end_judged;
+
+    drill_params.breakout_params.ctrl_flags =
+        sys_drill_settings.breakout_params.ctrl_flags;
+
+    auto drill_settings_cmd =
+        std::make_shared<move::MotionCommandSetDrillParams>(drill_params);
+
+    mcq->push_command(drill_settings_cmd);
+
+    return task::TaskHelper::WaitforCmdTobeAccepted(drill_settings_cmd, 200);
+}
+#endif
 
 bool SystemSettingPanel::_set_motion_settings_to_motion_thread() {
     auto mcq = shared_core_data_->get_motion_cmd_queue();
@@ -172,8 +304,10 @@ void SystemSettingPanel::_set_adc_settings_to_zynq() {
 
     const auto &sys_adc_settings = s_sys_setting.get_zynq_adc_settings();
 
-    adc_settings.adc_gain_times_1000 = (int32_t)round(sys_adc_settings.adc_gain * 1000.0);
-    adc_settings.adc_offset_times_1000 = (int32_t)round(sys_adc_settings.adc_offset * 1000.0);
+    adc_settings.adc_gain_times_1000 =
+        (int32_t)round(sys_adc_settings.adc_gain * 1000.0);
+    adc_settings.adc_offset_times_1000 =
+        (int32_t)round(sys_adc_settings.adc_offset * 1000.0);
     adc_settings.voltage_filter_window_time_us =
         sys_adc_settings.voltage_filter_window_time_us;
 

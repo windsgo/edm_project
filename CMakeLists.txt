@@ -74,6 +74,7 @@ set(PROJECT_SOURCES
     Src/Utils/Netif/netif_utils.cpp
     Src/Utils/UnitConverter/UnitConverter.cpp
     Src/Utils/DataQueueRecorder/DataQueueRecorder.cpp
+    Src/Utils/Breakout/BreakoutFilter.cpp
     Src/Utils/Crc/crc.cpp
     Src/Motion/Moveruntime/Moveruntime.cpp
     Src/Motion/MoveruntimeWrapper/MoveruntimeWrapper.cpp

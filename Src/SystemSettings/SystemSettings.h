@@ -23,8 +23,13 @@ namespace _sys {
 struct _ecat_setting {
     uint32_t ecat_iomap_size{4096};
     std::string ecat_netif_name; // need to specify, based on different netif
+    uint32_t ecat_sync0_shift_time_ns{90000};
+    uint32_t dc_filter_cnt{1024};
+    uint32_t igh_op_wait_count_max{10000};
 
-    MEO_JSONIZATION(MEO_OPT ecat_iomap_size, ecat_netif_name);
+    MEO_JSONIZATION(MEO_OPT ecat_iomap_size, ecat_netif_name,
+                    MEO_OPT ecat_sync0_shift_time_ns, MEO_OPT dc_filter_cnt,
+                    MEO_OPT igh_op_wait_count_max);
 };
 
 struct _fast_move_param {
@@ -76,30 +81,90 @@ struct _zynq_adc_settings {
                     MEO_OPT voltage_filter_window_time_us);
 };
 
+struct _can_settings {
+    std::string can_device_name{"can0"};
+    std::string helper_can_device_name{"can1"};
+    uint32_t can_device_bitrate{500000};
+
+    MEO_JSONIZATION(MEO_OPT can_device_name, MEO_OPT helper_can_device_name,
+                    MEO_OPT can_device_bitrate);
+};
+
+struct _file_settings {
+    std::string coord_config_file{"coord.json"};
+    std::string log_config_file{"logdefine.json"};
+    std::string qss_file{"gui.qss"};
+    std::string power_database_file{"power.db"};
+    std::string interp_module_path_relative_to_root{
+        "Src/Interpreter/rs274pyInterpreter/pymodule/"};
+    std::string datasave_dir{"Data/"};
+
+    MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
+                    MEO_OPT qss_file, MEO_OPT power_database_file,
+                    MEO_OPT datasave_dir,
+                    MEO_OPT interp_module_path_relative_to_root)
+};
+
+struct _time_settings {
+    uint32_t info_dispatcher_peroid_ms{20};
+    uint32_t motion_cycle_us{1000};
+    uint32_t monitor_peroid_ms{50};
+
+    MEO_JSONIZATION(MEO_OPT info_dispatcher_peroid_ms, MEO_OPT motion_cycle_us,
+                    MEO_OPT monitor_peroid_ms);
+};
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+struct _breakout_settings {
+    uint32_t voltage_average_filter_window_size{200};
+    uint32_t stderr_filter_window_size{200};
+    double kn_valid_threshold{20};
+    uint32_t kn_sc_window_size{300};
+    double kn_valid_rate_threshold{0.01};
+    uint32_t kn_valid_rate_ok_cnt_threshold{320};
+    uint32_t kn_valid_rate_ok_cnt_maximum{600};
+
+    double max_move_um_after_breakout_start_detected{200};
+    double breakout_start_detect_length_percent{0.25};
+    double speed_rate_after_breakout_start_detected{0.8};
+    uint32_t wait_time_ms_after_breakout_end_judged{1000};
+
+    uint32_t ctrl_flags{0};
+
+    MEO_JSONIZATION(MEO_OPT voltage_average_filter_window_size,
+                    MEO_OPT stderr_filter_window_size,
+                    MEO_OPT kn_valid_threshold, MEO_OPT kn_sc_window_size,
+                    MEO_OPT kn_valid_rate_threshold,
+                    MEO_OPT kn_valid_rate_ok_cnt_threshold,
+                    MEO_OPT kn_valid_rate_ok_cnt_maximum,
+                    MEO_OPT max_move_um_after_breakout_start_detected,
+                    MEO_OPT breakout_start_detect_length_percent,
+                    MEO_OPT speed_rate_after_breakout_start_detected,
+                    MEO_OPT wait_time_ms_after_breakout_end_judged,
+                    MEO_OPT ctrl_flags);
+};
+
+struct _drill_settings {
+    double touch_return_um{500}; // 碰边后返回距离
+    double touch_speed_um_ms{2}; // 碰边速度
+
+    _breakout_settings breakout_params; // 穿透参数
+
+    MEO_JSONIZATION(MEO_OPT touch_return_um, MEO_OPT touch_speed_um_ms,
+                    MEO_OPT breakout_params);
+};
+#endif
+
 class _SystemSettingsData final {
 public:
     _SystemSettingsData() noexcept = default;
 
 public: // settings
-    std::string coord_config_file{"coord.json"};
-    std::string log_config_file{"logdefine.json"};
-    std::string qss_file{"gui.qss"};
-    std::string can_device_name{"can0"};
-    uint32_t can_device_bitrate{500000};
+    _file_settings file;
+    _can_settings can;
     _ecat_setting ecat;
     _fast_move_param fast_move_param;
-    std::string power_database_file{"power.db"};
-    std::string helper_can_device_name{"can1"};
-    std::string interp_module_path_relative_to_root{
-        "Src/Interpreter/rs274pyInterpreter/pymodule/"};
-    uint32_t info_dispatcher_peroid_ms{20};
     _jump_param jump_param;
-    std::string datasave_dir{"Data/"};
-    uint32_t motion_cycle_us{1000};
-    uint32_t monitor_peroid_ms{50};
-    uint32_t ecat_sync0_shift_time_ns{90000};
-    uint32_t dc_filter_cnt{1024};
-    uint32_t igh_op_wait_count_max{10000};
 
     _motion_settings motion_settings;
 
@@ -107,17 +172,20 @@ public: // settings
 
     _zynq_adc_settings zynq_adc_settings;
 
-    MEO_JSONIZATION(MEO_OPT coord_config_file, MEO_OPT log_config_file,
-                    MEO_OPT qss_file, MEO_OPT can_device_name,
-                    MEO_OPT can_device_bitrate, ecat, MEO_OPT fast_move_param,
-                    MEO_OPT power_database_file, MEO_OPT helper_can_device_name,
-                    MEO_OPT interp_module_path_relative_to_root,
-                    MEO_OPT info_dispatcher_peroid_ms, MEO_OPT jump_param,
-                    MEO_OPT datasave_dir, MEO_OPT motion_cycle_us,
-                    MEO_OPT monitor_peroid_ms, MEO_OPT ecat_sync0_shift_time_ns,
-                    MEO_OPT dc_filter_cnt, MEO_OPT igh_op_wait_count_max,
+    _time_settings time_settings;
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    _drill_settings drill_settings;
+#endif
+
+    MEO_JSONIZATION(MEO_OPT can, ecat, MEO_OPT fast_move_param,
+                    MEO_OPT jump_param, MEO_OPT file, MEO_OPT time_settings,
                     MEO_OPT motion_settings, MEO_OPT zynq_settings,
-                    MEO_OPT zynq_adc_settings);
+                    MEO_OPT zynq_adc_settings,
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+                    MEO_OPT drill_settings
+#endif
+    );
 };
 
 }; // namespace _sys
@@ -136,21 +204,23 @@ public:
 
 public:
     const std::string &get_coord_config_file() const {
-        return data_.coord_config_file;
+        return data_.file.coord_config_file;
     }
     const std::string &get_log_config_file() const {
-        return data_.log_config_file;
+        return data_.file.log_config_file;
     }
-    const std::string &get_qss_file() const { return data_.qss_file; }
+    const std::string &get_qss_file() const { return data_.file.qss_file; }
 
     // can
     const std::string &get_can_device_name() const {
-        return data_.can_device_name;
+        return data_.can.can_device_name;
     }
-    uint32_t get_can_device_bitrate() const { return data_.can_device_bitrate; }
+    uint32_t get_can_device_bitrate() const {
+        return data_.can.can_device_bitrate;
+    }
 
     const std::string &get_helper_can_device_name() const {
-        return data_.helper_can_device_name;
+        return data_.can.helper_can_device_name;
     }
 
     // ecat
@@ -181,34 +251,40 @@ public:
 
     // power db
     const std::string &get_power_database_file() const {
-        return data_.power_database_file;
+        return data_.file.power_database_file;
     }
 
     // interp module
     inline const std::string &get_interp_module_path_relative_to_root() const {
-        return data_.interp_module_path_relative_to_root;
+        return data_.file.interp_module_path_relative_to_root;
     }
 
     inline uint32_t get_info_dispatcher_peroid_ms() const {
-        return data_.info_dispatcher_peroid_ms;
+        return data_.time_settings.info_dispatcher_peroid_ms;
     }
 
     inline const auto &get_jump_param() const { return data_.jump_param; }
 
-    inline const auto &get_datasave_dir() const { return data_.datasave_dir; }
-
-    uint32_t get_motion_cycle_us() const { return data_.motion_cycle_us; }
-
-    uint32_t get_monitor_peroid_ms() const { return data_.monitor_peroid_ms; }
-
-    inline uint32_t get_ecat_sync0_shift_time_ns() const {
-        return data_.ecat_sync0_shift_time_ns;
+    inline const auto &get_datasave_dir() const {
+        return data_.file.datasave_dir;
     }
 
-    inline auto get_dc_filter_cnt() const { return data_.dc_filter_cnt; }
+    uint32_t get_motion_cycle_us() const {
+        return data_.time_settings.motion_cycle_us;
+    }
+
+    uint32_t get_monitor_peroid_ms() const {
+        return data_.time_settings.monitor_peroid_ms;
+    }
+
+    inline uint32_t get_ecat_sync0_shift_time_ns() const {
+        return data_.ecat.ecat_sync0_shift_time_ns;
+    }
+
+    inline auto get_dc_filter_cnt() const { return data_.ecat.dc_filter_cnt; }
 
     inline auto get_igh_op_wait_count_max() const {
-        return data_.igh_op_wait_count_max;
+        return data_.ecat.igh_op_wait_count_max;
     }
 
     // MotionSettings Related
@@ -221,7 +297,15 @@ public:
 
     inline const auto &get_zynq_settings() const { return data_.zynq_settings; }
 
-    inline const auto &get_zynq_adc_settings() const { return data_.zynq_adc_settings; }
+    inline const auto &get_zynq_adc_settings() const {
+        return data_.zynq_adc_settings;
+    }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    inline const auto &get_drill_settings() const {
+        return data_.drill_settings;
+    }
+#endif
 
 public:
     // you should save to local file manually
@@ -263,9 +347,17 @@ public:
     }
 
     // zynq adc settings change
-    inline void set_zynq_adc_settings(const _sys::_zynq_adc_settings& zynq_adc_settings) {
+    inline void
+    set_zynq_adc_settings(const _sys::_zynq_adc_settings &zynq_adc_settings) {
         data_.zynq_adc_settings = zynq_adc_settings;
     }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    inline void
+    set_drill_settings(const _sys::_drill_settings &drill_settings) {
+        data_.drill_settings = drill_settings;
+    }
+#endif
 
 public:
     bool save_to_file() const {

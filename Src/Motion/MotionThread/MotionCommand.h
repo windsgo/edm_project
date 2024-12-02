@@ -94,6 +94,9 @@ enum MotionCommandType {
     // 打孔指令
     MotionCommandAuto_StartDrillMove,
 
+    // 打孔与穿透检测参数
+    MotionCommand_SetDrillParams,
+
 #endif // EDM_POWER_TYPE
 
     MotionCommand_Max
@@ -374,6 +377,19 @@ public:
 
 private:
     DrillStartParams start_params_;
+};
+
+class MotionCommandSetDrillParams final : public MotionCommandBase {
+public:
+    MotionCommandSetDrillParams(const DrillParams &drill_params)
+        : MotionCommandBase(MotionCommand_SetDrillParams),
+          drill_params_(drill_params) {}
+    ~MotionCommandSetDrillParams() noexcept override = default;
+
+    const auto &drill_params() const { return drill_params_; }
+
+private:
+    DrillParams drill_params_;
 };
 #endif
 

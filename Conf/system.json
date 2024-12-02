@@ -1,14 +1,34 @@
 {
-    "can_device_bitrate": 500000,
-    "can_device_name": "can0",
-    "coord_config_file": "coord.json",
-    "datasave_dir": "Data/",
-    "dc_filter_cnt": 1024,
-    "ecat": {
-        "ecat_iomap_size": 4096,
-        "ecat_netif_name": "enp1s0"
+    "can": {
+        "can_device_bitrate": 500000,
+        "can_device_name": "can0",
+        "helper_can_device_name": "can1"
     },
-    "ecat_sync0_shift_time_ns": 125000,
+    "drill_settings": {
+        "breakout_params": {
+            "breakout_start_detect_length_percent": 0.250000,
+            "ctrl_flags": 0,
+            "kn_sc_window_size": 300,
+            "kn_valid_rate_ok_cnt_maximum": 600,
+            "kn_valid_rate_ok_cnt_threshold": 320,
+            "kn_valid_rate_threshold": 0.010000,
+            "kn_valid_threshold": 20.000000,
+            "max_move_um_after_breakout_start_detected": 200.000000,
+            "speed_rate_after_breakout_start_detected": 0.800000,
+            "stderr_filter_window_size": 200,
+            "voltage_average_filter_window_size": 200,
+            "wait_time_ms_after_breakout_end_judged": 1000
+        },
+        "touch_return_um": 500.000000,
+        "touch_speed_um_ms": 2.000000
+    },
+    "ecat": {
+        "dc_filter_cnt": 1024,
+        "ecat_iomap_size": 4096,
+        "ecat_netif_name": "enp1s0",
+        "ecat_sync0_shift_time_ns": 125000,
+        "igh_op_wait_count_max": 20000
+    },
     "fast_move_param": {
         "max_acc_um_s2": 200000.000000,
         "nacc_ms": 100,
@@ -17,24 +37,28 @@
         "speed_2_um_s": 330.000000,
         "speed_3_um_s": 16.000000
     },
-    "helper_can_device_name": "can1",
-    "igh_op_wait_count_max": 20000,
-    "info_dispatcher_peroid_ms": 40,
-    "interp_module_path_relative_to_root": "Src/Interpreter/rs274pyInterpreter/pymodule/",
+    "file": {
+        "coord_config_file": "coord.json",
+        "datasave_dir": "Data/",
+        "interp_module_path_relative_to_root": "Src/Interpreter/rs274pyInterpreter/pymodule/",
+        "log_config_file": "logdefine.json",
+        "power_database_file": "power.db",
+        "qss_file": "gui.qss"
+    },
     "jump_param": {
         "buffer_um": 30,
         "max_acc_um_s2": 1440000.000000,
         "nacc_ms": 60
     },
-    "log_config_file": "logdefine.json",
-    "monitor_peroid_ms": 40,
-    "motion_cycle_us": 500,
     "motion_settings": {
         "enable_g01_half_closed_loop": false,
         "enable_g01_run_each_servo_cmd": true
     },
-    "power_database_file": "power.db",
-    "qss_file": "gui.qss",
+    "time_settings": {
+        "info_dispatcher_peroid_ms": 40,
+        "monitor_peroid_ms": 40,
+        "motion_cycle_us": 500
+    },
     "zynq_adc_settings": {
         "adc_gain": 60.763000,
         "adc_offset": -306.560000,

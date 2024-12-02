@@ -34,6 +34,10 @@ private:
 
     void _set_adc_settings_to_zynq();
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    bool _set_drill_settings_to_motion_thread();
+#endif
+
 private:
     Ui::SystemSettingPanel *ui;
 

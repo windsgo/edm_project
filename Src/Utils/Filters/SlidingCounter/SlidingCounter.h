@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include <bitset>
@@ -12,6 +13,7 @@ template <int size> class SlidingCounter {
     static_assert(size > 0);
 
 public:
+    using ptr = std::shared_ptr<SlidingCounter<size>>;
     SlidingCounter()
         : current_window_size_(size), cursor_(0), valid_count_(0),
           invalid_count_(0) {}
@@ -26,6 +28,10 @@ public:
     void resize(std::size_t new_size) {
         if (new_size == current_window_size_ || new_size == 0) {
             return;
+        }
+
+        if (new_size > max_size_) {
+            new_size = max_size_;
         }
 
         current_window_size_ = new_size;
