@@ -28,6 +28,7 @@ DataQueueRecordPanel::DataQueueRecordPanel(SharedCoreData *shared_core_data,
     _init_dirs();
 
     _init_record_data1();
+    _init_record_data2();
 }
 
 DataQueueRecordPanel::~DataQueueRecordPanel() { delete ui; }
@@ -263,6 +264,102 @@ bool DataQueueRecordPanel::_save_data1_header_to_file(
     if (!ofs.is_open()) {
         s_logger->error(
             "_save_data1_header_to_file failed: cannot open file : {}",
+            filename);
+        return false;
+    }
+
+    ofs << header_str;
+
+    ofs.close();
+
+    return true;
+}
+
+void DataQueueRecordPanel::_init_record_data2()
+{
+    connect(ui->pb_start_record_2, &QPushButton::clicked, this,
+            [this](bool checked) {
+                if (checked) {
+                    auto ret = move::MotionSharedData::instance()
+                                   ->get_data_record_instance2()
+                                   ->start_record();
+
+                    if (ret) {
+                        emit shared_core_data_->sig_info_message(
+                            "Start Record Success");
+                    } else {
+                        emit shared_core_data_->sig_error_message(
+                            "Start Record Failed");
+                        ui->pb_start_record_2->setChecked(false);
+                    }
+
+                } else {
+                    // stop and wait for stopped
+                    move::MotionSharedData::instance()
+                        ->get_data_record_instance2()
+                        ->stop_record(true);
+
+                    emit shared_core_data_->sig_info_message(
+                        "Stop Record Success");
+                }
+            });
+
+    connect(ui->pb_decode_2, &QPushButton::clicked, this, [this]() {
+        // get input files
+        auto bin_filenames = QFileDialog::getOpenFileNames(
+            this, tr("Select Bin Files"),
+            move::MotionSharedData::instance()->RecordData1BinDir);
+
+        for (const auto &bin_filename : bin_filenames) {
+            auto decode_filename =
+                move::MotionSharedData::instance()
+                    ->get_data_record_instance2()
+                    ->decode_one_file(bin_filename,
+                                      ui->cb_include_header_2->isChecked());
+
+            if (decode_filename) {
+                emit shared_core_data_->sig_info_message(
+                    QString{"Decode Success, saved to: %0"}.arg(
+                        *decode_filename));
+            } else {
+                emit shared_core_data_->sig_error_message(
+                    QString{"Decode Failed, file: %0"}.arg(bin_filename));
+            }
+        }
+    });
+
+    connect(ui->pb_print_header_2, &QPushButton::clicked, this, [this]() {
+        auto header_filename = move::MotionSharedData::instance()
+                                   ->get_data_record_instance2()
+                                   ->header_filename();
+
+        auto ret = _save_data2_header_to_file(header_filename.toStdString());
+
+        if (ret) {
+            emit shared_core_data_->sig_info_message(
+                QString{"Print Header Success, saved to: %0"}.arg(
+                    header_filename));
+        } else {
+            emit shared_core_data_->sig_warn_message(
+                QString{"Print Header Failed, file: %0"}.arg(header_filename));
+        }
+    });
+}
+
+std::string DataQueueRecordPanel::_generate_data2_header() const {
+    return move::MotionSharedData::instance()
+        ->get_data_record_instance2()
+        ->generate_data_header();
+}
+
+bool DataQueueRecordPanel::_save_data2_header_to_file(
+    const std::string &filename) const {
+    auto header_str = _generate_data2_header();
+
+    std::ofstream ofs(filename);
+    if (!ofs.is_open()) {
+        s_logger->error(
+            "_save_data2_header_to_file failed: cannot open file : {}",
             filename);
         return false;
     }

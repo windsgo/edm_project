@@ -77,6 +77,13 @@ private:
     void _clear_all_status();
 
 private:
+    static inline int64_t GetCurrentTimeMs() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::high_resolution_clock::now().time_since_epoch())
+            .count();
+    }
+
+private:
     MotionCallbacks cbs_;
     DrillState drill_state_{DrillState::Idle};
     bool pause_flag_{false};

@@ -40,6 +40,8 @@ DrillAutoTask::DrillAutoTask(const DrillStartParams &start_params,
 
     s_motion_shared->set_current_drill_total_blu(
         util::UnitConverter::um2blu(start_params_.depth_um));
+
+    s_motion_shared->set_breakout_detected(false);
 }
 
 bool DrillAutoTask::pause() {
@@ -197,8 +199,147 @@ void DrillAutoTask::_drillstate_drilling() {
     double _servo_dis = util::UnitConverter::mm_min2blu_p(
         s_motion_shared->cached_udp_message().servo_calced_speed_mm_min);
 
-    if (start_params_.breakout && false) {
-        // TODO
+    if (start_params_.breakout) {
+        auto bo_filter = s_motion_shared->get_breakout_filter();
+        const auto &bt_param =
+            s_motion_shared->get_drill_params().breakout_params;
+        int cnt = bo_filter->get_last_kn_cnt();
+
+        bool kn_detected = cnt > bt_param.kn_valid_rate_ok_cnt_threshold;
+
+        if (runtime_.start_breakthrough_detect) {
+            switch (runtime_.detect_state) {
+            default:
+            case 0: {
+
+                if (bt_param.ctrl_flags & (1 << 0)) {
+                    // 使能穿透开始前基于kncnt值的降速
+
+                    if (cnt > bt_param.kn_valid_rate_ok_cnt_threshold / 2) {
+                        // 激活降速
+                        // 根据cnt的具体值分配速度
+
+                        double speed_ratio = fabs(
+                            (double)(bt_param.kn_valid_rate_ok_cnt_threshold -
+                                     cnt) /
+                            (double)(bt_param.kn_valid_rate_ok_cnt_threshold -
+                                     bt_param.kn_valid_rate_ok_cnt_threshold /
+                                         2));
+                        if (speed_ratio > 1.0)
+                            speed_ratio = 1.0;
+                        else if (speed_ratio < 0.35)
+                            speed_ratio = 0.35;
+
+                        _servo_dis *= speed_ratio; // 降速
+                    }
+                }
+
+                // 未检测到穿透开始
+                CURRENT_POS = CURRENT_POS - _servo_dis;
+
+                if (kn_detected) {
+                    // 穿透开始检测到
+                    runtime_.detect_state = 1;
+
+                    // 记录检测到的位置
+                    runtime_.breakout_start_detected_pos = CURRENT_POS;
+
+                    // 计算S轴最大的运动量
+                    // 当前位置减去一定的量
+                    runtime_.min_pos_after_breakout_start_detected =
+                        CURRENT_POS -
+                        bt_param.max_move_um_after_breakout_start_detected;
+                    s_logger->debug(
+                        "detect state 0->1, cur: {}, s_min: {}",
+                        runtime_.breakout_start_detected_pos,
+                        runtime_.min_pos_after_breakout_start_detected);
+                }
+                break;
+            }
+            case 1: {
+                // 穿透开始已经被检测到, 这里检测穿透结束
+
+                if (bt_param.ctrl_flags & (1 << 1)) {
+                    // 使能穿透开始后的降速
+
+                    double max_speed_ratio =
+                        bt_param.speed_rate_after_breakout_start_detected /
+                        100.0; // 上位机设定的最大速度
+                    double speed_ratio =
+                        fabs((CURRENT_POS -
+                              runtime_.min_pos_after_breakout_start_detected) /
+                             (runtime_.breakout_start_detected_pos -
+                              runtime_.min_pos_after_breakout_start_detected));
+                    if (speed_ratio > max_speed_ratio)
+                        speed_ratio = max_speed_ratio;
+                    else if (speed_ratio < 0.35)
+                        speed_ratio = 0.35;
+
+                    // 降速
+                    _servo_dis *= speed_ratio;
+                }
+
+                // 速度减小
+                CURRENT_POS = CURRENT_POS - _servo_dis;
+
+                // 位置限制, 如果到达了位置限制, 也就认为穿透结束了
+                if (CURRENT_POS <
+                    runtime_.min_pos_after_breakout_start_detected) {
+                    CURRENT_POS =
+                        runtime_.min_pos_after_breakout_start_detected;
+
+                    runtime_.breakout_end_judged_time_ms =
+                        GetCurrentTimeMs(); // 记录等待开始时间
+                    runtime_.detect_state = 2;
+                    s_motion_shared->set_breakout_detected(true);
+                    // 切换到状态2去等待一段时间
+                    s_logger->debug("detect state 1->2 [1], cur: {}, {} ms",
+                                    CURRENT_POS,
+                                    runtime_.breakout_end_judged_time_ms);
+                    break;
+                }
+
+                if (!(bt_param.ctrl_flags & (1 << 2))) {
+                    // 不忽略
+                    if (kn_detected) {
+                        // 检测到信号上的穿透结束
+                        runtime_.breakout_end_judged_time_ms =
+                            GetCurrentTimeMs(); // 记录等待开始时间
+                        runtime_.detect_state = 2;
+                        s_motion_shared->set_breakout_detected(true);
+                        // 切换到状态2去等待一段时间
+                        s_logger->debug("detect state 1->2 [2], cur: {}, {} ms",
+                                        CURRENT_POS,
+                                        runtime_.breakout_end_judged_time_ms);
+                    }
+                }
+                break;
+            }
+            case 2: {
+                // 持续放电等待
+                auto now_ms = GetCurrentTimeMs();
+                if (now_ms >
+                    runtime_.breakout_end_judged_time_ms +
+                        bt_param.wait_time_ms_after_breakout_end_judged) {
+                    s_logger->info("lyf breakout!!!, {} ms",
+                                   runtime_.breakout_end_judged_time_ms);
+                    s_motion_shared->set_breakout_detected(true);
+                    drill_over = true; // 打孔阶段结束
+                }
+                break;
+            }
+            }
+        } else {
+            // 穿透检测未使能
+            CURRENT_POS = CURRENT_POS - _servo_dis;
+        }
+
+        // 判断是否到达穿透开始段
+        if (!runtime_.start_breakthrough_detect &&
+            CURRENT_POS < runtime_.start_detect_pos) {
+            runtime_.start_breakthrough_detect = true;
+            s_logger->debug("start_breakthrough_detect");
+        }
     } else {
         // 正常运行, 非穿透检测
         CURRENT_POS = CURRENT_POS - _servo_dis; // 进给速度为正, 是负方向走
@@ -260,6 +401,22 @@ void DrillAutoTask::_drillstate_return_backing() {
 }
 
 void DrillAutoTask::run_once() {
+    auto data_record_instance2 = s_motion_shared->get_data_record_instance2();
+    if (data_record_instance2->is_data_recorder_running()) {
+        auto &rd = data_record_instance2->get_record_data_ref();
+
+        if (drill_state_ == DrillState::Drilling) {
+            if (pause_flag_) {
+                rd.is_drilling = 2;
+            } else {
+                rd.is_drilling = 1;
+            }
+        }
+
+        rd.detect_state = runtime_.detect_state;
+        rd.detect_started = runtime_.start_breakthrough_detect;
+    }
+
     if (pause_flag_) {
         return;
     }

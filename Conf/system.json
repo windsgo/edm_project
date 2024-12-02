@@ -57,7 +57,7 @@
     "time_settings": {
         "info_dispatcher_peroid_ms": 40,
         "monitor_peroid_ms": 40,
-        "motion_cycle_us": 500
+        "motion_cycle_us": 1000
     },
     "zynq_adc_settings": {
         "adc_gain": 60.763000,

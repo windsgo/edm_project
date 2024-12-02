@@ -4,6 +4,7 @@
 #include "Logger/LogMacro.h"
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
+#include "config.h"
 
 #include <cassert>
 
@@ -67,15 +68,14 @@ void MotionStateMachine::run_once() {
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     s_motion_shared->update_zynq_udpmessage_holder();
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    // 穿透检测滤波器
-    s_motion_shared->get_breakout_filter()->push_back_realtime_voltage(
-        (int)s_motion_shared->cached_udp_message().realtime_voltage);
-#endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 #else
     //! 状态机每周期开始更新can buffer缓存到本地
     s_motion_shared->update_can_buffer_cache();
 #endif
+
+    if (!enabled_) {
+        return;
+    }
 
     auto data_record_instance1 = s_motion_shared->get_data_record_instance1();
     if (data_record_instance1->is_data_recorder_running()) {
@@ -114,9 +114,18 @@ void MotionStateMachine::run_once() {
 #endif
     }
 
-    if (!enabled_) {
-        return;
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // breakout filter
+    auto bo_filter = s_motion_shared->get_breakout_filter();
+
+    bo_filter->push_back_realtime_voltage(
+        (int)s_motion_shared->cached_udp_message().realtime_voltage);
+
+    auto data_record_instance2 = s_motion_shared->get_data_record_instance2();
+    if (data_record_instance2->is_data_recorder_running()) {
+        data_record_instance2->clear_data_record();
     }
+#endif
 
     switch (main_mode_) {
     case MotionMainMode::Idle:
@@ -151,6 +160,35 @@ void MotionStateMachine::run_once() {
 
         data_record_instance1->push_data_to_recorder();
     }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    if (data_record_instance2->is_data_recorder_running()) {
+
+        auto &rd2 = data_record_instance2->get_record_data_ref();
+
+        rd2.thread_tick_us = s_motion_shared->get_thread_tick_us();
+
+        auto act_axis = s_motion_shared->get_act_axis();
+        rd2.act_axis_s = act_axis.at(EDM_DRILL_S_AXIS_IDX);
+
+        rd2.kn = bo_filter->get_last_stderr();
+        rd2.kn_valid_rate = bo_filter->get_last_kn_sliding_counter_valid_rate();
+        rd2.kn_cnt = bo_filter->get_last_kn_cnt();
+        rd2.realtime_voltage = bo_filter->get_last_realtime_voltage();
+        rd2.averaged_voltage = bo_filter->get_last_averaged_voltage();
+
+        rd2.kn_detected =
+            rd2.kn_cnt > s_motion_shared->get_drill_params()
+                             .breakout_params.kn_valid_rate_ok_cnt_threshold;
+
+        rd2.breakout_detected = s_motion_shared->get_breakout_detected();
+
+        data_record_instance2->get_record_data_ref().new_cmd_axis_s =
+            s_motion_shared->get_global_cmd_axis().at(EDM_DRILL_S_AXIS_IDX);
+
+        data_record_instance2->push_data_to_recorder();
+    }
+#endif
 }
 
 void MotionStateMachine::reset() {

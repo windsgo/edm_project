@@ -32,6 +32,11 @@ private:
     std::string _generate_data1_header() const;
     bool _save_data1_header_to_file(const std::string& filename) const;
 
+    // data2
+    void _init_record_data2();
+    std::string _generate_data2_header() const;
+    bool _save_data2_header_to_file(const std::string& filename) const;
+
 private:
     Ui::DataQueueRecordPanel *ui;
 

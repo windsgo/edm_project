@@ -214,12 +214,12 @@ void MainWindow::_init_tab_monitor() {
     // vol_cur
     vol_cur_displayer_->set_axis_title(QwtPlot::yLeft, "V", Qt::red);
     vol_cur_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 400);
-    vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "I", Qt::green);
+//    vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "I", Qt::green);
     vol_cur_displayer_->set_axis_scale(QwtPlot::yRight, 0, 30);
 
     desc.data_max_points = -1;
     // vol
-    desc.data_name = "V";
+    desc.data_name = "Voltage";
     desc.yAxis = QwtPlot::yLeft;
     desc.preferred_color = Qt::red;
     monitor_voltage_index_ = vol_cur_displayer_->add_data_item(desc);
@@ -236,7 +236,7 @@ void MainWindow::_init_tab_monitor() {
     mach_rate_displayer_->set_axis_title(QwtPlot::yLeft, "Speed", Qt::black);
     mach_rate_displayer_->set_axis_scale(QwtPlot::yLeft, -30, 30);
     // normal
-    desc.data_name = "sv speed";
+    desc.data_name = "svspeed";
     desc.preferred_color = Qt::green;
     sv_speed_index_ = mach_rate_displayer_->add_data_item(desc);
     // // short

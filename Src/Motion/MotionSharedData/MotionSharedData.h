@@ -18,6 +18,7 @@
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
 #include "DataRecordInstance1.h"
+#include "DataRecordInstance2.h"
 #include "Utils/UnitConverter/UnitConverter.h"
 #include "config.h"
 
@@ -104,6 +105,10 @@ public: // 数据记录相关, 一个周期内可能需要在不同地方记录�
         return data_record_instance1_;
     }
 
+    inline auto get_data_record_instance2() const {
+        return data_record_instance2_;
+    }
+
 public:
     inline void add_thread_tick() {
         thread_tick_us_ += thread_cycle_us_;
@@ -152,9 +157,13 @@ public:
         drill_params_ = drill_params;
 
         breakout_filter_->set_breakout_params(drill_params_.breakout_params);
+        data_record_instance2_->set_drill_param(drill_params_);
     }
 
     auto get_breakout_filter() const { return breakout_filter_; }
+
+    bool get_breakout_detected() const { return breakout_detected_; }
+    void set_breakout_detected(bool detected) { breakout_detected_ = detected; }
 #endif
 
 private:
@@ -174,6 +183,7 @@ private: // Can 接收与缓存相关数据
 
 private:
     DataRecordInstance1::ptr data_record_instance1_;
+    std::shared_ptr<DataRecordInstance2> data_record_instance2_;
 
 private:
     // 共享ecat manager, 便于获取数据和设定(如速度偏置控制)
@@ -208,12 +218,20 @@ private:
     DrillParams drill_params_;
 
     util::BreakoutFilter::ptr breakout_filter_;
+
+    bool breakout_detected_{false};
 #endif 
 
 private:
     MotionSharedData() {
         data_record_instance1_ = std::make_shared<DataRecordInstance1>(
             RecordData1BinDir, RecordData1DecodeDir);
+        
+        data_record_instance2_ = std::make_shared<DataRecordInstance2>(
+            RecordData1BinDir, RecordData1DecodeDir);
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+        data_record_instance2_->set_drill_param(drill_params_);
+#endif
 
         MotionUtils::ClearAxis(global_cmd_axis_);
 

@@ -37,6 +37,8 @@ DataDisplayer::DataDisplayer(int x_points, QWidget *parent)
     //    ui->qwtPlot->setAxisTitle(QwtPlot::yRight, "y");
     ui->qwtPlot->setAxisAutoScale(QwtPlot::xBottom, true);
 
+    ui->qwtPlot->setCanvasBackground(Qt::black);
+
     // init legend
     legend_ = new QwtLegend();
     ui->qwtPlot->insertLegend(legend_);

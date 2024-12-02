@@ -67,6 +67,7 @@ void ZynqUdpMessageHolder::get_udp_message(servo_return_converted_data_t &output
 #endif // EDM_OFFLINE_MANUAL_TOUCH_DETECT
 
 #ifdef EDM_OFFLINE_MANUAL_VOLTAGE
+    output.realtime_voltage = this->manual_voltage_value_;
     output.averaged_voltage = this->manual_voltage_value_;
 #endif // EDM_OFFLINE_MANUAL_VOLTAGE
 }
