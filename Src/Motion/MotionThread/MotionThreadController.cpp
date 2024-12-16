@@ -7,6 +7,7 @@
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 #include "Utils/Format/edm_format.h"
 #include "Utils/Time/TimeUseStatistic.h"
+#include "config.h"
 #include <cstdint>
 #include <ctime>
 
@@ -431,6 +432,9 @@ void MotionThreadController::_threadstate_running() {
     }
     case EcatState::EcatConnectedWaitingForOP: {
         bool op_reached{false};
+
+            _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
+            break;
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
         op_reached = true;
 #else // EDM_OFFLINE_RUN_NO_ECAT
@@ -458,7 +462,7 @@ void MotionThreadController::_threadstate_running() {
 
         if (op_reached) {
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
-            wakeup_systime_ns_ = _get_systime_ns() + cycletime_ns_ * 50;
+            wakeup_systime_ns_ = _get_systime_ns() + cycletime_ns_ * 1;
             s_logger->info("op reached");
         }
         break;
@@ -550,10 +554,16 @@ void MotionThreadController::_threadstate_running() {
             break;
         }
 
-        if (!ecat_manager_->servo_all_operation_enabled()) {
+        if (!ecat_manager_->servo_all_operation_enabled() && false) {
             s_logger->debug(
                 "{:08b}",
                 ecat_manager_->get_servo_device(0)->get_status_word());
+
+            for (int i = 0; i < 7; ++i) {
+                auto d = ecat_manager_->get_servo_device(i);
+                s_logger->debug("servo {}: sw: {:08b}", i, d->get_status_word());
+            }
+
             s_logger->warn("in EcatReady, ecat not all enabled");
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
             // 重置 运动状态机
@@ -583,7 +593,22 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
                             __PRETTY_FUNCTION__));
     }
 
-    s_motion_shared->set_global_cmd_axis(act_axis);
+    axis_t cmd_axis;
+    MotionUtils::ClearAxis(cmd_axis);
+    for (int i = 0; i < cmd_axis.size(); ++i) {
+        cmd_axis[i] = act_axis[i];
+        s_logger->info("init axis: servo {}: act: {}, cmd: {}", i, act_axis[i], cmd_axis[i]);
+    }
+
+    s_motion_shared->set_global_cmd_axis(cmd_axis);
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    int spindle_act_pulse = this->ecat_manager_->get_servo_actual_position(EDM_DRILL_SPINDLE_AXIS_IDX);
+    double spindle_act_pos = (double)spindle_act_pulse / s_motion_shared->gear_ratios()[EDM_DRILL_SPINDLE_AXIS_IDX];
+
+    s_motion_shared->get_spindle_controller()->init_current_axis(spindle_act_pos);
+#endif
+
     motion_state_machine_->set_enable(true);
 
     // 重新统计数

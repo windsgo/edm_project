@@ -24,9 +24,9 @@
     },
     "ecat": {
         "dc_filter_cnt": 1024,
-        "ecat_iomap_size": 4096,
+        "ecat_iomap_size": 8192,
         "ecat_netif_name": "enp1s0",
-        "ecat_sync0_shift_time_ns": 125000,
+        "ecat_sync0_shift_time_ns": 250000,
         "igh_op_wait_count_max": 20000
     },
     "fast_move_param": {

@@ -223,31 +223,7 @@ private:
 #endif 
 
 private:
-    MotionSharedData() {
-        data_record_instance1_ = std::make_shared<DataRecordInstance1>(
-            RecordData1BinDir, RecordData1DecodeDir);
-        
-        data_record_instance2_ = std::make_shared<DataRecordInstance2>(
-            RecordData1BinDir, RecordData1DecodeDir);
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-        data_record_instance2_->set_drill_param(drill_params_);
-#endif
-
-        MotionUtils::ClearAxis(global_cmd_axis_);
-
-        for (size_t i = 0; i < EDM_SERVO_NUM; ++i) {
-            gear_ratios_[i] = 1.0;
-        }
-
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-        gear_ratios_[EDM_DRILL_S_AXIS_IDX] = 100.0; // S轴100倍
-
-        spindle_control_ = std::make_shared<SpindleController>();
-
-        breakout_filter_ = std::make_shared<util::BreakoutFilter>();
-        breakout_filter_->set_breakout_params(drill_params_.breakout_params);
-#endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    }
+    MotionSharedData();
 
     MotionSharedData(const MotionSharedData &) = delete;
     MotionSharedData(MotionSharedData &&) = delete;

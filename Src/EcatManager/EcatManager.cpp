@@ -75,13 +75,13 @@ static std::vector<std::pair<uint32_t, uint32_t>>
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 static std::vector<std::pair<uint32_t, uint32_t>> //! TODO 
     s_slave_vendor_and_product_code_vec = {
-        {0x0000066f, 0x613C0007}, // X
-        {0x0000066f, 0x613C0007}, // Y
-        {0x0000066f, 0x60380007}, // Z
-        {0x0000066f, 0x60380006}, // B
+        {0x0000066f, 0x60380007}, // X
+        {0x0000066f, 0x60380007}, // Y
+        {0x0000066f, 0x613C0007}, // Z
+        {0x0000066f, 0x613C0007}, // B
         {0x0000066f, 0x60380006}, // C
         {0x0000066f, 0x60380004}, // S
-        {0x0000066f, 0x60380004}, // 主轴旋转 
+        {0x0000066f, 0x60380005}, // 主轴旋转 
 };
 #endif // EDM_POWER_TYPE
 #endif // EDM_ECAT_DRIVER_IGH
@@ -97,6 +97,8 @@ EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
     }
     memset(iomap_, 0, iomap_size_);
 #endif // EDM_ECAT_DRIVER_SOEM
+
+    s_logger->trace("servo num: {}", servo_num_);
 
 #ifdef EDM_ECAT_DRIVER_IGH
 #ifndef EDM_OFFLINE_RUN_NO_ECAT
@@ -797,9 +799,10 @@ bool EcatManager::servo_all_disabled() const {
 }
 
 void EcatManager::clear_fault_cycle_run_once() {
-
+    int i = 0;
     for (auto &servo : servo_devices_) {
         servo->set_operation_mode(OM_CSP);
+        // s_logger->debug("i:{}, sw:{:08b}", i, servo->get_status_word());
 
         if (servo->sw_fault()) {
             // s_logger->debug("sw_fault");
@@ -818,7 +821,7 @@ void EcatManager::clear_fault_cycle_run_once() {
                                                               // move suddenly
                                                               // or die again
         }
-
+        ++i;
         // EDM_CYCLIC_LOG(s_logger->debug, 2000, "sw: {0:x}, {0:b}, fault: {1}", servo->get_status_word(), servo->sw_fault());
     }
 }
