@@ -9,6 +9,7 @@
 
 #include "Motion/MotionThread/MotionCommand.h"
 #include "Motion/MotionThread/MotionCommandQueue.h"
+#include <qnamespace.h>
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -22,6 +23,7 @@ PowerManager::PowerManager(io::IOController::ptr io_ctrler,
     : QObject(parent), io_ctrler_(io_ctrler), power_ctrler_(power_ctrler),
       motion_cmd_queue_(motion_cmd_queue) {
     power_db_ = new PowerDatabase(); // no parent
+    power_db_->setWindowFlags(power_db_->windowFlags() | Qt::Tool);
     power_db_->hide();
 
     ele_cycle_timer_ = new QTimer(this);

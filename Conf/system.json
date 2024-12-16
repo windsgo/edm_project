@@ -5,6 +5,8 @@
         "helper_can_device_name": "can1"
     },
     "drill_settings": {
+        "auto_switch_ipump": false,
+        "auto_switch_opump": false,
         "breakout_params": {
             "breakout_start_detect_length_percent": 0.250000,
             "ctrl_flags": 0,
@@ -26,8 +28,8 @@
         "dc_filter_cnt": 1024,
         "ecat_iomap_size": 8192,
         "ecat_netif_name": "enp1s0",
-        "ecat_sync0_shift_time_ns": 250000,
-        "igh_op_wait_count_max": 20000
+        "ecat_sync0_shift_time_ns": 400000,
+        "igh_op_wait_count_max": 100000
     },
     "fast_move_param": {
         "max_acc_um_s2": 200000.000000,

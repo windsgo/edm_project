@@ -107,6 +107,16 @@ void HandboxConverter::_frame_pump(const QCanBusFrame &frame) {
 
     uint32_t machineio = *p_uint32;
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    if (machineio == 5) {
+        // 开油泵
+        cb_pump_on_(true);
+    } else if (machineio == 6) {
+        // 关油泵
+        cb_pump_on_(false);
+    }
+#else
+    // TODO
     if (machineio == 3) {
         // 开油泵
         cb_pump_on_(true);
@@ -114,6 +124,7 @@ void HandboxConverter::_frame_pump(const QCanBusFrame &frame) {
         // 关油泵
         cb_pump_on_(false);
     }
+#endif
 }
 
 void HandboxConverter::_frame_ent_auto() { cb_ent_auto_(); }

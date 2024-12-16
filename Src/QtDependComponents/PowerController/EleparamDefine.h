@@ -352,6 +352,18 @@ struct CanIOBoardEleParamsStrc {
 };
 static_assert(sizeof(struct CanIOBoardEleParamsStrc) == 8);
 
+
+/* 通知水泵状态变化 */
+struct CanHandboxIOStatus {
+    // index 0: 
+    uint8_t pump_on : 1;    // 脉宽档位
+    uint8_t _reserved1 : 7;    //  reserved
+    
+    // index 1 ~ 7:
+    uint8_t _reserved2[7];           //  reserved
+};
+static_assert(sizeof(struct CanHandboxIOStatus) == 8);
+
 } // namespace power
 
 } // namespace edm

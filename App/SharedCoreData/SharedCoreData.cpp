@@ -185,7 +185,7 @@ void SharedCoreData::send_ioboard_bz_once() const {
     this->io_ctrler_->set_can_machineio_output_withmask(io_bit, io_bit);
 
     // 响1下, 600ms后关闭
-    QTimer::singleShot(600, this, [io_bit, this]() {
+    QTimer::singleShot(400, this, [io_bit, this]() {
         this->io_ctrler_->set_can_machineio_output_withmask(0, io_bit);
     });
 #endif

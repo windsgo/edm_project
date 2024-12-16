@@ -433,8 +433,8 @@ void MotionThreadController::_threadstate_running() {
     case EcatState::EcatConnectedWaitingForOP: {
         bool op_reached{false};
 
-            _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
-            break;
+        // _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
+        // break;
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
         op_reached = true;
 #else // EDM_OFFLINE_RUN_NO_ECAT
@@ -561,7 +561,8 @@ void MotionThreadController::_threadstate_running() {
 
             for (int i = 0; i < 7; ++i) {
                 auto d = ecat_manager_->get_servo_device(i);
-                s_logger->debug("servo {}: sw: {:08b}", i, d->get_status_word());
+                s_logger->debug("servo {}: sw: {:08b}", i,
+                                d->get_status_word());
             }
 
             s_logger->warn("in EcatReady, ecat not all enabled");
@@ -597,16 +598,21 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
     MotionUtils::ClearAxis(cmd_axis);
     for (int i = 0; i < cmd_axis.size(); ++i) {
         cmd_axis[i] = act_axis[i];
-        s_logger->info("init axis: servo {}: act: {}, cmd: {}", i, act_axis[i], cmd_axis[i]);
+        s_logger->info("init axis: servo {}: act: {}, cmd: {}", i, act_axis[i],
+                       cmd_axis[i]);
     }
 
     s_motion_shared->set_global_cmd_axis(cmd_axis);
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    int spindle_act_pulse = this->ecat_manager_->get_servo_actual_position(EDM_DRILL_SPINDLE_AXIS_IDX);
-    double spindle_act_pos = (double)spindle_act_pulse / s_motion_shared->gear_ratios()[EDM_DRILL_SPINDLE_AXIS_IDX];
+    int spindle_act_pulse = this->ecat_manager_->get_servo_actual_position(
+        EDM_DRILL_SPINDLE_AXIS_IDX);
+    double spindle_act_pos =
+        (double)spindle_act_pulse /
+        s_motion_shared->gear_ratios()[EDM_DRILL_SPINDLE_AXIS_IDX];
 
-    s_motion_shared->get_spindle_controller()->init_current_axis(spindle_act_pos);
+    s_motion_shared->get_spindle_controller()->init_current_axis(
+        spindle_act_pos);
 #endif
 
     motion_state_machine_->set_enable(true);
@@ -1018,6 +1024,9 @@ void MotionThreadController::_copy_info_cache() {
     info_cache_.breakout_data.kn_valid_rate =
         breakout_filter->get_last_kn_sliding_counter_valid_rate();
     info_cache_.breakout_data.kn_cnt = breakout_filter->get_last_kn_cnt();
+
+    info_cache_.setBreakoutDetected(s_motion_shared->get_breakout_detected());
+    info_cache_.setKnDetected(breakout_filter->is_kn_detected());
 #endif
 
     info_cache_.main_mode = motion_state_machine_->main_mode();

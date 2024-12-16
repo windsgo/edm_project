@@ -829,6 +829,8 @@ void EcatManager::clear_fault_cycle_run_once() {
 void EcatManager::disable_cycle_run_once() {
     //! disabled 状态定义为 switch_on_disabled 状态
     for (auto &servo : servo_devices_) {
+        servo->set_operation_mode(OM_CSP);
+
         if (servo->sw_fault()) {
             servo->cw_fault_reset();
         } else if (servo->sw_switch_on_disabled()) {

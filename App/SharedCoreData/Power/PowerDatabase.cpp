@@ -6,6 +6,7 @@
 #include <QMessageBox>
 
 #include <SystemSettings/SystemSettings.h>
+#include <qtableview.h>
 
 #include "Exception/exception.h"
 #include "Logger/LogMacro.h"
@@ -370,6 +371,11 @@ void PowerDatabase::_slot_table_refresh() {
 
 void PowerDatabase::_set_table_editable(bool editable) {
     // TODO Others
+    if (editable) {
+        ui->tableView->setSelectionBehavior(QTableView::SelectionBehavior::SelectItems);
+    } else {
+        ui->tableView->setSelectionBehavior(QTableView::SelectionBehavior::SelectRows);
+    }
 
     // buttons disabled when editting
     ui->pb_enable_edit->setChecked(editable);

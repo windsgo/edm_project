@@ -147,11 +147,15 @@ struct _breakout_settings {
 struct _drill_settings {
     double touch_return_um{500}; // 碰边后返回距离
     double touch_speed_um_ms{2}; // 碰边速度
+    
+    bool auto_switch_opump{false};
+    bool auto_switch_ipump{false};
 
     _breakout_settings breakout_params; // 穿透参数
 
     MEO_JSONIZATION(MEO_OPT touch_return_um, MEO_OPT touch_speed_um_ms,
-                    MEO_OPT breakout_params);
+                    MEO_OPT breakout_params, MEO_OPT auto_switch_opump,
+                    MEO_OPT auto_switch_ipump);
 };
 #endif
 

@@ -95,6 +95,7 @@
 #define EDM_CAN_TXID_IOBOARD_ELEPARAMS              0x0403
 #define EDM_CAN_RXID_IOBOARD_SERVODATA              0x0231
 #define EDM_CAN_RXID_IOBOARD_ADCINFO                0x0232
+#define EDM_CAN_TXID_HANDBOX_IOSTATUS               0x0501
 
 // CAN ID (ZHONGGU)
 #define EDM_CAN_ZHONGGU_IO_OUTPUT_TXID              0x601 // 407,103统一的IO发送ID

@@ -54,6 +54,8 @@ public:
     auto get_last_kn_sliding_counter_valid_rate() const { return last_kn_sliding_counter_valid_rate_; }
     auto get_last_kn_cnt() const { return kn_cnt_; }
 
+    bool is_kn_detected() const { return last_stderr_ > stderr_threshold_; }
+
 public:
     void push_back_realtime_voltage(int realtime_voltage);
 

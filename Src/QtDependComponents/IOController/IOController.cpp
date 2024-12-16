@@ -6,6 +6,8 @@
 #include <QCanBusFrame>
 #include <functional>
 
+#include "QtDependComponents/PowerController/EleparamDefine.h"
+
 namespace edm {
 
 namespace io {
@@ -238,6 +240,30 @@ bool IOController::_set_can_machineio_output_no_lock_no_trigger(
     if (can_io_output == can_machineio_output_) {
         return false;
     }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    {
+        static const uint32_t opump_bit = (1 << (power::ZHONGGU_IOOut_IOOUT1_OPUMP - 1));
+        bool prev_opump_status = !!(can_machineio_output_ & opump_bit);
+        bool new_opump_status = !!(can_io_output & opump_bit);
+        if (prev_opump_status != new_opump_status) {
+            s_logger->debug("prev_opump_status: {}, new_opump_status: {}", prev_opump_status, new_opump_status);
+
+            struct power::CanHandboxIOStatus d;
+            d.pump_on = new_opump_status;
+            // construct bytearray
+            QByteArray bytearray(
+                reinterpret_cast<const char *>(canio_output_raw_bytes_),
+                8); // deep copy initialize
+
+            auto io_ptr = reinterpret_cast<struct power::CanHandboxIOStatus *>(&(bytearray.data()[0]));
+            *io_ptr = d; // set io
+
+            QCanBusFrame frame(EDM_CAN_TXID_HANDBOX_IOSTATUS, bytearray);
+            can_ctrler_->send_frame(can_device_index_, frame);
+        }
+    }
+#endif
 
     can_machineio_output_ = can_io_output;
     return true;

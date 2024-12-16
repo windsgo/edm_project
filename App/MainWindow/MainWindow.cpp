@@ -3,7 +3,9 @@
 #include "CoordSettingPanel/CoordSettingPanel.h"
 #include "DataDisplayer/DataDisplayer.h"
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
+#include "InputHelper/InputHelper.h"
 #include "LogListPanel/LogListPanel.h"
+#include "QtDependComponents/InfoDispatcher/InfoDispatcher.h"
 #include "QtDependComponents/ZynqConnection/UdpMessageDefine.h"
 #include "SystemSettings/SystemSettings.h"
 #include "qwt_axis.h"
@@ -19,6 +21,7 @@
 #include <qgridlayout.h>
 #include <qnamespace.h>
 #include <qpushbutton.h>
+#include <qstringliteral.h>
 
 #include "Logger/LogMacro.h"
 
@@ -214,7 +217,7 @@ void MainWindow::_init_tab_monitor() {
     // vol_cur
     vol_cur_displayer_->set_axis_title(QwtPlot::yLeft, "V", Qt::red);
     vol_cur_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 400);
-//    vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "I", Qt::green);
+    //    vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "I", Qt::green);
     vol_cur_displayer_->set_axis_scale(QwtPlot::yRight, 0, 30);
 
     desc.data_max_points = -1;
@@ -253,6 +256,31 @@ void MainWindow::_init_tab_monitor() {
                                            true, Qt::green, Qt::gray);
     dial_needle_->setWidth(10);
     ui->Dial_Voltage->setNeedle(dial_needle_);
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    ui->Dial_Voltage->setUpperBound(150);
+    connect(shared_core_data_->get_info_dispatcher(),
+            &InfoDispatcher::info_updated, this,
+            [this](const edm::move::MotionInfo &info) {
+                if (info.KnDetected()) {
+                    ui->lb_dir_has_kn->setText(QStringLiteral("有峭度"));
+                    ui->lb_dir_has_kn->setStyleSheet(QStringLiteral("QLabel{background-color:green;}"));
+                } else {
+                    ui->lb_dir_has_kn->setText(QStringLiteral("无峭度"));
+                    ui->lb_dir_has_kn->setStyleSheet(QStringLiteral("QLabel{background-color:white;}"));
+                }
+
+                if (info.BreakoutDetected()) {
+                    ui->lb_dis_is_breakout->setText(QStringLiteral("已穿透"));
+                    ui->lb_dis_is_breakout->setStyleSheet(QStringLiteral("QLabel{background-color:green;}"));
+                } else {
+                    ui->lb_dis_is_breakout->setText(QStringLiteral("未穿透"));
+                    ui->lb_dis_is_breakout->setStyleSheet(QStringLiteral("QLabel{background-color:white;}"));
+                }
+            });
+#else
+    ui->lb_dir_has_kn->hide();
+    ui->lb_dis_is_breakout->hide();
+#endif
 
     // init timer
     monitor_timer_ = new QTimer(this);
@@ -288,9 +316,8 @@ void MainWindow::_slot_monitor_timer_doit() {
                                   (double)sd.averaged_voltage);
     vol_cur_displayer_->update_display();
 
-    mach_rate_displayer_->push_data(
-        sv_speed_index_,
-        (double)sd.servo_calced_speed_mm_min);
+    mach_rate_displayer_->push_data(sv_speed_index_,
+                                    (double)sd.servo_calced_speed_mm_min);
     mach_rate_displayer_->update_display();
 
     ui->Dial_Voltage->setValue((double)sd.averaged_voltage);

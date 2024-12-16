@@ -48,6 +48,11 @@ enum MotionInfoBitState1 {
         1 << 2, // 接触感知检测使能 //! 应该用不到此状态, 因为现在都是ST机制
     MotionInfoBitState1_TouchDetected = 1 << 3, // 接触感知检测到（物理状态）
     MotionInfoBitState1_TouchWarning = 1 << 4, // 接触感知报警(需要清错)
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    MotionInfoBitState1_BreakoutDetected = 1 << 5,
+    MotionInfoBitState1_KnDetected = 1 << 6,
+#endif
 };
 
 struct MotionInfo {
@@ -122,6 +127,10 @@ public: // 便捷接口
     XX_(1, TouchDetectEnabled)
     XX_(1, TouchDetected)
     XX_(1, TouchWarning)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    XX_(1, BreakoutDetected)
+    XX_(1, KnDetected)
+#endif 
 
 #undef XX_
 };
@@ -184,6 +193,9 @@ struct DrillBreakOutParams {
 struct DrillParams {
     double touch_return_um{500}; // 碰边后返回距离
     double touch_speed_um_ms{2}; // 碰边速度
+
+    bool auto_switch_opump{false};
+    bool auto_switch_ipump{false};
 
     DrillBreakOutParams breakout_params; // 穿透参数
 };

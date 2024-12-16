@@ -34,7 +34,7 @@ void ZynqUdpMessageHolder::_udp_listener_cb(const QByteArray &ba) {
     temp.averaged_voltage = (double)udp_message_ptr->averaged_voltage_times_10 / 10.0;
     temp.realtime_voltage = (double)udp_message_ptr->realtime_voltage_times_10 / 10.0;
     temp.servo_calced_speed_mm_min = (double)udp_message_ptr->servo_calced_speed_mm_min_times_1000 / 1000.0;
-    temp.touch_detected = temp.realtime_voltage <= 3;
+    temp.touch_detected = temp.averaged_voltage <= 1.5;
 
     // atomic operation
     at_udp_message_converted_cached_.store(temp);

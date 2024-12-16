@@ -118,6 +118,9 @@ void SystemSettingPanel::_update_ui() {
     ui->dsb_drill_touch_return_length->setValue(drill_settings.touch_return_um);
     ui->dsb_drill_touch_speed->setValue(drill_settings.touch_speed_um_ms);
 
+    ui->pb_enable_auto_opump->setChecked(drill_settings.auto_switch_opump);
+    ui->pb_enable_auto_ipump->setChecked(drill_settings.auto_switch_ipump);
+
     const auto &bo_settings = drill_settings.breakout_params;
     ui->sb_drill_voltage_average_window->setValue(
         bo_settings.voltage_average_filter_window_size);
@@ -179,6 +182,9 @@ bool SystemSettingPanel::_save() {
 
     drill_settings.touch_return_um = ui->dsb_drill_touch_return_length->value();
     drill_settings.touch_speed_um_ms = ui->dsb_drill_touch_speed->value();
+
+    drill_settings.auto_switch_opump = ui->pb_enable_auto_opump->isChecked();
+    drill_settings.auto_switch_ipump = ui->pb_enable_auto_ipump->isChecked();
 
     struct _sys::_breakout_settings bo_settings;
     bo_settings.voltage_average_filter_window_size =
@@ -271,6 +277,9 @@ bool SystemSettingPanel::_set_drill_settings_to_motion_thread() {
 
     drill_params.breakout_params.ctrl_flags =
         sys_drill_settings.breakout_params.ctrl_flags;
+
+    drill_params.auto_switch_opump = sys_drill_settings.auto_switch_opump;
+    drill_params.auto_switch_ipump = sys_drill_settings.auto_switch_ipump;
 
     auto drill_settings_cmd =
         std::make_shared<move::MotionCommandSetDrillParams>(drill_params);

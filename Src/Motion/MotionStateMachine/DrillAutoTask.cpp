@@ -463,8 +463,14 @@ void DrillAutoTask::run_once() {
 }
 
 void DrillAutoTask::_all_pump_and_spindle_on(bool on) {
-    cbs_.cb_opump_on(on);
-    cbs_.cb_ipump_on(on);
+    const auto& dp = s_motion_shared->get_drill_params();
+    if (dp.auto_switch_opump) {
+        cbs_.cb_opump_on(on);
+    }
+    if (dp.auto_switch_ipump) {
+        cbs_.cb_ipump_on(on);
+    }
+
     if (on) {
         s_motion_shared->get_spindle_controller()->start_spindle();
     } else {

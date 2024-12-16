@@ -58,7 +58,7 @@ Apply</string>
    <item row="1" column="0" colspan="4">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_comm">
       <attribute name="title">
@@ -394,10 +394,27 @@ Apply</string>
             </property>
            </widget>
           </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="dsb_drill_touch_speed">
+            <property name="maximum">
+             <double>1000000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="dsb_drill_touch_return_length">
             <property name="maximum">
              <double>1000000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="pb_enable_auto_ipump">
+            <property name="text">
+             <string>自动内冲液</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -408,10 +425,13 @@ Apply</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="dsb_drill_touch_speed">
-            <property name="maximum">
-             <double>1000000.000000000000000</double>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="pb_enable_auto_opump">
+            <property name="text">
+             <string>自动外冲液</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
