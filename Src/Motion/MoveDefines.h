@@ -68,6 +68,7 @@ struct MotionInfo {
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     unit_t spindle_axis_blu{0.0};
+    bool is_spindle_on{false};
 
     unit_t drill_total_blu{0.0};     // 打孔总深度
     unit_t drill_remaining_blu{0.0}; // 打孔剩余深度

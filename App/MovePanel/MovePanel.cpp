@@ -1,7 +1,9 @@
 #include "MovePanel.h"
 #include "Motion/MoveDefines.h"
+#include "QtDependComponents/InfoDispatcher/InfoDispatcher.h"
 #include "ui_MovePanel.h"
 
+#include <qpushbutton.h>
 #include <sstream>
 
 #include "InputHelper/InputHelper.h"
@@ -81,6 +83,31 @@ void MovePanel::_init_array() {
 }
 
 void MovePanel::_init_button_cb() {
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    ui->pb_drill_spindle->setCheckable(true);
+    connect(ui->pb_drill_spindle, &QPushButton::clicked, this,
+            [this](bool checked) {
+                auto cmd = std::make_shared<move::MotionCommandSetSpindleState>(
+                    checked);
+                shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+
+                auto ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 1000);
+                if (!ret) {
+                    s_logger->error("set spindle [{}] failed", checked);
+                }
+            });
+
+    connect(shared_core_data_->get_info_dispatcher(),
+            &InfoDispatcher::info_updated, this,
+            [this](const move::MotionInfo &info) {
+                ui->pb_drill_spindle->setChecked(info.is_spindle_on);
+            });
+
+#else
+    ui->pb_drill_spindle->hide();
+#endif
+
     //! x+ x- ...
 #define CONNECT_PB_SINGLEPM_POS_SLOT(i__)                                    \
     connect(arr_pb_singlepm_posdir_.at((i__)), &QPushButton::pressed, this,  \
@@ -170,7 +197,6 @@ void MovePanel::_init_handbox_auto_signals() {
     connect(s, &SharedCoreData::sig_handbox_start_pointmove, this,
             [this](const move::axis_t &dir, uint32_t speed_level,
                    bool touch_detect_enable) {
-                
                 if (speed_level >= 3) {
                     ui->pb_check_mfr3->setChecked(true);
                 } else if (speed_level == 2) {
@@ -455,7 +481,7 @@ void MovePanel::_start_multiaxis_vectormove(const move::axis_t &dir,
                 continue;
             }
 
-            if ((!flag) || std::fabs(left_length) < each_axis_inc_length ) {
+            if ((!flag) || std::fabs(left_length) < each_axis_inc_length) {
                 flag = true;
                 each_axis_inc_length = fabs(left_length); // 取更小的那个
             }
@@ -491,9 +517,11 @@ void MovePanel::_start_multiaxis_vectormove(const move::axis_t &dir,
         // modify target pos
         for (uint8_t i = 0; i < dir.size(); ++i) {
             if (dir[i] > 0) {
-                motor_target_pos[i] = motor_start_pos[i] + util::UnitConverter::um2blu(1.0);
+                motor_target_pos[i] =
+                    motor_start_pos[i] + util::UnitConverter::um2blu(1.0);
             } else if (dir[i] < 0) {
-                motor_target_pos[i] = motor_start_pos[i] - util::UnitConverter::um2blu(1.0);
+                motor_target_pos[i] =
+                    motor_start_pos[i] - util::UnitConverter::um2blu(1.0);
             } else {
                 motor_target_pos[i] = motor_start_pos[i];
             }

@@ -7,6 +7,7 @@
 // Panels
 #include "CoordPanel/CoordPanel.h"
 #include "InfoPanel/InfoPanel.h"
+#include "Motion/MoveDefines.h"
 #include "MovePanel/MovePanel.h"
 #include "IOPanel/IOPanel.h"
 #include "PowerPanel/PowerPanel.h"
@@ -43,10 +44,17 @@ private:
     void _init_members();
     void _init_tab_monitor();
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    void _init_tab_breakout_monitor();
+#endif
+
     void _init_status_bar_palette_and_connection();
 
 private:
     void _slot_monitor_timer_doit();
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    void _slot_breakout_monitor_timer_doit(const move::MotionInfo& info);
+#endif
 
 public:
     void slot_info_message(const QString& str, int timeout = 0);
@@ -99,6 +107,18 @@ private: // monitor
     QwtDialSimpleNeedle* dial_needle_;
 
     QTimer* monitor_timer_;
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+private:
+    DataDisplayer* bo_displayer_1_;
+    DataDisplayer* bo_displayer_2_;
+
+    int bo_v_index_;
+    int bo_av_index_;
+
+    int bo_kn_index_;
+    int bo_knr_index_;
+    int bo_kn_cnt_index_;
+#endif
 };
 
 } // namespace app

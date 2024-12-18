@@ -1010,6 +1010,9 @@ void MotionThreadController::_copy_info_cache() {
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     info_cache_.spindle_axis_blu =
         s_motion_shared->get_spindle_controller()->current_axis();
+    info_cache_.is_spindle_on = 
+        s_motion_shared->get_spindle_controller()->is_spindle_on();
+
     info_cache_.drill_total_blu =
         s_motion_shared->get_current_drill_total_blu();
     info_cache_.drill_remaining_blu =

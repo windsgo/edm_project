@@ -5,6 +5,7 @@
 #include "DataQueueRecordPanel/DataQueueRecordPanel.h"
 #include "InputHelper/InputHelper.h"
 #include "LogListPanel/LogListPanel.h"
+#include "Motion/MoveDefines.h"
 #include "QtDependComponents/InfoDispatcher/InfoDispatcher.h"
 #include "QtDependComponents/ZynqConnection/UdpMessageDefine.h"
 #include "SystemSettings/SystemSettings.h"
@@ -152,6 +153,12 @@ void MainWindow::_init_members() {
 
     _init_tab_monitor();
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    _init_tab_breakout_monitor();
+#else
+    ui->tab_breakout_monitor->hide();
+#endif
+
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
             coord_panel_, &CoordPanel::slot_change_display_coord_index);
     connect(task_manager_, &task::TaskManager::sig_switch_coordindex,
@@ -258,25 +265,6 @@ void MainWindow::_init_tab_monitor() {
     ui->Dial_Voltage->setNeedle(dial_needle_);
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     ui->Dial_Voltage->setUpperBound(150);
-    connect(shared_core_data_->get_info_dispatcher(),
-            &InfoDispatcher::info_updated, this,
-            [this](const edm::move::MotionInfo &info) {
-                if (info.KnDetected()) {
-                    ui->lb_dir_has_kn->setText(QStringLiteral("有峭度"));
-                    ui->lb_dir_has_kn->setStyleSheet(QStringLiteral("QLabel{background-color:green;}"));
-                } else {
-                    ui->lb_dir_has_kn->setText(QStringLiteral("无峭度"));
-                    ui->lb_dir_has_kn->setStyleSheet(QStringLiteral("QLabel{background-color:white;}"));
-                }
-
-                if (info.BreakoutDetected()) {
-                    ui->lb_dis_is_breakout->setText(QStringLiteral("已穿透"));
-                    ui->lb_dis_is_breakout->setStyleSheet(QStringLiteral("QLabel{background-color:green;}"));
-                } else {
-                    ui->lb_dis_is_breakout->setText(QStringLiteral("未穿透"));
-                    ui->lb_dis_is_breakout->setStyleSheet(QStringLiteral("QLabel{background-color:white;}"));
-                }
-            });
 #else
     ui->lb_dir_has_kn->hide();
     ui->lb_dis_is_breakout->hide();
@@ -288,6 +276,91 @@ void MainWindow::_init_tab_monitor() {
             &MainWindow::_slot_monitor_timer_doit);
     monitor_timer_->start(SystemSettings::instance().get_monitor_peroid_ms());
 }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+void MainWindow::_init_tab_breakout_monitor() {
+    connect(shared_core_data_->get_info_dispatcher(),
+            &InfoDispatcher::info_updated, this,
+            [this](const edm::move::MotionInfo &info) {
+                if (info.KnDetected()) {
+                    ui->lb_dir_has_kn->setText(QStringLiteral("有峭度"));
+                    ui->lb_dir_has_kn->setStyleSheet(
+                        QStringLiteral("QLabel{background-color:green;}"));
+                } else {
+                    ui->lb_dir_has_kn->setText(QStringLiteral("无峭度"));
+                    ui->lb_dir_has_kn->setStyleSheet(
+                        QStringLiteral("QLabel{background-color:white;}"));
+                }
+
+                if (info.BreakoutDetected()) {
+                    ui->lb_dis_is_breakout->setText(QStringLiteral("已穿透"));
+                    ui->lb_dis_is_breakout->setStyleSheet(
+                        QStringLiteral("QLabel{background-color:green;}"));
+                } else {
+                    ui->lb_dis_is_breakout->setText(QStringLiteral("未穿透"));
+                    ui->lb_dis_is_breakout->setStyleSheet(
+                        QStringLiteral("QLabel{background-color:white;}"));
+                }
+            });
+
+    // layout
+    auto layout = new QGridLayout(ui->tab_breakout_monitor);
+    bo_displayer_1_ = new DataDisplayer();
+    bo_displayer_2_ = new DataDisplayer();
+
+    layout->addWidget(bo_displayer_1_, 0, 0);
+    layout->addWidget(bo_displayer_2_, 1, 0);
+
+    // add datas
+    DisplayedDataDesc desc;
+    desc.visible = true;
+    desc.line_width = 2.0;
+    // 1
+    bo_displayer_1_->set_axis_title(QwtPlot::yLeft, "V", Qt::green);
+    bo_displayer_1_->set_axis_scale(QwtPlot::yLeft, 0, 120);
+    bo_displayer_1_->set_axis_title(QwtPlot::yRight, "KNR", Qt::white);
+    bo_displayer_1_->set_axis_scale(QwtPlot::yRight, 0, 2.0);
+
+    desc.data_max_points = -1;
+    // vol
+    desc.data_name = "V";
+    desc.yAxis = QwtPlot::yLeft;
+    desc.preferred_color = Qt::red;
+    bo_v_index_ = bo_displayer_1_->add_data_item(desc);
+    // vol
+    desc.data_name = "VF";
+    desc.yAxis = QwtPlot::yLeft;
+    desc.preferred_color = Qt::green;
+    bo_av_index_ = bo_displayer_1_->add_data_item(desc);
+    // knr
+    desc.data_name = "KNR";
+    desc.yAxis = QwtPlot::yRight;
+    desc.preferred_color = Qt::red;
+    bo_knr_index_ = bo_displayer_1_->add_data_item(desc);
+
+    // 2
+    bo_displayer_2_->set_axis_title(QwtPlot::yLeft, "KN", Qt::green);
+    bo_displayer_2_->set_axis_scale(QwtPlot::yLeft, 0, 80.0);
+    bo_displayer_2_->set_axis_title(QwtPlot::yRight, "CNT", Qt::yellow);
+    bo_displayer_2_->set_axis_scale(QwtPlot::yRight, 0, 1000);
+
+    desc.data_max_points = -1;
+    // KN
+    desc.data_name = "KN";
+    desc.yAxis = QwtPlot::yLeft;
+    desc.preferred_color = Qt::green;
+    bo_kn_index_ = bo_displayer_2_->add_data_item(desc);
+    // KNCNT
+    desc.data_name = "CNT";
+    desc.yAxis = QwtPlot::yRight;
+    desc.preferred_color = Qt::yellow;
+    bo_kn_cnt_index_ = bo_displayer_2_->add_data_item(desc);
+
+    connect(shared_core_data_->get_info_dispatcher(),
+            &InfoDispatcher::info_updated, this,
+            &MainWindow::_slot_breakout_monitor_timer_doit);
+}
+#endif
 
 void MainWindow::_init_status_bar_palette_and_connection() {
     status_bar_info_palette_ = statusBar()->palette();
@@ -306,6 +379,20 @@ void MainWindow::_init_status_bar_palette_and_connection() {
     connect(this->shared_core_data_, &SharedCoreData::sig_error_message, this,
             &MainWindow::slot_error_message);
 }
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+void MainWindow::_slot_breakout_monitor_timer_doit(
+    const move::MotionInfo &info) {
+    bo_displayer_1_->push_data(bo_v_index_, info.breakout_data.realtime_voltage);
+    bo_displayer_1_->push_data(bo_av_index_, info.breakout_data.averaged_voltage);
+    bo_displayer_1_->push_data(bo_knr_index_, info.breakout_data.kn_valid_rate);
+    bo_displayer_1_->update_display();
+
+    bo_displayer_2_->push_data(bo_kn_index_, info.breakout_data.kn);
+    bo_displayer_2_->push_data(bo_kn_cnt_index_, info.breakout_data.kn_cnt);
+    bo_displayer_2_->update_display();
+}
+#endif
 
 void MainWindow::_slot_monitor_timer_doit() {
 #ifdef EDM_USE_ZYNQ_SERVOBOARD // use zynq board to do servo things

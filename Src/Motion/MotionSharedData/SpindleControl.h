@@ -61,7 +61,7 @@ private:
     // 主轴速度
     unit_t spindle_current_speed_blu_per_peroid_{0};
     // 主轴设定目标速度
-    unit_t spindle_target_speed_blu_per_peroid_{0};
+    unit_t spindle_target_speed_blu_per_peroid_{util::UnitConverter::blu_ms2blu_p(40)};
     // 主轴最大加速度 (每周期速度的最大改变量) 默认每毫秒变化1个blu
     unit_t spindle_max_acc_blu_per_peroid_{
         util::UnitConverter::blu_ms2blu_p(1)};
