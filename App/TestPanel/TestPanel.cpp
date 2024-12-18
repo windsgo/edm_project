@@ -7,6 +7,7 @@
 #include "ui_TestPanel.h"
 
 #include <QSlider>
+#include <qpushbutton.h>
 
 #include "Logger/LogMacro.h"
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -52,8 +53,7 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
     connect(ui->pb_set_spindle_param, &QPushButton::clicked, this, [this]() {
         auto cmd = std::make_shared<move::MotionCommandSetSpindleParam>(
-            ui->dsb_spindle_speed->value(),
-            ui->dsb_spindle_acc->value());
+            ui->dsb_spindle_speed->value(), ui->dsb_spindle_acc->value());
         shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
 
         auto ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 1000);
@@ -125,6 +125,68 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
         emit shared_core_data_->sig_handbox_stop_pointmove();
 #endif
     });
+
+    _init_test_director();
+}
+
+void TestPanel::_init_test_director() {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    connect(
+        ui->pb_director_start_pointmove, &QPushButton::clicked, this, [this]() {
+            auto io_ctrler = this->shared_core_data_->get_io_ctrler();
+
+            io_ctrler->director_start_pointmove(ui->sb_director_inc->value(),
+                                                ui->sb_director_speed->value());
+        });
+    connect(ui->pb_director_stop_pointmove, &QPushButton::clicked, this,
+            [this]() {
+                auto io_ctrler = this->shared_core_data_->get_io_ctrler();
+
+                io_ctrler->director_stop_pointmove();
+            });
+
+    connect(ui->pb_director_move_pos, &QPushButton::pressed, this, [this]() {
+        auto io_ctrler = this->shared_core_data_->get_io_ctrler();
+
+        io_ctrler->director_start_pointmove(10000,
+                                            ui->sb_director_speed->value());
+    });
+    connect(ui->pb_director_move_neg, &QPushButton::pressed, this, [this]() {
+        auto io_ctrler = this->shared_core_data_->get_io_ctrler();
+
+        io_ctrler->director_start_pointmove(-10000,
+                                            ui->sb_director_speed->value());
+    });
+    connect(ui->pb_director_move_pos, &QPushButton::released, this, [this]() {
+        auto io_ctrler = this->shared_core_data_->get_io_ctrler();
+
+        io_ctrler->director_stop_pointmove();
+    });
+    connect(ui->pb_director_move_neg, &QPushButton::released, this, [this]() {
+        auto io_ctrler = this->shared_core_data_->get_io_ctrler();
+
+        io_ctrler->director_stop_pointmove();
+    });
+
+    connect(ui->pb_director_start_homemove, &QPushButton::clicked, this,
+            [this]() {
+                auto io_ctrler = this->shared_core_data_->get_io_ctrler();
+
+                io_ctrler->director_start_homemove(
+                    ui->sb_director_home_back_speed->value(),
+                    ui->sb_director_home_forward_speed->value());
+            });
+
+    QTimer *timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, [this]() {
+        auto d = shared_core_data_->get_io_ctrler()->get_director_state();
+
+        ui->sb_director_curr_pos->setValue(d.curr_step);
+        ui->sb_director_curr_state->setValue(d.director_state);
+    });
+
+    timer->start(100);
+#endif
 }
 
 TestPanel::~TestPanel() { delete ui; }

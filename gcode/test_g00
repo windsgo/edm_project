@@ -3,6 +3,7 @@ i = RS274Interpreter()
 i.g54()
 i.f(100)
 i.g90()
+i.g04(100000)
 i.g00(x=100)
 # i.g00(x=5000, y=5000, touch=True)
 

@@ -1,4 +1,5 @@
 #include "InfoPanel.h"
+#include "Motion/MoveDefines.h"
 #include "ui_InfoPanel.h"
 
 namespace edm {

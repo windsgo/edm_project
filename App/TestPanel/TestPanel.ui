@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>259</width>
-    <height>506</height>
+    <width>518</width>
+    <height>512</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout_5">
    <item row="0" column="0">
     <widget class="QPushButton" name="pb_phy_detected">
      <property name="sizePolicy">
@@ -50,7 +50,72 @@ Detected</string>
      </property>
     </widget>
    </item>
-   <item row="7" column="0" colspan="2">
+   <item row="1" column="1">
+    <widget class="QPushButton" name="pb_test_yz_negmove">
+     <property name="text">
+      <string>TestYZ_NEG</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Feed Probablity</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QSlider" name="horizontalSlider_servo">
+     <property name="minimum">
+      <number>0</number>
+     </property>
+     <property name="maximum">
+      <number>100</number>
+     </property>
+     <property name="value">
+      <number>50</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="tickPosition">
+      <enum>QSlider::TicksBelow</enum>
+     </property>
+     <property name="tickInterval">
+      <number>50</number>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Speed (0.00-10)(um/ms)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QSlider" name="horizontalSlider_servo_2">
+     <property name="minimum">
+      <number>0</number>
+     </property>
+     <property name="maximum">
+      <number>100</number>
+     </property>
+     <property name="value">
+      <number>10</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="tickPosition">
+      <enum>QSlider::TicksBelow</enum>
+     </property>
+     <property name="tickInterval">
+      <number>10</number>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
     <widget class="QGroupBox" name="groupBox">
      <property name="title">
       <string>TestVoltageDisplay</string>
@@ -91,85 +156,7 @@ Detected</string>
      </layout>
     </widget>
    </item>
-   <item row="6" column="0" colspan="2">
-    <widget class="QSlider" name="horizontalSlider_servo_2">
-     <property name="minimum">
-      <number>0</number>
-     </property>
-     <property name="maximum">
-      <number>100</number>
-     </property>
-     <property name="value">
-      <number>10</number>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="tickPosition">
-      <enum>QSlider::TicksBelow</enum>
-     </property>
-     <property name="tickInterval">
-      <number>10</number>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Feed Probablity</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Speed (0.00-10)(um/ms)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QPushButton" name="pb_test_yz_negmove">
-     <property name="text">
-      <string>TestYZ_NEG</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="2">
-    <widget class="QSlider" name="horizontalSlider_servo">
-     <property name="minimum">
-      <number>0</number>
-     </property>
-     <property name="maximum">
-      <number>100</number>
-     </property>
-     <property name="value">
-      <number>50</number>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="tickPosition">
-      <enum>QSlider::TicksBelow</enum>
-     </property>
-     <property name="tickInterval">
-      <number>50</number>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="8" column="0" colspan="2">
+   <item row="7" column="0" colspan="2">
     <widget class="QGroupBox" name="groupBox_2">
      <property name="title">
       <string>主轴测试</string>
@@ -266,6 +253,254 @@ Detected</string>
        <widget class="QPushButton" name="pb_set_spindle_param">
         <property name="text">
          <string>设定</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="2" rowspan="5">
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>导向器测试</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="5" column="0" colspan="2">
+       <widget class="QPushButton" name="pb_director_start_pointmove">
+        <property name="text">
+         <string>开始运动</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>导向器
+当前位置</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QSpinBox" name="sb_director_home_back_speed">
+        <property name="maximum">
+         <number>200</number>
+        </property>
+        <property name="value">
+         <number>3</number>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>回退速度</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="sb_director_curr_state">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="minimum">
+         <number>-1000000</number>
+        </property>
+        <property name="maximum">
+         <number>1000000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_13">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>导向器
+当前状态</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="2">
+       <widget class="QPushButton" name="pb_director_stop_pointmove">
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 120, 0);</string>
+        </property>
+        <property name="text">
+         <string>停止运动</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QSpinBox" name="sb_director_inc">
+        <property name="minimum">
+         <number>-1000000</number>
+        </property>
+        <property name="maximum">
+         <number>1000000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>速度</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="sb_director_curr_pos">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="minimum">
+         <number>-1000000</number>
+        </property>
+        <property name="maximum">
+         <number>1000000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0" colspan="2">
+       <widget class="QPushButton" name="pb_director_start_homemove">
+        <property name="text">
+         <string>开始回零</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="label_11">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>前进速度</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="sb_director_speed">
+        <property name="maximum">
+         <number>200</number>
+        </property>
+        <property name="value">
+         <number>3</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>增量</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QSpinBox" name="sb_director_home_forward_speed">
+        <property name="maximum">
+         <number>200</number>
+        </property>
+        <property name="value">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_14">
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>点动</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="pb_director_move_neg">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>-</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="pb_director_move_pos">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>+</string>
         </property>
        </widget>
       </item>

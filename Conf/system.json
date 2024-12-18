@@ -32,9 +32,9 @@
         "igh_op_wait_count_max": 100000
     },
     "fast_move_param": {
-        "max_acc_um_s2": 200000.000000,
+        "max_acc_um_s2": 150000.000000,
         "nacc_ms": 100,
-        "speed_0_um_s": 33000.000000,
+        "speed_0_um_s": 30000.000000,
         "speed_1_um_s": 6600.000000,
         "speed_2_um_s": 330.000000,
         "speed_3_um_s": 16.000000

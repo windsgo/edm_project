@@ -111,8 +111,8 @@ static std::unordered_map<uint32_t, QString> s_io_names_map = {
     {power::ZHONGGU_IOOut_CAP8, "CAP8"},
     {power::ZHONGGU_IOOut_IOOUT5_LIGHT, "LIGHT"},
     {power::ZHONGGU_IOOut_IOOUT6_RED, "RED"},
-    {power::ZHONGGU_IOOut_IOOUT7_YELLOW, "YELLOW"},
-    {power::ZHONGGU_IOOut_IOOUT8_GREEN, "GREEN"},
+    {power::ZHONGGU_IOOut_IOOUT7_YELLOW, "GREEN"},
+    {power::ZHONGGU_IOOut_IOOUT8_GREEN, "YELLOW"}, // 灯绿和黄接反了
     {power::ZHONGGU_IOOut_IOOUT9_TOOL_FIXTURE, QObject::tr("松电极")},
     {power::ZHONGGU_IOOut_IOOUT10_FUSI_IN, QObject::tr("扶丝入")},
     {power::ZHONGGU_IOOut_IOOUT11_FUSI_OUT, QObject::tr("扶丝出")},
@@ -262,7 +262,7 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
     uint32_t input_io_count = 1;
     const uint32_t output_io_cols = std::ceil((double)total_io_num / (double)row_nums); 
 
-    for (std::size_t io = 1; io <= 16; ++io) {
+    for (std::size_t io = 1; io <= 17; ++io) {
         uint32_t row = (input_io_count - 1) % row_nums;
         uint32_t col = (input_io_count - 1) / row_nums + output_io_cols;
 

@@ -74,6 +74,12 @@ private:
 
     void _init_help_connections();
 
+    void _light_red_blink();
+    void _light_yellow_blink();
+    void _light_yellow();
+    void _light_green();
+    void _auto_led_control();
+
 private:
     void _state_current_node_initing();
     void _state_running();

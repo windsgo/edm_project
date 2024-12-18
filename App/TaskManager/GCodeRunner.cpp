@@ -4,6 +4,7 @@
 #include "Logger/LogMacro.h"
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
+#include "QtDependComponents/PowerController/EleparamDefine.h"
 #include "TaskManager/GCodeTask.h"
 #include "TaskManager/GCodeTaskBase.h"
 #include "Utils/Format/edm_format.h"
@@ -12,6 +13,7 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <chrono>
 #include <cstddef>
 #include <memory>
 
@@ -29,6 +31,10 @@ GCodeRunner::GCodeRunner(app::SharedCoreData *shared_core_data, QObject *parent)
 
     _reset_state();
     _init_help_connections();
+
+    QTimer *light_timer = new QTimer(this);
+    connect(light_timer, &QTimer::timeout, this, &GCodeRunner::_auto_led_control);
+    light_timer->start(1000);
 }
 
 bool GCodeRunner::start(const std::vector<GCodeTaskBase::ptr> &gcode_list) {
@@ -294,6 +300,85 @@ void GCodeRunner::_run_once() {
         if (ret) {
             delay_pause_flag_ = false;
         }
+    }
+}
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+static uint32_t s_yellow_bit = (1 << (power::ZHONGGU_IOOut_IOOUT8_GREEN - 1));
+static uint32_t s_green_bit = (1 << (power::ZHONGGU_IOOut_IOOUT7_YELLOW - 1));
+static uint32_t s_red_bit = (1 << (power::ZHONGGU_IOOut_IOOUT6_RED - 1));
+#endif
+
+void GCodeRunner::_light_red_blink() {}
+
+void GCodeRunner::_light_yellow_blink() {
+    auto io = shared_core_data_->get_io_ctrler();
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    io->set_can_machineio_output_withmask(0, s_green_bit);
+    io->set_can_machineio_output_withmask(0, s_red_bit);
+
+    auto curr_io = io->get_can_machineio_output_safe();
+    auto is_yellow_on = !!(curr_io & s_yellow_bit);
+    if (is_yellow_on) {
+        io->set_can_machineio_output_withmask(0, s_yellow_bit);
+    } else {
+        io->set_can_machineio_output_withmask(0xFFFFFFFF, s_yellow_bit);
+    }
+#endif
+}
+
+void GCodeRunner::_light_yellow() {
+    auto io = shared_core_data_->get_io_ctrler();
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    io->set_can_machineio_output_withmask(0xFFFFFFFF, s_yellow_bit);
+    io->set_can_machineio_output_withmask(0, s_green_bit);
+    io->set_can_machineio_output_withmask(0, s_red_bit);
+#endif
+}
+void GCodeRunner::_light_green() {
+    auto io = shared_core_data_->get_io_ctrler();
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    io->set_can_machineio_output_withmask(0, s_yellow_bit);
+    io->set_can_machineio_output_withmask(0xFFFFFFFF, s_green_bit);
+    io->set_can_machineio_output_withmask(0, s_red_bit);
+#endif
+}
+
+void GCodeRunner::_auto_led_control() {
+    switch (state_) {
+    case State::ReadyToStart:
+    case State::CurrentNodeIniting:
+    case State::Running:
+    case State::WaitingForPaused:
+    case State::WaitingForResumed:
+    case State::WaitingForStopped: {
+        // yellow light blink
+        _light_yellow_blink();
+        break;
+        // static auto last_time = std::chrono::high_resolution_clock::now();
+        // auto now = std::chrono::high_resolution_clock::now();
+
+        // if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time).count() >= 1000) {
+        //     last_time = now;
+        //     _light_yellow_blink();
+        // }
+    }
+    case State::Paused: {
+        // yellow always
+        _light_yellow();
+        break;
+    }
+    case State::Stopped: {
+        // green always
+        _light_green();
+        break;
+    }
+    default:
+        assert(false);
+        break;
     }
 }
 

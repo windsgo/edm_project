@@ -116,31 +116,31 @@ void GCodePanel::_init_handbox_auto_signals() {
 
     connect(s, &SharedCoreData::sig_handbox_ent_auto, this, [this]() {
         // 不处理 start // TODO
+        if (ui->pb_start->isEnabled()) {
+            this->_slot_start();
+            return;
+        }
         
         // 只处理resume的情况
         if (ui->pb_resume->isEnabled()) {
             this->_slot_resume();
-            this->shared_core_data_->send_ioboard_bz_once();
         }
     });
 
     connect(s, &SharedCoreData::sig_handbox_pause_auto, this, [this]() {
         if (ui->pb_pause->isEnabled()) {
             this->_slot_pause();
-            this->shared_core_data_->send_ioboard_bz_once();
         }
     });
 
     connect(s, &SharedCoreData::sig_handbox_stop_auto, this, [this]() {
         if (ui->pb_stop->isEnabled()) {
             this->_slot_stop();
-            this->shared_core_data_->send_ioboard_bz_once();
         }
     });
 
     connect(s, &SharedCoreData::sig_handbox_ack, this, [this]() {
         this->_slot_ack();
-        this->shared_core_data_->send_ioboard_bz_once();
     });
 }
 
@@ -271,6 +271,8 @@ void GCodePanel::_slot_loadfile() {
 }
 
 void GCodePanel::_slot_start() {
+    this->shared_core_data_->send_ioboard_bz_once();
+    
     auto filename = ui->le_current_file->text();
     if (filename.isEmpty() || filename.isNull()) {
         QMessageBox::critical(this, "start error",
@@ -370,6 +372,8 @@ void GCodePanel::_slot_start() {
 }
 
 void GCodePanel::_slot_pause() {
+    this->shared_core_data_->send_ioboard_bz_once();
+
     auto ret = task_manager_->operation_gcode_pause();
 
     if (!ret) {
@@ -389,6 +393,8 @@ void GCodePanel::_slot_pause() {
 }
 
 void GCodePanel::_slot_resume() {
+    this->shared_core_data_->send_ioboard_bz_once();
+
     auto ret = task_manager_->operation_gcode_resume();
 
     // if (ret) {
@@ -404,6 +410,7 @@ void GCodePanel::_slot_resume() {
 }
 
 void GCodePanel::_slot_stop() {
+    this->shared_core_data_->send_ioboard_bz_once();
 
     auto ret = task_manager_->operation_gcode_stop();
 
@@ -419,6 +426,8 @@ void GCodePanel::_slot_stop() {
 }
 
 void GCodePanel::_slot_estop() {
+    this->shared_core_data_->send_ioboard_bz_once();
+
     bool ret = task_manager_->operation_emergency_stop();
     if (!ret) {
         emit this->shared_core_data_->sig_error_message("Send ESTOP Failed",
@@ -434,10 +443,10 @@ void GCodePanel::_slot_estop() {
 }
 
 void GCodePanel::_slot_ack() {
+    this->shared_core_data_->send_ioboard_bz_once();
+
     auto ack_cmd =
         std::make_shared<edm::move::MotionCommandSettingClearWarning>(0);
-
-    shared_core_data_->send_ioboard_bz_once();
 
     shared_core_data_->get_motion_cmd_queue()->push_command(ack_cmd);
 

@@ -112,7 +112,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_power">
        <attribute name="title">
@@ -476,6 +476,11 @@
       <widget class="QWidget" name="tab_monitor">
        <attribute name="title">
         <string>Monitor</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tab_breakout_monitor">
+       <attribute name="title">
+        <string>Breakout</string>
        </attribute>
       </widget>
       <widget class="QWidget" name="tab_log">

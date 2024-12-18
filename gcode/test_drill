@@ -5,6 +5,6 @@ i.g91()
 i.f(1000)
 i.drill(depth=10.0, holdtime=1000, \
     touch=False, back=True, \
-    breakout=False, spindle_speed=None)
+    breakout=False, spindle_speed=50)
 
 i.m02()

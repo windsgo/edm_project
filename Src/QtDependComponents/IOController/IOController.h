@@ -9,6 +9,7 @@
 #include <QByteArray>
 #include <qcanbusframe.h>
 
+#include "QtDependComponents/PowerController/EleparamDefine.h"
 #include "config.h"
 
 namespace edm {
@@ -60,6 +61,14 @@ public:
     uint32_t get_can_machineio_output_safe() const;
 #endif
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    power::CanIOBoardDirectorState get_director_state() const;
+
+    void director_start_pointmove(int32_t target_inc, uint16_t speed);
+    void director_stop_pointmove();
+    void director_start_homemove(uint16_t back_speed, uint16_t forward_speed);
+#endif
+
 private:
     // 无锁的设置函数, 仅仅是比对值和设置值
     // 如果需要trigger发送(io发生变动), 返回true, 否则返回false
@@ -100,6 +109,10 @@ private:
     std::atomic_uint32_t can_machineio_input_{0x0}; // can listener modify , safe atomic
 #endif
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // 把小孔机的导向器功能先放在这里吧
+    std::atomic<power::CanIOBoardDirectorState> at_local_director_state_;
+#endif
 
     int can_device_index_ = -1; // used to send can frames by can::CanController
 

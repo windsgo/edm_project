@@ -5,8 +5,10 @@
 
 #include <QCanBusFrame>
 #include <functional>
+#include <qcanbusframe.h>
 
 #include "QtDependComponents/PowerController/EleparamDefine.h"
+#include "config.h"
 
 namespace edm {
 
@@ -17,7 +19,8 @@ const uint8_t IOController::canio1_raw_bytes_[8] = {0xED, 0x00, 0xDE, 0x00,
                                                     0,    0,    0,    0};
 const uint8_t IOController::canio2_raw_bytes_[8] = {0xDE, 0x00, 0xED, 0x00,
                                                     0,    0,    0,    0};
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 const uint8_t IOController::canio_output_raw_bytes_[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
@@ -41,19 +44,36 @@ IOController::IOController(can::CanController::ptr can_ctrler,
     // canio2_bytearray_[0] = 0xDE;
     // canio2_bytearray_[1] = 0x00;
     // canio2_bytearray_[2] = 0xED;
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // register input io listener
     can_ctrler_->add_frame_received_listener(
         can_device_index_,
         std::bind_front(&IOController::_input_io_listener, this));
 #endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    can_ctrler_->add_frame_received_listener(
+        can_device_index_, [this](const QCanBusFrame &frame) {
+            if (frame.frameId() == EDM_CAN_RXID_IOBOARD_DIRECTOR_STATE) {
+                auto ptr = reinterpret_cast<power::CanIOBoardDirectorState *>(
+                    &(frame.payload().data()[0]));
+                at_local_director_state_.store(*ptr);
+
+                s_logger->trace("director state: {}, {}", (int)(ptr->curr_step),
+                                (uint32_t)(ptr->director_state));
+            }
+        });
+#endif
 }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 // input io listener
-void IOController::_input_io_listener(const QCanBusFrame& frame) {
+void IOController::_input_io_listener(const QCanBusFrame &frame) {
     if (frame.frameId() == CANIO_INPUT_RXID) {
-        auto io_ptr = reinterpret_cast<uint32_t *>(&(frame.payload().data()[0]));
+        auto io_ptr =
+            reinterpret_cast<uint32_t *>(&(frame.payload().data()[0]));
         can_machineio_input_.store(*io_ptr);
 
         s_logger->trace("io input: {0:#010X} {0:032B}", *io_ptr);
@@ -134,7 +154,8 @@ void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
 
     _trigger_send_io_2(new_io_2);
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 void IOController::set_can_machineio_output(uint32_t can_io_output) {
     {
         std::lock_guard guard(mutex_can_io_);
@@ -188,7 +209,8 @@ void IOController::trigger_send_current_io() {
     // s_logger->trace(
     //     "IOController::trigger_send_current_io: 1: {:032B}, 2: {:032B}", io1,
     //     io2);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     uint32_t io_output;
     {
         std::lock_guard guard(mutex_can_io_);
@@ -209,10 +231,71 @@ uint32_t IOController::get_can_machineio_2_safe() const {
     std::lock_guard guard(mutex_can_io_);
     return can_machineio_2_;
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 uint32_t IOController::get_can_machineio_output_safe() const {
     std::lock_guard guard(mutex_can_io_);
     return can_machineio_output_;
+}
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+power::CanIOBoardDirectorState IOController::get_director_state() const {
+    return at_local_director_state_.load();
+}
+
+void IOController::director_start_pointmove(int32_t target_inc,
+                                            uint16_t speed) {
+    power::CanIOBoardDirectorStartPointMove d;
+    d.target_inc = target_inc;
+    d.speed = speed;
+
+    QByteArray bytearray(
+        reinterpret_cast<const char *>(canio_output_raw_bytes_),
+        8); // deep copy initialize
+
+    auto d_ptr =
+        reinterpret_cast<struct power::CanIOBoardDirectorStartPointMove *>(
+            &(bytearray.data()[0]));
+    *d_ptr = d; // set
+
+    QCanBusFrame frame(EDM_CAN_TXID_IOBOARD_DIRECTOR_STARTPOINTMOVE, bytearray);
+    can_ctrler_->send_frame(can_device_index_, frame);
+}
+
+void IOController::director_stop_pointmove() {
+    power::CanIOBoardDirectorStopPointMove d;
+
+    QByteArray bytearray(
+        reinterpret_cast<const char *>(canio_output_raw_bytes_),
+        8); // deep copy initialize
+
+    auto d_ptr =
+        reinterpret_cast<struct power::CanIOBoardDirectorStopPointMove *>(
+            &(bytearray.data()[0]));
+    *d_ptr = d; // set
+
+    QCanBusFrame frame(EDM_CAN_TXID_IOBOARD_DIRECTOR_STOPPOINTMOVE, bytearray);
+    can_ctrler_->send_frame(can_device_index_, frame);
+}
+
+void IOController::director_start_homemove(uint16_t back_speed,
+                                           uint16_t forward_speed) {
+    power::CanIOBoardDirectorStartHomeMove d;
+    d.back_speed = back_speed;
+    d.forward_speed = forward_speed;
+
+    QByteArray bytearray(
+        reinterpret_cast<const char *>(canio_output_raw_bytes_),
+        8); // deep copy initialize
+
+    auto d_ptr =
+        reinterpret_cast<struct power::CanIOBoardDirectorStartHomeMove *>(
+            &(bytearray.data()[0]));
+    *d_ptr = d; // set
+
+    QCanBusFrame frame(EDM_CAN_TXID_IOBOARD_DIRECTOR_STARTHOMEMOVE, bytearray);
+    can_ctrler_->send_frame(can_device_index_, frame);
 }
 #endif
 
@@ -234,7 +317,8 @@ bool IOController::_set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2) {
     can_machineio_2_ = can_io_2;
     return true;
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 bool IOController::_set_can_machineio_output_no_lock_no_trigger(
     uint32_t can_io_output) {
     if (can_io_output == can_machineio_output_) {
@@ -243,11 +327,13 @@ bool IOController::_set_can_machineio_output_no_lock_no_trigger(
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     {
-        static const uint32_t opump_bit = (1 << (power::ZHONGGU_IOOut_IOOUT1_OPUMP - 1));
+        static const uint32_t opump_bit =
+            (1 << (power::ZHONGGU_IOOut_IOOUT1_OPUMP - 1));
         bool prev_opump_status = !!(can_machineio_output_ & opump_bit);
         bool new_opump_status = !!(can_io_output & opump_bit);
         if (prev_opump_status != new_opump_status) {
-            s_logger->debug("prev_opump_status: {}, new_opump_status: {}", prev_opump_status, new_opump_status);
+            s_logger->debug("prev_opump_status: {}, new_opump_status: {}",
+                            prev_opump_status, new_opump_status);
 
             struct power::CanHandboxIOStatus d;
             d.pump_on = new_opump_status;
@@ -256,7 +342,8 @@ bool IOController::_set_can_machineio_output_no_lock_no_trigger(
                 reinterpret_cast<const char *>(canio_output_raw_bytes_),
                 8); // deep copy initialize
 
-            auto io_ptr = reinterpret_cast<struct power::CanHandboxIOStatus *>(&(bytearray.data()[0]));
+            auto io_ptr = reinterpret_cast<struct power::CanHandboxIOStatus *>(
+                &(bytearray.data()[0]));
             *io_ptr = d; // set io
 
             QCanBusFrame frame(EDM_CAN_TXID_HANDBOX_IOSTATUS, bytearray);
@@ -309,7 +396,8 @@ void IOController::_calc_endcheck(QByteArray &bytearray) {
 
     bytearray[7] = static_cast<uint8_t>(end_check);
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 void IOController::_trigger_send_io_output(uint32_t io_output) {
     // construct bytearray
     QByteArray bytearray(

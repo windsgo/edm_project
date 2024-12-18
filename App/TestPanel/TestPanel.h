@@ -19,6 +19,8 @@ public:
     ~TestPanel();
 
 private:
+    void _init_test_director();
+
     void _update_phy_touchdetect();
     void _update_servo();
 

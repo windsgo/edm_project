@@ -364,6 +364,34 @@ struct CanHandboxIOStatus {
 };
 static_assert(sizeof(struct CanHandboxIOStatus) == 8);
 
+/* 103返回的小孔机导向器信息 */
+struct CanIOBoardDirectorState {
+    int32_t curr_step : 32;
+    uint8_t director_state : 8;
+    uint8_t reserved_1 : 8;
+    uint8_t reserved_2 : 8;
+    uint8_t reserved_3 : 8;
+};
+static_assert(sizeof(struct CanIOBoardDirectorState) == 8);
+
+struct CanIOBoardDirectorStartPointMove {
+    int32_t target_inc : 32;
+    uint16_t speed : 16;
+    uint16_t reserved : 16;
+};
+static_assert(sizeof(struct CanIOBoardDirectorStartPointMove) == 8);
+struct CanIOBoardDirectorStopPointMove {
+    uint32_t reserved1 : 32;
+    uint32_t reserved2 : 32;
+};
+static_assert(sizeof(struct CanIOBoardDirectorStopPointMove) == 8);
+struct CanIOBoardDirectorStartHomeMove {
+    uint16_t back_speed : 16;
+    uint16_t forward_speed : 16;
+    uint32_t reserved : 32;
+};
+static_assert(sizeof(struct CanIOBoardDirectorStartHomeMove) == 8);
+
 } // namespace power
 
 } // namespace edm
