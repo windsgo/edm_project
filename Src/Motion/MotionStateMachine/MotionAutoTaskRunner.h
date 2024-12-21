@@ -8,6 +8,7 @@
 #include "G04AutoTask.h"
 #include "M00FakeAutoTask.h"
 #include "DrillAutoTask.h"
+#include "G01GroupAutoTask.h"
 
 #include "Motion/SignalBuffer/SignalBuffer.h"
 

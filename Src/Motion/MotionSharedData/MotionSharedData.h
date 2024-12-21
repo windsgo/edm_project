@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "Motion/SignalBuffer/SignalBuffer.h"
+
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
 #include "DataRecordInstance1.h"
@@ -107,6 +109,12 @@ public: // 数据记录相关, 一个周期内可能需要在不同地方记录�
 
     inline auto get_data_record_instance2() const {
         return data_record_instance2_;
+    }
+
+public:
+    inline auto get_signal_buffer() const { return signal_buffer_; }
+    inline void set_signal_buffer(SignalBuffer::ptr signal_buffer) {
+        signal_buffer_ = signal_buffer;
     }
 
 public:
@@ -226,6 +234,9 @@ private:
 
     bool breakout_detected_{false};
 #endif 
+
+private:
+    SignalBuffer::ptr signal_buffer_{nullptr}; // set by outside
 
 private:
     MotionSharedData();

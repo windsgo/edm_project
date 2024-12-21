@@ -342,6 +342,31 @@ bool MotionStateMachine::start_auto_g04(double deley_s) {
     return true;
 }
 
+bool MotionStateMachine::start_auto_g01_group(const G01GroupStartParam &start_param)
+{
+    s_logger->trace("{}", __PRETTY_FUNCTION__);
+
+    if (main_mode_ != MotionMainMode::Idle) {
+        return false;
+    }
+
+    auto new_g01_group_auto_task =
+        std::make_shared<G01GroupAutoTask>(start_param, cbs_);
+    
+    if (new_g01_group_auto_task->is_over()) {
+        return false;
+    }
+
+    auto ret = auto_task_runner_->restart_task(new_g01_group_auto_task);
+    if (!ret) {
+        return false;
+    }
+
+    signal_buffer_->set_signal(MotionSignal_AutoStarted);
+    _mainmode_switch_to(MotionMainMode::Auto);
+    return true;
+}
+
 bool MotionStateMachine::start_auto_m00fake() {
     s_logger->trace("{}", __PRETTY_FUNCTION__);
 

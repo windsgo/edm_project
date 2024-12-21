@@ -57,6 +57,7 @@ MotionThreadController::MotionThreadController(
     }
 
     signal_buffer_ = std::make_shared<SignalBuffer>();
+    s_motion_shared->set_signal_buffer(signal_buffer_);
 
     //! 初始化公共数据的can buffer, ecat_manager_
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
@@ -970,6 +971,7 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         auto g01_group_cmd =
             std::static_pointer_cast<MotionCommandAutoG01Group>(cmd);
         
+        /*
         s_logger->debug("***** G01Group Received");
         s_logger->debug("G01Group: size={}", g01_group_cmd->start_param().items.size());
         for (int i = 0; i < g01_group_cmd->start_param().items.size(); ++i) {
@@ -980,8 +982,12 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
             }
             s_logger->debug("  line_number: {}", item.line);
         }
+        */
 
-        accept_cmd_flag = true;
+        auto ret = motion_state_machine_->start_auto_g01_group(
+            g01_group_cmd->start_param());
+
+        accept_cmd_flag = ret;
 
         break;
     }

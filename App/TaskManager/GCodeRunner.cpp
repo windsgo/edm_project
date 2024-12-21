@@ -1011,6 +1011,10 @@ void GCodeRunner::_state_running() {
         return;
     }
 
+    if (curr_gcode->type() == GCodeTaskType::G01GroupMotionCommand) {
+        emit this->sig_autogcode_switched_to_line(local_info_cache_.sub_line_number);
+    }
+
     // Motion GCode, 此处进行状态轮训, 转换状态
     switch (local_info_cache_.main_mode) {
     case move::MotionMainMode::Auto: {

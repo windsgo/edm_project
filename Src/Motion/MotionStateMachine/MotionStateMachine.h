@@ -73,6 +73,8 @@ public: // operate interfaces
 
     bool start_auto_g04(double deley_s);
 
+    bool start_auto_g01_group(const G01GroupStartParam &start_param);
+
     bool start_auto_m00fake();
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
