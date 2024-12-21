@@ -604,6 +604,7 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
 
     s_motion_shared->set_global_cmd_axis(cmd_axis);
 
+#ifndef EDM_OFFLINE_RUN_NO_ECAT
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     int spindle_act_pulse = this->ecat_manager_->get_servo_actual_position(
         EDM_DRILL_SPINDLE_AXIS_IDX);
@@ -613,6 +614,7 @@ void MotionThreadController::_ecat_state_switch_to_ready() {
 
     s_motion_shared->get_spindle_controller()->init_current_axis(
         spindle_act_pos);
+#endif
 #endif
 
     motion_state_machine_->set_enable(true);
@@ -962,6 +964,27 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         break;
     }
 #endif // (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    case MotionCommandAuto_G01Group: {
+        s_logger->trace("Handle MotionCmd: Auto_G01Group");
+
+        auto g01_group_cmd =
+            std::static_pointer_cast<MotionCommandAutoG01Group>(cmd);
+        
+        s_logger->debug("***** G01Group Received");
+        s_logger->debug("G01Group: size={}", g01_group_cmd->start_param().items.size());
+        for (int i = 0; i < g01_group_cmd->start_param().items.size(); ++i) {
+            s_logger->debug("G01Group: item[{}]", i);
+            const auto& item = g01_group_cmd->start_param().items[i];
+            for (int i = 0; i < item.incs.size(); ++i) {
+                s_logger->debug("  inc[{}]: {}", i, item.incs[i]);
+            }
+            s_logger->debug("  line_number: {}", item.line);
+        }
+
+        accept_cmd_flag = true;
+
+        break;
+    }
     default:
         s_logger->warn("Unsupported MotionCommandType: {}", (int)cmd->type());
         cmd->ignore();
@@ -1007,10 +1030,12 @@ void MotionThreadController::_copy_info_cache() {
     info_cache_.curr_cmd_axis_blu = s_motion_shared->get_global_cmd_axis();
     s_motion_shared->get_act_axis(info_cache_.curr_act_axis_blu);
 
+    info_cache_.sub_line_number = s_motion_shared->get_sub_line_num();
+
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     info_cache_.spindle_axis_blu =
         s_motion_shared->get_spindle_controller()->current_axis();
-    info_cache_.is_spindle_on = 
+    info_cache_.is_spindle_on =
         s_motion_shared->get_spindle_controller()->is_spindle_on();
 
     info_cache_.drill_total_blu =

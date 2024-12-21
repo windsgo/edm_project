@@ -135,6 +135,9 @@ public:
     axis_t get_act_axis() const;
     bool get_act_axis(axis_t &axis) const;
 
+    auto get_sub_line_num() const { return sub_line_num_; }
+    void set_sub_line_num(int sub_line_num) { sub_line_num_ = sub_line_num; }
+
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 public:
     auto get_spindle_controller() const { return spindle_control_; }
@@ -169,6 +172,8 @@ public:
 private:
     axis_t global_cmd_axis_; // 全局共享指令位置,
                              // 简化指令坐标在各级之间传递的逻辑, 防止指令突变
+
+    int sub_line_num_ {-1}; // 子行号, 用于G01GroupMotionCommand
 
 private: // Can 接收与缓存相关数据
 #ifdef EDM_USE_ZYNQ_SERVOBOARD

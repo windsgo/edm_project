@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <vector>
 
 #include "Motion/MoveDefines.h"
 #include "TaskManager/GCodeTask.h"
@@ -35,7 +36,8 @@ static const std::unordered_map<std::string, GCodeTaskType> s_type_map = {
     XX_(PauseCommand),
     XX_(ProgramEndCommand),
     XX_(CoordSetZeroCommand),
-    XX_(DrillMotionCommand)
+    XX_(DrillMotionCommand),
+    XX_(G01GroupMotionCommand)
 
 #undef XX_
 
@@ -262,6 +264,75 @@ static std::optional<GCodeTaskBase::ptr> _make_drill(const json::object &jo) {
 }
 #endif
 
+static std::optional<GCodeTaskBase::ptr>
+_make_g01_group(const json::object &jo) {
+    std::vector<GCodeTaskG01GroupMotion::G01GroupPoint> point_vec;
+
+    auto coord_index = jo.at("CoordinateIndex").as_integer();
+
+    auto line_number = jo.at("LineNumber").as_integer();
+
+    auto points_ja = jo.at("G01GroupPoints").as_array();
+    // s_logger->debug("G01GroupPoints size: {}", points_ja.size());
+
+    for (const auto &item_jv : points_ja) {
+        const auto& item_jo = item_jv.as_object();
+        // s_logger->debug("G01GroupPoint: {}", item_jo.dumps());
+
+        auto coord_mode_str = item_jo.at("CoordinateMode").as_string();
+
+        auto coord_mode_enum_find_ret = s_coord_mode_map.find(coord_mode_str);
+        if (coord_mode_enum_find_ret == s_coord_mode_map.end()) {
+            s_logger->error(
+                "GCodeTaskConverter _make_g01_group: CoordinateMode err: {}",
+                coord_mode_str);
+            return std::nullopt;
+        }
+
+        auto coord_mode = coord_mode_enum_find_ret->second;
+
+        GCodeTaskG01GroupMotion::G01GroupPoint point;
+        point.coord_mode = coord_mode;
+
+        point.line_number = item_jo.at("LineNumber").as_integer();
+
+        const auto &coords = item_jo.at("Coordinates").as_array();
+        if (coords.size() < 6) {
+            s_logger->error(
+                "GCodeTaskConverter _make_g01_group: coords less than 6, {}",
+                coords.size());
+            return std::nullopt;
+        }
+
+        point.cmd_values.resize(6);
+        for (std::size_t i = 0; i < 6; ++i) {
+            if (!coords[i].is_null()) {
+                point.cmd_values[i] = coords[i].as_double();
+            }
+        }
+        point_vec.push_back(point);
+    }
+
+    // test print
+    // for (int i = 0; i < point_vec.size(); ++i) {
+    //     s_logger->debug("G01GroupPoint[{}]:", i);
+    //     s_logger->debug("  LineNumber: {}", point_vec[i].line_number);
+    //     s_logger->debug("  CoordinateMode: {}", (int)point_vec[i].coord_mode);
+    //     for (int j = 0; j < 6; ++j) {
+    //         if (point_vec[i].cmd_values[j]) {
+    //             s_logger->debug("  {}: {}", j, *(point_vec[i].cmd_values[j]));
+    //         } else {
+    //             s_logger->debug("  {}: null", j);
+    //         }
+    //     }
+    // }
+
+    auto g01_group = std::make_shared<GCodeTaskG01GroupMotion>(
+        coord_index, point_vec, line_number, -1);
+
+    return g01_group;
+}
+
 std::optional<GCodeTaskBase::ptr>
 GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
 
@@ -319,6 +390,10 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
         return _make_drill(jo);
     }
 #endif
+
+    case GCodeTaskType::G01GroupMotionCommand: {
+        return _make_g01_group(jo);
+    }
 
     //! 以下命令虽然构造, 但是实际无操作
     // G90G91的设置记录在G00node中

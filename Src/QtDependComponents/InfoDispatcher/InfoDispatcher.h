@@ -40,6 +40,8 @@ signals: // motion 信号
     void sig_auto_paused();
     void sig_auto_resumed();
     void sig_auto_stopped();
+
+    void sig_auto_notify();
     
     // TODO other signals
 

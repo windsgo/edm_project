@@ -3,12 +3,8 @@ from enum import Enum, unique
 import json
 from inspect import stack
 
-__all__ = ["InterpreterException", "RS274Interpreter"]
-
-# TODO G01Nodes类, 用于存储连续的G01指令的坐标点, 合成一个运动指令, 可以支持跨段回退, 或跨段抬刀等
-class G01Nodes(object):
-    def __init__(self) -> None:
-        self.__nodes = []
+__all__ = ["InterpreterException", "RS274Interpreter", "Points"]
+        
 
 @unique
 class CoordinateMode(Enum):
@@ -36,6 +32,7 @@ class CommandType(Enum):
     DelayCommand = 6 # g04t5
     CoordSetZeroCommand = 7 # coord_set_x_zero, coord_set_zero(x=True, z=True), coord_set_all_zero(), etc
     DrillMotionCommand = 8 # 打孔指令
+    G01GroupMotionCommand = 9 # g01_group
     PauseCommand = 98 # m00
     ProgramEndCommand = 99 # m02
 
@@ -61,15 +58,8 @@ class CommandDictKey(Enum):
     DrillBreakout = 15
     DrillBack = 16
     DrillSpindleSpeed = 17
+    G01GroupPoints = 18
 
-def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
-    output = ""
-    for line in input.splitlines():
-        output += prefix
-        output += line
-        output += "\n"
-    
-    return output
 
 class InterpreterException(Exception):
     def __init__(self, *args: object) -> None:
@@ -82,6 +72,74 @@ class InterpreterException(Exception):
         # self.error_info = _add_prefix_to_each_line_of_str(self.error_info, "**   ")
     def __str__(self) -> str:
         return self.error_info
+
+# 点列, 用于一组点, 可以用于进行一系列连续的运动(如G01连续, 便于跨段回退; 或表示Nurbs曲线点)
+class Points(object):
+    class _Point(object):
+        def __init__(self, coordinate_mode : CoordinateMode, line_number) -> None:
+            self.__coordinate_mode : CoordinateMode = coordinate_mode
+            self.__coords : list = [None, None, None, None, None, None]
+            self.__line_number : int = line_number
+        
+        def set_point(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> None:
+            self.__coords = [x, y, z, b, c, a]
+            for value in self.__coords:
+                if ((value is not None) and (not isinstance(value, (int, float)))):
+                    raise InterpreterException(f"Point value type invalid: {type(value)} ")
+        
+        def get_point(self) -> list:
+            return self.__coords
+
+        def get_coordinate_mode(self) -> CoordinateMode:
+            return self.__coordinate_mode
+        
+        def get_line_number(self) -> int:
+            return self.__line_number
+    
+    def __init__(self) -> None:
+        self.__points : list[Points._Point] = []
+        self.__current_coordinate_mode = CoordinateMode.Undefined
+        
+    def _check_environment(self) -> None:
+        if (self.__current_coordinate_mode == CoordinateMode.Undefined):
+            raise InterpreterException("CoordinateMode Undefined " + _get_stackmessage(2))
+    
+    def g90(self) -> Points:
+        self.__current_coordinate_mode = CoordinateMode.AbsoluteMode
+        return self
+
+    def g91(self) -> Points:
+        self.__current_coordinate_mode = CoordinateMode.IncrementMode
+        return self
+    
+    def push(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> Points:
+        self._check_environment()
+        point = self._Point(self.__current_coordinate_mode, _get_caller_linenumber())
+        try:
+            point.set_point(x, y, z, b, c, a)
+        except Exception as e:
+            raise InterpreterException(e.__str__() + _get_stackmessage())
+        
+        self.__points.append(point)
+        
+        return self
+    
+    def get_points(self) -> list[Points._Point]:
+        return self.__points
+    
+    def test_print(self) -> Points:
+        for p in self.__points:
+            print(f"mode: {p.get_coordinate_mode().name}, point: {p.get_point()}, line: {p.get_line_number()}")
+        return self
+
+def _add_prefix_to_each_line_of_str(input: str, prefix: str) -> str:
+    output = ""
+    for line in input.splitlines():
+        output += prefix
+        output += line
+        output += "\n"
+    
+    return output
 
 class Environment(object):
     def __init__(self) -> None:
@@ -449,6 +507,46 @@ class RS274Interpreter(object):
         command[CommandDictKey.Coordinates.name] = coordinates
             
         self.__g_command_list.append(command)
+        return self
+    
+    @staticmethod
+    def _get_G01GroupPoints(points: Points) -> list:
+        ret = []
+        for p in points.get_points():
+            ret.append({
+                CommandDictKey.CoordinateMode.name: p.get_coordinate_mode().name,
+                CommandDictKey.Coordinates.name: p.get_point(),
+                CommandDictKey.LineNumber.name: p.get_line_number()
+            })
+        
+        return ret
+    
+    def g01_group(self, points: Points) -> RS274Interpreter:
+        if (self.__g_environment.is_program_end()): 
+            return self
+        
+        if (not isinstance(points, Points)):
+            raise InterpreterException(f"Points Type Not Valid: {type(points)} " + _get_stackmessage())
+        
+        self.__g_environment.set_motion_mode(MotionMode.G01)
+        self._assert_environment_valid()
+        
+        command = {
+            CommandDictKey.CommandType.name: CommandType.G01GroupMotionCommand.name,
+            # CommandDictKey.CoordinateMode.name: self.__g_environment.get_coordinate_mode().name,
+            # CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
+            CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
+            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+        }
+        
+        command[CommandDictKey.G01GroupPoints.name] = self._get_G01GroupPoints(points)
+        
+        # test
+        # print("** g01_group")
+        # points.test_print()
+        # print(json.dumps(command, indent=2, ensure_ascii=False))
+        self.__g_command_list.append(command)
+        
         return self
     
     # 进给率F设定

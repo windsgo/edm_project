@@ -33,7 +33,8 @@ GCodeRunner::GCodeRunner(app::SharedCoreData *shared_core_data, QObject *parent)
     _init_help_connections();
 
     QTimer *light_timer = new QTimer(this);
-    connect(light_timer, &QTimer::timeout, this, &GCodeRunner::_auto_led_control);
+    connect(light_timer, &QTimer::timeout, this,
+            &GCodeRunner::_auto_led_control);
     light_timer->start(1000);
 }
 
@@ -361,7 +362,8 @@ void GCodeRunner::_auto_led_control() {
         // static auto last_time = std::chrono::high_resolution_clock::now();
         // auto now = std::chrono::high_resolution_clock::now();
 
-        // if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time).count() >= 1000) {
+        // if (std::chrono::duration_cast<std::chrono::milliseconds>(now -
+        // last_time).count() >= 1000) {
         //     last_time = now;
         //     _light_yellow_blink();
         // }
@@ -861,6 +863,136 @@ void GCodeRunner::_state_current_node_initing() {
         break;
     }
 #endif
+    case GCodeTaskType::G01GroupMotionCommand: {
+        auto g01group_gcode =
+            std::static_pointer_cast<GCodeTaskG01GroupMotion>(curr_gcode);
+
+        move::G01GroupStartParam start_param;
+
+        // check coord index
+        if (!shared_core_data_->get_coord_system()->exist_coordinate_index(
+                g01group_gcode->coord_index())) {
+            _abort(EDM_FMT::format("abort: g01 group coord index not exist: {}",
+                                   g01group_gcode->coord_index()));
+            return;
+        }
+
+        // motor start pos
+        const auto &motor_start_pos = local_info_cache_.curr_cmd_axis_blu;
+
+        // mach start pos
+        move::axis_t mach_start_pos;
+        shared_core_data_->get_coord_system()->get_cm().motor_to_machine(
+            motor_start_pos, mach_start_pos);
+
+        for (int i = 0; i < g01group_gcode->points().size(); ++i) {
+            const auto &point = g01group_gcode->points()[i];
+
+            move::axis_t mach_target_pos = mach_start_pos;
+
+            move::G01GroupItem item;
+            item.line = point.line_number;
+
+            move::MotionUtils::ClearAxis(item.incs);
+
+            const auto &cmd_values = point.cmd_values;
+            if (point.coord_mode == GCodeCoordinateMode::IncrementMode) {
+                // inc
+                for (std::size_t i = 0; i < EDM_AXIS_NUM; ++i) {
+                    if (cmd_values[i]) {
+                        mach_target_pos[i] +=
+                            util::UnitConverter::mm2blu(*(cmd_values[i]));
+                        item.incs[i] =
+                            util::UnitConverter::mm2blu(*(cmd_values[i]));
+                    }
+                }
+            } else {
+                // abs
+                uint32_t coord_index = g01group_gcode->coord_index();
+
+                // 先将输入的机床坐标起点转化为坐标系坐标起点
+                move::axis_t coord_start_pos;
+                bool ret1 = shared_core_data_->get_coord_system()
+                                ->get_cm()
+                                .machine_to_coord(coord_index, mach_start_pos,
+                                                  coord_start_pos);
+                if (!ret1) {
+                    _abort(EDM_FMT::format(
+                        "abort: g01 group machine_to_coord failed: {}",
+                        coord_index));
+                    return;
+                }
+
+                // 根据cmd_values设定coord_target_pos
+                move::axis_t coord_target_pos;
+                for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+                    if (cmd_values[i]) {
+                        coord_target_pos[i] =
+                            util::UnitConverter::mm2blu(*(cmd_values[i]));
+                    } else {
+                        coord_target_pos[i] = coord_start_pos[i];
+                    }
+                }
+
+                // 再转化为 MachTargetPos
+                bool ret2 = shared_core_data_->get_coord_system()
+                                ->get_cm()
+                                .coord_to_machine(coord_index, coord_target_pos,
+                                                  mach_target_pos);
+                if (!ret2) {
+                    _abort(EDM_FMT::format(
+                        "abort: g01 group coord_to_machine failed: {}",
+                        coord_index));
+                    return;
+                }
+
+                for (std::size_t i = 0; i < EDM_AXIS_NUM; ++i) {
+                    item.incs[i] = mach_target_pos[i] - mach_start_pos[i];
+
+                    if (std::abs(item.incs[i]) < 0.000001) {
+                        item.incs[i] = 0.0;
+                    }
+                }
+            }
+
+            if (move::MotionUtils::IsAxisTheSame(mach_start_pos,
+                                                 mach_target_pos)) {
+                s_logger->warn("g01 group warn: start and target the same");
+                continue;
+            }
+
+            // 根据mach_target_pos, 判断软限位
+            auto curr_dir = move::MotionUtils::CalcAxisUnitVector(
+                mach_start_pos, mach_target_pos);
+            auto sl_check_ret = TaskHelper::CheckPosandnegSoftLimit(
+                shared_core_data_->get_coord_system(), mach_target_pos,
+                curr_dir);
+            if (!sl_check_ret) {
+                _abort(EDM_FMT::format("abort: g01 group softlimit reached"));
+                return;
+            }
+
+            start_param.items.push_back(item);
+            mach_start_pos = mach_target_pos;
+        }
+
+        assert(g01_gcode->cmd_values().size() == 6);
+
+        auto g01group_cmd =
+            std::make_shared<move::MotionCommandAutoG01Group>(start_param);
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(g01group_cmd);
+
+        // 等待命令被接收
+        if (!TaskHelper::WaitforCmdTobeAccepted(g01group_cmd, 1000)) {
+            _abort("abort: start g01 group failed, cmd not accepted by motion or "
+                   "timeout");
+            break;
+        }
+
+        _switch_to_state(State::Running);
+        break;
+    }
 
     default:
         s_logger->error("GCodeRunner: unknown gcode type: {}",

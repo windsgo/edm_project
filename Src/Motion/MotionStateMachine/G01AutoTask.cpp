@@ -500,6 +500,10 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
 }
 
 bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    return false; // 小孔机不支持抬刀
+#endif
+
     // 更新抬刀参数
     jumping_param_ = s_motion_shared->get_jump_param();
 

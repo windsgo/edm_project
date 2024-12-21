@@ -66,6 +66,8 @@ struct MotionInfo {
                                    // 但如果后续加入坐标处理等算法, 就不一定了
     axis_t curr_act_axis_blu{0.0}; // 当前周期编码器实际位置
 
+    int sub_line_number {-1}; // 子行号, 用于G01GroupMotionCommand
+
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     unit_t spindle_axis_blu{0.0};
     bool is_spindle_on{false};
@@ -145,6 +147,8 @@ enum MotionSignalType {
     MotionSignal_AutoResumed,
     MotionSignal_AutoStopped,
 
+    MotionSignal_AutoNotify,
+
     // TODO
 
     MotionSignal_MAX
@@ -210,6 +214,16 @@ struct DrillStartParams {
     std::optional<double> spindle_speed_blu_ms_opt;
 };
 #endif
+
+
+struct G01GroupItem {
+    move::axis_t incs;
+    int line{-1};
+};
+
+struct G01GroupStartParam {
+    std::vector<G01GroupItem> items;
+};
 
 } // namespace move
 

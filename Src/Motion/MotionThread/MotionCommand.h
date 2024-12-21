@@ -99,6 +99,8 @@ enum MotionCommandType {
 
 #endif // EDM_POWER_TYPE
 
+    MotionCommandAuto_G01Group,
+
     MotionCommand_Max
 };
 
@@ -392,6 +394,19 @@ private:
     DrillParams drill_params_;
 };
 #endif
+
+class MotionCommandAutoG01Group final : public MotionCommandBase {
+public:
+    MotionCommandAutoG01Group(const G01GroupStartParam &start_param)
+        : MotionCommandBase(MotionCommandAuto_G01Group),
+          start_param_(start_param) {}
+    ~MotionCommandAutoG01Group() noexcept override = default;
+
+    const auto &start_param() const { return start_param_; }
+
+private:
+    G01GroupStartParam start_param_;
+};
 
 // class MotionCommandStartLinearServoMove final
 //     : public MotionCommandSimpleMoveBase {

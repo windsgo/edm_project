@@ -1,6 +1,7 @@
 #include "InfoDispatcher.h"
 
 #include "Logger/LogMacro.h"
+#include "Motion/MoveDefines.h"
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -67,6 +68,9 @@ void InfoDispatcher::_handle_signal_callback(const move::MotionSignal &signal) {
         break;
     case move::MotionSignalType::MotionSignal_AutoStopped:
         emit sig_auto_stopped();
+        break;
+    case move::MotionSignalType::MotionSignal_AutoNotify:
+        emit sig_auto_notify();
         break;
     default:
         s_logger->warn("recv unknown signal: {}", (int)signal.type);

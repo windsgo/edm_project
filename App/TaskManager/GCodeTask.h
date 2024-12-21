@@ -203,6 +203,34 @@ private:
 };
 #endif
 
+class GCodeTaskG01GroupMotion final : public GCodeTaskBase {
+public:
+    struct G01GroupPoint {
+        std::vector<std::optional<double>> cmd_values;
+        GCodeCoordinateMode coord_mode{GCodeCoordinateMode::Undefined};
+        int line_number{-1};
+    };
+
+public:
+    GCodeTaskG01GroupMotion(int coord_index,
+                            const std::vector<G01GroupPoint> &points,
+                            int line_number, int node_index = -1)
+        : GCodeTaskBase(GCodeTaskType::G01GroupMotionCommand, line_number,
+                        node_index),
+          coord_index_(coord_index), points_(points) {}
+    ~GCodeTaskG01GroupMotion() noexcept override = default;
+
+    bool is_motion_task() const override { return true; }
+
+    const auto &points() const { return points_; }
+
+    auto coord_index() const { return coord_index_; }
+
+private:
+    int coord_index_;
+    std::vector<G01GroupPoint> points_;
+};
+
 } // namespace task
 
 } // namespace edm
