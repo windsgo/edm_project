@@ -45,8 +45,8 @@ typedef struct {
     uint16_t servo_sensitivity; // 伺服灵敏度 (0~100)
     uint16_t servo_ref_voltage; // 伺服参考电压 (0~300)
 
-    uint16_t servo_voltage_diff_level; // 伺服电压区间档位分组
-    uint16_t _reserved;                // 保留, 用于对齐结构体
+    uint16_t servo_voltage_diff_level; // 伺服电压区间档位分组, >=50表示采用上下阈值档位
+    uint16_t servo_ref_voltage_low;                // 下参考, 小孔加工使用
 } upper_servo_settings_t;
 
 // 主要参数设定(上位机下发)

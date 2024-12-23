@@ -46,6 +46,13 @@ private:
     bool mach_on_;
 };
 
+class MotionEventTriggerBzOnce : public QEvent {
+public:
+    MotionEventTriggerBzOnce() : QEvent(type) {}
+    constexpr static const QEvent::Type type =
+        QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_MotionTriggerBzOnce);
+};
+
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 class MotionEventOPumpOn : public QEvent {
 public:
@@ -262,6 +269,12 @@ void SharedCoreData::customEvent(QEvent *e) {
         auto mach_on_event = static_cast<MotionEventMachOn *>(e);
         this->power_manager_->set_highpower_on(mach_on_event->mach_on());
         this->power_ctrler_->update_eleparam_and_send();
+        e->accept();
+        break;
+    }
+
+    case MotionEventTriggerBzOnce::type: {
+        this->send_ioboard_bz_once();
         e->accept();
         break;
     }
@@ -495,6 +508,17 @@ void SharedCoreData::_init_motionthread_cb() {
                                             new MotionEventMachOn(_mach_on));
             },
             arg);
+
+        // thread safe call
+        this->global_cmd_queue_->push_command(run_cmd);
+    };
+
+    motion_cbs_.cb_trigger_bz_once = [this](void) -> void {
+        auto run_cmd = global::CommandCommonFunctionFactory::bind(
+            [this](int dummy) {
+                QCoreApplication::postEvent(this,
+                                            new MotionEventTriggerBzOnce());
+            }, 1);
 
         // thread safe call
         this->global_cmd_queue_->push_command(run_cmd);

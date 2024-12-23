@@ -239,6 +239,7 @@ void PowerController::_handle_servo_settings() {
     servo_s.servo_ref_voltage = curr_eleparam_.sv;
     servo_s.servo_voltage_diff_level = curr_eleparam_.UpperThreshold;
     servo_s.servo_sensitivity = curr_eleparam_.servo_sensitivity;
+    servo_s.servo_ref_voltage_low = curr_eleparam_.LowerThreshold;
 
     static int64_t last_send_time = 0;
     bool forced = false;

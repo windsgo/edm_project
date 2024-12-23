@@ -123,6 +123,8 @@ void DrillAutoTask::_drillstate_touching() {
     if (s_motion_shared->cached_udp_message().touch_detected) {
         s_logger->debug("DrillAutoTask Touch Detected");
 
+        cbs_.cb_trigger_bz_once();
+
         // 碰边完成, 记录碰边位置, 计算加工目标位置
         runtime_.touched_pos = CURRENT_POS;
         runtime_.mach_start_pos =
@@ -166,7 +168,7 @@ void DrillAutoTask::_drillstate_touched_backing() {
         util::UnitConverter::um2blu(
             s_motion_shared->get_drill_params().touch_return_um);
 
-    CURRENT_POS = CURRENT_POS + 5; // TODO, 目前固定速度回退
+    CURRENT_POS = CURRENT_POS + 1; // TODO, 目前固定速度回退
 
     if (CURRENT_POS >= target_back_pos) {
         // 回退完成
@@ -198,6 +200,17 @@ void DrillAutoTask::_drillstate_drilling() {
 
     double _servo_dis = util::UnitConverter::mm_min2blu_p(
         s_motion_shared->cached_udp_message().servo_calced_speed_mm_min);
+
+    // // test local servo
+    // double _servo_dis = 0.0;
+    // double v = s_motion_shared->cached_udp_message().averaged_voltage;
+    // if (v > 80) {
+    //     _servo_dis = 1;
+    // } else if (v > 40) {
+    //     _servo_dis = 0.5;
+    // } else {
+    //     _servo_dis = -0.5;
+    // }
 
     if (start_params_.breakout) {
         auto bo_filter = s_motion_shared->get_breakout_filter();
@@ -296,12 +309,14 @@ void DrillAutoTask::_drillstate_drilling() {
                     s_logger->debug("detect state 1->2 [1], cur: {}, {} ms",
                                     CURRENT_POS,
                                     runtime_.breakout_end_judged_time_ms);
+
+                    cbs_.cb_trigger_bz_once();
                     break;
                 }
 
                 if (!(bt_param.ctrl_flags & (1 << 2))) {
                     // 不忽略
-                    if (kn_detected) {
+                    if (!kn_detected) {
                         // 检测到信号上的穿透结束
                         runtime_.breakout_end_judged_time_ms =
                             GetCurrentTimeMs(); // 记录等待开始时间
@@ -311,6 +326,8 @@ void DrillAutoTask::_drillstate_drilling() {
                         s_logger->debug("detect state 1->2 [2], cur: {}, {} ms",
                                         CURRENT_POS,
                                         runtime_.breakout_end_judged_time_ms);
+
+                        cbs_.cb_trigger_bz_once();
                     }
                 }
                 break;
@@ -386,17 +403,18 @@ void DrillAutoTask::_drillstate_prepare_back_delaying() {
 void DrillAutoTask::_drillstate_return_backing() {
     double target_back_pos = runtime_.mach_over_back_return_pos;
 
-    CURRENT_POS = CURRENT_POS + 5; // TODO, 目前固定速度回退
+    CURRENT_POS = CURRENT_POS + 2; // TODO, 目前固定速度回退
 
     if (CURRENT_POS >= target_back_pos) {
         // 回退完成
-        s_logger->debug("DrillAutoTask, Return Backing Over: {}", CURRENT_POS);
         CURRENT_POS = target_back_pos;
+        s_logger->debug("DrillAutoTask, Return Backing Over: {}", CURRENT_POS);
 
         _clear_all_status();
 
         _mach_on(false);
         _all_pump_and_spindle_on(false);
+        cbs_.cb_trigger_bz_once();
     }
 }
 

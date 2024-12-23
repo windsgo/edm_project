@@ -178,8 +178,7 @@ void MotionStateMachine::run_once() {
         rd2.averaged_voltage = bo_filter->get_last_averaged_voltage();
 
         rd2.kn_detected =
-            rd2.kn_cnt > s_motion_shared->get_drill_params()
-                             .breakout_params.kn_valid_rate_ok_cnt_threshold;
+            s_motion_shared->get_breakout_filter()->is_kn_detected();
 
         rd2.breakout_detected = s_motion_shared->get_breakout_detected();
 

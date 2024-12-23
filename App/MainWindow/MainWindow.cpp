@@ -335,7 +335,7 @@ void MainWindow::_init_tab_breakout_monitor() {
     // knr
     desc.data_name = "KNR";
     desc.yAxis = QwtPlot::yRight;
-    desc.preferred_color = Qt::red;
+    desc.preferred_color = Qt::yellow;
     bo_knr_index_ = bo_displayer_1_->add_data_item(desc);
 
     // 2

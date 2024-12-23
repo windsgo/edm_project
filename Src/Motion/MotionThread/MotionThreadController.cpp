@@ -1033,6 +1033,9 @@ void MotionThreadController::_copy_info_cache() {
     std::lock_guard guard(info_cache_mutex_);
 #endif // EDM_MOTION_INFO_GET_USE_ATOMIC
 
+    // bit_state1
+    info_cache_.bit_state1 = 0;
+    
     info_cache_.curr_cmd_axis_blu = s_motion_shared->get_global_cmd_axis();
     s_motion_shared->get_act_axis(info_cache_.curr_act_axis_blu);
 
@@ -1094,8 +1097,6 @@ void MotionThreadController::_copy_info_cache() {
     info_cache_.time_use_data.statemachine_time_use_max =
         TIMEUSESTAT_MAX(statemachine_time_statistic_);
 
-    // bit_state1
-    info_cache_.bit_state1 = 0;
 
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
     info_cache_.setEcatConnected(ecat_state_ > EcatState::EcatConnecting);

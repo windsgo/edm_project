@@ -85,6 +85,7 @@
 #define EDM_CUSTOM_QTEVENT_TYPE_MotionMachOn        1011
 #define EDM_CUSTOM_QTEVENT_TYPE_MotionOPumpOn       1012
 #define EDM_CUSTOM_QTEVENT_TYPE_MotionIPumpOn       1013
+#define EDM_CUSTOM_QTEVENT_TYPE_MotionTriggerBzOnce 1014
 
 // CAN TxID 集合 (DIMEN)
 #define EDM_CAN_TXID_POWER                          0x0010
@@ -129,7 +130,7 @@
 #define EDM_IOBOARD_NEW_SERVODATA_1MS
 
 // OFFLINE DEFINE
-#define EDM_OFFLINE_RUN
+// #define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程

@@ -171,6 +171,8 @@ struct MotionCallbacks {
     std::function<void(bool)> cb_enable_voltage_gate;
     std::function<void(bool)> cb_mach_on;
 
+    std::function<void(void)> cb_trigger_bz_once;
+
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     std::function<void(bool)> cb_opump_on;
     std::function<void(bool)> cb_ipump_on;

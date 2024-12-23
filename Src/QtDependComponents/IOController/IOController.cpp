@@ -406,6 +406,7 @@ void IOController::_trigger_send_io_output(uint32_t io_output) {
 
     auto io_ptr = reinterpret_cast<uint32_t *>(&(bytearray.data()[0]));
     *io_ptr = io_output; // set io
+    io_ptr[1] = 0x12345678; // check crc
 
     QCanBusFrame frame(CANIO_OUTPUT_TXID, bytearray);
     can_ctrler_->send_frame(can_device_index_, frame);

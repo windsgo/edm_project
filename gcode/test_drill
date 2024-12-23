@@ -3,8 +3,26 @@ i = RS274Interpreter()
 i.g54()
 i.g91()
 i.f(1000)
-i.drill(depth=10.0, holdtime=1000, \
-    touch=False, back=True, \
-    breakout=False, spindle_speed=50)
+i.e(3)
+
+def do_drill():
+    i.drill(depth=10.0, holdtime=1000, \
+        touch=True, back=True, \
+        breakout=True, spindle_speed=150)
+
+# do_drill()
+
+for num in range(10):
+    do_drill()
+    if (num == 9):
+        break
+    i.g04(1)
+    i.g91().f(300).g00(x=2)
+    i.g91().f(300).g00(z=-2)
+    i.g04(1)
+    
+#i.drill(depth=10.0, holdtime=1000, \
+#    touch=True, back=True, \
+#    breakout=True, spindle_speed=100)
 
 i.m02()

@@ -8,21 +8,21 @@
         "auto_switch_ipump": true,
         "auto_switch_opump": true,
         "breakout_params": {
-            "breakout_start_detect_length_percent": 0.250000,
-            "ctrl_flags": 0,
-            "kn_sc_window_size": 300,
-            "kn_valid_rate_ok_cnt_maximum": 600,
-            "kn_valid_rate_ok_cnt_threshold": 320,
+            "breakout_start_detect_length_percent": 0.230000,
+            "ctrl_flags": 4,
+            "kn_sc_window_size": 400,
+            "kn_valid_rate_ok_cnt_maximum": 1000,
+            "kn_valid_rate_ok_cnt_threshold": 500,
             "kn_valid_rate_threshold": 0.010000,
             "kn_valid_threshold": 20.000000,
-            "max_move_um_after_breakout_start_detected": 200.000000,
+            "max_move_um_after_breakout_start_detected": 400.000000,
             "speed_rate_after_breakout_start_detected": 0.800000,
             "stderr_filter_window_size": 200,
             "voltage_average_filter_window_size": 200,
-            "wait_time_ms_after_breakout_end_judged": 1000
+            "wait_time_ms_after_breakout_end_judged": 1500
         },
-        "touch_return_um": 500.000000,
-        "touch_speed_um_ms": 2.000000
+        "touch_return_um": 700.000000,
+        "touch_speed_um_ms": 1.000000
     },
     "ecat": {
         "dc_filter_cnt": 1024,
@@ -32,11 +32,11 @@
         "igh_op_wait_count_max": 100000
     },
     "fast_move_param": {
-        "max_acc_um_s2": 200000.000000,
+        "max_acc_um_s2": 170000.000000,
         "nacc_ms": 100,
-        "speed_0_um_s": 30000.000000,
+        "speed_0_um_s": 16000.000000,
         "speed_1_um_s": 6600.000000,
-        "speed_2_um_s": 330.000000,
+        "speed_2_um_s": 450.000000,
         "speed_3_um_s": 16.000000
     },
     "file": {
@@ -62,9 +62,9 @@
         "motion_cycle_us": 1000
     },
     "zynq_adc_settings": {
-        "adc_gain": 60.763000,
-        "adc_offset": -306.560000,
-        "voltage_filter_window_time_us": 10000
+        "adc_gain": 26.415000,
+        "adc_offset": -133.081000,
+        "voltage_filter_window_time_us": 15000
     },
     "zynq_settings": {
         "zynq_tcp_server_ip": "192.168.1.133",
