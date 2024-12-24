@@ -31,12 +31,18 @@ public slots: // 用于外部
     void slot_start_record_data2();
     void slot_stop_record_data2();
 
+    void slot_start_audio_record();
+    void slot_stop_audio_record();
+
 private:
     void _start_record_data1();
     void _stop_record_data1();
 
     void _start_record_data2();
     void _stop_record_data2();
+
+    void _start_audio_record();
+    void _stop_audio_record();
 
 private:
     void _init_dirs();
@@ -51,6 +57,9 @@ private:
     std::string _generate_data2_header() const;
     bool _save_data2_header_to_file(const std::string& filename) const;
 
+    // audio record
+    void _init_audio_record();
+
 private:
     Ui::DataQueueRecordPanel *ui;
 
@@ -62,6 +71,10 @@ private:
 
     // util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr motion_record_data1_recorder_;
     // const QString data1_header_file_ = RecordData1DecodeDir + "data1_header.txt";
+
+    const QString DataSaveRootDir =
+        QString::fromStdString(SystemSettings::instance().get_datasave_dir());
+    const QString AudioRecordDir = DataSaveRootDir + "/AudioRecord/";
 };
 
 

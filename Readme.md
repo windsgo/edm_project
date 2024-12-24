@@ -2,6 +2,14 @@
 
 ## 必要依赖
 
+### Audio
+
+注意, sudo环境下无法直接访问音频设备，需要运行`run_withaudio.sh`脚本。
+```bash
+#!/bin/bash
+sudo pulseaudio --start --log-target=syslog && sudo build/App/app
+```
+
 ### GCC/G++13
 
 ```bash

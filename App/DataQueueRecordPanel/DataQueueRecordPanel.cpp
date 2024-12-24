@@ -1,5 +1,6 @@
 #include "DataQueueRecordPanel.h"
 #include "Motion/MotionSharedData/MotionSharedData.h"
+#include "QtDependComponents/AudioRecorder/AudioRecorder.h"
 #include "config.h"
 #include "ui_DataQueueRecordPanel.h"
 
@@ -29,6 +30,8 @@ DataQueueRecordPanel::DataQueueRecordPanel(SharedCoreData *shared_core_data,
 
     _init_record_data1();
     _init_record_data2();
+
+    _init_audio_record();
 }
 
 DataQueueRecordPanel::~DataQueueRecordPanel() { delete ui; }
@@ -48,9 +51,68 @@ void DataQueueRecordPanel::_init_dirs() {
         move::MotionSharedData::instance()->RecordData1BinDir);
     _check_and_create_dir(
         move::MotionSharedData::instance()->RecordData1DecodeDir);
+
+    _check_and_create_dir(AudioRecordDir);
     // _check_and_create_dir(DataSaveRootDir);
     // _check_and_create_dir(RecordData1BinDir);
     // _check_and_create_dir(RecordData1DecodeDir);
+}
+
+void DataQueueRecordPanel::_start_audio_record() {
+    ui->pb_start_audio_record->setChecked(false); // remain unchecked
+
+    auto ar = shared_core_data_->get_audio_recorder();
+
+    audio::AudioStartRecordParam param;
+    param.audio_device_info = QAudioDeviceInfo::defaultInputDevice();
+    param.audio_format.setSampleRate(192000);
+    param.audio_format.setChannelCount(1);
+    param.audio_format.setSampleSize(16);
+    param.audio_format.setCodec("audio/pcm");
+    param.audio_format.setByteOrder(QAudioFormat::LittleEndian);
+    param.audio_format.setSampleType(QAudioFormat::SignedInt);
+
+    param.file_path = AudioRecordDir + "audio_" +
+                      QDateTime::currentDateTime().toString("yyyyMMdd_hh_mm_ss") +
+                      ".pcm";
+
+    ar->start_record(param); // TODO param from sys settings
+}
+
+void DataQueueRecordPanel::_stop_audio_record() {
+    ui->pb_start_audio_record->setChecked(true); // remain checked
+
+    auto ar = shared_core_data_->get_audio_recorder();
+    ar->stop_record();
+}
+
+void DataQueueRecordPanel::slot_start_audio_record() { _start_audio_record(); }
+
+void DataQueueRecordPanel::slot_stop_audio_record() { _stop_audio_record(); }
+
+void DataQueueRecordPanel::_init_audio_record() {
+    auto ar = shared_core_data_->get_audio_recorder();
+
+    connect(ui->pb_start_audio_record, &QPushButton::clicked, this,
+            [this, ar](bool checked) {
+                if (checked) {
+                    _start_audio_record();
+                } else {
+                    _stop_audio_record();
+                }
+            });
+
+    connect(ar, &audio::AudioRecorder::sig_record_started, this,
+            [this](bool success) {
+                if (success) {
+                    ui->pb_start_audio_record->setChecked(true);
+                } else {
+                    ui->pb_start_audio_record->setChecked(false);
+                }
+            });
+
+    connect(ar, &audio::AudioRecorder::sig_record_stopped, this,
+            [this]() { ui->pb_start_audio_record->setChecked(false); });
 }
 
 #if 0

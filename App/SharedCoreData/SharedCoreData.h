@@ -24,6 +24,8 @@
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
+#include "QtDependComponents/AudioRecorder/AudioRecorder.h"
+
 #include "Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.h"
 
 #include "Motion/MotionSignalQueue/MotionSignalQueue.h"
@@ -82,6 +84,8 @@ public:
     inline auto get_zynq_connect_ctrler() const { return zynq_connect_ctrler_; }
     inline auto get_zynq_udpmessage_holder() const { return zynq_udpmessage_holder_; }
 #endif
+
+    inline auto get_audio_recorder() const { return audio_recorder_; }
 
 // slots
     // io板蜂鸣器响一下协议
@@ -142,6 +146,8 @@ private:
     InfoDispatcher *info_dispatcher_;
 
     PowerManager* power_manager_;
+
+    audio::AudioRecorder *audio_recorder_;
 
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     zynq::ZynqConnectController::ptr zynq_connect_ctrler_;

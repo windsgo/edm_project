@@ -7,6 +7,7 @@
 #include "ui_TestPanel.h"
 
 #include <QSlider>
+#include <qaudiodeviceinfo.h>
 #include <qpushbutton.h>
 
 #include "Logger/LogMacro.h"
@@ -127,6 +128,63 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
     });
 
     _init_test_director();
+
+    _init_audio_test();
+}
+
+void TestPanel::_init_audio_test() {
+    connect(
+        ui->pb_test_start_audio_record, &QPushButton::clicked, this, [this]() {
+            // auto ad = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+            // for (const auto &d : ad) {
+            //     s_logger->debug("available audio device: {}, realm: {}",
+            //                     d.deviceName().toStdString(),
+            //                     d.realm().toStdString());
+            // }
+
+            audio::AudioStartRecordParam param;
+            param.file_path = "test_audio.pcm";
+            param.audio_device_info = QAudioDeviceInfo::defaultInputDevice();
+            param.audio_format.setSampleRate(192000);
+            param.audio_format.setChannelCount(1);
+            param.audio_format.setSampleSize(16);
+            param.audio_format.setCodec("audio/pcm");
+            param.audio_format.setByteOrder(QAudioFormat::LittleEndian);
+            param.audio_format.setSampleType(QAudioFormat::SignedInt);
+
+            s_logger->debug(
+                "test start record: filename: {}, sample rate: {}, "
+                "channel count: {}, sample size: {}, codec: {}, "
+                "byte order: {}, sample type: {}",
+                param.file_path.toStdString(), param.audio_format.sampleRate(),
+                param.audio_format.channelCount(),
+                param.audio_format.sampleSize(),
+                param.audio_format.codec().toStdString(),
+                param.audio_format.byteOrder() == QAudioFormat::LittleEndian
+                    ? "LittleEndian"
+                    : "BigEndian",
+                [param]() {
+                    switch (param.audio_format.sampleType()) {
+                    case QAudioFormat::SignedInt:
+                        return "SignedInt";
+                    case QAudioFormat::UnSignedInt:
+                        return "UnSignedInt";
+                    case QAudioFormat::Float:
+                        return "Float";
+                    default:
+                        return "Unknown";
+                    }
+                }());
+            s_logger->debug("default audio device: {}",
+                            param.audio_device_info.deviceName().toStdString());
+
+            shared_core_data_->get_audio_recorder()->start_record(param);
+        });
+
+    connect(ui->pb_test_stop_audio_record, &QPushButton::clicked, this, [this]() {
+        s_logger->debug("test stop record");
+        shared_core_data_->get_audio_recorder()->stop_record();
+    });
 }
 
 void TestPanel::_init_test_director() {

@@ -434,6 +434,8 @@ void SharedCoreData::_init_data() {
     // 获取运动线程中的记录器指针, 用于操作开始结束
     // record_data1_queuerecorder_ =
     //     move::MotionSharedData::instance()->get_record_data1_queuerecorder();
+
+    audio_recorder_ = new audio::AudioRecorder(this);
 }
 
 void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
