@@ -179,13 +179,16 @@ void TestPanel::_init_test_director() {
 
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, [this]() {
+        if (this->isVisible() == false)
+            return;
+
         auto d = shared_core_data_->get_io_ctrler()->get_director_state();
 
         ui->sb_director_curr_pos->setValue(d.curr_step);
         ui->sb_director_curr_state->setValue(d.director_state);
     });
 
-    timer->start(100);
+    timer->start(250);
 #endif
 }
 

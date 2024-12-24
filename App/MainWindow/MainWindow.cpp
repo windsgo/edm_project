@@ -166,6 +166,22 @@ void MainWindow::_init_members() {
             &CoordSettingPanel::slot_change_display_coord_index);
     connect(task_manager_, &task::TaskManager::sig_coord_offset_changed,
             coord_setting_panel_, &CoordSettingPanel::slot_update_display);
+    connect(task_manager_, &task::TaskManager::sig_record_data,
+            this, [this](int index, bool start) {
+                if (index == 1) {
+                    if (start) {
+                        dqr_panel_->slot_start_record_data1();
+                    } else {
+                        dqr_panel_->slot_stop_record_data1();
+                    }
+                } else if (index == 2) {
+                    if (start) {
+                        dqr_panel_->slot_start_record_data2();
+                    } else {
+                        dqr_panel_->slot_stop_record_data2();
+                    }
+                }
+            });
 
     // // test
     // auto test_data_displayer_layout = new QGridLayout(ui->tab_testdisplay);

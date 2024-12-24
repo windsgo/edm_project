@@ -24,6 +24,20 @@ public:
     explicit DataQueueRecordPanel(SharedCoreData* shared_core_data, QWidget *parent = nullptr);
     ~DataQueueRecordPanel();
 
+public slots: // 用于外部
+    void slot_start_record_data1();
+    void slot_stop_record_data1();
+
+    void slot_start_record_data2();
+    void slot_stop_record_data2();
+
+private:
+    void _start_record_data1();
+    void _stop_record_data1();
+
+    void _start_record_data2();
+    void _stop_record_data2();
+
 private:
     void _init_dirs();
 

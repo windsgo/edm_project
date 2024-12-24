@@ -51,12 +51,16 @@ signals:
 
     void sig_coord_offset_changed();
 
+    void sig_record_data(int index, bool start);
+
 private:
     bool _cmd_auto_pause();
     bool _cmd_auto_resume();
     bool _cmd_auto_stop();
 
     bool _cmd_emergency_stop();
+
+    void _drill_record_data(bool start);
 
 private: 
     // 定时器触发, 或任意命令触发, 或任意信号到达也触发, 状态机完全由轮询状态完成, 不依赖信号
@@ -73,12 +77,6 @@ private:
     void _reset_state();
 
     void _init_help_connections();
-
-    void _light_red_blink();
-    void _light_yellow_blink();
-    void _light_yellow();
-    void _light_green();
-    void _auto_led_control();
 
 private:
     void _state_current_node_initing();

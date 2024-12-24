@@ -5,11 +5,13 @@
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/MoveDefines.h"
 #include "QtDependComponents/PowerController/EleparamDefine.h"
+#include "SystemSettings/SystemSettings.h"
 #include "TaskManager/GCodeTask.h"
 #include "TaskManager/GCodeTaskBase.h"
 #include "Utils/Format/edm_format.h"
 #include "Utils/UnitConverter/UnitConverter.h"
 #include "config.h"
+#include "spdlog/spdlog.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -304,86 +306,6 @@ void GCodeRunner::_run_once() {
     }
 }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-static uint32_t s_yellow_bit = (1 << (power::ZHONGGU_IOOut_IOOUT8_GREEN - 1));
-static uint32_t s_green_bit = (1 << (power::ZHONGGU_IOOut_IOOUT7_YELLOW - 1));
-static uint32_t s_red_bit = (1 << (power::ZHONGGU_IOOut_IOOUT6_RED - 1));
-#endif
-
-void GCodeRunner::_light_red_blink() {}
-
-void GCodeRunner::_light_yellow_blink() {
-    auto io = shared_core_data_->get_io_ctrler();
-
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    io->set_can_machineio_output_withmask(0, s_green_bit);
-    io->set_can_machineio_output_withmask(0, s_red_bit);
-
-    auto curr_io = io->get_can_machineio_output_safe();
-    auto is_yellow_on = !!(curr_io & s_yellow_bit);
-    if (is_yellow_on) {
-        io->set_can_machineio_output_withmask(0, s_yellow_bit);
-    } else {
-        io->set_can_machineio_output_withmask(0xFFFFFFFF, s_yellow_bit);
-    }
-#endif
-}
-
-void GCodeRunner::_light_yellow() {
-    auto io = shared_core_data_->get_io_ctrler();
-
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    io->set_can_machineio_output_withmask(0xFFFFFFFF, s_yellow_bit);
-    io->set_can_machineio_output_withmask(0, s_green_bit);
-    io->set_can_machineio_output_withmask(0, s_red_bit);
-#endif
-}
-void GCodeRunner::_light_green() {
-    auto io = shared_core_data_->get_io_ctrler();
-
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    io->set_can_machineio_output_withmask(0, s_yellow_bit);
-    io->set_can_machineio_output_withmask(0xFFFFFFFF, s_green_bit);
-    io->set_can_machineio_output_withmask(0, s_red_bit);
-#endif
-}
-
-void GCodeRunner::_auto_led_control() {
-    switch (state_) {
-    case State::ReadyToStart:
-    case State::CurrentNodeIniting:
-    case State::Running:
-    case State::WaitingForPaused:
-    case State::WaitingForResumed:
-    case State::WaitingForStopped: {
-        // yellow light blink
-        _light_yellow_blink();
-        break;
-        // static auto last_time = std::chrono::high_resolution_clock::now();
-        // auto now = std::chrono::high_resolution_clock::now();
-
-        // if (std::chrono::duration_cast<std::chrono::milliseconds>(now -
-        // last_time).count() >= 1000) {
-        //     last_time = now;
-        //     _light_yellow_blink();
-        // }
-    }
-    case State::Paused: {
-        // yellow always
-        _light_yellow();
-        break;
-    }
-    case State::Stopped: {
-        // green always
-        _light_green();
-        break;
-    }
-    default:
-        assert(false);
-        break;
-    }
-}
-
 bool GCodeRunner::_check_gcode_list_at_first() {
     for (const auto &g : gcode_list_) {
         // 判断电参数号是否存在
@@ -442,7 +364,23 @@ void GCodeRunner::_end() {
     emit sig_auto_stopped(false);
 }
 
+void GCodeRunner::_drill_record_data(bool start) {
+    if (!SystemSettings::instance().get_drill_settings().auto_record_data) {
+        return;
+    }
+
+    emit sig_record_data(2, start);
+}
+
 void GCodeRunner::_check_to_next_gcode() {
+    auto curr_over_gcode = gcode_list_[curr_gcode_num_];
+    if (curr_over_gcode) {
+        if (curr_over_gcode->type() == GCodeTaskType::DrillMotionCommand) {
+            _drill_record_data(false); // stop record data2
+        }
+    }
+
+    // next gcode
     ++curr_gcode_num_;
 
     if (curr_gcode_num_ >= gcode_list_.size()) {
@@ -859,6 +797,8 @@ void GCodeRunner::_state_current_node_initing() {
             break;
         }
 
+        _drill_record_data(true); // record data start
+
         _switch_to_state(State::Running);
         break;
     }
@@ -976,8 +916,6 @@ void GCodeRunner::_state_current_node_initing() {
             mach_start_pos = mach_target_pos;
         }
 
-        assert(g01_gcode->cmd_values().size() == 6);
-
         auto g01group_cmd =
             std::make_shared<move::MotionCommandAutoG01Group>(start_param);
 
@@ -985,8 +923,9 @@ void GCodeRunner::_state_current_node_initing() {
 
         // 等待命令被接收
         if (!TaskHelper::WaitforCmdTobeAccepted(g01group_cmd, 1000)) {
-            _abort("abort: start g01 group failed, cmd not accepted by motion or "
-                   "timeout");
+            _abort(
+                "abort: start g01 group failed, cmd not accepted by motion or "
+                "timeout");
             break;
         }
 
@@ -1012,7 +951,8 @@ void GCodeRunner::_state_running() {
     }
 
     if (curr_gcode->type() == GCodeTaskType::G01GroupMotionCommand) {
-        emit this->sig_autogcode_switched_to_line(local_info_cache_.sub_line_number);
+        emit this->sig_autogcode_switched_to_line(
+            local_info_cache_.sub_line_number);
     }
 
     // Motion GCode, 此处进行状态轮训, 转换状态
@@ -1266,9 +1206,14 @@ void GCodeRunner::_state_waiting_for_stopped() {
         switch (local_info_cache_.auto_state) {
         case move::MotionAutoState::Stopping:
             break;
-        case move::MotionAutoState::Stopped:
+        case move::MotionAutoState::Stopped: {
+            if (curr_gcode->type() == GCodeTaskType::DrillMotionCommand) {
+                _drill_record_data(false); // stop record data2
+            }
+
             _end(); //! emit auto stopped inside
             break;
+        }
         default:
             _abort(EDM_FMT::format(
                 "_state_waiting_for_stopped err: detected MM={}",
@@ -1279,6 +1224,10 @@ void GCodeRunner::_state_waiting_for_stopped() {
         break;
     }
     case move::MotionMainMode::Idle: {
+        if (curr_gcode->type() == GCodeTaskType::DrillMotionCommand) {
+            _drill_record_data(false); // stop record data2
+        }
+
         _end(); //! emit auto stopped inside
         break;
     }

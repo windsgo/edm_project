@@ -5,6 +5,7 @@
         "helper_can_device_name": "can1"
     },
     "drill_settings": {
+        "auto_record_data": true,
         "auto_switch_ipump": true,
         "auto_switch_opump": true,
         "breakout_params": {

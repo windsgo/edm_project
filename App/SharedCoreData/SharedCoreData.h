@@ -106,6 +106,9 @@ signals: // 发送信号, 连接到主窗口的status bar, 还可以连接到主
     void sig_warn_message(const QString& str, int timeout = 0);
     void sig_error_message(const QString& str, int timeout = 0);
 
+// signals:
+//     void sig_record_data(int index, bool start);
+
 protected:
     void customEvent(QEvent *e) override;
 

@@ -6,13 +6,13 @@ i.f(1000)
 i.e(3)
 
 def do_drill():
-    i.drill(depth=10.0, holdtime=1000, \
-        touch=True, back=True, \
-        breakout=True, spindle_speed=150)
+    i.drill(depth=1.0, holdtime=1000, \
+        touch=False, back=False, \
+        breakout=False, spindle_speed=150)
 
-# do_drill()
+do_drill()
 
-for num in range(10):
+for num in range(0):
     do_drill()
     if (num == 9):
         break

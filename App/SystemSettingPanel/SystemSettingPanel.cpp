@@ -75,6 +75,12 @@ void SystemSettingPanel::_init_button_cb() {
             [this](bool checked [[maybe_unused]]) { _do_save(); });
     connect(ui->pb_enable_g01_run_each_servo_cmd, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
+    connect(ui->pb_enable_auto_opump, &QPushButton::clicked, this,
+            [this](bool checked [[maybe_unused]]) { _do_save(); });
+    connect(ui->pb_enable_auto_ipump, &QPushButton::clicked, this,
+            [this](bool checked [[maybe_unused]]) { _do_save(); });
+    connect(ui->pb_enable_auto_recorddata, &QPushButton::clicked, this, 
+            [this](bool checked [[maybe_unused]]) { _do_save(); });
 }
 
 void SystemSettingPanel::_do_save() {
@@ -122,6 +128,7 @@ void SystemSettingPanel::_update_ui() {
 
     ui->pb_enable_auto_opump->setChecked(drill_settings.auto_switch_opump);
     ui->pb_enable_auto_ipump->setChecked(drill_settings.auto_switch_ipump);
+    ui->pb_enable_auto_recorddata->setChecked(drill_settings.auto_record_data);
 
     const auto &bo_settings = drill_settings.breakout_params;
     ui->sb_drill_voltage_average_window->setValue(
@@ -187,6 +194,7 @@ bool SystemSettingPanel::_save() {
 
     drill_settings.auto_switch_opump = ui->pb_enable_auto_opump->isChecked();
     drill_settings.auto_switch_ipump = ui->pb_enable_auto_ipump->isChecked();
+    drill_settings.auto_record_data = ui->pb_enable_auto_recorddata->isChecked();
 
     struct _sys::_breakout_settings bo_settings;
     bo_settings.voltage_average_filter_window_size =

@@ -102,7 +102,25 @@ void ZynqTcpWorker::slot_send(const QByteArray &ba) {
         return;
     }
 
+    if (tcp_socket_->state() != QTcpSocket::SocketState::ConnectedState) {
+        return;
+    }
+
     tcp_socket_->write(ba);
+
+    bool ret = tcp_socket_->waitForBytesWritten(200);
+    if (!ret) {
+        tcp_socket_->abort();
+        s_logger->warn("ZynqTcpWorker: tcp write timeout, abort");
+        return;
+    }
+
+    ret = tcp_socket_->waitForReadyRead(200);
+    if (!ret) {
+        tcp_socket_->abort();
+        s_logger->warn("ZynqTcpWorker: tcp read timeout, abort");
+        return;
+    }
 }
 
 void ZynqTcpWorker::_slot_data_received() {

@@ -62,6 +62,8 @@ signals: // 提供给GUI界面的信号, 告知一些重要状态变化
     void sig_switch_coordindex(uint32_t coord_index);
     
     void sig_coord_offset_changed();
+    
+    void sig_record_data(int index, bool start);
 
 private:
     void _init_state();

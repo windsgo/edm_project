@@ -77,6 +77,8 @@ void TaskManager::_init_connections() {
             &TaskManager::sig_switch_coordindex);
     connect(gcode_runner_, &GCodeRunner::sig_coord_offset_changed, this,
             &TaskManager::sig_coord_offset_changed);  
+    connect(gcode_runner_, &GCodeRunner::sig_record_data, this,
+            &TaskManager::sig_record_data);
 }
 
 bool TaskManager::_cmd_start_pointmove(

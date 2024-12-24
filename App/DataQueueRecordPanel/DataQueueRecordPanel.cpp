@@ -179,31 +179,49 @@ void DataQueueRecordPanel::_init_record_data1() {
     });
 }
 #else
+
+void DataQueueRecordPanel::_start_record_data1() {
+    ui->pb_start_record_1->setChecked(true);
+
+    auto ret = move::MotionSharedData::instance()
+                   ->get_data_record_instance1()
+                   ->start_record();
+
+    if (ret) {
+        emit shared_core_data_->sig_info_message("Start Record  Success");
+    } else {
+        emit shared_core_data_->sig_error_message("Start Record 1 Failed");
+        ui->pb_start_record_1->setChecked(false);
+    }
+}
+
+void DataQueueRecordPanel::_stop_record_data1() {
+    ui->pb_start_record_1->setChecked(false);
+
+    move::MotionSharedData::instance()
+        ->get_data_record_instance1()
+        ->stop_record(true);
+
+    emit shared_core_data_->sig_info_message("Stop Record 1 Success");
+}
+
+void DataQueueRecordPanel::slot_start_record_data1() {
+    ui->pb_start_record_1->setChecked(true);
+    _start_record_data1();
+}
+
+void DataQueueRecordPanel::slot_stop_record_data1() {
+    ui->pb_start_record_1->setChecked(false);
+    _stop_record_data1();
+}
+
 void DataQueueRecordPanel::_init_record_data1() {
     connect(ui->pb_start_record_1, &QPushButton::clicked, this,
             [this](bool checked) {
                 if (checked) {
-                    auto ret = move::MotionSharedData::instance()
-                                   ->get_data_record_instance1()
-                                   ->start_record();
-
-                    if (ret) {
-                        emit shared_core_data_->sig_info_message(
-                            "Start Record Success");
-                    } else {
-                        emit shared_core_data_->sig_error_message(
-                            "Start Record Failed");
-                        ui->pb_start_record_1->setChecked(false);
-                    }
-
+                    _start_record_data1();
                 } else {
-                    // stop and wait for stopped
-                    move::MotionSharedData::instance()
-                        ->get_data_record_instance1()
-                        ->stop_record(true);
-
-                    emit shared_core_data_->sig_info_message(
-                        "Stop Record Success");
+                    _stop_record_data1();
                 }
             });
 
@@ -275,32 +293,48 @@ bool DataQueueRecordPanel::_save_data1_header_to_file(
     return true;
 }
 
-void DataQueueRecordPanel::_init_record_data2()
-{
+void DataQueueRecordPanel::_start_record_data2() {
+    ui->pb_start_record_2->setChecked(true);
+
+    auto ret = move::MotionSharedData::instance()
+                   ->get_data_record_instance2()
+                   ->start_record();
+
+    if (ret) {
+        emit shared_core_data_->sig_info_message("Start Record 2 Success");
+    } else {
+        emit shared_core_data_->sig_error_message("Start Record 2 Failed");
+        ui->pb_start_record_2->setChecked(false);
+    }
+}
+
+void DataQueueRecordPanel::_stop_record_data2() {
+    ui->pb_start_record_2->setChecked(false);
+
+    move::MotionSharedData::instance()
+        ->get_data_record_instance2()
+        ->stop_record(true);
+
+    emit shared_core_data_->sig_info_message("Stop Record 2 Success");
+}
+
+void DataQueueRecordPanel::slot_start_record_data2() {
+    ui->pb_start_record_2->setChecked(true);
+    _start_record_data2();
+}
+
+void DataQueueRecordPanel::slot_stop_record_data2() {
+    ui->pb_start_record_2->setChecked(false);
+    _stop_record_data2();
+}
+
+void DataQueueRecordPanel::_init_record_data2() {
     connect(ui->pb_start_record_2, &QPushButton::clicked, this,
             [this](bool checked) {
                 if (checked) {
-                    auto ret = move::MotionSharedData::instance()
-                                   ->get_data_record_instance2()
-                                   ->start_record();
-
-                    if (ret) {
-                        emit shared_core_data_->sig_info_message(
-                            "Start Record Success");
-                    } else {
-                        emit shared_core_data_->sig_error_message(
-                            "Start Record Failed");
-                        ui->pb_start_record_2->setChecked(false);
-                    }
-
+                    _start_record_data2();
                 } else {
-                    // stop and wait for stopped
-                    move::MotionSharedData::instance()
-                        ->get_data_record_instance2()
-                        ->stop_record(true);
-
-                    emit shared_core_data_->sig_info_message(
-                        "Stop Record Success");
+                    _stop_record_data2();
                 }
             });
 
