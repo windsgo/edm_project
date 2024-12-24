@@ -115,7 +115,7 @@ private:
 
     QTimer* update_timer_;
     const int update_timer_fast_peroid_ms_ = 100; // 快速周期
-    const int update_timer_regular_peroid_ms_ = 200; // 普通周期 
+    const int update_timer_regular_peroid_ms_ = 1000; // 普通周期 
 
     std::vector<GCodeTaskBase::ptr> gcode_list_;
     int curr_gcode_num_;

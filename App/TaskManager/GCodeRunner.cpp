@@ -32,10 +32,10 @@ GCodeRunner::GCodeRunner(app::SharedCoreData *shared_core_data, QObject *parent)
     _reset_state();
     _init_help_connections();
 
-    QTimer *light_timer = new QTimer(this);
-    connect(light_timer, &QTimer::timeout, this,
-            &GCodeRunner::_auto_led_control);
-    light_timer->start(1000);
+    // QTimer *light_timer = new QTimer(this);
+    // connect(light_timer, &QTimer::timeout, this,
+    //         &GCodeRunner::_auto_led_control);
+    // light_timer->start(1000);
 }
 
 bool GCodeRunner::start(const std::vector<GCodeTaskBase::ptr> &gcode_list) {

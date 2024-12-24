@@ -57,14 +57,14 @@
         "enable_g01_run_each_servo_cmd": true
     },
     "time_settings": {
-        "info_dispatcher_peroid_ms": 40,
-        "monitor_peroid_ms": 40,
+        "info_dispatcher_peroid_ms": 80,
+        "monitor_peroid_ms": 80,
         "motion_cycle_us": 1000
     },
     "zynq_adc_settings": {
         "adc_gain": 26.415000,
         "adc_offset": -133.081000,
-        "voltage_filter_window_time_us": 15000
+        "voltage_filter_window_time_us": 10000
     },
     "zynq_settings": {
         "zynq_tcp_server_ip": "192.168.1.133",

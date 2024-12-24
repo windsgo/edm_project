@@ -54,6 +54,8 @@ SystemSettingPanel::SystemSettingPanel(SharedCoreData *shared_core_data,
 
     _init_button_cb();
     _update_ui();
+    
+    _do_save(); // set once
 }
 
 SystemSettingPanel::~SystemSettingPanel() {

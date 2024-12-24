@@ -118,8 +118,10 @@ void MotionStateMachine::run_once() {
     // breakout filter
     auto bo_filter = s_motion_shared->get_breakout_filter();
 
+    // bo_filter->push_back_realtime_voltage(
+    //     (int)s_motion_shared->cached_udp_message().realtime_voltage);
     bo_filter->push_back_realtime_voltage(
-        (int)s_motion_shared->cached_udp_message().realtime_voltage);
+        (int)s_motion_shared->cached_udp_message().averaged_voltage);
 
     auto data_record_instance2 = s_motion_shared->get_data_record_instance2();
     if (data_record_instance2->is_data_recorder_running()) {
