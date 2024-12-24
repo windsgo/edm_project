@@ -67,10 +67,10 @@ void DataQueueRecordPanel::_start_audio_record() {
     param.audio_device_info = QAudioDeviceInfo::defaultInputDevice();
     param.audio_format.setSampleRate(192000);
     param.audio_format.setChannelCount(1);
-    param.audio_format.setSampleSize(16);
+    param.audio_format.setSampleSize(32);
     param.audio_format.setCodec("audio/pcm");
     param.audio_format.setByteOrder(QAudioFormat::LittleEndian);
-    param.audio_format.setSampleType(QAudioFormat::SignedInt);
+    param.audio_format.setSampleType(QAudioFormat::SampleType::Float);
 
     param.file_path = AudioRecordDir + "audio_" +
                       QDateTime::currentDateTime().toString("yyyyMMdd_hh_mm_ss") +

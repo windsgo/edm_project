@@ -74,7 +74,11 @@ static bool _convert_pcm_data_to_wav(const QString &wav_filename,
     out << quint32(16);
 
     // byte 1
-    out << quint16(1);            // Audio format (PCM)
+    if (format.sampleType() == QAudioFormat::SampleType::Float) {
+        out << quint16(3); // Audio format (IEEE float)
+    } else {
+        out << quint16(1); // Audio format (PCM)
+    }
     out << quint16(channelCount); // Number of channels
 
     // byte 2
