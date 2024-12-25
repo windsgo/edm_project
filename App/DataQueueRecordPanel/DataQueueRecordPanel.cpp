@@ -75,6 +75,8 @@ void DataQueueRecordPanel::_start_audio_record() {
     param.file_path = AudioRecordDir + "audio_" +
                       QDateTime::currentDateTime().toString("yyyyMMdd_hh_mm_ss") +
                       ".pcm";
+    
+    s_logger->info("audio device: {}", param.audio_device_info.deviceName().toStdString());
 
     ar->start_record(param); // TODO param from sys settings
 }
