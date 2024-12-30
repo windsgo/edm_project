@@ -6,7 +6,7 @@ i.f(1000)
 i.e(3)
 
 def do_drill():
-    i.drill(depth=1.0, holdtime=1000, \
+    i.drill(depth=4.0, holdtime=2000, \
         touch=False, back=False, \
         breakout=False, spindle_speed=150)
 

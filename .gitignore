@@ -19,3 +19,6 @@ output.bin
 !CMakeLists.txt
 
 *.txt.user
+
+venv
+venv/**

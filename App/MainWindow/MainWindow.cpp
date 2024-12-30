@@ -180,6 +180,12 @@ void MainWindow::_init_members() {
                     } else {
                         dqr_panel_->slot_stop_record_data2();
                     }
+                } else if (index == 0xAE) {
+                    if (start) {
+                        dqr_panel_->slot_start_audio_record();
+                    } else {
+                        dqr_panel_->slot_stop_audio_record();
+                    }
                 }
             });
 
