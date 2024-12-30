@@ -94,7 +94,7 @@ def plot_together(wav_file: str, motion_file: str, save_file: bool=False, show_p
     use_which_time = "wave" if (wav_time[-1] > motion_time[-1]) else "motion" # bigger
     print(f"use_which_time: {use_which_time}")
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(12, 10))
     
     subplotnum = 4
     
@@ -173,6 +173,9 @@ def plot_together(wav_file: str, motion_file: str, save_file: bool=False, show_p
     else:
         plt.xlim([motion_time[0], motion_time[-1]])
     
+    # rms
+    # plt.subplot(subplotnum, 1, 3)
+    
     # plot cmd_axis
     motion_cmd = []
     for cmd_str in motion_data["cmd_s"]:
@@ -201,7 +204,7 @@ def plot_together(wav_file: str, motion_file: str, save_file: bool=False, show_p
     cbar_ax = plt.gcf().add_axes([pos2.x1 + 0.01, pos2.y0, 0.02, pos2.height])
     plt.colorbar(cax=cbar_ax, label='Intensity [dB]', ticks=[-250, -200, -150, -100, -50])
     
-    plt.subplots_adjust(hspace=0.5)
+    plt.subplots_adjust(hspace=0.6)
     # for i in range(1, subplotnum + 1):
     #     plt.subplot(subplotnum, 1, i)
     #     add_grid_ticks()

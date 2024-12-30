@@ -276,8 +276,8 @@ void DrillAutoTask::_drillstate_drilling() {
                     // 使能穿透开始后的降速
 
                     double max_speed_ratio =
-                        bt_param.speed_rate_after_breakout_start_detected /
-                        100.0; // 上位机设定的最大速度
+                        bt_param.speed_rate_after_breakout_start_detected 
+                        ; // 上位机设定的最大速度
                     double speed_ratio =
                         fabs((CURRENT_POS -
                               runtime_.min_pos_after_breakout_start_detected) /

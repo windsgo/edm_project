@@ -11,18 +11,18 @@
         "breakout_params": {
             "breakout_start_detect_length_percent": 0.230000,
             "ctrl_flags": 4,
-            "kn_sc_window_size": 400,
+            "kn_sc_window_size": 600,
             "kn_valid_rate_ok_cnt_maximum": 1000,
-            "kn_valid_rate_ok_cnt_threshold": 500,
+            "kn_valid_rate_ok_cnt_threshold": 600,
             "kn_valid_rate_threshold": 0.010000,
-            "kn_valid_threshold": 20.000000,
-            "max_move_um_after_breakout_start_detected": 400.000000,
-            "speed_rate_after_breakout_start_detected": 0.800000,
+            "kn_valid_threshold": 15.000000,
+            "max_move_um_after_breakout_start_detected": 1000.000000,
+            "speed_rate_after_breakout_start_detected": 0.750000,
             "stderr_filter_window_size": 200,
             "voltage_average_filter_window_size": 200,
-            "wait_time_ms_after_breakout_end_judged": 1500
+            "wait_time_ms_after_breakout_end_judged": 1000
         },
-        "touch_return_um": 700.000000,
+        "touch_return_um": 500.000000,
         "touch_speed_um_ms": 1.000000
     },
     "ecat": {
