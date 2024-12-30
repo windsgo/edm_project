@@ -223,9 +223,9 @@ void MainWindow::_init_tab_monitor() {
     desc.line_width = 2.0;
     // vol_cur
     vol_cur_displayer_->set_axis_title(QwtPlot::yLeft, "V", Qt::red);
-    vol_cur_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 400);
-    //    vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "I", Qt::green);
-    vol_cur_displayer_->set_axis_scale(QwtPlot::yRight, 0, 30);
+    vol_cur_displayer_->set_axis_scale(QwtPlot::yLeft, 0, 120);
+       vol_cur_displayer_->set_axis_title(QwtPlot::yRight, "V", Qt::green);
+    vol_cur_displayer_->set_axis_scale(QwtPlot::yRight, 0, 120);
 
     desc.data_max_points = -1;
     // vol
@@ -233,6 +233,11 @@ void MainWindow::_init_tab_monitor() {
     desc.yAxis = QwtPlot::yLeft;
     desc.preferred_color = Qt::red;
     monitor_voltage_index_ = vol_cur_displayer_->add_data_item(desc);
+    // a vol
+    desc.data_name = "AvgVolt";
+    desc.yAxis = QwtPlot::yRight;
+    desc.preferred_color = Qt::green;
+    monitor_current_index_ = vol_cur_displayer_->add_data_item(desc);
 
     // cur
     // desc.data_name = "I";
@@ -400,7 +405,10 @@ void MainWindow::_slot_monitor_timer_doit() {
     shared_core_data_->get_zynq_udpmessage_holder()->get_udp_message(sd);
 
     vol_cur_displayer_->push_data(monitor_voltage_index_,
+                                  (double)sd.realtime_voltage);
+    vol_cur_displayer_->push_data(monitor_current_index_,
                                   (double)sd.averaged_voltage);
+                                  
     vol_cur_displayer_->update_display();
 
     mach_rate_displayer_->push_data(sv_speed_index_,
