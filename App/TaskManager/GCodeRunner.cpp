@@ -369,7 +369,8 @@ void GCodeRunner::_drill_record_data(bool start) {
         return;
     }
 
-    emit sig_record_data(2, start);
+    emit sig_record_data(2, start); // motion data
+    emit sig_record_data(0xAE, start); // audio signal (AE signal)
 }
 
 void GCodeRunner::_check_to_next_gcode() {

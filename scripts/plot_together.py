@@ -108,6 +108,7 @@ def plot_together(wav_file: str, motion_file: str, save_file: bool=False, show_p
     plt.title('Original Audio Data')
     plt.xlabel('Time [s]')
     plt.ylabel('Amplitude')
+    plt.ylim([-1, 1])
     if (use_which_time == "wave"):
         plt.xlim([wav_time[0], wav_time[-1]])
     else:
@@ -166,6 +167,7 @@ def plot_together(wav_file: str, motion_file: str, save_file: bool=False, show_p
     plt.title(f'Filtered Audio Data, Bandpass {lowcut/1000} - {highcut/1000} kHz')
     plt.xlabel('Time [s]')
     plt.ylabel('Amplitude')
+    plt.ylim([-1, 1])
     if (use_which_time == "wave"):
         plt.xlim([wav_time[0], wav_time[-1]])
     else:
