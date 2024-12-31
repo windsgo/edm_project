@@ -73,7 +73,7 @@ static std::vector<std::pair<uint32_t, uint32_t>>
         {0x0000066f, 0x60380004}, // A
 };
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-static std::vector<std::pair<uint32_t, uint32_t>> //! TODO 
+static std::vector<std::pair<uint32_t, uint32_t>> //! TODO
     s_slave_vendor_and_product_code_vec = {
         {0x0000066f, 0x60380007}, // X
         {0x0000066f, 0x60380007}, // Y
@@ -81,7 +81,7 @@ static std::vector<std::pair<uint32_t, uint32_t>> //! TODO
         {0x0000066f, 0x613C0007}, // B
         {0x0000066f, 0x60380006}, // C
         {0x0000066f, 0x60380004}, // S
-        {0x0000066f, 0x60380005}, // 主轴旋转 
+        {0x0000066f, 0x60380005}, // 主轴旋转
 };
 #endif // EDM_POWER_TYPE
 #endif // EDM_ECAT_DRIVER_IGH
@@ -113,10 +113,10 @@ EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
 
     // resize member vectors according to servonum and ionum (unused now)
     // and assign each pointer to nullptr
-    igh_domain_vec_.resize(servo_num_ + io_num_);
-    for (auto &d : igh_domain_vec_) {
-        d = nullptr;
-    }
+    // igh_domain_vec_.resize(servo_num_ + io_num_);
+    // for (auto &d : igh_domain_vec_) {
+    //     d = nullptr;
+    // }
 
     igh_domain_pd_vec_.resize(servo_num_ + io_num_);
     for (auto &d_pd : igh_domain_pd_vec_) {
@@ -281,12 +281,18 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
 
 #ifdef EDM_ECAT_DRIVER_IGH
 
-    for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
-        igh_domain_vec_[i] = ecrt_master_create_domain(igh_master_);
-        if (!igh_domain_vec_[i]) {
-            s_logger->error("ecrt_master_create_domain failed: i = {}", i);
-            return false;
-        }
+    // for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
+    //     igh_domain_vec_[i] = ecrt_master_create_domain(igh_master_);
+    //     if (!igh_domain_vec_[i]) {
+    //         s_logger->error("ecrt_master_create_domain failed: i = {}", i);
+    //         return false;
+    //     }
+    // }
+
+    igh_domain_instance_ = ecrt_master_create_domain(igh_master_);
+    if (!igh_domain_instance_) {
+        s_logger->error("ecrt_master_create_domain failed");
+        return false;
     }
 
     // configure Panasonic slaves
@@ -368,7 +374,13 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         // final
         igh_domain_regs_vec_[i].push_back({});
 
-        if (ecrt_domain_reg_pdo_entry_list(igh_domain_vec_[i],
+        // if (ecrt_domain_reg_pdo_entry_list(igh_domain_vec_[i],
+        //                                    igh_domain_regs_vec_[i].data())) {
+        //     s_logger->error("PDO entry registration failed: servo {}", i);
+        //     return false;
+        // }
+
+        if (ecrt_domain_reg_pdo_entry_list(igh_domain_instance_,
                                            igh_domain_regs_vec_[i].data())) {
             s_logger->error("PDO entry registration failed: servo {}", i);
             return false;
@@ -404,8 +416,9 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         return false;
     }
 
-    for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
-        igh_domain_pd_vec_[i] = ecrt_domain_data(igh_domain_vec_[i]);
+    for (uint32_t i = 0; i < igh_domain_pd_vec_.size(); ++i) {
+        // igh_domain_pd_vec_[i] = ecrt_domain_data(igh_domain_vec_[i]);
+        igh_domain_pd_vec_[i] = ecrt_domain_data(igh_domain_instance_);
         if (!igh_domain_pd_vec_[i]) {
             s_logger->error("ecrt_domain_data failed: slave {}", i);
             return false;
@@ -478,18 +491,34 @@ bool EcatManager::_igh_check_receive_valid() {
 
     // check domain state
     ec_domain_state_t domain_state;
-    for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
-        ecrt_domain_state(igh_domain_vec_[i], &domain_state);
+    // for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
+    //     ecrt_domain_state(igh_domain_vec_[i], &domain_state);
 
-        if (domain_state.working_counter != 3) [[unlikely]] {
-            s_logger->warn("igh domain {} wkc {}", i,
+    //     if (domain_state.working_counter != 3) [[unlikely]] {
+    //         s_logger->warn("igh domain {} wkc {}", i,
+    //                        (int)domain_state.working_counter);
+    //         return false;
+    //     }
+
+    //     if (domain_state.wc_state != ec_wc_state_t::EC_WC_COMPLETE)
+    //         [[unlikely]] {
+    //         s_logger->warn("igh domain {} wc_state {}", i,
+    //                        (int)domain_state.wc_state);
+    //         return false;
+    //     }
+    // }
+    {
+        ecrt_domain_state(igh_domain_instance_, &domain_state);
+
+        if (domain_state.working_counter != 3 * (servo_num_ + io_num_)) [[unlikely]] {
+            s_logger->warn("igh domain wkc {}",
                            (int)domain_state.working_counter);
             return false;
         }
 
         if (domain_state.wc_state != ec_wc_state_t::EC_WC_COMPLETE)
             [[unlikely]] {
-            s_logger->warn("igh domain {} wc_state {}", i,
+            s_logger->warn("igh domain wc_state {}",
                            (int)domain_state.wc_state);
             return false;
         }
@@ -662,14 +691,18 @@ bool EcatManager::receive_check(int wkc [[maybe_unused]]) {
 #ifdef EDM_ECAT_DRIVER_IGH
 void EcatManager::igh_master_receive() { ecrt_master_receive(igh_master_); }
 void EcatManager::igh_domain_process() {
-    for (auto domain : igh_domain_vec_) {
-        ecrt_domain_process(domain);
-    }
+    // for (auto domain : igh_domain_vec_) {
+    //     ecrt_domain_process(domain);
+    // }
+
+    ecrt_domain_process(igh_domain_instance_);
 }
 void EcatManager::igh_domain_queue() {
-    for (auto domain : igh_domain_vec_) {
-        ecrt_domain_queue(domain);
-    }
+    // for (auto domain : igh_domain_vec_) {
+    //     ecrt_domain_queue(domain);
+    // }
+
+    ecrt_domain_queue(igh_domain_instance_);
 }
 void EcatManager::igh_master_send() { ecrt_master_send(igh_master_); }
 
@@ -814,7 +847,8 @@ void EcatManager::clear_fault_cycle_run_once() {
             // s_logger->debug("sw_ready_to_switch_on");
             servo->cw_switch_on();
         } else if (servo->sw_switched_on() || servo->sw_operational_enabled()) {
-            // s_logger->debug("sw_switched_on: {}, sw_operational_enabled: {}", servo->sw_switched_on(), servo->sw_operational_enabled());
+            // s_logger->debug("sw_switched_on: {}, sw_operational_enabled: {}",
+            // servo->sw_switched_on(), servo->sw_operational_enabled());
             servo->cw_enable_operation();
             servo->sync_actual_position_to_target_position(); // to ensure the
                                                               // servo would not
@@ -822,7 +856,8 @@ void EcatManager::clear_fault_cycle_run_once() {
                                                               // or die again
         }
         ++i;
-        // EDM_CYCLIC_LOG(s_logger->debug, 2000, "sw: {0:x}, {0:b}, fault: {1}", servo->get_status_word(), servo->sw_fault());
+        // EDM_CYCLIC_LOG(s_logger->debug, 2000, "sw: {0:x}, {0:b}, fault: {1}",
+        // servo->get_status_word(), servo->sw_fault());
     }
 }
 

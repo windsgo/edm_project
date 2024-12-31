@@ -140,7 +140,8 @@ private: // igh things
     std::vector<ec_slave_config_t *> igh_sc_vec_;
 
     // 每一个从站分配一个domain
-    std::vector<ec_domain_t *> igh_domain_vec_;
+    // std::vector<ec_domain_t *> igh_domain_vec_;
+    ec_domain_t* igh_domain_instance_{nullptr}; // test single domain
 
     // 每一个从站的domain的pdo数据指针
     std::vector<uint8_t *> igh_domain_pd_vec_;
