@@ -24,7 +24,9 @@
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "QtDependComponents/ZynqConnection/ZynqUdpMessageHolder.h"
 
+#ifdef EDM_ENABLE_AUDIO_RECORD
 #include "QtDependComponents/AudioRecorder/AudioRecorder.h"
+#endif
 
 #include "Interpreter/rs274pyInterpreter/RS274InterpreterWrapper.h"
 
@@ -85,7 +87,9 @@ public:
     inline auto get_zynq_udpmessage_holder() const { return zynq_udpmessage_holder_; }
 #endif
 
+#ifdef EDM_ENABLE_AUDIO_RECORD
     inline auto get_audio_recorder() const { return audio_recorder_; }
+#endif
 
 // slots
     // io板蜂鸣器响一下协议
@@ -147,7 +151,9 @@ private:
 
     PowerManager* power_manager_;
 
+#ifdef EDM_ENABLE_AUDIO_RECORD
     audio::AudioRecorder *audio_recorder_;
+#endif
 
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
     zynq::ZynqConnectController::ptr zynq_connect_ctrler_;

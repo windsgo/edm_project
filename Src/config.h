@@ -14,6 +14,11 @@
 #error "EDM_POWER_TYPE not valid"
 #endif
 
+// 使能Audio功能(做穿透检测实验时使用的)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#define EDM_ENABLE_AUDIO_RECORD
+#endif
+
 // 坐标轴(=驱动器)数目
 #define EDM_AXIS_NUM                    6
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)

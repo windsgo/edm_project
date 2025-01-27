@@ -59,6 +59,7 @@ void DataQueueRecordPanel::_init_dirs() {
 }
 
 void DataQueueRecordPanel::_start_audio_record() {
+#ifdef EDM_ENABLE_AUDIO_RECORD
     ui->pb_start_audio_record->setChecked(false); // remain unchecked
 
     auto ar = shared_core_data_->get_audio_recorder();
@@ -79,13 +80,20 @@ void DataQueueRecordPanel::_start_audio_record() {
     s_logger->info("audio device: {}", param.audio_device_info.deviceName().toStdString());
 
     ar->start_record(param); // TODO param from sys settings
+#else
+    ui->pb_start_audio_record->setChecked(false);
+#endif
 }
 
 void DataQueueRecordPanel::_stop_audio_record() {
+#ifdef EDM_ENABLE_AUDIO_RECORD
     ui->pb_start_audio_record->setChecked(true); // remain checked
 
     auto ar = shared_core_data_->get_audio_recorder();
     ar->stop_record();
+#else
+    ui->pb_start_audio_record->setChecked(false);
+#endif
 }
 
 void DataQueueRecordPanel::slot_start_audio_record() { _start_audio_record(); }
@@ -93,10 +101,12 @@ void DataQueueRecordPanel::slot_start_audio_record() { _start_audio_record(); }
 void DataQueueRecordPanel::slot_stop_audio_record() { _stop_audio_record(); }
 
 void DataQueueRecordPanel::_init_audio_record() {
+#ifdef EDM_ENABLE_AUDIO_RECORD
     auto ar = shared_core_data_->get_audio_recorder();
+#endif
 
     connect(ui->pb_start_audio_record, &QPushButton::clicked, this,
-            [this, ar](bool checked) {
+            [this](bool checked) {
                 if (checked) {
                     _start_audio_record();
                 } else {
@@ -104,6 +114,7 @@ void DataQueueRecordPanel::_init_audio_record() {
                 }
             });
 
+#ifdef EDM_ENABLE_AUDIO_RECORD
     connect(ar, &audio::AudioRecorder::sig_record_started, this,
             [this](bool success) {
                 if (success) {
@@ -115,6 +126,7 @@ void DataQueueRecordPanel::_init_audio_record() {
 
     connect(ar, &audio::AudioRecorder::sig_record_stopped, this,
             [this]() { ui->pb_start_audio_record->setChecked(false); });
+#endif
 }
 
 #if 0
@@ -358,6 +370,7 @@ bool DataQueueRecordPanel::_save_data1_header_to_file(
 }
 
 void DataQueueRecordPanel::_start_record_data2() {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     ui->pb_start_record_2->setChecked(true);
 
     auto ret = move::MotionSharedData::instance()
@@ -370,9 +383,13 @@ void DataQueueRecordPanel::_start_record_data2() {
         emit shared_core_data_->sig_error_message("Start Record 2 Failed");
         ui->pb_start_record_2->setChecked(false);
     }
+#else
+    ui->pb_start_record_2->setChecked(false);
+#endif
 }
 
 void DataQueueRecordPanel::_stop_record_data2() {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     ui->pb_start_record_2->setChecked(false);
 
     move::MotionSharedData::instance()
@@ -380,6 +397,9 @@ void DataQueueRecordPanel::_stop_record_data2() {
         ->stop_record(true);
 
     emit shared_core_data_->sig_info_message("Stop Record 2 Success");
+#else
+    ui->pb_start_record_2->setChecked(false);
+#endif
 }
 
 void DataQueueRecordPanel::slot_start_record_data2() {
@@ -402,6 +422,7 @@ void DataQueueRecordPanel::_init_record_data2() {
                 }
             });
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     connect(ui->pb_decode_2, &QPushButton::clicked, this, [this]() {
         // get input files
         auto bin_filenames = QFileDialog::getOpenFileNames(
@@ -442,8 +463,10 @@ void DataQueueRecordPanel::_init_record_data2() {
                 QString{"Print Header Failed, file: %0"}.arg(header_filename));
         }
     });
+#endif
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 std::string DataQueueRecordPanel::_generate_data2_header() const {
     return move::MotionSharedData::instance()
         ->get_data_record_instance2()
@@ -468,6 +491,7 @@ bool DataQueueRecordPanel::_save_data2_header_to_file(
 
     return true;
 }
+#endif
 
 } // namespace app
 } // namespace edm

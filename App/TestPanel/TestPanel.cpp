@@ -129,9 +129,12 @@ TestPanel::TestPanel(SharedCoreData *shared_core_data, QWidget *parent)
 
     _init_test_director();
 
+#if 0
     _init_audio_test();
+#endif
 }
 
+#if 0
 void TestPanel::_init_audio_test() {
     connect(
         ui->pb_test_start_audio_record, &QPushButton::clicked, this, [this]() {
@@ -186,6 +189,7 @@ void TestPanel::_init_audio_test() {
         shared_core_data_->get_audio_recorder()->stop_record();
     });
 }
+#endif
 
 void TestPanel::_init_test_director() {
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)

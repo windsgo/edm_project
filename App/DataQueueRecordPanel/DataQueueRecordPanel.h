@@ -54,8 +54,10 @@ private:
 
     // data2
     void _init_record_data2();
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     std::string _generate_data2_header() const;
     bool _save_data2_header_to_file(const std::string& filename) const;
+#endif
 
     // audio record
     void _init_audio_record();

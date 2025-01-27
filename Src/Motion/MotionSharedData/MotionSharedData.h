@@ -106,10 +106,12 @@ public: // 数据记录相关, 一个周期内可能需要在不同地方记录�
     inline auto get_data_record_instance1() const {
         return data_record_instance1_;
     }
-
+    
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     inline auto get_data_record_instance2() const {
         return data_record_instance2_;
     }
+#endif
 
 public:
     inline auto get_signal_buffer() const { return signal_buffer_; }
@@ -196,7 +198,10 @@ private: // Can 接收与缓存相关数据
 
 private:
     DataRecordInstance1::ptr data_record_instance1_;
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     std::shared_ptr<DataRecordInstance2> data_record_instance2_;
+#endif
 
 private:
     // 共享ecat manager, 便于获取数据和设定(如速度偏置控制)

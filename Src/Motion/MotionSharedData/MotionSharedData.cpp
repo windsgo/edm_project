@@ -15,9 +15,9 @@ MotionSharedData::MotionSharedData() {
     data_record_instance1_ = std::make_shared<DataRecordInstance1>(
         RecordData1BinDir, RecordData1DecodeDir);
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     data_record_instance2_ = std::make_shared<DataRecordInstance2>(
         RecordData1BinDir, RecordData1DecodeDir);
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     data_record_instance2_->set_drill_param(drill_params_);
 #endif
 

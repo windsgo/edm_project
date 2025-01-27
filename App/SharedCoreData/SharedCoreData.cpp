@@ -435,7 +435,9 @@ void SharedCoreData::_init_data() {
     // record_data1_queuerecorder_ =
     //     move::MotionSharedData::instance()->get_record_data1_queuerecorder();
 
+#ifdef EDM_ENABLE_AUDIO_RECORD
     audio_recorder_ = new audio::AudioRecorder(this);
+#endif
 }
 
 void SharedCoreData::_init_handbox_converter(uint32_t can_index) {

@@ -19,7 +19,9 @@ public:
     ~TestPanel();
 
 private:
+#if 0
     void _init_audio_test();
+#endif
 
     void _init_test_director();
 

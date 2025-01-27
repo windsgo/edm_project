@@ -76,7 +76,7 @@ public:
 
 protected:
     DataStruct record_data_cache_;
-    util::DataQueueRecorder<DataStruct>::ptr record_data_queuerecorder_;
+    typename util::DataQueueRecorder<DataStruct>::ptr record_data_queuerecorder_;
 
     QString name_;
 
