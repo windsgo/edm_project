@@ -60,7 +60,9 @@ private:
 
     bool _cmd_emergency_stop();
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     void _drill_record_data(bool start);
+#endif
 
 private: 
     // 定时器触发, 或任意命令触发, 或任意信号到达也触发, 状态机完全由轮询状态完成, 不依赖信号

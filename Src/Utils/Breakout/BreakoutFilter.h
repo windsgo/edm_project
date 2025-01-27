@@ -1,8 +1,7 @@
 #pragma once
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-
 #include "Motion/MoveDefines.h"
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 
 #include "Utils/Filters/SlidingFilter/SlidingFilter.h"
 #include "Utils/Filters/SlidingCounter/SlidingCounter.h"

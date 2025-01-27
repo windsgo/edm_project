@@ -8,8 +8,8 @@
 #define EDM_POWER_DIMEN                             1
 #define EDM_POWER_ZHONGGU                           2
 #define EDM_POWER_ZHONGGU_DRILL                     3
-// #define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
-#define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU_DRILL
+#define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
+// #define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU_DRILL
 #ifndef EDM_POWER_TYPE
 #error "EDM_POWER_TYPE not valid"
 #endif
@@ -130,7 +130,7 @@
 #define EDM_IOBOARD_NEW_SERVODATA_1MS
 
 // OFFLINE DEFINE
-// #define EDM_OFFLINE_RUN
+#define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程

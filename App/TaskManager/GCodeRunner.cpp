@@ -364,6 +364,7 @@ void GCodeRunner::_end() {
     emit sig_auto_stopped(false);
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 void GCodeRunner::_drill_record_data(bool start) {
     if (!SystemSettings::instance().get_drill_settings().auto_record_data) {
         return;
@@ -372,14 +373,18 @@ void GCodeRunner::_drill_record_data(bool start) {
     emit sig_record_data(2, start); // motion data
     emit sig_record_data(0xAE, start); // audio signal (AE signal)
 }
+#endif
 
 void GCodeRunner::_check_to_next_gcode() {
     auto curr_over_gcode = gcode_list_[curr_gcode_num_];
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     if (curr_over_gcode) {
         if (curr_over_gcode->type() == GCodeTaskType::DrillMotionCommand) {
             _drill_record_data(false); // stop record data2
         }
     }
+#endif
 
     // next gcode
     ++curr_gcode_num_;
@@ -1208,9 +1213,11 @@ void GCodeRunner::_state_waiting_for_stopped() {
         case move::MotionAutoState::Stopping:
             break;
         case move::MotionAutoState::Stopped: {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
             if (curr_gcode->type() == GCodeTaskType::DrillMotionCommand) {
                 _drill_record_data(false); // stop record data2
             }
+#endif
 
             _end(); //! emit auto stopped inside
             break;
@@ -1225,9 +1232,11 @@ void GCodeRunner::_state_waiting_for_stopped() {
         break;
     }
     case move::MotionMainMode::Idle: {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
         if (curr_gcode->type() == GCodeTaskType::DrillMotionCommand) {
             _drill_record_data(false); // stop record data2
         }
+#endif
 
         _end(); //! emit auto stopped inside
         break;

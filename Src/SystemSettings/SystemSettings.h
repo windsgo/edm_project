@@ -114,7 +114,7 @@ struct _time_settings {
                     MEO_OPT monitor_peroid_ms);
 };
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 struct _breakout_settings {
     uint32_t voltage_average_filter_window_size{200};
     uint32_t stderr_filter_window_size{200};
@@ -159,7 +159,7 @@ struct _drill_settings {
                     MEO_OPT breakout_params, MEO_OPT auto_switch_opump,
                     MEO_OPT auto_record_data, MEO_OPT auto_switch_ipump);
 };
-#endif
+//#endif
 
 class _SystemSettingsData final {
 public:
@@ -180,17 +180,17 @@ public: // settings
 
     _time_settings time_settings;
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     _drill_settings drill_settings;
-#endif
+//#endif
 
     MEO_JSONIZATION(MEO_OPT can, ecat, MEO_OPT fast_move_param,
                     MEO_OPT jump_param, MEO_OPT file, MEO_OPT time_settings,
                     MEO_OPT motion_settings, MEO_OPT zynq_settings,
-                    MEO_OPT zynq_adc_settings,
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-                    MEO_OPT drill_settings
-#endif
+                    MEO_OPT zynq_adc_settings
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+                    ,MEO_OPT drill_settings
+//#endif
     );
 };
 
@@ -307,11 +307,11 @@ public:
         return data_.zynq_adc_settings;
     }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     inline const auto &get_drill_settings() const {
         return data_.drill_settings;
     }
-#endif
+//#endif
 
 public:
     // you should save to local file manually
@@ -358,12 +358,12 @@ public:
         data_.zynq_adc_settings = zynq_adc_settings;
     }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     inline void
     set_drill_settings(const _sys::_drill_settings &drill_settings) {
         data_.drill_settings = drill_settings;
     }
-#endif
+//#endif
 
 public:
     bool save_to_file() const {

@@ -391,6 +391,7 @@ bool MotionStateMachine::start_auto_m00fake() {
     return true;
 }
 
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 bool MotionStateMachine::start_auto_drill(
     const DrillStartParams &start_params) {
     s_logger->trace("{}", __PRETTY_FUNCTION__);
@@ -415,6 +416,7 @@ bool MotionStateMachine::start_auto_drill(
     _mainmode_switch_to(MotionMainMode::Auto);
     return true;
 }
+#endif
 
 bool MotionStateMachine::pause_auto() {
     s_logger->trace("{}", __PRETTY_FUNCTION__);

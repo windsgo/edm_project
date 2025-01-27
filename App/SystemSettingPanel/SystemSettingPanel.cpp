@@ -120,7 +120,7 @@ void SystemSettingPanel::_update_ui() {
     ui->sb_adc_filter_time_us->setValue(
         s_sys_setting.get_zynq_adc_settings().voltage_filter_window_time_us);
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // drill
     const auto &drill_settings = s_sys_setting.get_drill_settings();
     ui->dsb_drill_touch_return_length->setValue(drill_settings.touch_return_um);
@@ -154,7 +154,7 @@ void SystemSettingPanel::_update_ui() {
         bo_settings.wait_time_ms_after_breakout_end_judged);
 
     ui->sb_drill_ctrl_flags->setValue(bo_settings.ctrl_flags);
-#endif
+//#endif
 }
 
 bool SystemSettingPanel::_save() {
@@ -185,7 +185,7 @@ bool SystemSettingPanel::_save() {
 
     _set_adc_settings_to_zynq();
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // drill
     struct _sys::_drill_settings drill_settings;
 
@@ -230,7 +230,7 @@ bool SystemSettingPanel::_save() {
         emit shared_core_data_->sig_error_message(
             QString{"Set Drill Settings Failed!"});
     }
-#endif
+//#endif
 
     auto set_ret = _set_motion_settings_to_motion_thread();
     if (!set_ret) {
@@ -246,8 +246,9 @@ bool SystemSettingPanel::_save() {
     return save_ret;
 }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 bool SystemSettingPanel::_set_drill_settings_to_motion_thread() {
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     auto mcq = shared_core_data_->get_motion_cmd_queue();
 
     move::DrillParams drill_params;
@@ -297,8 +298,11 @@ bool SystemSettingPanel::_set_drill_settings_to_motion_thread() {
     mcq->push_command(drill_settings_cmd);
 
     return task::TaskHelper::WaitforCmdTobeAccepted(drill_settings_cmd, 200);
-}
+#else
+    return true;
 #endif
+}
+//#endif
 
 bool SystemSettingPanel::_set_motion_settings_to_motion_thread() {
     auto mcq = shared_core_data_->get_motion_cmd_queue();
