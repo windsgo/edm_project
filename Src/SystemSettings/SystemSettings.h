@@ -59,8 +59,14 @@ struct _motion_settings {
     bool enable_g01_run_each_servo_cmd{true};
     bool enable_g01_half_closed_loop{true};
 
+    // G01动态特性伺服测试
+    bool enable_g01_servo_with_dynamic_strategy{false};
+    uint32_t g01_servo_dynamic_strategy_type{0};
+
     MEO_JSONIZATION(MEO_OPT enable_g01_run_each_servo_cmd,
-                    MEO_OPT enable_g01_half_closed_loop);
+                    MEO_OPT enable_g01_half_closed_loop,
+                    MEO_OPT enable_g01_servo_with_dynamic_strategy,
+                    MEO_OPT g01_servo_dynamic_strategy_type);
 };
 
 struct _zynq_settings {
@@ -294,12 +300,8 @@ public:
     }
 
     // MotionSettings Related
-    inline auto get_enable_g01_run_each_servo_cmd() const {
-        return data_.motion_settings.enable_g01_run_each_servo_cmd;
-    }
-    inline auto get_enable_g01_half_closed_loop() const {
-        return data_.motion_settings.enable_g01_half_closed_loop;
-    }
+    inline const auto& get_motion_settings() const { return data_.motion_settings; }
+    inline auto& get_motion_settings() { return data_.motion_settings; }
 
     inline const auto &get_zynq_settings() const { return data_.zynq_settings; }
 
@@ -342,14 +344,6 @@ public:
     }
     inline void set_jumpparam_buffer_um(double v) {
         data_.jump_param.buffer_um = v;
-    }
-
-    // MotionSettings Related
-    inline void set_enable_g01_run_each_servo_cmd(bool v) {
-        data_.motion_settings.enable_g01_run_each_servo_cmd = v;
-    }
-    inline void set_enable_g01_half_closed_loop(bool v) {
-        data_.motion_settings.enable_g01_half_closed_loop = v;
     }
 
     // zynq adc settings change

@@ -556,7 +556,33 @@ bool G01AutoTask::_servoing_do_servothings() {
     auto data_record_instance1 = s_motion_shared->get_data_record_instance1();
     if (data_record_instance1->is_data_recorder_running()) {
         data_record_instance1->get_record_data_ref().g01_servo_cmd = servo_cmd;
-        data_record_instance1->get_record_data_ref().is_g01_normal_servoing = true;
+        data_record_instance1->get_record_data_ref().is_g01_normal_servoing =
+            true;
+    }
+
+    if (s_motion_shared->get_settings()
+            .enable_g01_servo_with_dynamic_strategy) {
+        // test get current pos
+
+        // 获取驱动器当前实际位置
+        auto act_axis = s_motion_shared->get_act_axis();
+
+        // 测试打印 (每1000周期打印一次)
+#if 1
+        {
+            static int jjj = 0;
+            ++jjj;
+            if (jjj > 1000) {
+                jjj = 0;
+                const auto &cmd_axis = s_motion_shared->get_global_cmd_axis();
+                s_logger->debug("cmd_axis x: {}, y: {}, z: {}", cmd_axis.at(0),
+                                cmd_axis.at(1), cmd_axis.at(2));
+
+                s_logger->debug("act_axis x: {}, y: {}, z: {}", act_axis.at(0),
+                                act_axis.at(1), act_axis.at(2));
+            }
+        }
+#endif
     }
 
     if (servo_cmd > 0.0) {
@@ -653,8 +679,8 @@ bool G01AutoTask::_check_and_validate_jump_height() {
 
 double G01AutoTask::_get_servo_cmd_from_shared() {
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
-    auto sv_speed = (double)s_motion_shared->cached_udp_message()
-                        .servo_calced_speed_mm_min;
+    auto sv_speed =
+        (double)s_motion_shared->cached_udp_message().servo_calced_speed_mm_min;
 
     return util::UnitConverter::mm_min2blu_p(sv_speed);
 #else

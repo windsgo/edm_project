@@ -5,25 +5,25 @@
         "helper_can_device_name": "can1"
     },
     "drill_settings": {
-        "auto_record_data": true,
-        "auto_switch_ipump": true,
-        "auto_switch_opump": true,
+        "auto_record_data": false,
+        "auto_switch_ipump": false,
+        "auto_switch_opump": false,
         "breakout_params": {
-            "breakout_start_detect_length_percent": 0.230000,
-            "ctrl_flags": 4,
-            "kn_sc_window_size": 600,
-            "kn_valid_rate_ok_cnt_maximum": 1000,
-            "kn_valid_rate_ok_cnt_threshold": 600,
-            "kn_valid_rate_threshold": 0.010000,
-            "kn_valid_threshold": 15.000000,
-            "max_move_um_after_breakout_start_detected": 1000.000000,
-            "speed_rate_after_breakout_start_detected": 0.750000,
-            "stderr_filter_window_size": 200,
-            "voltage_average_filter_window_size": 200,
-            "wait_time_ms_after_breakout_end_judged": 1000
+            "breakout_start_detect_length_percent": 0.000000,
+            "ctrl_flags": 0,
+            "kn_sc_window_size": 0,
+            "kn_valid_rate_ok_cnt_maximum": 0,
+            "kn_valid_rate_ok_cnt_threshold": 0,
+            "kn_valid_rate_threshold": 0.000000,
+            "kn_valid_threshold": 0.000000,
+            "max_move_um_after_breakout_start_detected": 0.000000,
+            "speed_rate_after_breakout_start_detected": 0.000000,
+            "stderr_filter_window_size": 0,
+            "voltage_average_filter_window_size": 0,
+            "wait_time_ms_after_breakout_end_judged": 0
         },
-        "touch_return_um": 500.000000,
-        "touch_speed_um_ms": 1.000000
+        "touch_return_um": 0.000000,
+        "touch_speed_um_ms": 0.000000
     },
     "ecat": {
         "dc_filter_cnt": 1024,
@@ -55,7 +55,9 @@
     },
     "motion_settings": {
         "enable_g01_half_closed_loop": false,
-        "enable_g01_run_each_servo_cmd": true
+        "enable_g01_run_each_servo_cmd": false,
+        "enable_g01_servo_with_dynamic_strategy": true,
+        "g01_servo_dynamic_strategy_type": 1
     },
     "time_settings": {
         "info_dispatcher_peroid_ms": 80,
@@ -63,9 +65,9 @@
         "motion_cycle_us": 1000
     },
     "zynq_adc_settings": {
-        "adc_gain": 26.415000,
-        "adc_offset": -133.081000,
-        "voltage_filter_window_time_us": 10000
+        "adc_gain": 60.000000,
+        "adc_offset": 0.000000,
+        "voltage_filter_window_time_us": 1
     },
     "zynq_settings": {
         "zynq_tcp_server_ip": "192.168.1.133",

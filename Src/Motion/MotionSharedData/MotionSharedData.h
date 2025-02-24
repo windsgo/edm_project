@@ -38,6 +38,10 @@ namespace move {
 struct MotionSettings {
     bool enable_g01_run_each_servo_cmd{true}; // TODO 替代目前的一次读取方式
     bool enable_g01_half_closed_loop{true};
+
+    // G01动态特性伺服测试
+    bool enable_g01_servo_with_dynamic_strategy{false};
+    uint32_t g01_servo_dynamic_strategy_type{0};
 };
 
 //! 用于Motion全局数据交换、记录, 一些关键的数据可以记录在这里

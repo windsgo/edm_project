@@ -75,6 +75,11 @@ void SystemSettingPanel::_init_button_cb() {
             [this](bool checked [[maybe_unused]]) { _do_save(); });
     connect(ui->pb_enable_g01_run_each_servo_cmd, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
+    connect(ui->pb_enable_g01_servo_dynamic_strategy, &QPushButton::clicked, this,
+            [this](bool checked [[maybe_unused]]) { _do_save(); });
+    connect(ui->sb_g01_servo_dynamic_strategy_type, QOverload<int>::of(&QSpinBox::valueChanged), this,
+            [this](int value [[maybe_unused]]) { _do_save(); });
+
     connect(ui->pb_enable_auto_opump, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
     connect(ui->pb_enable_auto_ipump, &QPushButton::clicked, this,
@@ -108,10 +113,15 @@ void SystemSettingPanel::_update_ui() {
     ui->sb_jump_buffer->setValue(s_sys_setting.get_jump_param().buffer_um);
 
     // Motion Settings
+    const auto& motion_settings = s_sys_setting.get_motion_settings();
     ui->pb_enable_g01_run_each_servo_cmd->setChecked(
-        s_sys_setting.get_enable_g01_run_each_servo_cmd());
+        motion_settings.enable_g01_run_each_servo_cmd);
     ui->pb_enable_g01_half_closed_loop->setChecked(
-        s_sys_setting.get_enable_g01_half_closed_loop());
+        motion_settings.enable_g01_half_closed_loop);
+    ui->pb_enable_g01_servo_dynamic_strategy->setChecked(
+        motion_settings.enable_g01_servo_with_dynamic_strategy);
+    ui->sb_g01_servo_dynamic_strategy_type->setValue(
+        motion_settings.g01_servo_dynamic_strategy_type);
 
     // adc
     ui->dsb_adc_gain->setValue(s_sys_setting.get_zynq_adc_settings().adc_gain);
@@ -170,10 +180,14 @@ bool SystemSettingPanel::_save() {
     s_sys_setting.set_jumpparam_buffer_um(ui->sb_jump_buffer->value());
 
     // Motion Settings (set s_sys_setting and set to motion thread)
-    s_sys_setting.set_enable_g01_run_each_servo_cmd(
-        ui->pb_enable_g01_run_each_servo_cmd->isChecked()); // TODO
-    s_sys_setting.set_enable_g01_half_closed_loop(
-        ui->pb_enable_g01_half_closed_loop->isChecked()); // TODO
+    s_sys_setting.get_motion_settings().enable_g01_run_each_servo_cmd =
+        ui->pb_enable_g01_run_each_servo_cmd->isChecked();
+    s_sys_setting.get_motion_settings().enable_g01_half_closed_loop =
+        ui->pb_enable_g01_half_closed_loop->isChecked();
+    s_sys_setting.get_motion_settings().enable_g01_servo_with_dynamic_strategy =
+        ui->pb_enable_g01_servo_dynamic_strategy->isChecked();
+    s_sys_setting.get_motion_settings().g01_servo_dynamic_strategy_type =
+        ui->sb_g01_servo_dynamic_strategy_type->value();
 
     struct _sys::_zynq_adc_settings adc_s;
     adc_s.adc_offset = ui->dsb_adc_offset->value();
@@ -307,11 +321,14 @@ bool SystemSettingPanel::_set_drill_settings_to_motion_thread() {
 bool SystemSettingPanel::_set_motion_settings_to_motion_thread() {
     auto mcq = shared_core_data_->get_motion_cmd_queue();
 
+    const auto& sys_motion_settings = s_sys_setting.get_motion_settings();
+
     move::MotionSettings motion_settings;
-    motion_settings.enable_g01_half_closed_loop =
-        s_sys_setting.get_enable_g01_half_closed_loop();
-    motion_settings.enable_g01_run_each_servo_cmd =
-        s_sys_setting.get_enable_g01_run_each_servo_cmd();
+    motion_settings.enable_g01_half_closed_loop = sys_motion_settings.enable_g01_half_closed_loop;
+    motion_settings.enable_g01_run_each_servo_cmd = sys_motion_settings.enable_g01_run_each_servo_cmd;
+    
+    motion_settings.enable_g01_servo_with_dynamic_strategy = sys_motion_settings.enable_g01_servo_with_dynamic_strategy;
+    motion_settings.g01_servo_dynamic_strategy_type = sys_motion_settings.g01_servo_dynamic_strategy_type;
 
     auto motion_settings_cmd =
         std::make_shared<move::MotionCommandSettingMotionSettings>(

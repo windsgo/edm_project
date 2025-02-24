@@ -859,6 +859,12 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         s_motion_shared->set_settings(
             set_motion_settings_cmd->motion_settings());
+        
+        const auto& settings = set_motion_settings_cmd->motion_settings();
+        s_logger->debug("motion_settings: {}, {}, {}, {}", settings.enable_g01_run_each_servo_cmd,
+                settings.enable_g01_half_closed_loop,
+                settings.enable_g01_servo_with_dynamic_strategy,
+                settings.g01_servo_dynamic_strategy_type);
 
         accept_cmd_flag = true;
         break;

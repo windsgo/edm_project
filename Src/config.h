@@ -20,7 +20,7 @@
 #endif
 
 // 坐标轴(=驱动器)数目
-#define EDM_AXIS_NUM                    6
+#define EDM_AXIS_NUM                    3
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 #define EDM_SERVO_NUM                   EDM_AXIS_NUM + 1 // 多一个主轴
 #define EDM_DRILL_S_AXIS_IDX            EDM_AXIS_NUM - 1 // S轴编号(0开始, 5)
