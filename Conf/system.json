@@ -1,4 +1,32 @@
 {
+    "axis_params": {
+        "axis_params_vec": [
+            {
+                "max_acc_um_s2": 2222,
+                "max_speed_um_s": 2111
+            },
+            {
+                "max_acc_um_s2": 0,
+                "max_speed_um_s": 0
+            },
+            {
+                "max_acc_um_s2": 0,
+                "max_speed_um_s": 0
+            },
+            {
+                "max_acc_um_s2": 0,
+                "max_speed_um_s": 0
+            },
+            {
+                "max_acc_um_s2": 0,
+                "max_speed_um_s": 0
+            },
+            {
+                "max_acc_um_s2": 0,
+                "max_speed_um_s": 0
+            }
+        ]
+    },
     "can": {
         "can_device_bitrate": 500000,
         "can_device_name": "can0",

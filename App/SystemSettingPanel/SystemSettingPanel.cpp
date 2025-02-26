@@ -54,7 +54,7 @@ SystemSettingPanel::SystemSettingPanel(SharedCoreData *shared_core_data,
 
     _init_button_cb();
     _update_ui();
-    
+
     _do_save(); // set once
 }
 
@@ -75,16 +75,18 @@ void SystemSettingPanel::_init_button_cb() {
             [this](bool checked [[maybe_unused]]) { _do_save(); });
     connect(ui->pb_enable_g01_run_each_servo_cmd, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
-    connect(ui->pb_enable_g01_servo_dynamic_strategy, &QPushButton::clicked, this,
-            [this](bool checked [[maybe_unused]]) { _do_save(); });
-    connect(ui->sb_g01_servo_dynamic_strategy_type, QOverload<int>::of(&QSpinBox::valueChanged), this,
-            [this](int value [[maybe_unused]]) { _do_save(); });
+    connect(ui->pb_enable_g01_servo_dynamic_strategy, &QPushButton::clicked,
+            this, [this](bool checked [[maybe_unused]]) { _do_save(); });
+    // connect(ui->sb_g01_servo_dynamic_strategy_type,
+    //         QOverload<int>::of(&QSpinBox::valueChanged), this,
+    //         [this](int value [[maybe_unused]]) { _do_save(); });
+    // 这里value changed信号会在updateui时触发，产生bug
 
     connect(ui->pb_enable_auto_opump, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
     connect(ui->pb_enable_auto_ipump, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
-    connect(ui->pb_enable_auto_recorddata, &QPushButton::clicked, this, 
+    connect(ui->pb_enable_auto_recorddata, &QPushButton::clicked, this,
             [this](bool checked [[maybe_unused]]) { _do_save(); });
 }
 
@@ -113,7 +115,7 @@ void SystemSettingPanel::_update_ui() {
     ui->sb_jump_buffer->setValue(s_sys_setting.get_jump_param().buffer_um);
 
     // Motion Settings
-    const auto& motion_settings = s_sys_setting.get_motion_settings();
+    const auto &motion_settings = s_sys_setting.get_motion_settings();
     ui->pb_enable_g01_run_each_servo_cmd->setChecked(
         motion_settings.enable_g01_run_each_servo_cmd);
     ui->pb_enable_g01_half_closed_loop->setChecked(
@@ -130,7 +132,7 @@ void SystemSettingPanel::_update_ui() {
     ui->sb_adc_filter_time_us->setValue(
         s_sys_setting.get_zynq_adc_settings().voltage_filter_window_time_us);
 
-//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    //#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // drill
     const auto &drill_settings = s_sys_setting.get_drill_settings();
     ui->dsb_drill_touch_return_length->setValue(drill_settings.touch_return_um);
@@ -164,7 +166,24 @@ void SystemSettingPanel::_update_ui() {
         bo_settings.wait_time_ms_after_breakout_end_judged);
 
     ui->sb_drill_ctrl_flags->setValue(bo_settings.ctrl_flags);
-//#endif
+    //#endif
+
+    // axis params
+    const auto &axis_params = s_sys_setting.get_axis_params().axis_params_vec;
+
+    ui->sb_maxspeed_0->setValue(axis_params[0].max_speed_um_s);
+    ui->sb_maxspeed_1->setValue(axis_params[1].max_speed_um_s);
+    ui->sb_maxspeed_2->setValue(axis_params[2].max_speed_um_s);
+    ui->sb_maxspeed_3->setValue(axis_params[3].max_speed_um_s);
+    ui->sb_maxspeed_4->setValue(axis_params[4].max_speed_um_s);
+    ui->sb_maxspeed_5->setValue(axis_params[5].max_speed_um_s);
+
+    ui->sb_maxacc_0->setValue(axis_params[0].max_acc_um_s2);
+    ui->sb_maxacc_1->setValue(axis_params[1].max_acc_um_s2);
+    ui->sb_maxacc_2->setValue(axis_params[2].max_acc_um_s2);
+    ui->sb_maxacc_3->setValue(axis_params[3].max_acc_um_s2);
+    ui->sb_maxacc_4->setValue(axis_params[4].max_acc_um_s2);
+    ui->sb_maxacc_5->setValue(axis_params[5].max_acc_um_s2);
 }
 
 bool SystemSettingPanel::_save() {
@@ -199,7 +218,7 @@ bool SystemSettingPanel::_save() {
 
     _set_adc_settings_to_zynq();
 
-//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    //#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // drill
     struct _sys::_drill_settings drill_settings;
 
@@ -208,7 +227,8 @@ bool SystemSettingPanel::_save() {
 
     drill_settings.auto_switch_opump = ui->pb_enable_auto_opump->isChecked();
     drill_settings.auto_switch_ipump = ui->pb_enable_auto_ipump->isChecked();
-    drill_settings.auto_record_data = ui->pb_enable_auto_recorddata->isChecked();
+    drill_settings.auto_record_data =
+        ui->pb_enable_auto_recorddata->isChecked();
 
     struct _sys::_breakout_settings bo_settings;
     bo_settings.voltage_average_filter_window_size =
@@ -244,7 +264,23 @@ bool SystemSettingPanel::_save() {
         emit shared_core_data_->sig_error_message(
             QString{"Set Drill Settings Failed!"});
     }
-//#endif
+    //#endif
+
+    // axis params
+    auto &axis_params = s_sys_setting.get_axis_params().axis_params_vec;
+    axis_params.at(0).max_speed_um_s = ui->sb_maxspeed_0->value();
+    axis_params.at(1).max_speed_um_s = ui->sb_maxspeed_1->value();
+    axis_params.at(2).max_speed_um_s = ui->sb_maxspeed_2->value();
+    axis_params.at(3).max_speed_um_s = ui->sb_maxspeed_3->value();
+    axis_params.at(4).max_speed_um_s = ui->sb_maxspeed_4->value();
+    axis_params.at(5).max_speed_um_s = ui->sb_maxspeed_5->value();
+
+    axis_params.at(0).max_acc_um_s2 = ui->sb_maxacc_0->value();
+    axis_params.at(1).max_acc_um_s2 = ui->sb_maxacc_1->value();
+    axis_params.at(2).max_acc_um_s2 = ui->sb_maxacc_2->value();
+    axis_params.at(3).max_acc_um_s2 = ui->sb_maxacc_3->value();
+    axis_params.at(4).max_acc_um_s2 = ui->sb_maxacc_4->value();
+    axis_params.at(5).max_acc_um_s2 = ui->sb_maxacc_5->value();
 
     auto set_ret = _set_motion_settings_to_motion_thread();
     if (!set_ret) {
@@ -254,6 +290,7 @@ bool SystemSettingPanel::_save() {
 
     auto save_ret = s_sys_setting.save_to_file();
     if (!save_ret) {
+        s_logger->error("save to file failed");
         s_sys_setting.reload_from_file();
     }
 
@@ -321,14 +358,18 @@ bool SystemSettingPanel::_set_drill_settings_to_motion_thread() {
 bool SystemSettingPanel::_set_motion_settings_to_motion_thread() {
     auto mcq = shared_core_data_->get_motion_cmd_queue();
 
-    const auto& sys_motion_settings = s_sys_setting.get_motion_settings();
+    const auto &sys_motion_settings = s_sys_setting.get_motion_settings();
 
     move::MotionSettings motion_settings;
-    motion_settings.enable_g01_half_closed_loop = sys_motion_settings.enable_g01_half_closed_loop;
-    motion_settings.enable_g01_run_each_servo_cmd = sys_motion_settings.enable_g01_run_each_servo_cmd;
-    
-    motion_settings.enable_g01_servo_with_dynamic_strategy = sys_motion_settings.enable_g01_servo_with_dynamic_strategy;
-    motion_settings.g01_servo_dynamic_strategy_type = sys_motion_settings.g01_servo_dynamic_strategy_type;
+    motion_settings.enable_g01_half_closed_loop =
+        sys_motion_settings.enable_g01_half_closed_loop;
+    motion_settings.enable_g01_run_each_servo_cmd =
+        sys_motion_settings.enable_g01_run_each_servo_cmd;
+
+    motion_settings.enable_g01_servo_with_dynamic_strategy =
+        sys_motion_settings.enable_g01_servo_with_dynamic_strategy;
+    motion_settings.g01_servo_dynamic_strategy_type =
+        sys_motion_settings.g01_servo_dynamic_strategy_type;
 
     auto motion_settings_cmd =
         std::make_shared<move::MotionCommandSettingMotionSettings>(

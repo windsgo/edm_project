@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <iostream>
 
 #include "Exception/exception.h"
 #include "Utils/Format/edm_format.h"
@@ -45,6 +46,23 @@ struct _fast_move_param {
     MEO_JSONIZATION(MEO_OPT max_acc_um_s2, MEO_OPT nacc_ms,
                     MEO_OPT speed_0_um_s, MEO_OPT speed_1_um_s,
                     MEO_OPT speed_2_um_s, MEO_OPT speed_3_um_s);
+};
+
+// 单个轴的速度等参数(不包括软限位等，这些在坐标系中设置)
+// 长度单位均为um(直线轴)/0.001度(旋转轴)
+struct _axis_param {
+    uint32_t max_speed_um_s{100};   // um/s 对旋转轴来说是0.001度/s
+    uint32_t max_acc_um_s2{100000}; // um/s^2 对旋转轴来说是0.001度/s^2
+
+    MEO_JSONIZATION(MEO_OPT max_speed_um_s, MEO_OPT max_acc_um_s2);
+};
+
+struct _sys_axis_params {
+    // 简便起见, 用vector来存储各轴参数,
+    // std::vector<_axis_param> axis_params_vec{{}, {}, {}, {}, {}, {}};
+    std::array<_axis_param, 6> axis_params_vec;
+
+    MEO_JSONIZATION(MEO_OPT axis_params_vec);
 };
 
 struct _jump_param {
@@ -186,18 +204,22 @@ public: // settings
 
     _time_settings time_settings;
 
-//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    //#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     _drill_settings drill_settings;
-//#endif
+    //#endif
+
+    _sys_axis_params axis_params;
 
     MEO_JSONIZATION(MEO_OPT can, ecat, MEO_OPT fast_move_param,
                     MEO_OPT jump_param, MEO_OPT file, MEO_OPT time_settings,
                     MEO_OPT motion_settings, MEO_OPT zynq_settings,
                     MEO_OPT zynq_adc_settings
-//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-                    ,MEO_OPT drill_settings
-//#endif
-    );
+                    //#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+                    ,
+                    MEO_OPT drill_settings
+                    //#endif
+                    ,
+                    MEO_OPT axis_params);
 };
 
 }; // namespace _sys
@@ -300,8 +322,10 @@ public:
     }
 
     // MotionSettings Related
-    inline const auto& get_motion_settings() const { return data_.motion_settings; }
-    inline auto& get_motion_settings() { return data_.motion_settings; }
+    inline const auto &get_motion_settings() const {
+        return data_.motion_settings;
+    }
+    inline auto &get_motion_settings() { return data_.motion_settings; }
 
     inline const auto &get_zynq_settings() const { return data_.zynq_settings; }
 
@@ -309,11 +333,14 @@ public:
         return data_.zynq_adc_settings;
     }
 
-//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    //#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     inline const auto &get_drill_settings() const {
         return data_.drill_settings;
     }
-//#endif
+    //#endif
+
+    inline const auto &get_axis_params() const { return data_.axis_params; }
+    auto &get_axis_params() { return data_.axis_params; }
 
 public:
     // you should save to local file manually
@@ -352,12 +379,12 @@ public:
         data_.zynq_adc_settings = zynq_adc_settings;
     }
 
-//#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    //#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     inline void
     set_drill_settings(const _sys::_drill_settings &drill_settings) {
         data_.drill_settings = drill_settings;
     }
-//#endif
+    //#endif
 
 public:
     bool save_to_file() const {
@@ -392,6 +419,18 @@ private:
                 "system settings init failed: convert ex: {}: {}", e.what(),
                 GetSysConfigPath()));
         }
+
+        // if (data_.axis_params.axis_params.size() < EDM_AXIS_NUM) {
+        if (data_.axis_params.axis_params_vec.size() < 6) { // 要求写满6个轴...
+            // 如果配置文件中，轴参数的数量不足, 则报错
+            throw exception(EDM_FMT::format(
+                "system settings init failed: axis params size not enough, "
+                "config axis num {}, need axis num {}: {}",
+                data_.axis_params.axis_params_vec.size(), EDM_AXIS_NUM,
+                GetSysConfigPath()));
+        }
+
+        std::cout << "*****: " << data_.axis_params.axis_params_vec[0].max_speed_um_s << std::endl;
 
         ifs.close();
     }
