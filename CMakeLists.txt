@@ -144,3 +144,11 @@ endif()
 
 add_subdirectory(App)
 # add_subdirectory(tests)
+
+# 添加一个自定义目标，该目标在构建时执行 scripts/run.sh 脚本
+add_custom_target(RunScript ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "Running generate_desktop.sh script..."
+    COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/scripts/generate_desktop.sh
+    COMMENT "Executing run.sh script"
+    VERBATIM  # 如果脚本路径或参数中包含空格，则使用此选项
+)
