@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=数控程序
+Exec=/home/windsgo/Documents/edm/edm_project/scripts/../run_withaudio.sh
+Icon=/home/windsgo/Documents/edm/edm_project/scripts/App.png
+Path=/home/windsgo/Documents/edm/edm_project/scripts/../
+Type=Application
+Categories=Application;
+Version=1.0
+Terminal=true
+StartupNotify=true
