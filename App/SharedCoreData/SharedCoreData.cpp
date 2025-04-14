@@ -488,7 +488,7 @@ void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
 
 void SharedCoreData::_init_motionthread_cb() {
     motion_cbs_.cb_enable_voltage_gate = [this](bool arg) -> void {
-        s_logger->debug("push voltage gate command: {}", arg);
+        s_logger->trace("push voltage gate command: {}", arg);
 
         // postevent本身可能会耗时较多但是线程安全,
         // 而global_cmd_queue_这个队列是相当空闲的 操作电压的操作无须特别实时,

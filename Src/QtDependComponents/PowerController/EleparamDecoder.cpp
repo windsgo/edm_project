@@ -817,6 +817,8 @@ void EleparamDecoder::_zhonggu_handle_ip() {
         ip = 0;
     }
 
+    // s_logger->debug("ip: {}", ip);
+
     if (ip & 0x01) {
         result_->io() |= ip1_io;
     }

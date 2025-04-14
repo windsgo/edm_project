@@ -9,7 +9,7 @@ EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 // static bool s_g01_run_each_servo_cmd =
 //     edm::SystemSettings::instance().get_enable_g01_run_each_servo_cmd();
 
-#define MULTI_SEND_INTERVAL 30 // (ms)
+#define MULTI_SEND_INTERVAL 200 // (ms)
 
 namespace edm {
 
@@ -440,7 +440,7 @@ void G01AutoTask::_servo_substate_jumpdowning() {
         line_traj_->set_curr_length(servoing_length_before_jump_ -
                                     jumping_param_.buffer_blu);
 
-        s_logger->debug("jump down over: ltcurr-z: "
+        s_logger->trace("jump down over: ltcurr-z: "
                         "{}, curr-z: {}, curr-length: {}",
                         this->line_traj_->curr_pos()[2],
                         s_motion_shared->get_global_cmd_axis()[2],
@@ -467,7 +467,7 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
             // 缓冲段最后一次运动
             servo_cmd = buffer_remaining_length;
 
-            s_logger->debug(
+            s_logger->trace(
                 "buffer over, servo_cmd:{}, buffer_remaining_length: {}",
                 servo_cmd, buffer_remaining_length);
 
@@ -632,7 +632,7 @@ bool G01AutoTask::_plan_jump_up() {
             (up_start_pos[i] - curr_maching_dir[i] * jumping_param_.up_blu);
     }
 
-    s_logger->debug("plan jump up: startpos-z: {}, targetpos-z: {}, ltcurr-z: "
+    s_logger->trace("plan jump up: startpos-z: {}, targetpos-z: {}, ltcurr-z: "
                     "{}, curr-z: {}, curr-length: {}",
                     up_start_pos[2], jump_up_target_pos_[2],
                     this->line_traj_->curr_pos()[2],
