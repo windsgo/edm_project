@@ -812,6 +812,11 @@ void EleparamDecoder::_zhonggu_handle_ip() {
 
     uint16_t ip = input_->ele_param().ip;
 
+    // 检查machbit, 如果machbit是0, ip强制给0
+    if (input_->machpower_flag() == 0) {
+        ip = 0;
+    }
+
     if (ip & 0x01) {
         result_->io() |= ip1_io;
     }

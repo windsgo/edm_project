@@ -53,7 +53,6 @@ void PowerController::set_highpower_on(bool on) {
 
 bool PowerController::is_highpower_on() const { return highpower_on_flag_; }
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void PowerController::set_machbit_on(bool on) {
     machpower_flag_ = on;
     update_eleparam_and_send(); // machbit发到电源
@@ -61,6 +60,7 @@ void PowerController::set_machbit_on(bool on) {
 
 bool PowerController::is_machbit_on() const { return machpower_flag_; }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 void PowerController::set_power_on(bool on) {
     static const uint32_t pwon_io_1 = 1 << (EleContactorOut_PWON_JF1 - 1);
     static const uint32_t sof_io_2 = 1 << (EleContactorOut_SOF - 33);
@@ -160,7 +160,7 @@ void PowerController::_update_eleparam_and_send(
         eleparam, highpower_on_flag_, machpower_flag_, canframe_pulse_value_);
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     auto input =
-        std::make_shared<EleparamDecodeInput>(eleparam, highpower_on_flag_);
+        std::make_shared<EleparamDecodeInput>(eleparam, highpower_on_flag_, machpower_flag_);
 #endif
 
     // 获取decode输出

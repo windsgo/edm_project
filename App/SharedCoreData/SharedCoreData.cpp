@@ -256,11 +256,11 @@ void SharedCoreData::customEvent(QEvent *e) {
     }
 
     case MotionEventVoltageEnable::type: {
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
+//#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
         auto vol_enable_event = static_cast<MotionEventVoltageEnable *>(e);
         this->power_manager_->set_machbit_on(
             vol_enable_event->voltage_enable());
-#endif
+//#endif
         e->accept();
         break;
     };

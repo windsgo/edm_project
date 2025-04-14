@@ -37,7 +37,7 @@ void HandboxConverter::_listen_cb(const QCanBusFrame &frame) {
         return;
     }
 
-    s_logger->debug("drillbox funcid: {}", func_id);
+    s_logger->trace("drillbox funcid: {}", func_id);
 
     switch (func_id) {
     case id::start_pointmove:

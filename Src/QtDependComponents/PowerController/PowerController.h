@@ -63,10 +63,10 @@ public:
     void set_highpower_on(bool on);
     bool is_highpower_on() const;
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     void set_machbit_on(bool on);
     bool is_machbit_on() const;
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     // Power ON 接口 设计 PWON, SOF 继电器, 单独设置, 与电参数刷新无关
     // 直接设置IO
     void set_power_on(bool on);
@@ -113,10 +113,10 @@ private:
     // 高频开关标志位(影响继电器, 切换加工时用)
     uint8_t highpower_on_flag_ = 0;
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     // 允许高频标志位(影响电源can帧标志位, 抬刀时切换电压用)
-    uint8_t machpower_flag_ = 1;
+    uint8_t machpower_flag_ = 1; // 就是mach_bit, dimen是canbuffer里一个bit, 中古用来控制ip输出
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     // 精加工标志位(发送给IO板标识)
     uint8_t finishing_cut_flag_ = 0;
 

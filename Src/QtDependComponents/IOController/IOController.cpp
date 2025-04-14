@@ -325,6 +325,8 @@ bool IOController::_set_can_machineio_output_no_lock_no_trigger(
         return false;
     }
 
+    // TODO 这一部分最好是不放在这里做，而是放在外层。。
+    //! FIXME
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     {
         static const uint32_t opump_bit =

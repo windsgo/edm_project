@@ -22,7 +22,8 @@ public:
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
         : can_buffer_{QByteArray{8, 0x00}, QByteArray{8, 0x00}}, io_1_(0x00),
           io_2_(0x00){}
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
         : io_(0x00) {
     }
 #endif
@@ -37,7 +38,8 @@ public:
 
     auto &io_2() { return io_2_; }
     const auto &io_2() const { return io_2_; }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     auto &io() { return io_; }
     const auto &io() const { return io_; }
 #endif
@@ -65,7 +67,8 @@ public:
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     static auto get_io_1_mask() { return io_1_mask; }
     static auto get_io_2_mask() { return io_2_mask; }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     static auto get_io_mask() { return io_mask; }
 #endif
 
@@ -74,7 +77,8 @@ private:
     std::array<QByteArray, 2> can_buffer_;
     uint32_t io_1_;
     uint32_t io_2_;
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     uint32_t io_;
 #endif
 
@@ -83,7 +87,8 @@ private:
     // 定义电参数控制的 io_1 和 io_2 的掩码
     static const uint32_t io_1_mask;
     static const uint32_t io_2_mask;
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     static const uint32_t io_mask;
 #endif
 };
@@ -98,26 +103,29 @@ public:
                         uint8_t machpower_flag, uint16_t counter)
         : ele_param_(ele_param), highpower_flag_(highpower_flag),
           machpower_flag_(machpower_flag), counter_(counter) {}
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    EleparamDecodeInput(const EleParam_dkd_t &ele_param, uint8_t highpower_flag)
-        : ele_param_(ele_param), highpower_flag_(highpower_flag) {}
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    EleparamDecodeInput(const EleParam_dkd_t &ele_param, uint8_t highpower_flag,
+                        uint8_t machpower_flag)
+        : ele_param_(ele_param), highpower_flag_(highpower_flag),
+          machpower_flag_(machpower_flag) {}
 #endif
     ~EleparamDecodeInput() = default;
 
     const auto &ele_param() const { return ele_param_; }
     auto highpower_flag() const { return highpower_flag_; }
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     auto machpower_flag() const { return machpower_flag_; }
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     auto counter() const { return counter_; }
 #endif
 
 private:
     EleParam_dkd_t ele_param_;
-    uint8_t highpower_flag_;
+    uint8_t highpower_flag_; // 高频打开标志(操作最终的接触器)
 
+    uint8_t machpower_flag_{1}; // dimem can 帧 mach 使能位; 中谷ip使能位
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
-    uint8_t machpower_flag_; // can 帧 mach 高频使能位
-    uint16_t counter_;       // 计数器(用于填充心跳)
+    uint16_t counter_; // 计数器(用于填充心跳)
 #endif
 };
 

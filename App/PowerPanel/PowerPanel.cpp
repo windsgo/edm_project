@@ -22,9 +22,11 @@ PowerPanel::PowerPanel(SharedCoreData *shared_core_data, QWidget *parent)
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     ui->pb_power_on->setChecked(false);
     ui->pb_power_on->setEnabled(false);
-    ui->pb_mach_bit->setChecked(false);
-    ui->pb_mach_bit->setEnabled(false);
 #endif
+
+    // 中古成形机/小孔机, 可以尝试用mach_bit控制ip是否输出, 因此不要取消这各按键
+    // ui->pb_mach_bit->setChecked(false);
+    // ui->pb_mach_bit->setEnabled(false);
 
     _init_update_slots();
     _init_button_slots();
@@ -51,6 +53,7 @@ void PowerPanel::_update_io_display() {
     ui->pb_mach_bit->setChecked(pm_->is_machbit_on());
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     ui->pb_mach_on->setChecked(pm_->is_highpower_on());
+    ui->pb_mach_bit->setChecked(pm_->is_machbit_on());
 #endif
 }
 
@@ -129,11 +132,11 @@ void PowerPanel::_init_button_slots() {
         this->shared_core_data_->get_power_manager()->show_database_ui();
     });
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
+//#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     connect(ui->pb_mach_bit, &QPushButton::clicked, this, [this](bool checked) {
         pm_->set_machbit_on(checked);
     });
-#endif
+//#endif
 
     connect(ui->pb_mach_on, &QPushButton::clicked, this, [this](bool checked) {
         pm_->set_highpower_on(checked);

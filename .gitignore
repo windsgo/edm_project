@@ -22,3 +22,5 @@ output.bin
 
 venv
 venv/**
+
+scripts/App.desktop

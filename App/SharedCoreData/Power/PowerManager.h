@@ -52,13 +52,13 @@ public:
         return power_ctrler_->is_highpower_on();
     }
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     inline void set_machbit_on(bool on) {
         power_ctrler_->set_machbit_on(on);
         emit sig_power_flag_changed();
     }
     inline bool is_machbit_on() const { return power_ctrler_->is_machbit_on(); }
 
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     inline void set_power_on(bool on) {
         power_ctrler_->set_power_on(on);
         emit sig_power_flag_changed();
