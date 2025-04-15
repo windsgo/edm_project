@@ -7,6 +7,8 @@
 
 #include "Logger/LogMacro.h"
 
+#include "DataQueueRecordPanel/DataQueueRecordPanel.h"
+
 constexpr static const int s_statusbar_timeout = 10000;
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
@@ -30,6 +32,27 @@ GCodePanel::GCodePanel(SharedCoreData *shared_core_data,
     _set_ui_edit_enable(false);
     _set_editbutton_enable(true);
     _set_machining_ui_init();
+
+    QTimer *info_update_timer = new QTimer(this);
+    connect(info_update_timer, &QTimer::timeout, this, [this]() {
+        _update_ui_time_info();
+    });
+    info_update_timer->start(1000);
+}
+
+void GCodePanel::_update_ui_time_info() {
+    ui->lb_curr_node->setText(QString::number(
+        task_manager_->get_gcode_runner()->current_gcode_num() + 1));
+    ui->lb_total_node->setText(QString::number(
+        task_manager_->get_gcode_runner()->total_gcode_num()));
+
+    auto curr_elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(
+        task_manager_->get_gcode_runner()->current_node_elapsed_time()).count();
+    ui->lb_curr_elapsed->setText(QString::number(curr_elapsed_time) + "s");
+
+    auto total_elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(
+        task_manager_->get_gcode_runner()->total_elapsed_time()).count();
+    ui->lb_total_elapsed->setText(QString::number(total_elapsed_time) + "s");
 }
 
 GCodePanel::~GCodePanel() { delete ui; }
@@ -60,6 +83,30 @@ void GCodePanel::_init_button_slots() {
     connect(ui->pb_estop, &QPushButton::clicked, this,
             &GCodePanel::_slot_estop);
     connect(ui->pb_ack, &QPushButton::clicked, this, &GCodePanel::_slot_ack);
+
+    connect(ui->pb_generate_time_report, &QPushButton::clicked, this,
+            [this]() {
+                auto str_vec = task_manager_->get_gcode_runner()->get_time_report();
+                QString str;
+                for (const auto &s : str_vec) {
+                    str += QString::fromStdString(s) + "\n";
+                }
+                qDebug().noquote() << str;
+
+                QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+                QString filename = "TimeRecord_" + timestamp + "_" + ui->le_current_file->text() + ".txt";
+                QString save_path = DataQueueRecordPanel::GCodeTimeReportSaveDir + "/" + filename;
+
+                QFile file(save_path);
+                if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                    QTextStream out(&file);
+                    out << str;
+                    file.close();
+                    QMessageBox::information(this, "Save Success", "Time report saved to: " + save_path);
+                } else {
+                    QMessageBox::critical(this, "Save Error", "Failed to save time report to: " + save_path);
+                }
+            });
 }
 
 void GCodePanel::_init_autogcode_connections() {
@@ -107,7 +154,10 @@ void GCodePanel::_init_autogcode_connections() {
 
     connect(
         task_manager_, &task::TaskManager::sig_autogcode_switched_to_line, this,
-        [this](uint32_t line) { this->gcode_editor_->moveCursorToLine(line); });
+        [this](uint32_t line) { 
+            _update_ui_time_info();
+            this->gcode_editor_->moveCursorToLine(line); 
+        });
 }
 
 void GCodePanel::_init_handbox_auto_signals() {
@@ -120,7 +170,7 @@ void GCodePanel::_init_handbox_auto_signals() {
             this->_slot_start();
             return;
         }
-        
+
         // 只处理resume的情况
         if (ui->pb_resume->isEnabled()) {
             this->_slot_resume();
@@ -139,9 +189,8 @@ void GCodePanel::_init_handbox_auto_signals() {
         }
     });
 
-    connect(s, &SharedCoreData::sig_handbox_ack, this, [this]() {
-        this->_slot_ack();
-    });
+    connect(s, &SharedCoreData::sig_handbox_ack, this,
+            [this]() { this->_slot_ack(); });
 }
 
 void GCodePanel::_slot_edit(bool checked) {
@@ -272,7 +321,7 @@ void GCodePanel::_slot_loadfile() {
 
 void GCodePanel::_slot_start() {
     this->shared_core_data_->send_ioboard_bz_once();
-    
+
     auto filename = ui->le_current_file->text();
     if (filename.isEmpty() || filename.isNull()) {
         QMessageBox::critical(this, "start error",
@@ -484,7 +533,8 @@ bool GCodePanel::_load_from_file(const QString &filename) {
 
 bool GCodePanel::_save_to_file(const QString &filename) {
     QFile savefile(filename);
-    if (!savefile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+    if (!savefile.open(QIODevice::WriteOnly | QIODevice::Text |
+                       QIODevice::Truncate)) {
         return false;
     }
 

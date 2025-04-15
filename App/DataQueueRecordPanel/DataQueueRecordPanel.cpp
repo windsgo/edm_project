@@ -20,6 +20,13 @@ EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 namespace edm {
 namespace app {
 
+const QString DataQueueRecordPanel::DataSaveRootDir =
+    QString::fromStdString(SystemSettings::instance().get_datasave_dir());
+const QString DataQueueRecordPanel::AudioRecordDir 
+    = DataQueueRecordPanel::DataSaveRootDir + "/AudioRecord/";
+const QString DataQueueRecordPanel::GCodeTimeReportSaveDir 
+    = DataQueueRecordPanel::DataSaveRootDir + "/GCodeTimeReport/";
+
 DataQueueRecordPanel::DataQueueRecordPanel(SharedCoreData *shared_core_data,
                                            QWidget *parent)
     : QWidget(parent), ui(new Ui::DataQueueRecordPanel),
@@ -56,6 +63,8 @@ void DataQueueRecordPanel::_init_dirs() {
     // _check_and_create_dir(DataSaveRootDir);
     // _check_and_create_dir(RecordData1BinDir);
     // _check_and_create_dir(RecordData1DecodeDir);
+
+    _check_and_create_dir(GCodeTimeReportSaveDir);
 }
 
 void DataQueueRecordPanel::_start_audio_record() {

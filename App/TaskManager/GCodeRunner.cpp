@@ -15,12 +15,25 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <bits/chrono.h>
 #include <chrono>
 #include <cstddef>
+#include <ctime>
 #include <memory>
+#include <sstream>
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 EDM_STATIC_LOGGER_NAME(s_loglist, "loglist")
+
+static std::string get_time_str_from_timepoint(
+    const std::chrono::system_clock::time_point &time_point,
+    const char* format = "%Y-%m-%d %H:%M:%S") {
+    auto time_t = std::chrono::system_clock::to_time_t(time_point);
+    auto tm = std::localtime(&time_t);
+    std::stringstream ss;
+    ss << std::put_time(tm, format);
+    return ss.str();
+}   
 
 namespace edm {
 
@@ -53,6 +66,7 @@ bool GCodeRunner::start(const std::vector<GCodeTaskBase::ptr> &gcode_list) {
 
     gcode_list_ = gcode_list;
     curr_gcode_num_ = 0;
+    total_elapsed_time_ = std::chrono::system_clock::duration::zero();
 
     if (!_check_gcode_list_at_first()) {
         return false; //! set abort inside _check_xxx()
@@ -77,6 +91,13 @@ bool GCodeRunner::pause() {
             // 本地运行的task, 直接暂停在本地
             _switch_to_state(State::Paused);
             emit sig_auto_paused();
+
+            curr_gcode->timer().pause();
+            // s_logger->debug(
+            //     "in GCodeRunner::pause: 暂停计时器(local), gcode_num: {}, line: {}, code: {}",
+            //     curr_gcode_num_, curr_gcode->line_number(),
+            //     curr_gcode->get_gcode_str());
+
             return true;
         } else {
             bool ret = _cmd_auto_pause();
@@ -87,6 +108,12 @@ bool GCodeRunner::pause() {
             }
 
             _switch_to_state(WaitingForPaused);
+
+            curr_gcode->timer().pause();
+            // s_logger->debug(
+            //     "in GCodeRunner::pause: 暂停计时器(motion), gcode_num: {}, line: {}, code: {}",
+            //     curr_gcode_num_, curr_gcode->line_number(),
+            //     curr_gcode->get_gcode_str());
             return true;
         }
     }
@@ -117,6 +144,13 @@ bool GCodeRunner::resume() {
             // 本地运行的task, 直接继续运行
             _switch_to_state(State::Running);
             emit sig_auto_resumed();
+
+            curr_gcode->timer().resume();
+            // s_logger->debug(
+            //     "in GCodeRunner::resume: 继续计时器(local), gcode_num: {}, line: {}, code: {}",
+            //     curr_gcode_num_, curr_gcode->line_number(),
+            //     curr_gcode->get_gcode_str());
+
             return true;
         } else {
             bool ret = _cmd_auto_resume();
@@ -125,6 +159,13 @@ bool GCodeRunner::resume() {
             }
 
             _switch_to_state(WaitingForResumed);
+
+            curr_gcode->timer().resume();
+            // s_logger->debug(
+            //     "in GCodeRunner::resume: 继续计时器(motion), gcode_num: {}, line: {}, code: {}",
+            //     curr_gcode_num_, curr_gcode->line_number(),
+            //     curr_gcode->get_gcode_str());
+
             return true;
         }
     }
@@ -207,6 +248,38 @@ bool GCodeRunner::estop() {
     }
 
     return ret;
+}
+
+std::vector<std::string> GCodeRunner::get_time_report() const {
+    std::vector<std::string> str_vec;
+
+    for (int i = 0; i < gcode_list_.size(); ++i) {
+        const auto &gcode = gcode_list_[i];
+
+        if (gcode->timer().state() != TaskTimer::State::Stopped) {
+            // 没执行完的
+            continue;
+            // break;
+        }
+
+        auto elapsed_time = gcode->timer().elapsed_time();
+        auto start_time_str =
+            get_time_str_from_timepoint(gcode->timer().start_time());
+        auto end_time_str =
+            get_time_str_from_timepoint(gcode->timer().end_time());
+        
+        auto str = EDM_FMT::format("[{} -> {}] [{:4}s] line: {}, code: {}",
+                                   start_time_str, end_time_str,
+                                   std::chrono::duration_cast<std::chrono::seconds>(
+                                       elapsed_time)
+                                       .count(),
+                                   gcode->line_number(),
+                                   gcode->get_gcode_str());
+
+        str_vec.push_back(str);
+    }
+
+    return str_vec;
 }
 
 bool GCodeRunner::_cmd_auto_pause() {
@@ -362,6 +435,26 @@ void GCodeRunner::_end() {
     _reset_state();
     last_error_str_.clear();
     emit sig_auto_stopped(false);
+
+    // 测试打印时间
+    // for (int i = 0; i < gcode_list_.size(); ++i) {
+    //     const auto& gcode = gcode_list_[i];
+
+    //     if (gcode->timer().state() == TaskTimer::State::Idle) {
+    //         break;
+    //     }
+
+    //     auto elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+    //         gcode->timer().elapsed_time()).count();
+        
+    //     s_logger->info(
+    //         "{} - {}: {:04}ms: node[{:02}]: {}",
+    //         get_time_str_from_timepoint(gcode->timer().start_time()),
+    //         get_time_str_from_timepoint(gcode->timer().end_time()),
+    //         elapsed_time_ms,
+    //         i,
+    //         gcode->get_gcode_str());
+    // }
 }
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
@@ -386,6 +479,13 @@ void GCodeRunner::_check_to_next_gcode() {
     }
 #endif
 
+    curr_over_gcode->timer().stop();
+    total_elapsed_time_ += curr_over_gcode->timer().elapsed_time();
+    // s_logger->debug(
+    //     "in _check_to_next_gcode: 结束计时器, gcode_num: {}, line: {}, code: {}",
+    //     curr_gcode_num_, curr_over_gcode->line_number(),
+    //     curr_over_gcode->get_gcode_str());
+
     // next gcode
     ++curr_gcode_num_;
 
@@ -400,9 +500,20 @@ void GCodeRunner::_check_to_next_gcode() {
 
 void GCodeRunner::_reset_state() {
     state_ = State::Stopped;
-    curr_gcode_num_ = -1; //! reset to -1, means the state is un-inited
+
+    // 结束这个node的计时
+    if (curr_gcode_num_ < gcode_list_.size()) {
+        auto curr_gcode = gcode_list_[curr_gcode_num_];
+        if (curr_gcode) {
+            curr_gcode->timer().stop();
+        }
+        s_logger->debug("in _reset_state: 结束计时器, gcode_num: {}",
+                        curr_gcode_num_);
+    }
+
+    // curr_gcode_num_ = -1; //! reset to -1, means the state is un-inited
     update_timer_->stop();
-    gcode_list_.clear();
+    // gcode_list_.clear();
     delay_pause_flag_ = false;
 }
 
@@ -423,8 +534,18 @@ void GCodeRunner::_state_current_node_initing() {
     auto curr_gcode = gcode_list_[curr_gcode_num_];
     assert(curr_gcode);
 
-    s_loglist->trace("GCodeRunner switch node: {}, line: {}", curr_gcode_num_,
-                     curr_gcode->line_number());
+    s_loglist->trace("GCodeRunner switch node: {}, line: {}, code: {}", curr_gcode_num_,
+                     curr_gcode->line_number(), curr_gcode->get_gcode_str());
+    s_logger->trace(
+        "GCodeRunner switch node: {}, line: {}, code: {}", curr_gcode_num_,
+        curr_gcode->line_number(), curr_gcode->get_gcode_str());
+    
+    if (!curr_gcode->timer().is_running()) {
+        curr_gcode->timer().restart(); // 启动计时器
+        // s_logger->debug(
+        //     "in _state_current_node_initing: 启动计时器, gcode_num: {}, line: {}, code: {}",
+        //     curr_gcode_num_, curr_gcode->line_number(), curr_gcode->get_gcode_str());
+    }
 
     //! 可以在这里emit, 更好的是在 ++curr_gcode_num_ 的时候emit
     emit sig_autogcode_switched_to_line(curr_gcode->line_number());

@@ -11,6 +11,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <chrono>
 
 namespace edm
 {
@@ -38,6 +39,27 @@ public:
     void reset() { _reset_state(); last_error_str_.clear(); }
 
     const auto& last_error_str() const { return last_error_str_; }
+
+    // 用于显示
+    int current_gcode_num() const { return curr_gcode_num_; }
+    int total_gcode_num() const { return gcode_list_.size(); }
+
+    auto current_node_elapsed_time() const {
+        if (curr_gcode_num_ < gcode_list_.size()) {
+            auto curr_gcode = gcode_list_[curr_gcode_num_];
+            if (curr_gcode) {
+                return curr_gcode->timer().elapsed_time();
+            }
+        }
+
+        return std::chrono::system_clock::duration::zero();
+    }
+
+    auto total_elapsed_time() const {
+        return total_elapsed_time_ + current_node_elapsed_time();
+    }
+
+    std::vector<std::string> get_time_report() const;
 
 signals:
     void sig_auto_started();
@@ -118,12 +140,16 @@ private:
     const int update_timer_regular_peroid_ms_ = 1000; // 普通周期 
 
     std::vector<GCodeTaskBase::ptr> gcode_list_;
-    int curr_gcode_num_;
+    int curr_gcode_num_{0};
+
+    std::chrono::system_clock::duration total_elapsed_time_{0};
 
     std::string last_error_str_;
 
     // solve pause fail.
     bool delay_pause_flag_ {false}; // 延迟暂停(下一个状态暂停)
+
+    // 记录时间
 };
 
 } // namespace task

@@ -96,6 +96,10 @@ static std::optional<GCodeTaskBase::ptr> _make_g00(const json::object &jo) {
     auto g00 = std::make_shared<GCodeTaskG00Motion>(!m05, touch, feed_speed,
                                                     coord_index, coord_mode,
                                                     values, line_number, -1);
+    
+    if (jo.contains("CommandStr")) {
+        g00->set_gcode_str(jo.at("CommandStr").as_string());
+    }
 
     return g00;
 }
@@ -134,6 +138,10 @@ static std::optional<GCodeTaskBase::ptr> _make_g01(const json::object &jo) {
 
     auto g01 = std::make_shared<GCodeTaskG01Motion>(coord_index, coord_mode,
                                                     values, line_number, -1);
+    
+    if (jo.contains("CommandStr")) {
+        g01->set_gcode_str(jo.at("CommandStr").as_string());
+    }
 
     return g01;
 }
@@ -146,6 +154,10 @@ _make_coord_index(const json::object &jo) {
 
     auto coord_index_task = std::make_shared<GCodeTaskCoordinateIndex>(
         coord_index, line_number, -1);
+    
+    if (jo.contains("CommandStr")) {
+        coord_index_task->set_gcode_str(jo.at("CommandStr").as_string());
+    }
 
     return coord_index_task;
 }
@@ -158,6 +170,10 @@ static std::optional<GCodeTaskBase::ptr> _make_ele_set(const json::object &jo) {
     auto ele_set =
         std::make_shared<GCodeTaskEleparamSet>(ele_index, line_number, -1);
 
+    if (jo.contains("CommandStr")) {
+        ele_set->set_gcode_str(jo.at("CommandStr").as_string());
+    }
+
     return ele_set;
 }
 
@@ -168,6 +184,10 @@ static std::optional<GCodeTaskBase::ptr> _make_delay(const json::object &jo) {
 
     auto delay = std::make_shared<GCodeTaskDeley>(delay_time, line_number, -1);
 
+    if (jo.contains("CommandStr")) {
+        delay->set_gcode_str(jo.at("CommandStr").as_string());
+    }
+
     return delay;
 }
 
@@ -176,6 +196,10 @@ static std::optional<GCodeTaskBase::ptr> _make_m02(const json::object &jo) {
 
     auto m02 = std::make_shared<GCodeTaskProgramEnd>(line_number, -1);
 
+    if (jo.contains("CommandStr")) {
+        m02->set_gcode_str(jo.at("CommandStr").as_string());
+    }
+
     return m02;
 }
 
@@ -183,6 +207,10 @@ static std::optional<GCodeTaskBase::ptr> _make_m00(const json::object &jo) {
     auto line_number = jo.at("LineNumber").as_integer();
 
     auto m00 = std::make_shared<GCodeTaskPauseCommand>(line_number, -1);
+
+    if (jo.contains("CommandStr")) {
+        m00->set_gcode_str(jo.at("CommandStr").as_string());
+    }
 
     return m00;
 }
@@ -194,6 +222,10 @@ _make_coord_mode(const json::object &jo) {
     auto coord_mode =
         std::make_shared<GCodeTaskCoordinateMode>(line_number, -1);
 
+    if (jo.contains("CommandStr")) {
+        coord_mode->set_gcode_str(jo.at("CommandStr").as_string());
+    }
+
     return coord_mode;
 }
 
@@ -202,6 +234,10 @@ _make_feed_set(const json::object &jo) {
     auto line_number = jo.at("LineNumber").as_integer();
 
     auto feed_set = std::make_shared<GCodeTaskFeedSpeedSet>(line_number, -1);
+
+    if (jo.contains("CommandStr")) {
+        feed_set->set_gcode_str(jo.at("CommandStr").as_string());
+    }
 
     return feed_set;
 }
@@ -234,6 +270,10 @@ _make_coord_set_zero(const json::object &jo) {
     auto coord_set_zero = std::make_shared<GCodeTaskCoordSetZeroCommand>(
         set_zero_axis_list, line_number, -1);
 
+    if (jo.contains("CommandStr")) {
+        coord_set_zero->set_gcode_str(jo.at("CommandStr").as_string());
+    }
+
     return coord_set_zero;
 }
 
@@ -259,6 +299,10 @@ static std::optional<GCodeTaskBase::ptr> _make_drill(const json::object &jo) {
 
     auto drill =
         std::make_shared<GCodeTaskDrillMotion>(start_params, line_number, -1);
+
+    if (jo.contains("CommandStr")) {
+        drill->set_gcode_str(jo.at("CommandStr").as_string());
+    }
 
     return drill;
 }
@@ -329,6 +373,10 @@ _make_g01_group(const json::object &jo) {
 
     auto g01_group = std::make_shared<GCodeTaskG01GroupMotion>(
         coord_index, point_vec, line_number, -1);
+
+    if (jo.contains("CommandStr")) {
+        g01_group->set_gcode_str(jo.at("CommandStr").as_string());
+    }
 
     return g01_group;
 }

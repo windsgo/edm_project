@@ -72,6 +72,9 @@ private:
     void _set_machining_ui_stopped();
 
 private:
+    void _update_ui_time_info();
+
+private:
     Ui::GCodePanel *ui;
 
     SharedCoreData* shared_core_data_;

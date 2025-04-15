@@ -74,9 +74,13 @@ private:
     // util::DataQueueRecorder<move::MotionSharedData::RecordData1>::ptr motion_record_data1_recorder_;
     // const QString data1_header_file_ = RecordData1DecodeDir + "data1_header.txt";
 
-    const QString DataSaveRootDir =
-        QString::fromStdString(SystemSettings::instance().get_datasave_dir());
-    const QString AudioRecordDir = DataSaveRootDir + "/AudioRecord/";
+public:
+    static const QString DataSaveRootDir;
+    static const QString AudioRecordDir;
+    static const QString GCodeTimeReportSaveDir;
+    // const QString DataSaveRootDir =
+    //     QString::fromStdString(SystemSettings::instance().get_datasave_dir());
+    // const QString AudioRecordDir = DataSaveRootDir + "/AudioRecord/";
 };
 
 

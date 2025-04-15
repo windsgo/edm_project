@@ -47,6 +47,8 @@ public: // GUI命令接口
 
     const auto &autogcode_last_error_str() const { return gcode_runner_->last_error_str(); }
 
+    auto get_gcode_runner() const { return gcode_runner_; }
+
 signals: // 提供给GUI界面的信号, 告知一些重要状态变化
     // 通知信号 (整个GCodeList的运行信号)
     void sig_auto_started();

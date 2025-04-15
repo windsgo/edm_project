@@ -59,6 +59,7 @@ class CommandDictKey(Enum):
     DrillBack = 16
     DrillSpindleSpeed = 17
     G01GroupPoints = 18
+    CommandStr = 19
 
 
 class InterpreterException(Exception):
@@ -76,10 +77,11 @@ class InterpreterException(Exception):
 # 点列, 用于一组点, 可以用于进行一系列连续的运动(如G01连续, 便于跨段回退; 或表示Nurbs曲线点)
 class Points(object):
     class _Point(object):
-        def __init__(self, coordinate_mode : CoordinateMode, line_number) -> None:
+        def __init__(self, coordinate_mode : CoordinateMode, line_number, code_str) -> None:
             self.__coordinate_mode : CoordinateMode = coordinate_mode
             self.__coords : list = [None, None, None, None, None, None]
             self.__line_number : int = line_number
+            self.__code_str : str = code_str
         
         def set_point(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> None:
             self.__coords = [x, y, z, b, c, a]
@@ -95,6 +97,9 @@ class Points(object):
         
         def get_line_number(self) -> int:
             return self.__line_number
+        
+        def get_code_str(self) -> str:
+            return self.__code_str
     
     def __init__(self) -> None:
         self.__points : list[Points._Point] = []
@@ -114,7 +119,7 @@ class Points(object):
     
     def push(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> Points:
         self._check_environment()
-        point = self._Point(self.__current_coordinate_mode, _get_caller_linenumber())
+        point = self._Point(self.__current_coordinate_mode, _get_caller_linenumber(), _get_caller_code())
         try:
             point.set_point(x, y, z, b, c, a)
         except Exception as e:
@@ -223,7 +228,8 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.CoordinateModeCommand.name,
             CommandDictKey.CoordinateMode.name: CoordinateMode.AbsoluteMode.name,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
@@ -238,7 +244,8 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.CoordinateModeCommand.name,
             CommandDictKey.CoordinateMode.name: CoordinateMode.IncrementMode.name,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
@@ -258,7 +265,8 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.DelayCommand.name,
             CommandDictKey.DelayTime.name: t,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
@@ -278,7 +286,8 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.EleparamSetCommand.name,
             CommandDictKey.EleparamIndex.name: index,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
@@ -299,7 +308,8 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.CoordinateIndexCommand.name,
             CommandDictKey.CoordinateIndex.name: index,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber(2) # indirect call
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(2), # indirect call
+            CommandDictKey.CommandStr.name: _get_caller_code(2)
         }
         
         self.__g_command_list.append(command)
@@ -339,7 +349,8 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.CoordSetZeroCommand.name,
             CommandDictKey.SetZeroAxisList.name: set_zero_axis_list,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber(2) # indirect call
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(2), # indirect call
+            CommandDictKey.CommandStr.name: _get_caller_code(2)
         }
         
         self.__g_command_list.append(command)
@@ -371,7 +382,8 @@ class RS274Interpreter(object):
         self.__g_environment.set_program_end_flag()
         command = {
             CommandDictKey.CommandType.name: CommandType.ProgramEndCommand.name,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
@@ -384,7 +396,8 @@ class RS274Interpreter(object):
         
         command = {
             CommandDictKey.CommandType.name: CommandType.PauseCommand.name,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
@@ -462,7 +475,8 @@ class RS274Interpreter(object):
             CommandDictKey.CoordinateMode.name: self.__g_environment.get_coordinate_mode().name,
             CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
             CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         coordinates = self._get_coordinate_dict(x, y, z, b, c, a)
@@ -497,6 +511,7 @@ class RS274Interpreter(object):
             CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
             CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
             CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code(),
             CommandDictKey.M05IgnoreTouchDetect.name: m05,
             CommandDictKey.G00Touch.name: touch,
             CommandDictKey.FeedSpeed.name: self.__g_environment.get_feed_speed()
@@ -516,7 +531,8 @@ class RS274Interpreter(object):
             ret.append({
                 CommandDictKey.CoordinateMode.name: p.get_coordinate_mode().name,
                 CommandDictKey.Coordinates.name: p.get_point(),
-                CommandDictKey.LineNumber.name: p.get_line_number()
+                CommandDictKey.LineNumber.name: p.get_line_number(),
+                CommandDictKey.CommandStr.name: p.get_code_str()
             })
         
         return ret
@@ -536,7 +552,8 @@ class RS274Interpreter(object):
             # CommandDictKey.CoordinateMode.name: self.__g_environment.get_coordinate_mode().name,
             # CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
             CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         command[CommandDictKey.G01GroupPoints.name] = self._get_G01GroupPoints(points)
@@ -565,7 +582,8 @@ class RS274Interpreter(object):
         command = {
             CommandDictKey.CommandType.name: CommandType.FeedSpeedSetCommand.name,
             CommandDictKey.FeedSpeed.name: speed,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
@@ -616,7 +634,8 @@ class RS274Interpreter(object):
             CommandDictKey.DrillBreakout.name: breakout,
             CommandDictKey.DrillBack.name: back,
             CommandDictKey.DrillSpindleSpeed.name: spindle_speed,
-            CommandDictKey.LineNumber.name: _get_caller_linenumber()
+            CommandDictKey.LineNumber.name: _get_caller_linenumber(),
+            CommandDictKey.CommandStr.name: _get_caller_code()
         }
         
         self.__g_command_list.append(command)
