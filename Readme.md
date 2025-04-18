@@ -28,6 +28,16 @@ sudo apt install dbus-x11
 
 ## 实时性措施
 
+### Preempt RT install
+
+`https://ubuntu.com/pro`
+
+```
+sudo pro attach xxx(your token)
+sudo pro enable realtime-kernel
+sudo apt install linux-realtime
+```
+
 ### 实时线程
 
 1. `Preepmt RT`

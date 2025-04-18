@@ -93,8 +93,8 @@
         "motion_cycle_us": 1000
     },
     "zynq_adc_settings": {
-        "adc_gain": 55.031,
-        "adc_offset": -277.319,
+        "adc_gain": 55.031000,
+        "adc_offset": -277.319000,
         "voltage_filter_window_time_us": 10000
     },
     "zynq_settings": {
