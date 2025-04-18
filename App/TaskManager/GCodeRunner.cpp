@@ -352,6 +352,15 @@ void GCodeRunner::_run_once() {
     }
     case State::Paused: {
         // Do Nothing here
+        auto curr_gcode = gcode_list_[curr_gcode_num_];
+        if (curr_gcode->timer().state() != TaskTimer::State::Paused) {
+            curr_gcode->timer().pause();
+            s_logger->warn(
+                "in GCodeRunner::Paused: timer state not paused, paused now, gcode_num: {}, "
+                "line: {}, code: {}",
+                curr_gcode_num_, curr_gcode->line_number(),
+                curr_gcode->get_gcode_str());
+        }
         break;
     }
     case State::WaitingForResumed: {
@@ -364,6 +373,15 @@ void GCodeRunner::_run_once() {
     }
     case State::Stopped: {
         // Do Nothing here
+        auto curr_gcode = gcode_list_[curr_gcode_num_];
+        if (curr_gcode->timer().state() != TaskTimer::State::Stopped) {
+            curr_gcode->timer().stop();
+            s_logger->warn(
+                "in GCodeRunner::Stopped: timer state not stopped, stopped now, gcode_num: {}, "
+                "line: {}, code: {}",
+                curr_gcode_num_, curr_gcode->line_number(),
+                curr_gcode->get_gcode_str());
+        }
         break;
     }
     default:
@@ -1070,6 +1088,18 @@ void GCodeRunner::_state_current_node_initing() {
 
 void GCodeRunner::_state_running() {
     auto curr_gcode = gcode_list_[curr_gcode_num_];
+
+    if (curr_gcode->timer().state() == TaskTimer::State::Idle) {
+        s_logger->warn("in _state_running: 启动计时器 (from idle), gcode_num: {}, line: {}, code: {}",
+                        curr_gcode_num_, curr_gcode->line_number(),
+                        curr_gcode->get_gcode_str());
+        curr_gcode->timer().restart(); // 启动计时器
+    } else if (curr_gcode->timer().state() == TaskTimer::State::Paused) {
+        s_logger->warn("in _state_running: 启动计时器 (from paused), gcode_num: {}, line: {}, code: {}",
+                        curr_gcode_num_, curr_gcode->line_number(),
+                        curr_gcode->get_gcode_str());
+        curr_gcode->timer().resume(); // 恢复计时器
+    }
 
     if (!curr_gcode->is_motion_task()) {
         // 非Motion GCode, 在此处执行

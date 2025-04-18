@@ -72,6 +72,11 @@ public:
         } else if (state_ == State::Paused) {
             end_time_ = std::chrono::system_clock::now();
             state_ = State::Stopped;
+        } else if (state_ == State::Idle) {
+            end_time_ = std::chrono::system_clock::now();
+            start_time_ = end_time_;
+            total_start_time_ = start_time_;
+            state_ = State::Stopped;
         }
     }
 

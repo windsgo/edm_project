@@ -83,6 +83,8 @@ static std::unordered_map<uint32_t, QString> s_io_input_names_map = {
     {power::ZHONGGU_IOIn_IOIN2, QObject::tr("IN2")},
     {power::ZHONGGU_IOIn_IOIN5_TOOL_FIX_BTN, QObject::tr("松电极按钮")},
     {power::ZHONGGU_IOIn_IOIN6_WORK_FIX_BTN, QObject::tr("松工件按钮")},
+    {power::ZHONGGU_IOIn_IOIN7, QObject::tr("IN7")},
+    {power::ZHONGGU_IOIn_IOIN8, QObject::tr("IN8")},
     {power::ZHONGGU_IOIn_IOIN12_TOOL_EXIST, QObject::tr("电极检测")},
     {power::ZHONGGU_IOIn_IOIN13_WORK_EXIST, QObject::tr("工件检测")},
     {power::ZHONGGU_IOIn_IOIN14_TOOL_PRESSURE, QObject::tr("电极气压")},
