@@ -69,8 +69,8 @@ static std::vector<std::pair<uint32_t, uint32_t>>
         {0x0000066f, 0x613C0007}, // Y
         {0x0000066f, 0x60380007}, // Z
         {0x0000066f, 0x60380006}, // B
-        {0x0000066f, 0x60380006}, // C
-        {0x0000066f, 0x60380004}, // A
+        {0x0000066f, 0x60380004}, // C
+        {0x0000066f, 0x60380006}, // A
 };
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 static std::vector<std::pair<uint32_t, uint32_t>> //! TODO
