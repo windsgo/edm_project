@@ -33,7 +33,8 @@ struct RecordData1 {
     uint8_t normal_charge_rate{0};
     uint8_t short_charge_rate{0};
     uint8_t open_charge_rate{0};
-    uint8_t current{0}; // 电流
+    
+    uint16_t current{0}; // 电流
     uint16_t average_voltage{0};
 
     inline void clear() {

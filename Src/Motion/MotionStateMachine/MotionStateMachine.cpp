@@ -100,7 +100,8 @@ void MotionStateMachine::run_once() {
 #ifdef EDM_USE_ZYNQ_SERVOBOARD
         const auto &csd = s_motion_shared->cached_udp_message();
         rd1.average_voltage = csd.averaged_voltage;
-        rd1.current = 0;            // TODO
+        rd1.current = csd.realtime_voltage;            // TODO
+
         rd1.normal_charge_rate = 0; // TODO
         rd1.short_charge_rate = 0;  // TODO
         rd1.open_charge_rate = 0;   // TODO
