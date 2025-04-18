@@ -8,10 +8,13 @@ def func():
     i.g00(x=-5,y=-5,m05=True)
 
 i.e(1)
-i.g01(z=-50)
+i.g01(z=-50, options=['abc', '123'])
 
 #for j in range(5):
 #    func()
 #    i.g04(0.5)
 
 i.m02()
+
+#print(i.get_command_list())
+#print(i.get_command_list_jsonstr())

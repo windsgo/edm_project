@@ -142,6 +142,11 @@ public:
     
     auto& timer() { return timer_; }
     const auto& timer() const { return timer_; }
+
+    void set_options(const std::vector<std::string> &options) {
+        options_ = options;
+    }
+    const auto &get_options() const { return options_; }
     
 private:
     GCodeTaskType type_;
@@ -152,6 +157,9 @@ private:
     // 用于记录时间等信息
     std::string gcode_str_; // 代码记录
     TaskTimer timer_; // 计时器
+
+    // 后续很多都可以用这种options带字符串参数的方式快速传参, 便于开发...
+    std::vector<std::string> options_;
 
 protected:
 };

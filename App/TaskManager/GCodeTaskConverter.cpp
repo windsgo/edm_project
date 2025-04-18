@@ -97,9 +97,9 @@ static std::optional<GCodeTaskBase::ptr> _make_g00(const json::object &jo) {
                                                     coord_index, coord_mode,
                                                     values, line_number, -1);
     
-    if (jo.contains("CommandStr")) {
-        g00->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     g00->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return g00;
 }
@@ -139,9 +139,9 @@ static std::optional<GCodeTaskBase::ptr> _make_g01(const json::object &jo) {
     auto g01 = std::make_shared<GCodeTaskG01Motion>(coord_index, coord_mode,
                                                     values, line_number, -1);
     
-    if (jo.contains("CommandStr")) {
-        g01->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     g01->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return g01;
 }
@@ -155,9 +155,9 @@ _make_coord_index(const json::object &jo) {
     auto coord_index_task = std::make_shared<GCodeTaskCoordinateIndex>(
         coord_index, line_number, -1);
     
-    if (jo.contains("CommandStr")) {
-        coord_index_task->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     coord_index_task->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return coord_index_task;
 }
@@ -170,9 +170,9 @@ static std::optional<GCodeTaskBase::ptr> _make_ele_set(const json::object &jo) {
     auto ele_set =
         std::make_shared<GCodeTaskEleparamSet>(ele_index, line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        ele_set->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     ele_set->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return ele_set;
 }
@@ -184,9 +184,9 @@ static std::optional<GCodeTaskBase::ptr> _make_delay(const json::object &jo) {
 
     auto delay = std::make_shared<GCodeTaskDeley>(delay_time, line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        delay->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     delay->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return delay;
 }
@@ -196,9 +196,9 @@ static std::optional<GCodeTaskBase::ptr> _make_m02(const json::object &jo) {
 
     auto m02 = std::make_shared<GCodeTaskProgramEnd>(line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        m02->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     m02->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return m02;
 }
@@ -208,9 +208,9 @@ static std::optional<GCodeTaskBase::ptr> _make_m00(const json::object &jo) {
 
     auto m00 = std::make_shared<GCodeTaskPauseCommand>(line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        m00->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     m00->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return m00;
 }
@@ -222,9 +222,9 @@ _make_coord_mode(const json::object &jo) {
     auto coord_mode =
         std::make_shared<GCodeTaskCoordinateMode>(line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        coord_mode->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     coord_mode->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return coord_mode;
 }
@@ -235,9 +235,9 @@ _make_feed_set(const json::object &jo) {
 
     auto feed_set = std::make_shared<GCodeTaskFeedSpeedSet>(line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        feed_set->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     feed_set->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return feed_set;
 }
@@ -270,9 +270,9 @@ _make_coord_set_zero(const json::object &jo) {
     auto coord_set_zero = std::make_shared<GCodeTaskCoordSetZeroCommand>(
         set_zero_axis_list, line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        coord_set_zero->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     coord_set_zero->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return coord_set_zero;
 }
@@ -300,9 +300,9 @@ static std::optional<GCodeTaskBase::ptr> _make_drill(const json::object &jo) {
     auto drill =
         std::make_shared<GCodeTaskDrillMotion>(start_params, line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        drill->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     drill->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return drill;
 }
@@ -374,9 +374,9 @@ _make_g01_group(const json::object &jo) {
     auto g01_group = std::make_shared<GCodeTaskG01GroupMotion>(
         coord_index, point_vec, line_number, -1);
 
-    if (jo.contains("CommandStr")) {
-        g01_group->set_gcode_str(jo.at("CommandStr").as_string());
-    }
+    // if (jo.contains("CommandStr")) {
+    //     g01_group->set_gcode_str(jo.at("CommandStr").as_string());
+    // }
 
     return g01_group;
 }
@@ -396,67 +396,131 @@ GCodeTaskConverter::_MakeGCodeTaskFromJsonObject(const json::object &jo) {
     auto type = static_cast<GCodeTaskType>(type_enum_find_ret->second);
     s_logger->debug("GCodeTaskConverter: type {},{}", type_str, (int)type);
 
+    std::optional<GCodeTaskBase::ptr> make_ret { std::nullopt };
+
     switch (type) {
     case GCodeTaskType::Undefined:
         s_logger->error("GCodeTaskConverter: type is undefined.");
-        return std::nullopt; // failed
+        make_ret = std::nullopt; // failed
+        break;
 
     case GCodeTaskType::G00MotionCommand: {
-        return _make_g00(jo);
+        make_ret = _make_g00(jo);
+        break;
     }
 
     case GCodeTaskType::G01MotionCommand: {
-        return _make_g01(jo);
+        make_ret = _make_g01(jo);
+        break;
     }
 
     case GCodeTaskType::CoordinateIndexCommand: {
-        return _make_coord_index(jo);
+        make_ret = _make_coord_index(jo);
+        break;
     }
 
     case GCodeTaskType::EleparamSetCommand: {
-        return _make_ele_set(jo);
+        make_ret = _make_ele_set(jo);
+        break;
     }
 
     case GCodeTaskType::DelayCommand: {
-        return _make_delay(jo);
+        make_ret = _make_delay(jo);
+        break;
     }
 
     case GCodeTaskType::ProgramEndCommand: {
-        return _make_m02(jo);
+        make_ret = _make_m02(jo);
+        break;
     }
 
     case GCodeTaskType::PauseCommand: {
-        return _make_m00(jo);
+        make_ret = _make_m00(jo);
+        break;
     }
     case GCodeTaskType::CoordSetZeroCommand: {
-        return _make_coord_set_zero(jo);
+        make_ret = _make_coord_set_zero(jo);
+        break;
     }
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // 不是小孔时, 忽略此条
     case GCodeTaskType::DrillMotionCommand: {
-        return _make_drill(jo);
+        make_ret = _make_drill(jo);
+        break;
     }
 #endif
 
     case GCodeTaskType::G01GroupMotionCommand: {
-        return _make_g01_group(jo);
+        make_ret = _make_g01_group(jo);
+        break;
     }
 
     //! 以下命令虽然构造, 但是实际无操作
     // G90G91的设置记录在G00node中
     // F值的设置也记录在G00node中
     case GCodeTaskType::CoordinateModeCommand: {
-        return _make_coord_mode(jo);
+        make_ret = _make_coord_mode(jo);
+        break;
     }
     case GCodeTaskType::FeedSpeedSetCommand: {
-        return _make_feed_set(jo);
+        make_ret = _make_feed_set(jo);
+        break;
     }
 
     default:
         s_logger->warn("Ignore task: {}", type_str);
-        return nullptr; // ignored
+        make_ret = nullptr; // ignored
+        break;
     }
+
+    if (!make_ret) {
+        // failed (std::nullopt)
+        return make_ret;
+    }
+
+    if (!make_ret.value()) {
+        // ignored (nullptr)
+        return make_ret;
+    }
+
+    // not failed and not ignored
+
+    if (jo.contains("CommandStr")) {
+        if (!jo.at("CommandStr").is_string()) {
+            s_logger->error(
+                "MakeGCodeTaskListFromJson: CommandStr is not a string");
+            return std::nullopt; // failed
+        }
+
+        (*make_ret)->set_gcode_str(jo.at("CommandStr").as_string());
+    }
+
+    if (jo.contains("Options")) {
+        auto&& jv_options = jo.at("Options");
+        
+        if (!jv_options.is_array()) {
+            s_logger->error(
+                "MakeGCodeTaskListFromJson: Options is not an array");
+            return std::nullopt; // failed
+        }
+
+        auto&& ja_options = jv_options.as_array();
+        std::vector<std::string> options_vec;
+        for (const auto &jv_option : ja_options) {
+            if (!jv_option.is_string()) {
+                s_logger->error(
+                    "MakeGCodeTaskListFromJson: Options[{}] is not a string");
+                return std::nullopt; // failed
+            }
+
+            options_vec.push_back(jv_option.as_string());
+            // s_logger->debug("option: {}", jv_option.as_string());
+        }
+        (*make_ret)->set_options(options_vec);
+    }
+
+    return make_ret;
 }
 
 std::optional<std::vector<GCodeTaskBase::ptr>>

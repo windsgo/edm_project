@@ -60,6 +60,7 @@ class CommandDictKey(Enum):
     DrillSpindleSpeed = 17
     G01GroupPoints = 18
     CommandStr = 19
+    Options = 20
 
 
 class InterpreterException(Exception):
@@ -464,9 +465,17 @@ class RS274Interpreter(object):
         return coordinates
 
     # G01普通直线加工指令
-    def g01(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> RS274Interpreter:
+    def g01(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None,
+            options: list[str] = []) -> RS274Interpreter:
         if (self.__g_environment.is_program_end()): 
             return self
+        
+        if (not isinstance(options, list)):
+            raise InterpreterException(f"Options Type Not Valid: {type(options)} " + _get_stackmessage())
+        
+        for option in options:
+            if (not isinstance(option, str)):
+                raise InterpreterException(f"Option: '{option}' Type Not Valid: {type(option)} " + _get_stackmessage())
         
         self.__g_environment.set_motion_mode(MotionMode.G01)
         self._assert_environment_valid()
@@ -476,7 +485,8 @@ class RS274Interpreter(object):
             CommandDictKey.MotionMode.name: self.__g_environment.get_motion_mode().name,
             CommandDictKey.CoordinateIndex.name: self.__g_environment.get_coordinate_index(),
             CommandDictKey.LineNumber.name: _get_caller_linenumber(),
-            CommandDictKey.CommandStr.name: _get_caller_code()
+            CommandDictKey.CommandStr.name: _get_caller_code(),
+            CommandDictKey.Options.name: options
         }
         
         coordinates = self._get_coordinate_dict(x, y, z, b, c, a)
