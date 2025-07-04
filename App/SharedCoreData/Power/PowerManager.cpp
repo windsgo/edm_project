@@ -70,9 +70,12 @@ bool PowerManager::set_current_eleparam_index(uint32_t index) {
 
 static inline double _get_speed_blu_s_from_js(uint32_t js) {
     // js = 01 -> 0.1m/min = 100mm/min
-    if (js > 99)
-        js = 99;
-    return util::UnitConverter::mm_min2blu_s((double)js * 100.0);
+    uint32_t digits_12 = js % 100; // 百,千,万位标识速度
+    if (digits_12 == 0) {
+        digits_12 = 1; // 最小速度为0.1m/min
+    }
+
+    return util::UnitConverter::mm_min2blu_s((double)digits_12 * 100.0);
 }
 
 static inline double _get_jump_acc_from_js(uint32_t js) {
