@@ -62,7 +62,7 @@ ec_sync_info_t slave_0_syncs[] = {
     {0xff}};
 
 // 不同的松下驱动器也有不同的product_code
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU || EDM_POWER_TYPE == EDM_POWER_DIMEN)
 static std::vector<std::pair<uint32_t, uint32_t>>
     s_slave_vendor_and_product_code_vec = {
         {0x0000066f, 0x613C0007}, // X

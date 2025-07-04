@@ -19,8 +19,11 @@ const uint8_t IOController::canio1_raw_bytes_[8] = {0xED, 0x00, 0xDE, 0x00,
                                                     0,    0,    0,    0};
 const uint8_t IOController::canio2_raw_bytes_[8] = {0xDE, 0x00, 0xED, 0x00,
                                                     0,    0,    0,    0};
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
-    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) ||       \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) || \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
 const uint8_t IOController::canio_output_raw_bytes_[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
@@ -154,8 +157,11 @@ void IOController::set_can_machineio_2_withmask(uint32_t part_of_can_io_2,
 
     _trigger_send_io_2(new_io_2);
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
-    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) ||       \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) || \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
 void IOController::set_can_machineio_output(uint32_t can_io_output) {
     {
         std::lock_guard guard(mutex_can_io_);
@@ -206,11 +212,14 @@ void IOController::trigger_send_current_io() {
     _trigger_send_io_1(io1);
     _trigger_send_io_2(io2);
 
-    // s_logger->trace(
-    //     "IOController::trigger_send_current_io: 1: {:032B}, 2: {:032B}", io1,
-    //     io2);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
-    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+// s_logger->trace(
+//     "IOController::trigger_send_current_io: 1: {:032B}, 2: {:032B}", io1,
+//     io2);
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) ||       \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) || \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
     uint32_t io_output;
     {
         std::lock_guard guard(mutex_can_io_);
@@ -231,8 +240,11 @@ uint32_t IOController::get_can_machineio_2_safe() const {
     std::lock_guard guard(mutex_can_io_);
     return can_machineio_2_;
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
-    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) ||       \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) || \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
 uint32_t IOController::get_can_machineio_output_safe() const {
     std::lock_guard guard(mutex_can_io_);
     return can_machineio_output_;
@@ -317,8 +329,11 @@ bool IOController::_set_can_machineio_2_no_lock_no_trigger(uint32_t can_io_2) {
     can_machineio_2_ = can_io_2;
     return true;
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
-    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) ||       \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) || \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
 bool IOController::_set_can_machineio_output_no_lock_no_trigger(
     uint32_t can_io_output) {
     if (can_io_output == can_machineio_output_) {
@@ -352,7 +367,8 @@ bool IOController::_set_can_machineio_output_no_lock_no_trigger(
             can_ctrler_->send_frame(can_device_index_, frame);
         }
     }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
     {
         static const uint32_t opump_bit =
             (1 << (power::ZHONGGU_IOOut_IOOUT1_FULD - 1));
@@ -423,8 +439,11 @@ void IOController::_calc_endcheck(QByteArray &bytearray) {
 
     bytearray[7] = static_cast<uint8_t>(end_check);
 }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
-    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#endif
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) ||       \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) || \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
 void IOController::_trigger_send_io_output(uint32_t io_output) {
     // construct bytearray
     QByteArray bytearray(
@@ -432,7 +451,7 @@ void IOController::_trigger_send_io_output(uint32_t io_output) {
         8); // deep copy initialize
 
     auto io_ptr = reinterpret_cast<uint32_t *>(&(bytearray.data()[0]));
-    *io_ptr = io_output; // set io
+    *io_ptr = io_output;    // set io
     io_ptr[1] = 0x12345678; // check crc
 
     QCanBusFrame frame(CANIO_OUTPUT_TXID, bytearray);

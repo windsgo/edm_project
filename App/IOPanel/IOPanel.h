@@ -52,6 +52,12 @@ private:
     void _button_clicked(uint32_t io_num, bool checked);
 
 private:
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+    void _dimenextra_set_button_output(QPushButton *pb, uint32_t out_num);
+    void _dimenextra_button_clicked(uint32_t io_num, bool checked); // 中古IO部分按钮
+#endif
+
+private:
     Ui::IOPanel *ui;
 
     SharedCoreData *shared_core_data_;
@@ -62,13 +68,19 @@ private:
     std::unordered_map<uint32_t, QPushButton *> map_io_to_button_;
     std::unordered_map<QPushButton *, uint32_t> map_button_to_io_;
 
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+    std::unordered_map<uint32_t, QPushButton *> dimenextra_map_io_to_button_;
+    std::unordered_map<QPushButton *, uint32_t> dimenextra_map_button_to_io_;
+#endif
+
     // io 按钮布局
     QGridLayout *io_button_layout_{nullptr};
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    //#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE ==
+    //EDM_POWER_ZHONGGU_DRILL)
     // INPUT 按钮io对应
     std::unordered_map<uint32_t, QPushButton *> map_inputio_to_dispbtn_;
-#endif
+    //#endif
 
     QTimer *update_io_timer_;
 };

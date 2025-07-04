@@ -7,11 +7,15 @@
 // 电柜使用定义
 #define EDM_POWER_DIMEN                             1
 #define EDM_POWER_ZHONGGU                           2
-#define EDM_POWER_ZHONGGU_DRILL                     3
-#define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU
+#define EDM_POWER_ZHONGGU_DRILL                     3   
+#define EDM_POWER_TYPE                              EDM_POWER_DIMEN
 // #define EDM_POWER_TYPE                              EDM_POWER_ZHONGGU_DRILL
 #ifndef EDM_POWER_TYPE
 #error "EDM_POWER_TYPE not valid"
+#endif
+
+#ifdef EDM_POWER_DIMEN
+    #define EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO // dimen电源, 但使用中谷的IO板控制部分IO(水泵,工件夹具,电极夹具)
 #endif
 
 // 使能Audio功能(做穿透检测实验时使用的)
@@ -135,7 +139,7 @@
 #define EDM_IOBOARD_NEW_SERVODATA_1MS
 
 // OFFLINE DEFINE
-// #define EDM_OFFLINE_RUN
+#define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程

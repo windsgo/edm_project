@@ -5,6 +5,7 @@
 #include "Exception/exception.h"
 
 #include <QDebug>
+#include <cstddef>
 #include <qobject.h>
 #include <qpushbutton.h>
 
@@ -50,6 +51,28 @@ static std::unordered_map<uint32_t, QString> s_io_names_map = {
 
     {46, "IP15"},  {47, "SOF"},
 };
+static std::unordered_map<uint32_t, QString> s_io_input_names_map = {};
+
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+// 使用dimen电源但仍然使用中古io控制夹爪和油泵, 提供这三个IO
+static std::unordered_map<uint32_t, QString> s_extra_io_names_map = {
+    {power::ZHONGGU_IOOut_IOOUT9_TOOL_FIXTURE, QObject::tr("ZG松电极")},
+    {power::ZHONGGU_IOOut_IOOUT10_WORK_FIXTURE, QObject::tr("ZG松工件")},
+    {power::ZHONGGU_IOOut_IOOUT1_FULD, QObject::tr("ZG油泵")}};
+
+
+static inline std::optional<QString> _get_extra_io_name(uint32_t io) {
+    std::optional<QString> ioname{std::nullopt};
+
+    auto ret = s_extra_io_names_map.find(io);
+    if (ret != s_extra_io_names_map.end()) {
+        ioname = ret->second;
+    }
+
+    return ioname;
+}
+#endif
+
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
 static std::unordered_map<uint32_t, QString> s_io_names_map = {
     {power::ZHONGGU_IOOut_IOOUT1_FULD, "FULD"},
@@ -90,17 +113,6 @@ static std::unordered_map<uint32_t, QString> s_io_input_names_map = {
     {power::ZHONGGU_IOIn_IOIN14_TOOL_PRESSURE, QObject::tr("电极气压")},
     {power::ZHONGGU_IOIn_IOIN15_WORK_PRESSURE, QObject::tr("工件气压")}};
 
-static inline std::optional<QString> _get_io_input_name(uint32_t io) {
-    std::optional<QString> ioname{std::nullopt};
-
-    auto ret = s_io_input_names_map.find(io);
-    if (ret != s_io_input_names_map.end()) {
-        ioname = ret->second;
-    }
-
-    return ioname;
-}
-
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
 static std::unordered_map<uint32_t, QString> s_io_names_map = {
     {power::ZHONGGU_IOOut_IOOUT1_OPUMP, QObject::tr("外冲")},
@@ -132,7 +144,8 @@ static std::unordered_map<uint32_t, QString> s_io_names_map = {
     {power::ZHONGGU_IOOut_IP4, "IP4"},
     {power::ZHONGGU_IOOut_IP8, "IP8"},
     {power::ZHONGGU_IOOut_WORK, QObject::tr("WORK")},
-    {power::ZHONGGU_IOOut_TOOL, QObject::tr("TOOL")} //! TODO 待测试反极性，先不开放
+    {power::ZHONGGU_IOOut_TOOL,
+     QObject::tr("TOOL")} //! TODO 待测试反极性，先不开放
 };
 
 static std::unordered_map<uint32_t, QString> s_io_input_names_map = {
@@ -155,6 +168,8 @@ static std::unordered_map<uint32_t, QString> s_io_input_names_map = {
     {power::ZHONGGU_IOIn_IOIN17_H_ZERO, QObject::tr("H原点")},
 };
 
+#endif
+
 static inline std::optional<QString> _get_io_input_name(uint32_t io) {
     std::optional<QString> ioname{std::nullopt};
 
@@ -165,8 +180,6 @@ static inline std::optional<QString> _get_io_input_name(uint32_t io) {
 
     return ioname;
 }
-
-#endif
 
 static inline std::optional<QString> _get_io_name(uint32_t io) {
     std::optional<QString> ioname{std::nullopt};
@@ -186,10 +199,11 @@ void IOPanel::_init_common_io_buttons() {
 
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
     map_io_to_button_[power::EleContactorOut_BZ_JF2]->setEnabled(false);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) 
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
     // map_io_to_button_[power::ZHONGGU_IOOut_IOOUT4_BZ]->setEnabled(false);
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    map_io_to_button_[power::ZHONGGU_IOOut_TOOL]->setEnabled(false); //! TODO 待测试反极性，先不开放
+    map_io_to_button_[power::ZHONGGU_IOOut_TOOL]->setEnabled(
+        false); //! TODO 待测试反极性，先不开放
 #endif
 
     ui->groupBox_io->setLayout(io_button_layout_);
@@ -251,29 +265,57 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
         // qDebug() << "io:" << io << "row:" << row << "col:" << col;
 
         auto io_name_opt = _get_io_name(io);
-        QString button_name = io_name_opt
-                                ? QString{"OUT%0:\n%1"}.arg(io).arg(*io_name_opt)
-                                : QString{"OUT%0"}.arg(io);
+        QString button_name =
+            io_name_opt ? QString{"OUT%0:\n%1"}.arg(io).arg(*io_name_opt)
+                        : QString{"OUT%0"}.arg(io);
 
         auto pb = _make_button_at_gridlayout(button_name, row, col);
         _set_button_output(pb, io);
     }
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    // INPUT display
-    uint32_t input_io_count = 1;
-    const uint32_t output_io_cols = std::ceil((double)total_io_num / (double)row_nums); 
+    #ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+    // 中古IO部分按钮
+    uint32_t extraio_count = 1;
+    const uint32_t output_io_cols =
+        std::ceil((double)total_io_num / (double)row_nums);
 
-    for (std::size_t io = 1; io <= 17; ++io) {
+    for (std::size_t io = 1; io <= 32; ++io) {
+        uint32_t row = (extraio_count - 1) % row_nums;
+        uint32_t col = (extraio_count - 1) / row_nums + output_io_cols;
+
+        auto io_name_opt = _get_extra_io_name(io);
+
+        if (io_name_opt) {
+            QString button_name =
+                QString{"ZGOUT%0:\n%1"}.arg(io).arg(*io_name_opt);
+
+            auto pb = _make_button_at_gridlayout(button_name, row, col);
+            _dimenextra_set_button_output(pb, io);
+
+            ++extraio_count;
+        }
+    }
+    #endif
+
+
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    // INPUT display
+    uint32_t input_io_count = 1; 
+    const uint32_t output_io_cols =
+        std::ceil((double)total_io_num / (double)row_nums);
+
+    for (std::size_t io = 1; io <= 17; ++io) { 
         uint32_t row = (input_io_count - 1) % row_nums;
-        uint32_t col = (input_io_count - 1) / row_nums + output_io_cols;
+        uint32_t col = (input_io_count - 1) / row_nums + output_io_cols; 
 
         // qDebug() << "io:" << io << "row:" << row << "col:" << col;
 
         auto io_name_opt = _get_io_input_name(io);
 
         if (io_name_opt) {
-            QString button_name = QString{"IN%0:\n%1"}.arg(io).arg(*io_name_opt);
+            QString button_name =
+                QString{"IN%0:\n%1"}.arg(io).arg(*io_name_opt);
 
             auto pb = _make_button_at_gridlayout(button_name, row, col);
             _set_button_input(pb, io);
@@ -288,14 +330,21 @@ void IOPanel::_init_handbox_pump_signal() {
     connect(this->shared_core_data_, &SharedCoreData::sig_handbox_pump, this,
             [this](bool pump_on) {
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+                // 使用dimen电源但仍然使用中古io控制夹爪和油泵
                 auto btn =
-                    this->map_io_to_button_[power::EleContactorOut_FULD_JF7];
+                    this->dimenextra_map_io_to_button_[power::ZHONGGU_IOOut_IOOUT1_FULD];
+#else
+            auto btn = this->map_io_to_button_[power::EleContactorOut_FULD_JF7];
+#endif
+
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
-                auto btn =
-                    this->map_io_to_button_[power::ZHONGGU_IOOut_IOOUT1_FULD];
+            auto btn =
+                this->map_io_to_button_[power::ZHONGGU_IOOut_IOOUT1_FULD];
 #elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-                auto btn =
-                    this->map_io_to_button_[power::ZHONGGU_IOOut_IOOUT1_OPUMP]; // 小孔机控制外冲液
+            auto btn =
+                this->map_io_to_button_
+                    [power::ZHONGGU_IOOut_IOOUT1_OPUMP]; // 小孔机控制外冲液
 #endif
                 btn->setChecked(pump_on);
                 emit btn->clicked(pump_on);
@@ -318,18 +367,29 @@ void IOPanel::_update_all_io_display() {
             btn->setChecked(!!(io_2 & io_bit));
         }
     }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+    // update extra io buttons
+    auto io_output = io_ctrler_->get_can_machineio_output_safe();
+    for (auto &[io, btn] : dimenextra_map_io_to_button_) {
+        uint32_t io_bit = 1 << (io - 1);
+        btn->setChecked(!!(io_output & io_bit));
+    }
+#endif
+
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     auto io_output = io_ctrler_->get_can_machineio_output_safe();
     auto io_input = io_ctrler_->get_can_machineio_input();
 
     for (auto &[io, btn] : map_io_to_button_) {
-        uint32_t io_bit = 1 << (io - 33);
+        uint32_t io_bit = 1 << (io - 33); //! FIXME 这个-33似乎不对
         btn->setChecked(!!(io_output & io_bit));
     }
 
     // INPUT
     for (auto &[io, btn] : map_inputio_to_dispbtn_) {
-        uint32_t io_bit = 1 << (io - 33);
+        uint32_t io_bit = 1 << (io - 33); //! FIXME 这个-33似乎不对
         btn->setChecked(!!(io_input & io_bit));
     }
     // map_inputio_to_dispbtn_[power::ZHONGGU_IOIn_IOIN2]->setChecked(true);
@@ -355,7 +415,8 @@ void IOPanel::_button_clicked(uint32_t io_num, bool checked) {
             io_ctrler_->set_can_machineio_2_withmask(0x00, io_bit);
         }
     }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     if (io_num <= 32) {
         uint32_t io_bit = 1 << (io_num - 1);
         if (checked) {
@@ -368,6 +429,38 @@ void IOPanel::_button_clicked(uint32_t io_num, bool checked) {
 
     _update_all_io_display();
 }
+
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+void IOPanel::_dimenextra_set_button_output(QPushButton *pb, uint32_t out_num) {
+    pb->setEnabled(true);
+    dimenextra_map_io_to_button_.emplace(out_num, pb);
+    dimenextra_map_button_to_io_.emplace(pb, out_num);
+
+    QObject::connect(pb, &QPushButton::clicked, this, [this](bool checked) {
+        auto sender_pb = static_cast<QPushButton *>(QObject::sender());
+
+        // should be safe ...
+        uint32_t sender_pb_out_num = this->dimenextra_map_button_to_io_[sender_pb];
+
+        s_logger->debug("dimenextra clicked: name: {}, io: {}, on: {}",
+                        sender_pb->text().toStdString(), sender_pb_out_num,
+                        checked);
+
+        this->_dimenextra_button_clicked(sender_pb_out_num, checked);
+    });
+}
+
+void IOPanel::_dimenextra_button_clicked(uint32_t io_num, bool checked) {
+    if (io_num <= 32) {
+        uint32_t io_bit = 1 << (io_num - 1);
+        if (checked) {
+            io_ctrler_->set_can_machineio_output_withmask(io_bit, io_bit);
+        } else {
+            io_ctrler_->set_can_machineio_output_withmask(0x00, io_bit);
+        }
+    }
+}
+#endif
 
 } // namespace app
 } // namespace edm
