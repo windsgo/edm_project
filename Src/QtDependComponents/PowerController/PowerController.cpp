@@ -182,7 +182,7 @@ void PowerController::_handle_servo_settings() {
     if (!eleparam_inited_)
         return;
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN) && !defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
     uint8_t bz_enable = _is_bz_enable();
 
     //! 防止CAN丢包导致伺服设定没发下去, 这里定时发
@@ -228,7 +228,9 @@ void PowerController::_handle_servo_settings() {
         // 发送 frame
         can_ctrler_->send_frame(can_device_index_, frame);
     }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#endif
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)\
+    || defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
     // TODO
 
     static zynq::upper_servo_settings_t prev_servo_s;

@@ -137,7 +137,9 @@ bool PowerManager::set_current_eleparam(const power::EleParam_dkd_t &eleparam) {
 
 void PowerManager::_ele_cycle_timer_slot() {
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
-    power_ctrler_->trigger_send_ioboard_eleparam();
+#ifndef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+    power_ctrler_->trigger_send_ioboard_eleparam(); // 不用发这个了, 伺服在zynq上做
+#endif
 #endif
     power_ctrler_->trigger_send_eleparam();
     io_ctrler_->trigger_send_current_io();
