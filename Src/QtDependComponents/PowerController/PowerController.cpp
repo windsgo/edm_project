@@ -111,7 +111,8 @@ void PowerController::_trigger_send_io_value() {
         curr_result_->io_1(), EleparamDecodeResult::get_io_1_mask());
     io_ctrler_->set_can_machineio_2_withmask(
         curr_result_->io_2(), EleparamDecodeResult::get_io_2_mask());
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     io_ctrler_->set_can_machineio_output_withmask(
         curr_result_->io(), EleparamDecodeResult::get_io_mask());
 #endif
@@ -158,9 +159,10 @@ void PowerController::_update_eleparam_and_send(
     // 构造输入
     auto input = std::make_shared<EleparamDecodeInput>(
         eleparam, highpower_on_flag_, machpower_flag_, canframe_pulse_value_);
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    auto input =
-        std::make_shared<EleparamDecodeInput>(eleparam, highpower_on_flag_, machpower_flag_);
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
+    auto input = std::make_shared<EleparamDecodeInput>(
+        eleparam, highpower_on_flag_, machpower_flag_);
 #endif
 
     // 获取decode输出
@@ -182,7 +184,9 @@ void PowerController::_handle_servo_settings() {
     if (!eleparam_inited_)
         return;
 
-#if (EDM_POWER_TYPE == EDM_POWER_DIMEN) && !defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
+#ifndef EDM_USE_ZYNQ_SERVOBOARD
+    // #if (EDM_POWER_TYPE == EDM_POWER_DIMEN) &&
+    // !defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
     uint8_t bz_enable = _is_bz_enable();
 
     //! 防止CAN丢包导致伺服设定没发下去, 这里定时发
@@ -228,11 +232,11 @@ void PowerController::_handle_servo_settings() {
         // 发送 frame
         can_ctrler_->send_frame(can_device_index_, frame);
     }
-#endif
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)\
-    || defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
-    // TODO
-
+// #endif
+// #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || (EDM_POWER_TYPE ==
+// EDM_POWER_ZHONGGU_DRILL)\
+    // || defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
+#else // EDM_USE_ZYNQ_SERVOBOARD
     static zynq::upper_servo_settings_t prev_servo_s;
 
     zynq::upper_servo_settings_t servo_s;
