@@ -3,8 +3,10 @@
 #include <QCoreApplication>
 
 #include <memory>
+#include <qabstractsocket.h>
 #include <qcoreapplication.h>
 #include <qhostaddress.h>
+#include <qtcpsocket.h>
 #include <random>
 #include <thread>
 
@@ -152,11 +154,15 @@ public:
         QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_HandboxAck);
 };
 
+#include <QTcpSocket>
+#include <QAbstractSocket>
 struct metatype_register__ {
     metatype_register__() {
         qRegisterMetaType<edm::move::axis_t>("edm::move::axis_t");
         qRegisterMetaType<edm::power::EleParam_dkd_t>(
             "edm::power::EleParam_dkd_t");
+        qRegisterMetaType<QAbstractSocket::SocketState>(
+            "QAbstractSocket::SocketState");
     }
 };
 static struct metatype_register__ mt_register__;

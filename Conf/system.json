@@ -93,9 +93,9 @@
         "motion_cycle_us": 1000
     },
     "zynq_adc_settings": {
-        "adc_gain": 55.031000,
-        "adc_offset": -277.319000,
-        "voltage_filter_window_time_us": 10000
+        "adc_gain": 61.401000,
+        "adc_offset": -320.925000,
+        "voltage_filter_window_time_us": 12000
     },
     "zynq_settings": {
         "zynq_tcp_server_ip": "192.168.1.133",

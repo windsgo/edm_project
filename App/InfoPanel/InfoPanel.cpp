@@ -3,6 +3,11 @@
 #include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "ui_InfoPanel.h"
 
+
+#include "Logger/LogMacro.h"
+
+EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
+
 namespace edm {
 namespace app {
 
@@ -23,6 +28,7 @@ void InfoPanel::_init_info_slot() {
     connect(shared_core_data_->get_zynq_connect_ctrler().get(),
             &zynq::ZynqConnectController::sig_zynq_tcp_socket_state_changed,
             this, [this](QAbstractSocket::SocketState state) {
+        s_logger->debug("in info panel, zynq connected: {}", !!(state == QAbstractSocket::ConnectedState));
         if (state == QAbstractSocket::ConnectedState) {
             ui->pb_display_zynq->setChecked(true);
         } else {

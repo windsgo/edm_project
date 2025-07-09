@@ -107,16 +107,9 @@ void HandboxConverter::_frame_pump(const QCanBusFrame &frame) {
 
     uint32_t machineio = *p_uint32;
 
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
-    if (machineio == 5) {
-        // 开油泵
-        cb_pump_on_(true);
-    } else if (machineio == 6) {
-        // 关油泵
-        cb_pump_on_(false);
-    }
-#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)
-    // 中古成型机, 沿用drill的手盒协议, 开水泵变成油泵
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) \
+    || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) \
+    || defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
     if (machineio == 5) {
         // 开油泵
         cb_pump_on_(true);
