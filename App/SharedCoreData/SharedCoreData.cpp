@@ -163,6 +163,8 @@ struct metatype_register__ {
             "edm::power::EleParam_dkd_t");
         qRegisterMetaType<QAbstractSocket::SocketState>(
             "QAbstractSocket::SocketState");
+        qRegisterMetaType<QTcpSocket::SocketState>(
+            "QTcpSocket::SocketState");
     }
 };
 static struct metatype_register__ mt_register__;

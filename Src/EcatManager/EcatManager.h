@@ -139,9 +139,13 @@ private: // igh things
 
     std::vector<ec_slave_config_t *> igh_sc_vec_;
 
+#define USE_MULTI_DOMAINS
     // 每一个从站分配一个domain
-    // std::vector<ec_domain_t *> igh_domain_vec_;
+#ifdef USE_MULTI_DOMAINS
+    std::vector<ec_domain_t *> igh_domain_vec_;
+#else
     ec_domain_t* igh_domain_instance_{nullptr}; // test single domain
+#endif
 
     // 每一个从站的domain的pdo数据指针
     std::vector<uint8_t *> igh_domain_pd_vec_;

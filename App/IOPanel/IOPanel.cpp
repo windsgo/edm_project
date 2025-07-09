@@ -6,6 +6,7 @@
 
 #include <QDebug>
 #include <cstddef>
+#include <qmessagebox.h>
 #include <qobject.h>
 #include <qpushbutton.h>
 
@@ -445,6 +446,32 @@ void IOPanel::_dimenextra_set_button_output(QPushButton *pb, uint32_t out_num) {
         s_logger->debug("dimenextra clicked: name: {}, io: {}, on: {}",
                         sender_pb->text().toStdString(), sender_pb_out_num,
                         checked);
+
+        if (sender_pb_out_num == power::ZHONGGU_IOOut_IOOUT9_TOOL_FIXTURE) {
+            if (checked == true) {
+                // 松开保护
+                auto ret_button = QMessageBox::information(this, tr("确认松电极夹具"), tr("确认松开电极夹具？"), 
+                    QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No,
+                    QMessageBox::StandardButton::Yes);
+                
+                if (ret_button != QMessageBox::StandardButton::Yes) {
+                    sender_pb->setChecked(false); // remain unchecked
+                    return; // return, do not open this io 
+                }
+            }
+        } else if (sender_pb_out_num == power::ZHONGGU_IOOut_IOOUT10_WORK_FIXTURE) {
+            if (checked == true) {
+                // 松开保护
+                auto ret_button = QMessageBox::information(this, tr("确认松工件夹具"), tr("确认松开工件夹具？"), 
+                    QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No,
+                    QMessageBox::StandardButton::Yes);
+                
+                if (ret_button != QMessageBox::StandardButton::Yes) {
+                    sender_pb->setChecked(false); // remain unchecked
+                    return; // return, do not open this io 
+                }
+            }
+        }
 
         this->_dimenextra_button_clicked(sender_pb_out_num, checked);
     });

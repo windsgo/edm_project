@@ -56,6 +56,9 @@ public:
     ZynqTcpWorker(const QHostAddress& server_ip, uint16_t server_port);
     void add_listener(const std::function<void(const QByteArray &)> listener_cb);
 
+    // maybe unsafe
+    auto socket_state() const { return tcp_socket_ ? tcp_socket_->state() : QTcpSocket::UnconnectedState; }
+
 signals:
     void sig_tcp_msg_received(QByteArray);
     // TODO tcp connected/disconnected signal
@@ -98,6 +101,9 @@ public:
     void add_tcp_listener(const std::function<void(const QByteArray &)> listener_cb);
 
     void send_tcp_bytearray(const QByteArray& ba);
+
+    // maybe unsafe
+    auto get_tcp_socket_state() const { return tcp_worker_ ? tcp_worker_->socket_state() : QTcpSocket::UnconnectedState; }
 
 signals:
     void sig_zynq_tcp_connected();

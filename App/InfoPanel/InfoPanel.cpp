@@ -5,6 +5,7 @@
 
 
 #include "Logger/LogMacro.h"
+#include <qtcpsocket.h>
 
 EDM_STATIC_LOGGER(s_logger, EDM_LOGGER_ROOT());
 
@@ -25,16 +26,23 @@ void InfoPanel::_init_info_slot() {
     connect(shared_core_data_->get_info_dispatcher(),
             &InfoDispatcher::info_updated, this, &InfoPanel::_update_info);
     
-    connect(shared_core_data_->get_zynq_connect_ctrler().get(),
-            &zynq::ZynqConnectController::sig_zynq_tcp_socket_state_changed,
-            this, [this](QAbstractSocket::SocketState state) {
-        s_logger->debug("in info panel, zynq connected: {}", !!(state == QAbstractSocket::ConnectedState));
-        if (state == QAbstractSocket::ConnectedState) {
-            ui->pb_display_zynq->setChecked(true);
-        } else {
-            ui->pb_display_zynq->setChecked(false);
-        }
+    // connect(shared_core_data_->get_zynq_connect_ctrler().get(),
+    //         &zynq::ZynqConnectController::sig_zynq_tcp_socket_state_changed,
+    //         this, [this](QAbstractSocket::SocketState state) {
+    //     // s_logger->debug("in info panel, zynq connected: {}", !!(state == QAbstractSocket::ConnectedState));
+    //     tcp_state_cached_ = state;
+    //     if (state == QAbstractSocket::ConnectedState) {
+    //         ui->pb_display_zynq->setChecked(true);
+    //     } else {
+    //         ui->pb_display_zynq->setChecked(false);
+    //     }
+    // });
+
+    QTimer *t1 = new QTimer(this);
+    connect(t1, &QTimer::timeout, this, [this]() {
+        ui->pb_display_zynq->setChecked(shared_core_data_->get_zynq_connect_ctrler()->get_tcp_socket_state() == QTcpSocket::ConnectedState);
     });
+    t1->start(1000);
     // TODO signal connection
 }
 

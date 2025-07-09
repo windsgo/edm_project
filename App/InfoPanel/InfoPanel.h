@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <qtcpsocket.h>
 
 #include "SharedCoreData/SharedCoreData.h"
 
@@ -33,6 +34,8 @@ private:
     Ui::InfoPanel *ui;
 
     SharedCoreData *shared_core_data_;
+
+    // QTcpSocket::SocketState tcp_state_cached_{QTcpSocket::SocketState::UnconnectedState};
 };
 
 } // namespace app

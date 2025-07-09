@@ -113,10 +113,12 @@ EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
 
     // resize member vectors according to servonum and ionum (unused now)
     // and assign each pointer to nullptr
-    // igh_domain_vec_.resize(servo_num_ + io_num_);
-    // for (auto &d : igh_domain_vec_) {
-    //     d = nullptr;
-    // }
+#ifdef USE_MULTI_DOMAINS
+    igh_domain_vec_.resize(servo_num_ + io_num_);
+    for (auto &d : igh_domain_vec_) {
+        d = nullptr;
+    }
+#endif
 
     igh_domain_pd_vec_.resize(servo_num_ + io_num_);
     for (auto &d_pd : igh_domain_pd_vec_) {
@@ -281,19 +283,21 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
 
 #ifdef EDM_ECAT_DRIVER_IGH
 
-    // for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
-    //     igh_domain_vec_[i] = ecrt_master_create_domain(igh_master_);
-    //     if (!igh_domain_vec_[i]) {
-    //         s_logger->error("ecrt_master_create_domain failed: i = {}", i);
-    //         return false;
-    //     }
-    // }
-
+#ifdef USE_MULTI_DOMAINS
+    for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
+        igh_domain_vec_[i] = ecrt_master_create_domain(igh_master_);
+        if (!igh_domain_vec_[i]) {
+            s_logger->error("ecrt_master_create_domain failed: i = {}", i);
+            return false;
+        }
+    }
+#else
     igh_domain_instance_ = ecrt_master_create_domain(igh_master_);
     if (!igh_domain_instance_) {
         s_logger->error("ecrt_master_create_domain failed");
         return false;
     }
+#endif
 
     // configure Panasonic slaves
     auto motion_cycle_us = SystemSettings::instance().get_motion_cycle_us();
@@ -374,18 +378,19 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         // final
         igh_domain_regs_vec_[i].push_back({});
 
-        // if (ecrt_domain_reg_pdo_entry_list(igh_domain_vec_[i],
-        //                                    igh_domain_regs_vec_[i].data())) {
-        //     s_logger->error("PDO entry registration failed: servo {}", i);
-        //     return false;
-        // }
-
+#ifdef USE_MULTI_DOMAINS
+        if (ecrt_domain_reg_pdo_entry_list(igh_domain_vec_[i],
+                                           igh_domain_regs_vec_[i].data())) {
+            s_logger->error("PDO entry registration failed: servo {}", i);
+            return false;
+        }
+#else
         if (ecrt_domain_reg_pdo_entry_list(igh_domain_instance_,
                                            igh_domain_regs_vec_[i].data())) {
             s_logger->error("PDO entry registration failed: servo {}", i);
             return false;
         }
-
+#endif
         s_logger->info("servo {} configured", i);
     }
 
@@ -417,8 +422,11 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
     }
 
     for (uint32_t i = 0; i < igh_domain_pd_vec_.size(); ++i) {
-        // igh_domain_pd_vec_[i] = ecrt_domain_data(igh_domain_vec_[i]);
+#ifdef USE_MULTI_DOMAINS
+        igh_domain_pd_vec_[i] = ecrt_domain_data(igh_domain_vec_[i]);
+#else
         igh_domain_pd_vec_[i] = ecrt_domain_data(igh_domain_instance_);
+#endif
         if (!igh_domain_pd_vec_[i]) {
             s_logger->error("ecrt_domain_data failed: slave {}", i);
             return false;
@@ -491,22 +499,26 @@ bool EcatManager::_igh_check_receive_valid() {
 
     // check domain state
     ec_domain_state_t domain_state;
-    // for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
-    //     ecrt_domain_state(igh_domain_vec_[i], &domain_state);
 
-    //     if (domain_state.working_counter != 3) [[unlikely]] {
-    //         s_logger->warn("igh domain {} wkc {}", i,
-    //                        (int)domain_state.working_counter);
-    //         return false;
-    //     }
+#ifdef USE_MULTI_DOMAINS
+    for (uint32_t i = 0; i < igh_domain_vec_.size(); ++i) {
+        ecrt_domain_state(igh_domain_vec_[i], &domain_state);
 
-    //     if (domain_state.wc_state != ec_wc_state_t::EC_WC_COMPLETE)
-    //         [[unlikely]] {
-    //         s_logger->warn("igh domain {} wc_state {}", i,
-    //                        (int)domain_state.wc_state);
-    //         return false;
-    //     }
-    // }
+        if (domain_state.working_counter != 3) [[unlikely]] {
+            // s_logger->warn("igh domain {} wkc {}", i,
+            //                (int)domain_state.working_counter);
+            // 先注释掉不打印, 太多了
+            return false;
+        }
+
+        if (domain_state.wc_state != ec_wc_state_t::EC_WC_COMPLETE)
+            [[unlikely]] {
+            s_logger->warn("igh domain {} wc_state {}", i,
+                           (int)domain_state.wc_state);
+            return false;
+        }
+    }
+#else
     {
         ecrt_domain_state(igh_domain_instance_, &domain_state);
 
@@ -523,6 +535,7 @@ bool EcatManager::_igh_check_receive_valid() {
             return false;
         }
     }
+#endif
 
     // EDM_CYCLIC_LOG(s_logger->debug, 1000, "master: {}, {}, {}",
     //                (int)master_state.slaves_responding,
@@ -691,18 +704,22 @@ bool EcatManager::receive_check(int wkc [[maybe_unused]]) {
 #ifdef EDM_ECAT_DRIVER_IGH
 void EcatManager::igh_master_receive() { ecrt_master_receive(igh_master_); }
 void EcatManager::igh_domain_process() {
-    // for (auto domain : igh_domain_vec_) {
-    //     ecrt_domain_process(domain);
-    // }
-
+#ifdef USE_MULTI_DOMAINS
+    for (auto domain : igh_domain_vec_) {
+        ecrt_domain_process(domain);
+    }
+#else
     ecrt_domain_process(igh_domain_instance_);
+#endif
 }
 void EcatManager::igh_domain_queue() {
-    // for (auto domain : igh_domain_vec_) {
-    //     ecrt_domain_queue(domain);
-    // }
-
+#ifdef USE_MULTI_DOMAINS
+    for (auto domain : igh_domain_vec_) {
+        ecrt_domain_queue(domain);
+    }
+#else
     ecrt_domain_queue(igh_domain_instance_);
+#endif
 }
 void EcatManager::igh_master_send() { ecrt_master_send(igh_master_); }
 

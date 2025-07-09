@@ -34,7 +34,10 @@ add_subdirectory(third_party/meojson)
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 # boost python
+# set(Boost_ROOT_DIR /usr/share)
 find_package(Boost COMPONENTS python REQUIRED)
+message(STATUS ********* Boost_INCLUDE_DIR: ${Boost_INCLUDE_DIR})
+message(STATUS ********* Boost_LIBRARIES: ${Boost_LIBRARIES})
 
 # spdlog
 # list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
