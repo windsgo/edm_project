@@ -228,7 +228,63 @@ GRUB_CMDLINE_LINUX="audit=0 isolcpus=2,3 nohz=on nohz_full=2,3 rcu_nocbs=2,3 irq
 
 ```
 
-## IGH配置
+
+## IGH配置(1.6.6)
+
+### 下载
+
+- 版本使用release版的1.6.6版本
+
+### 卸载之前的版本
+
+- 去之前的安装文件夹中运行
+
+```bash
+sudo make modules_install uninstall
+```
+
+- 去/etc/sysconfig/文件中删除ethercat文件
+
+### 编译安装
+
+仍然参考`INSTALL.md`进行编译安装:
+
+- 注意 `--enable-igb --enable-r8169`需要根据实际网卡的驱动进行选择对应的专用驱动。
+- 查看网卡驱动可以使用 `ethtool -i enp3s0` 命令, 其中 `enp3s0`是对应网卡名, 由`ip a`获得。
+
+
+```bash
+# configure
+./configure --enable-8139too=no --enable-igb --enable-r8169 \
+    --enable-cycles --enable-hrtimer \
+    --sysconfdir=/etc # 指定sysconfdir，无须自己再链接or复制
+
+# build
+make all modules -j8
+
+# install
+sudo make modules_install install
+sudo depmod
+```
+### 配置
+
+- `/etc/sysconfig/ethercat`中, 修改 `MASTER0_DEVICE`为对应网卡的物理地址, 修改 `DEVICE_MODULES`为对应驱动, 如`DEVICE_MODULES="igb"` 或 `DEVICE_MODULES="r8169"`
+
+```bash
+# 这一段一定要在root的bash中完成
+bash
+su root
+echo KERNEL==\"EtherCAT[0-9]*\", MODE=\"0664\", GROUP=\"users\" > /etc/udev/rules.d/99-EtherCAT.rules
+```
+
+Now you can start the EtherCAT master:
+
+```bash
+/etc/init.d/ethercat start
+```
+
+
+## IGH配置(1.6-stable)
 
 ### 下载
 
