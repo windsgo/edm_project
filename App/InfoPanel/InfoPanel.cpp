@@ -1,5 +1,6 @@
 #include "InfoPanel.h"
 #include "Motion/MoveDefines.h"
+#include "QtDependComponents/ZynqConnection/ZynqConnectController.h"
 #include "ui_InfoPanel.h"
 
 namespace edm {
@@ -19,6 +20,15 @@ void InfoPanel::_init_info_slot() {
     connect(shared_core_data_->get_info_dispatcher(),
             &InfoDispatcher::info_updated, this, &InfoPanel::_update_info);
     
+    connect(shared_core_data_->get_zynq_connect_ctrler().get(),
+            &zynq::ZynqConnectController::sig_zynq_tcp_socket_state_changed,
+            this, [this](QAbstractSocket::SocketState state) {
+        if (state == QAbstractSocket::ConnectedState) {
+            ui->pb_display_zynq->setChecked(true);
+        } else {
+            ui->pb_display_zynq->setChecked(false);
+        }
+    });
     // TODO signal connection
 }
 

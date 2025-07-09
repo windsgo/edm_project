@@ -252,7 +252,7 @@ void PowerController::_handle_servo_settings() {
     int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
                       std::chrono::system_clock::now().time_since_epoch())
                       .count();
-    if (now - last_send_time > 5) {
+    if (now - last_send_time > 3) {
         // 平均5s发一次
         last_send_time = now;
         forced = true;

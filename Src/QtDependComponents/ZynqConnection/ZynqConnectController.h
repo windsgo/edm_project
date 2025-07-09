@@ -63,6 +63,8 @@ signals:
     // connected signal, to send settings to zynq
     void sig_tcp_connected();
 
+    void sig_tcp_socket_state_changed(QAbstractSocket::SocketState state);
+
 private: // friend ZynqConnectController call
     void slot_start_work(); // start reconnect timer
     void slot_send(const QByteArray& ba); // send tcp message
@@ -99,6 +101,7 @@ public:
 
 signals:
     void sig_zynq_tcp_connected();
+    void sig_zynq_tcp_socket_state_changed(QAbstractSocket::SocketState state);
 
 private:
     void _init_worker_and_thread();
