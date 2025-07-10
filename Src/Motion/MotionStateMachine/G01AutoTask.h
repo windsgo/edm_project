@@ -182,6 +182,16 @@ private:
     // 伺服前进比例阈值, 超过这个比例, 则认为不需要抬刀
     double sc_servo_go_valid_rate_threshold1_ {0.930};
 #endif
+
+#define EDM_G01_ENABLE_PAUSE_RETURN_BACK_A_LITTLE // 暂停时回退一点点
+#ifdef EDM_G01_ENABLE_PAUSE_RETURN_BACK_A_LITTLE
+    // 这个参数决定了暂停时回退的距离, 目前是0.1mm
+    unit_t pause_return_back_target_distance_blu_{util::UnitConverter::mm2blu(0.1)};
+    
+    unit_t pause_return_back_current_gone_blu_ {0.0}; // 暂停时回退的当前走过的距离
+
+    unit_t pause_return_back_speed_mm_per_min_ {60.0}; // 暂停时回退的速度, mm/min
+#endif 
 };
 
 } // namespace move

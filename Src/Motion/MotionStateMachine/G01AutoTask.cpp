@@ -319,6 +319,11 @@ void G01AutoTask::_state_pausing_or_stopping(State target_state) {
         switch (servo_sub_state_) {
         case ServoSubState::Servoing: {
             // if is servoing, then go to next pause and stop state
+#ifdef EDM_G01_ENABLE_PAUSE_RETURN_BACK_A_LITTLE
+            if (target_state == State::Paused) {
+                pause_return_back_current_gone_blu_ = 0;
+            }
+#endif
             _pauseorstop_substate_changeto(PauseOrStopSubState::BackingToBegin);
 
             cb_mach_on_(false);
@@ -343,9 +348,43 @@ void G01AutoTask::_state_pausing_or_stopping(State target_state) {
             _state_changeto(State::Stopped);
             break;
         }
-        if (target_state == State::Paused && !back_to_begin_when_pause_) {
-            _state_changeto(State::Paused);
-            break;
+        
+        if (target_state == State::Paused) {
+            if (!back_to_begin_when_pause_) {
+#ifdef EDM_G01_ENABLE_PAUSE_RETURN_BACK_A_LITTLE
+                // 不在暂停时回起点的话, 执行暂停时回退一点点的操作
+                // 按速度回退
+                bool return_ended = false;
+                double target_dec = util::UnitConverter::mm_min2blu_p(pause_return_back_speed_mm_per_min_);
+                // double target_dec = util::UnitConverter::mm_min2blu_p(0.5);
+                if (target_dec < 0.01) {
+                    target_dec = 0.01; // 最小回退速度
+                }
+
+                if (pause_return_back_current_gone_blu_ + target_dec > pause_return_back_target_distance_blu_) {
+                    target_dec = pause_return_back_target_distance_blu_ - pause_return_back_current_gone_blu_;
+                    pause_return_back_current_gone_blu_ = pause_return_back_target_distance_blu_;
+                    return_ended = true;
+                } else {
+                    pause_return_back_current_gone_blu_ += target_dec;
+                }
+                
+                line_traj_->run_once(-target_dec);
+                s_motion_shared->set_global_cmd_axis(line_traj_->curr_pos());
+                if (line_traj_->at_start()) {
+                    return_ended = true;
+                }
+                s_logger->debug("returning: curr-z: {}, curr-length: {}, return_ended: {}; target_dec: {}, pause_return_back_current_gone_blu_: {}",
+                                s_motion_shared->get_global_cmd_axis()[2],
+                                line_traj_->curr_length(), return_ended, target_dec, pause_return_back_current_gone_blu_);
+
+                if (!return_ended) {
+                    break; // 还没回退完, break出去, 下一周期继续回退
+                }
+#endif
+                _state_changeto(State::Paused);
+                break;
+            }
         }
 
         // TODO Back To Begin
@@ -485,7 +524,7 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
         s_motion_shared->set_global_cmd_axis(this->line_traj_->curr_pos());
 
     } else if (servo_cmd <= 0.0) {
-        s_logger->debug("buffer interrupted, buffer_remaining_length: {}",
+        s_logger->trace("buffer interrupted, buffer_remaining_length: {}",
                         buffer_remaining_length);
         buffer_interrupted = true; // 缓冲段有回退, 直接退出走正常伺服回退
     }
@@ -494,7 +533,7 @@ void G01AutoTask::_servo_substate_jumpdowningbuffer() {
         last_jump_end_time_ms_ =
             GetCurrentTimeMs(); // 更新变量: 上一次抬刀结束时间
 
-        s_logger->debug("jump down buffer over: ltcurr-z: "
+        s_logger->trace("jump down buffer over: ltcurr-z: "
                         "{}, curr-z: {}, curr-length: {}",
                         this->line_traj_->curr_pos()[2],
                         s_motion_shared->get_global_cmd_axis()[2],
@@ -533,11 +572,11 @@ bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
     auto sc_servo_go_valid_rate = sc_servo_go_.valid_rate();
     if (sc_servo_go_valid_rate >= sc_servo_go_valid_rate_threshold1_) {
         // 前进比例超过阈值, 不需要抬刀
-        s_logger->debug("dynamic jump judge: no jump, valid rate: {}",
+        s_logger->trace("dynamic jump judge: no jump, valid rate: {}",
             sc_servo_go_valid_rate);
         return false;
     } else {
-        s_logger->debug("dynamic jump judge: could jump, valid rate: {}",
+        s_logger->trace("dynamic jump judge: could jump, valid rate: {}",
             sc_servo_go_valid_rate);
     }
 #endif
