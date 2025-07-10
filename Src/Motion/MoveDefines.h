@@ -66,6 +66,8 @@ struct MotionInfo {
                                    // 但如果后续加入坐标处理等算法, 就不一定了
     axis_t curr_act_axis_blu{0.0}; // 当前周期编码器实际位置
 
+    axis_t curr_v_offsets_blu{0.0}; // 当前周期速度偏置, 单位为blu
+
     int sub_line_number {-1}; // 子行号, 用于G01GroupMotionCommand
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)

@@ -30,6 +30,7 @@ namespace edm {
 namespace ecat {
 
 #ifdef EDM_ECAT_DRIVER_IGH
+// 无速度偏执量的pdo
 ec_pdo_entry_info_t slave_0_pdo_entries[] = {
     {0x6040, 0x00, 16}, /* Controlword */
     {0x6060, 0x00, 8},  /* Modes of operation */
@@ -61,6 +62,48 @@ ec_sync_info_t slave_0_syncs[] = {
     {3, EC_DIR_INPUT, 1, slave_0_pdos + 1, EC_WD_DISABLE},
     {0xff}};
 
+// 有速度偏执量的pdo
+ec_pdo_entry_info_t slave_0_pdo_entries_with_v_offset[] = {
+    {0x6040, 0x00, 16}, /* Controlword */
+    {0x6060, 0x00, 8},  /* Modes of operation */
+    {0x607a, 0x00, 32}, /* Target position */
+    {0x60b8, 0x00, 16}, /* Touch probe function */
+    {0x60b1, 0x00, 32}, /* Velocity offset */
+
+    {0x603f, 0x00, 16}, /* Error code */
+    {0x6041, 0x00, 16}, /* Statusword */
+    {0x6061, 0x00, 8},  /* Modes of operation display */
+    {0x6064, 0x00, 32}, /* Position actual value */
+    {0x60b9, 0x00, 16}, /* Touch probe status */
+    {0x60ba, 0x00, 32}, /* Touch probe pos1 pos value */
+    {0x60f4, 0x00, 32}, /* Following error actual value */
+    {0x60fd, 0x00, 32}, /* Digital inputs */
+};
+
+ec_pdo_info_t slave_0_pdos_with_v_offset[] = {
+    {0x1600, 5, slave_0_pdo_entries + 0}, /* Receive PDO mapping 1 */
+    {0x1a00, 8, slave_0_pdo_entries + 5}, /* Transmit PDO mapping 1 */
+};
+
+ec_sync_info_t slave_0_syncs_with_v_offset[] = {
+    {0, EC_DIR_OUTPUT, 0, NULL, EC_WD_DISABLE},
+    {1, EC_DIR_INPUT, 0, NULL, EC_WD_DISABLE},
+    {2, EC_DIR_OUTPUT, 1, slave_0_pdos_with_v_offset + 0, EC_WD_ENABLE},
+    {3, EC_DIR_INPUT, 1, slave_0_pdos_with_v_offset + 1, EC_WD_DISABLE},
+    {0xff}};
+
+static std::vector<ServoType> s_slave_servo_type_vec = {
+    ServoType::Panasonic_A5B, // X
+    ServoType::Panasonic_A5B, // Y
+
+    ServoType::Panasonic_A5B, // Z
+    // ServoType::Panasonic_A5B_WithVOffset, // Z, 带速度偏置
+
+    ServoType::Panasonic_A5B, // B
+    ServoType::Panasonic_A5B, // C
+    ServoType::Panasonic_A5B, // A
+};
+
 // 不同的松下驱动器也有不同的product_code
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU || EDM_POWER_TYPE == EDM_POWER_DIMEN)
 static std::vector<std::pair<uint32_t, uint32_t>>
@@ -88,8 +131,8 @@ static std::vector<std::pair<uint32_t, uint32_t>> //! TODO
 
 EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
                          uint32_t servo_num, uint32_t io_num)
-    : ifname_(ifname), iomap_size_{iomap_size}, servo_num_{servo_num},
-      io_num_{io_num} {
+    : ifname_(ifname), iomap_size_{iomap_size},
+      servo_num_{servo_num}, io_num_{io_num} {
 #ifdef EDM_ECAT_DRIVER_SOEM
     iomap_ = new char[iomap_size_];
     if (!iomap_) {
@@ -313,7 +356,14 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
             return false;
         }
 
-        if (ecrt_slave_config_pdos(igh_sc_vec_[i], EC_END, slave_0_syncs)) {
+        ec_sync_info_t* sync_info;
+        if (s_slave_servo_type_vec[i] ==
+            ServoType::Panasonic_A5B_WithVOffset) {
+            sync_info = slave_0_syncs_with_v_offset;
+        } else {
+            sync_info = slave_0_syncs;
+        }
+        if (ecrt_slave_config_pdos(igh_sc_vec_[i], EC_END, sync_info)) {
             s_logger->error("ecrt_slave_config_pdos error: servo {}", i);
             return false;
         }
@@ -349,6 +399,12 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         igh_domain_regs_vec_[i].push_back(temp);
 
         // v_offset (custom)
+        if (s_slave_servo_type_vec[i] == ServoType::Panasonic_A5B_WithVOffset) {
+            temp.index = 0x60b1;
+            temp.subindex = 0x00;
+            temp.offset = &igh_domain_pdo_output_offsets_vec_[i].off_v_offset;
+            igh_domain_regs_vec_[i].push_back(temp);
+        }
         // temp.index = 0x60b1;
         // temp.subindex = 0x00;
         // temp.offset = &igh_domain_pdo_output_offsets_vec_[i].off_v_offset;
@@ -435,9 +491,21 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
 
     // create servo device interface
     for (uint32_t i = 0; i < servo_num_; ++i) {
-        servo_devices_[i] = std::make_shared<PanasonicServoDevice>(
-            igh_domain_pd_vec_[i], igh_domain_pdo_input_offsets_vec_[i],
-            igh_domain_pdo_output_offsets_vec_[i]);
+        if (s_slave_servo_type_vec.at(i) == ServoType::Panasonic_A5B) {
+            servo_devices_[i] = std::make_shared<PanasonicServoDevice>(
+                igh_domain_pd_vec_[i], igh_domain_pdo_input_offsets_vec_[i],
+                igh_domain_pdo_output_offsets_vec_[i]);
+        } else if (s_slave_servo_type_vec.at(i) ==
+                   ServoType::Panasonic_A5B_WithVOffset) {
+            servo_devices_[i] =
+                std::make_shared<PanasonicServoDeviceWithVOffset>(
+                    igh_domain_pd_vec_[i], igh_domain_pdo_input_offsets_vec_[i],
+                    igh_domain_pdo_output_offsets_vec_[i]);
+        } else {
+            s_logger->error("unsupported servo type: {}",
+                            (int)s_slave_servo_type_vec.at(i));
+            return false;
+        }
     }
 
     return true;
@@ -522,7 +590,8 @@ bool EcatManager::_igh_check_receive_valid() {
     {
         ecrt_domain_state(igh_domain_instance_, &domain_state);
 
-        if (domain_state.working_counter != 3 * (servo_num_ + io_num_)) [[unlikely]] {
+        if (domain_state.working_counter != 3 * (servo_num_ + io_num_))
+            [[unlikely]] {
             s_logger->warn("igh domain wkc {}",
                            (int)domain_state.working_counter);
             return false;

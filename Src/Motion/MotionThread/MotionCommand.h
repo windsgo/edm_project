@@ -101,6 +101,8 @@ enum MotionCommandType {
 
     MotionCommandAuto_G01Group,
 
+    MotionCommandSetting_TestVOffset, // 测试速度偏置
+
     MotionCommand_Max
 };
 
@@ -406,6 +408,18 @@ public:
 
 private:
     G01GroupStartParam start_param_;
+};
+
+class MotionCommandSettingTestVOffset final : public MotionCommandBase {
+public:
+    MotionCommandSettingTestVOffset(const move::axis_t& v_offset)
+        : MotionCommandBase(MotionCommandSetting_TestVOffset),
+          v_offset_(v_offset) {}
+    ~MotionCommandSettingTestVOffset() noexcept override = default;
+
+    const auto &v_offset() const { return v_offset_; }
+private:
+    move::axis_t v_offset_; // 速度偏置, 单位: blu , 具体单位未知, 取决于驱动器
 };
 
 // class MotionCommandStartLinearServoMove final

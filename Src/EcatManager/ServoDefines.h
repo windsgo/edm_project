@@ -30,12 +30,15 @@ namespace edm {
 
 namespace ecat {
 
-enum class ServoType { UnknownType = 0, Panasonic_A5B = 1 };
+enum class ServoType {
+    UnknownType = 0,
+    Panasonic_A5B = 1,
+    Panasonic_A5B_WithVOffset = 2 // 带速度偏执
+};
 
 // IGH
-#define PanaSonic_A6B_VendorID 0x0000066f
+#define PanaSonic_A6B_VendorID    0x0000066f
 #define PanaSonic_A6B_ProductCode 0x60380006
-
 
 struct Panasonic_A6B_OutputDomainOffsets {
     uint32_t off_control_word;

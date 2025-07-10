@@ -22,6 +22,7 @@ MotionSharedData::MotionSharedData() {
 #endif
 
     MotionUtils::ClearAxis(global_cmd_axis_);
+    MotionUtils::ClearAxis(global_v_offsets_);
 
     for (size_t i = 0; i < EDM_SERVO_NUM; ++i) {
         gear_ratios_[i] = 1.0;

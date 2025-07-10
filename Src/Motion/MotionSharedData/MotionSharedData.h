@@ -149,6 +149,12 @@ public:
     inline auto& get_global_cmd_axis() { return global_cmd_axis_; }
     void set_global_cmd_axis(const axis_t &cmd_axis);
 
+    inline const auto &get_global_v_offsets() const { return global_v_offsets_; }
+    inline auto& get_global_v_offsets() { return global_v_offsets_; }
+    inline void set_global_v_offsets(const axis_t &v_offsets) {
+        global_v_offsets_ = v_offsets;
+    }
+
     axis_t get_act_axis() const;
     bool get_act_axis(axis_t &axis) const;
 
@@ -189,6 +195,8 @@ public:
 private:
     axis_t global_cmd_axis_; // 全局共享指令位置,
                              // 简化指令坐标在各级之间传递的逻辑, 防止指令突变
+
+    axis_t global_v_offsets_; // 全局共享速度偏置, 用于伺服速度偏置控制
 
     int sub_line_num_ {-1}; // 子行号, 用于G01GroupMotionCommand
 

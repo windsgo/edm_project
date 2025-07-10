@@ -50,7 +50,7 @@ public:
     virtual void sync_actual_position_to_target_position() = 0;
 };
 
-class PanasonicServoDevice final : public ServoDevice {
+class PanasonicServoDevice : public ServoDevice {
 public:
 #ifdef EDM_ECAT_DRIVER_SOEM
     PanasonicServoDevice(Panasonic_A5B_Ctrl *ctrl,
@@ -69,7 +69,7 @@ public:
     PanasonicServoDevice(PanasonicServoDevice &&) = delete;
     PanasonicServoDevice &operator=(PanasonicServoDevice &&) = delete;
 
-    constexpr ServoType type() const override {
+    virtual constexpr ServoType type() const override {
         return ServoType::Panasonic_A5B;
     }
 
@@ -100,7 +100,7 @@ public:
 
     void sync_actual_position_to_target_position() override;
 
-private:
+protected:
 #ifdef EDM_ECAT_DRIVER_SOEM
     volatile Panasonic_A5B_Ctrl *ctrl_;
     volatile Panasonic_A5B_Stat *stat_;
@@ -112,6 +112,23 @@ private:
     Panasonic_A6B_InputDomainOffsets input_offsets_;
     Panasonic_A6B_OutputDomainOffsets output_offsets_;
 #endif // EDM_ECAT_DRIVER_IGH
+};
+
+class PanasonicServoDeviceWithVOffset final : public PanasonicServoDevice {
+public:
+    PanasonicServoDeviceWithVOffset(
+        uint8_t *domain_pd,
+        const Panasonic_A6B_InputDomainOffsets &input_offsets,
+        const Panasonic_A6B_OutputDomainOffsets &output_offsets) noexcept;
+    virtual ~PanasonicServoDeviceWithVOffset() noexcept = default;
+
+public:
+    constexpr ServoType type() const override {
+        return ServoType::Panasonic_A5B_WithVOffset;
+    }
+
+    // 速度偏置
+    void set_v_offset(int32_t v_offset);
 };
 
 } // namespace ecat

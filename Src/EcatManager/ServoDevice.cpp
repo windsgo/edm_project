@@ -136,6 +136,15 @@ void PanasonicServoDevice::sync_actual_position_to_target_position() {
     set_target_position(get_actual_position());
 }
 
+PanasonicServoDeviceWithVOffset::PanasonicServoDeviceWithVOffset(
+    uint8_t *domain_pd, const Panasonic_A6B_InputDomainOffsets &input_offsets,
+    const Panasonic_A6B_OutputDomainOffsets &output_offsets) noexcept
+    : PanasonicServoDevice(domain_pd, input_offsets, output_offsets) {}
+
+void PanasonicServoDeviceWithVOffset::set_v_offset(int32_t v_offset) {
+    EC_WRITE_S32(domain_pd_ + output_offsets_.off_v_offset, v_offset);
+}
+
 } // namespace ecat
 
 } // namespace edm

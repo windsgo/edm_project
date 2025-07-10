@@ -10,6 +10,7 @@
 #include "config.h"
 #include <cstdint>
 #include <ctime>
+#include <memory>
 
 #ifdef EDM_ECAT_DRIVER_SOEM
 #include "ethercat.h"
@@ -531,6 +532,16 @@ void MotionThreadController::_threadstate_running() {
                         s_motion_shared->gear_ratios()[i]));
                     device->cw_enable_operation();
                     device->set_operation_mode(OM_CSP);
+
+                    if (device->type() ==
+                        ecat::ServoType::Panasonic_A5B_WithVOffset) {
+                        // 设置速度偏置
+                        auto v_offset =
+                            s_motion_shared->get_global_v_offsets()[i];
+                        auto with_voffset_device = std::static_pointer_cast<
+                            ecat::PanasonicServoDeviceWithVOffset>(device);
+                        with_voffset_device->set_v_offset(v_offset); // 设置速度偏置
+                    }
                 }
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
@@ -556,15 +567,15 @@ void MotionThreadController::_threadstate_running() {
         }
 
         if (!ecat_manager_->servo_all_operation_enabled() && false) {
-            s_logger->debug(
-                "{:08b}",
-                ecat_manager_->get_servo_device(0)->get_status_word());
+            // s_logger->debug(
+            //     "{:08b}",
+            //     ecat_manager_->get_servo_device(0)->get_status_word());
 
-            for (int i = 0; i < 7; ++i) {
-                auto d = ecat_manager_->get_servo_device(i);
-                s_logger->debug("servo {}: sw: {:08b}", i,
-                                d->get_status_word());
-            }
+            // for (int i = 0; i < 7; ++i) {
+            //     auto d = ecat_manager_->get_servo_device(i);
+            //     s_logger->debug("servo {}: sw: {:08b}", i,
+            //                     d->get_status_word());
+            // }
 
             s_logger->warn("in EcatReady, ecat not all enabled");
             _switch_ecat_state(EcatState::EcatConnectedNotAllEnabled);
@@ -859,12 +870,13 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         s_motion_shared->set_settings(
             set_motion_settings_cmd->motion_settings());
-        
-        const auto& settings = set_motion_settings_cmd->motion_settings();
-        s_logger->debug("motion_settings: {}, {}, {}, {}", settings.enable_g01_run_each_servo_cmd,
-                settings.enable_g01_half_closed_loop,
-                settings.enable_g01_servo_with_dynamic_strategy,
-                settings.g01_servo_dynamic_strategy_type);
+
+        const auto &settings = set_motion_settings_cmd->motion_settings();
+        s_logger->debug("motion_settings: {}, {}, {}, {}",
+                        settings.enable_g01_run_each_servo_cmd,
+                        settings.enable_g01_half_closed_loop,
+                        settings.enable_g01_servo_with_dynamic_strategy,
+                        settings.g01_servo_dynamic_strategy_type);
 
         accept_cmd_flag = true;
         break;
@@ -976,11 +988,12 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         auto g01_group_cmd =
             std::static_pointer_cast<MotionCommandAutoG01Group>(cmd);
-        
+
         /*
         s_logger->debug("***** G01Group Received");
-        s_logger->debug("G01Group: size={}", g01_group_cmd->start_param().items.size());
-        for (int i = 0; i < g01_group_cmd->start_param().items.size(); ++i) {
+        s_logger->debug("G01Group: size={}",
+        g01_group_cmd->start_param().items.size()); for (int i = 0; i <
+        g01_group_cmd->start_param().items.size(); ++i) {
             s_logger->debug("G01Group: item[{}]", i);
             const auto& item = g01_group_cmd->start_param().items[i];
             for (int i = 0; i < item.incs.size(); ++i) {
@@ -995,6 +1008,35 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         accept_cmd_flag = ret;
 
+        break;
+    }
+    case MotionCommandSetting_TestVOffset: {
+        s_logger->trace("Handle MotionCmd: Setting_TestVOffset");
+
+        auto test_voffset_cmd =
+            std::static_pointer_cast<MotionCommandSettingTestVOffset>(cmd);
+
+        if (ecat_state_ != EcatState::EcatReady ||
+            thread_state_ != ThreadState::Running) {
+            break;
+        }
+
+        // 设置速度偏置
+        auto v_offset = test_voffset_cmd->v_offset();
+        s_motion_shared->set_global_v_offsets(v_offset);
+
+        // debug print
+        std::string printf_str = "v_offset: [";
+        for (int i = 0; i < v_offset.size(); ++i) {
+            printf_str += std::to_string(v_offset[i]);
+            if (i < v_offset.size() - 1) {
+                printf_str += ", ";
+            }
+        }
+        printf_str += "]";
+        s_logger->debug("***** TestVOffset Received, {}", printf_str);
+
+        accept_cmd_flag = true;
         break;
     }
     default:
@@ -1041,9 +1083,11 @@ void MotionThreadController::_copy_info_cache() {
 
     // bit_state1
     info_cache_.bit_state1 = 0;
-    
+
     info_cache_.curr_cmd_axis_blu = s_motion_shared->get_global_cmd_axis();
     s_motion_shared->get_act_axis(info_cache_.curr_act_axis_blu);
+
+    info_cache_.curr_v_offsets_blu = s_motion_shared->get_global_v_offsets();
 
     info_cache_.sub_line_number = s_motion_shared->get_sub_line_num();
 
@@ -1102,7 +1146,6 @@ void MotionThreadController::_copy_info_cache() {
         TIMEUSESTAT_AVG(statemachine_time_statistic_);
     info_cache_.time_use_data.statemachine_time_use_max =
         TIMEUSESTAT_MAX(statemachine_time_statistic_);
-
 
 #ifdef EDM_OFFLINE_RUN_NO_ECAT
     info_cache_.setEcatConnected(ecat_state_ > EcatState::EcatConnecting);
