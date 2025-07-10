@@ -374,9 +374,9 @@ void G01AutoTask::_state_pausing_or_stopping(State target_state) {
                 if (line_traj_->at_start()) {
                     return_ended = true;
                 }
-                s_logger->debug("returning: curr-z: {}, curr-length: {}, return_ended: {}; target_dec: {}, pause_return_back_current_gone_blu_: {}",
-                                s_motion_shared->get_global_cmd_axis()[2],
-                                line_traj_->curr_length(), return_ended, target_dec, pause_return_back_current_gone_blu_);
+                // s_logger->debug("returning: curr-z: {}, curr-length: {}, return_ended: {}; target_dec: {}, pause_return_back_current_gone_blu_: {}",
+                //                 s_motion_shared->get_global_cmd_axis()[2],
+                //                 line_traj_->curr_length(), return_ended, target_dec, pause_return_back_current_gone_blu_);
 
                 if (!return_ended) {
                     break; // 还没回退完, break出去, 下一周期继续回退
