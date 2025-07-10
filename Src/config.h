@@ -139,7 +139,7 @@
 #define EDM_IOBOARD_NEW_SERVODATA_1MS
 
 // OFFLINE DEFINE
-// #define EDM_OFFLINE_RUN
+#define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程

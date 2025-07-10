@@ -43,6 +43,12 @@ G01AutoTask::G01AutoTask(
         std::chrono::high_resolution_clock::now();
 
     cb_mach_on_(true);
+
+#ifdef EDM_G01_ENABLE_DYNAMIC_JUMP_JUDGE
+    // 初始化滑动计数器
+    sc_servo_go_.clear();
+    sc_servo_go_.resize(2000 * 1000 / s_motion_shared->get_thread_cycle_us() ); // 等效到2秒窗口
+#endif
 }
 
 bool G01AutoTask::pause() {
@@ -514,15 +520,31 @@ bool G01AutoTask::_servoing_check_and_plan_jump() { // Jump Trigger
         return false; // 间隔未到
     }
 
+    // 无论如何在这里先更新一下时间, 避免每个周期都进判定
+    last_jump_end_time_ms_ = now_ms; // 更新一下上一次抬刀结束时间
+
     // 设定的抬刀高度小于10um, 基本上就是设定了 UP=0
     if (jumping_param_.up_blu < util::UnitConverter::um2blu(10)) {
         return false;
     }
 
+#ifdef EDM_G01_ENABLE_DYNAMIC_JUMP_JUDGE
+    // 动态抬刀规划
+    auto sc_servo_go_valid_rate = sc_servo_go_.valid_rate();
+    if (sc_servo_go_valid_rate >= sc_servo_go_valid_rate_threshold1_) {
+        // 前进比例超过阈值, 不需要抬刀
+        s_logger->debug("dynamic jump judge: no jump, valid rate: {}",
+            sc_servo_go_valid_rate);
+        return false;
+    } else {
+        s_logger->debug("dynamic jump judge: could jump, valid rate: {}",
+            sc_servo_go_valid_rate);
+    }
+#endif
+
     // 规划抬刀
     if (!_plan_jump_up()) {
         // 规划失败
-        last_jump_end_time_ms_ = now_ms; // 更新一下上一次抬刀结束时间
         return false;
     }
 
@@ -552,6 +574,15 @@ bool G01AutoTask::_servoing_do_servothings() {
     }
 #endif
 
+#ifdef EDM_G01_ENABLE_DYNAMIC_JUMP_JUDGE
+    // 动态抬刀策略
+    if (servo_cmd > 0.0) {
+        sc_servo_go_.push_back_valid(); // 前进计数 + 1
+    } else {
+        sc_servo_go_.push_back_invalid(); // 回退计数 + 1
+    }
+#endif
+
     // 记录数据
     auto data_record_instance1 = s_motion_shared->get_data_record_instance1();
     if (data_record_instance1->is_data_recorder_running()) {
@@ -568,7 +599,7 @@ bool G01AutoTask::_servoing_do_servothings() {
         auto act_axis = s_motion_shared->get_act_axis();
 
         // 测试打印 (每1000周期打印一次)
-#if 1
+#if 0
         {
             static int jjj = 0;
             ++jjj;

@@ -124,6 +124,9 @@ public:
     }
 
 public:
+    inline auto get_thread_cycle_us() const {
+        return thread_cycle_us_;
+    }
     inline void add_thread_tick() {
         thread_tick_us_ += thread_cycle_us_;
         ++thread_tick_;

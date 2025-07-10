@@ -14,7 +14,10 @@
 
 #include "Motion/MotionSharedData/MotionSharedData.h"
 
+#include "Utils/Filters/SlidingCounter/SlidingCounter.h"
+
 #include <cassert>
+#include <cstddef>
 
 namespace edm {
 
@@ -169,6 +172,16 @@ private:
 
     // 高频使能回调 (做在Motion内部更方便, 更好是做在外面, 但是判断复杂)
     std::function<void(bool)> cb_mach_on_;
+
+#define EDM_G01_ENABLE_DYNAMIC_JUMP_JUDGE
+#ifdef EDM_G01_ENABLE_DYNAMIC_JUMP_JUDGE
+    // 动态抬刀策略
+    util::SlidingCounter<8000> sc_servo_go_; // 伺服前进比例滑动计数器, 超过一定比例后, 动态认为不需要抬刀
+    // 注意实际滑动计数器的大小 (取决于设定的伺服周期, 初始化时等效到2秒)
+
+    // 伺服前进比例阈值, 超过这个比例, 则认为不需要抬刀
+    double sc_servo_go_valid_rate_threshold1_ {0.930};
+#endif
 };
 
 } // namespace move
