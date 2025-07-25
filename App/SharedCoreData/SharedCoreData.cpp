@@ -456,37 +456,37 @@ void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
         // slot
         auto e = new HandBoxEventStartPointMove(dir, speed_level,
                                                 touch_detect_enable);
-        QCoreApplication::postEvent(this, e);
+        QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
 
     auto cb_stop_pm = [this]() {
         // send an event to this object, then emit a signal, to trigger move
         // slot
         auto e = new HandBoxEventStopPointMove();
-        QCoreApplication::postEvent(this, e);
+        QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
 
     auto cb_pause_auto = [this]() {
         auto e = new HandBoxEventPauseAuto();
-        QCoreApplication::postEvent(this, e);
+        QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
     auto cb_ent_auto = [this]() {
         auto e = new HandBoxEventEntAuto();
-        QCoreApplication::postEvent(this, e);
+        QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
     auto cb_stop_auto = [this]() {
         auto e = new HandBoxEventStopAuto();
-        QCoreApplication::postEvent(this, e);
+        QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
 
     auto cb_ack = [this]() {
         auto e = new HandBoxEventAck();
-        QCoreApplication::postEvent(this, e);
+        QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
 
     auto cb_pump_on = [this](bool on) {
         auto e = new HandBoxEventPump(on);
-        QCoreApplication::postEvent(this, e);
+        QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
 
     handbox_converter_ = std::make_shared<HandboxConverter>(
