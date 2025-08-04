@@ -5,6 +5,7 @@
 #include <string>
 
 #include "Exception/exception.h"
+#include "Motion/MotionUtils/MotionUtils.h"
 #include "Utils/Format/edm_format.h"
 
 #include "Logger/LogMacro.h"
@@ -56,6 +57,8 @@ CoordinateSystem::CoordinateSystem(const std::string &filename)
     // 初始化坐标系缓存
     _update_machine_axis_cache();
     _update_coord_axis_cache();
+
+    move::MotionUtils::ClearAxis(curr_using_v_offsets_);
 }
 
 void CoordinateSystem::update_motor_pos(const move::axis_t &new_motor_pos,

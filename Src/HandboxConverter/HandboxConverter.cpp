@@ -16,11 +16,11 @@ HandboxConverter::HandboxConverter(
     const std::function<void(void)> &cb_ent_auto,
     const std::function<void(void)> &cb_stop_auto,
     const std::function<void(void)> &cb_ack,
-    const std::function<void(bool)> &cb_pump_on)
+    const std::function<void(uint8_t)> &cb_pump)
     : cb_start_manual_pointmove_(cb_start_manual_pointmove),
       cb_stop_manual_pointmove_(cb_stop_manual_pointmove),
       cb_pause_auto_(cb_pause_auto), cb_ent_auto_(cb_ent_auto),
-      cb_stop_auto_(cb_stop_auto), cb_ack_(cb_ack), cb_pump_on_(cb_pump_on) {
+      cb_stop_auto_(cb_stop_auto), cb_ack_(cb_ack), cb_pump_(cb_pump) {
     auto cb = std::bind_front(&HandboxConverter::_listen_cb, this);
 
     can_ctrler->add_frame_received_listener(can_device_index, cb);
@@ -107,6 +107,9 @@ void HandboxConverter::_frame_pump(const QCanBusFrame &frame) {
 
     uint32_t machineio = *p_uint32;
 
+#if 1
+    cb_pump_(machineio);
+#else
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) \
     || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) \
     || defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
@@ -126,6 +129,7 @@ void HandboxConverter::_frame_pump(const QCanBusFrame &frame) {
         // 关油泵
         cb_pump_on_(false);
     }
+#endif
 #endif
 }
 

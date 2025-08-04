@@ -61,6 +61,13 @@ void CoordPanel::update_axis_display() {
                 util::UnitConverter::blu2mm(act_mach_axis[i])));
     }
 
+    const auto &v_offsets = coord_sys_->get_current_voffsets();
+    for (std::size_t i = 0; i < coord::Coordinate::Size; ++i) {
+        voffsets_label_arr_[i]->setText(
+            InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                util::UnitConverter::blu2mm(v_offsets[i])));
+    }  
+
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     const auto &info = shared_core_data_->get_info_dispatcher()->get_info();
     ui->lb_spindle_cmd_axis->setText(
@@ -123,6 +130,13 @@ void CoordPanel::_init_label_arr() {
     mach_act_axis_label_arr_.at(4) = ui->lb_c_mach_act_axis;
     mach_act_axis_label_arr_.at(5) = ui->lb_a_mach_act_axis;
 
+    voffsets_label_arr_.at(0) = ui->lb_x_voffset;
+    voffsets_label_arr_.at(1) = ui->lb_y_voffset;
+    voffsets_label_arr_.at(2) = ui->lb_z_voffset;
+    voffsets_label_arr_.at(3) = ui->lb_b_voffset;
+    voffsets_label_arr_.at(4) = ui->lb_c_voffset;
+    voffsets_label_arr_.at(5) = ui->lb_a_voffset;
+
     // set some invalid
     for (std::size_t i = coord::Coordinate::Size;
          i < cmd_axis_label_arr_.size(); ++i) {
@@ -136,6 +150,9 @@ void CoordPanel::_init_label_arr() {
         mach_cmd_axis_label_arr_.at(i)->setEnabled(false);
         mach_act_axis_label_arr_.at(i)->setText("null");
         mach_act_axis_label_arr_.at(i)->setEnabled(false);
+
+        voffsets_label_arr_.at(i)->setText("null");
+        voffsets_label_arr_.at(i)->setEnabled(false);
     }
 
 #if !(EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)

@@ -56,6 +56,8 @@ private:
     std::array<QLabel*, EDM_AXIS_MAX_NUM> mach_cmd_axis_label_arr_;
     std::array<QLabel*, EDM_AXIS_MAX_NUM> mach_act_axis_label_arr_;
 
+    std::array<QLabel*, EDM_AXIS_MAX_NUM> voffsets_label_arr_;
+
     std::unordered_map<uint32_t, uint32_t> coord_index2combobox_index_map_;
 };
 

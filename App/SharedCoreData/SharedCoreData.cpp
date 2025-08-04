@@ -111,15 +111,18 @@ public:
 
 class HandBoxEventPump : public QEvent {
 public:
-    HandBoxEventPump(bool pump_on) : QEvent(type), pump_on_(pump_on) {}
+    // HandBoxEventPump(bool pump_on) : QEvent(type), pump_on_(pump_on) {}
+    explicit HandBoxEventPump(uint8_t id) : QEvent(type), id_(id) {}
 
     constexpr static const QEvent::Type type =
         QEvent::Type(EDM_CUSTOM_QTEVENT_TYPE_HandboxPump);
 
-    auto pump_on() const { return pump_on_; }
+    // auto pump_on() const { return pump_on_; }
+    auto id() const { return id_; }
 
 private:
-    bool pump_on_;
+    // bool pump_on_;
+    uint8_t id_ {0};
 };
 
 class HandBoxEventEntAuto : public QEvent {
@@ -238,7 +241,7 @@ void SharedCoreData::customEvent(QEvent *e) {
     }
     case HandBoxEventPump::type: {
         auto he = static_cast<HandBoxEventPump *>(e);
-        emit sig_handbox_pump(he->pump_on());
+        emit sig_handbox_pump(he->id());
         e->accept();
         break;
     }
@@ -484,14 +487,14 @@ void SharedCoreData::_init_handbox_converter(uint32_t can_index) {
         QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
 
-    auto cb_pump_on = [this](bool on) {
-        auto e = new HandBoxEventPump(on);
+    auto cb_pump = [this](uint8_t id) {
+        auto e = new HandBoxEventPump(id);
         QCoreApplication::postEvent(this, e, Qt::EventPriority::HighEventPriority);
     };
 
     handbox_converter_ = std::make_shared<HandboxConverter>(
         can_ctrler_, can_index, cb_start_pm, cb_stop_pm, cb_pause_auto,
-        cb_ent_auto, cb_stop_auto, cb_ack, cb_pump_on);
+        cb_ent_auto, cb_stop_auto, cb_ack, cb_pump);
 }
 
 void SharedCoreData::_init_motionthread_cb() {

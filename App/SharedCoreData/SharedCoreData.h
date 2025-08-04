@@ -103,7 +103,7 @@ signals:
                                      uint32_t speed_level,
                                      bool touch_detect_enable);
     void sig_handbox_stop_pointmove();
-    void sig_handbox_pump(bool pump_pn);
+    void sig_handbox_pump(uint8_t id);
     void sig_handbox_ent_auto();
     void sig_handbox_pause_auto();
     void sig_handbox_stop_auto();

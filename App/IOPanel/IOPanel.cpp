@@ -61,7 +61,6 @@ static std::unordered_map<uint32_t, QString> s_extra_io_names_map = {
     {power::ZHONGGU_IOOut_IOOUT10_WORK_FIXTURE, QObject::tr("ZG松工件")},
     {power::ZHONGGU_IOOut_IOOUT1_FULD, QObject::tr("ZG油泵")}};
 
-
 static inline std::optional<QString> _get_extra_io_name(uint32_t io) {
     std::optional<QString> ioname{std::nullopt};
 
@@ -274,7 +273,7 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
         _set_button_output(pb, io);
     }
 
-    #ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
     // 中古IO部分按钮
     uint32_t extraio_count = 1;
     const uint32_t output_io_cols =
@@ -296,19 +295,18 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
             ++extraio_count;
         }
     }
-    #endif
-
+#endif
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) || \
     (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)
     // INPUT display
-    uint32_t input_io_count = 1; 
+    uint32_t input_io_count = 1;
     const uint32_t output_io_cols =
         std::ceil((double)total_io_num / (double)row_nums);
 
-    for (std::size_t io = 1; io <= 17; ++io) { 
+    for (std::size_t io = 1; io <= 17; ++io) {
         uint32_t row = (input_io_count - 1) % row_nums;
-        uint32_t col = (input_io_count - 1) / row_nums + output_io_cols; 
+        uint32_t col = (input_io_count - 1) / row_nums + output_io_cols;
 
         // qDebug() << "io:" << io << "row:" << row << "col:" << col;
 
@@ -328,13 +326,54 @@ void IOPanel::_layout_button_rows_priority(uint32_t row_nums) {
 }
 
 void IOPanel::_init_handbox_pump_signal() {
+
+#if 1
+    connect(this->shared_core_data_, &SharedCoreData::sig_handbox_pump, this,
+            [this](uint8_t id) {
+#if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
+#ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+                switch (id) {
+                case 5: {
+                    // 开油泵
+                    io_ctrler_->set_can_machineio_output_withmask(
+                        power::ZHONGGU_IOOut_IOOUT1_FULD,
+                        power::ZHONGGU_IOOut_IOOUT1_FULD);
+                    break;
+                }
+                case 6: {
+                    // 关油泵
+                    io_ctrler_->set_can_machineio_output_withmask(
+                        0, power::ZHONGGU_IOOut_IOOUT1_FULD);
+                    break;
+                }
+                // 3和4用于小孔机那边接着便于独立开关高频
+                case 3: {
+                    // 开高频
+                    shared_core_data_->get_power_ctrler()->set_highpower_on(true);
+                    break;
+                }
+                case 4: {
+                    // 关高频
+                    shared_core_data_->get_power_ctrler()->set_highpower_on(false);
+                    break;
+                }
+                default: return;
+            }
+            //! 其他TODO // TODO
+#else  //! EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+#endif // EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU)       // EDM_POWER_TYPE
+#elif (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) // EDM_POWER_TYPE
+#endif                                            // EDM_POWER_TYPE
+            });
+#else
     connect(this->shared_core_data_, &SharedCoreData::sig_handbox_pump, this,
             [this](bool pump_on) {
 #if (EDM_POWER_TYPE == EDM_POWER_DIMEN)
 #ifdef EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO
                 // 使用dimen电源但仍然使用中古io控制夹爪和油泵
-                auto btn =
-                    this->dimenextra_map_io_to_button_[power::ZHONGGU_IOOut_IOOUT1_FULD];
+                auto btn = this->dimenextra_map_io_to_button_
+                               [power::ZHONGGU_IOOut_IOOUT1_FULD];
 #else
             auto btn = this->map_io_to_button_[power::EleContactorOut_FULD_JF7];
 #endif
@@ -350,6 +389,7 @@ void IOPanel::_init_handbox_pump_signal() {
                 btn->setChecked(pump_on);
                 emit btn->clicked(pump_on);
             });
+#endif
 }
 
 void IOPanel::_update_all_io_display() {
@@ -441,7 +481,8 @@ void IOPanel::_dimenextra_set_button_output(QPushButton *pb, uint32_t out_num) {
         auto sender_pb = static_cast<QPushButton *>(QObject::sender());
 
         // should be safe ...
-        uint32_t sender_pb_out_num = this->dimenextra_map_button_to_io_[sender_pb];
+        uint32_t sender_pb_out_num =
+            this->dimenextra_map_button_to_io_[sender_pb];
 
         s_logger->debug("dimenextra clicked: name: {}, io: {}, on: {}",
                         sender_pb->text().toStdString(), sender_pb_out_num,
@@ -450,25 +491,30 @@ void IOPanel::_dimenextra_set_button_output(QPushButton *pb, uint32_t out_num) {
         if (sender_pb_out_num == power::ZHONGGU_IOOut_IOOUT9_TOOL_FIXTURE) {
             if (checked == true) {
                 // 松开保护
-                auto ret_button = QMessageBox::information(this, tr("确认松电极夹具"), tr("确认松开电极夹具？"), 
-                    QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No,
+                auto ret_button = QMessageBox::information(
+                    this, tr("确认松电极夹具"), tr("确认松开电极夹具？"),
+                    QMessageBox::StandardButton::Yes |
+                        QMessageBox::StandardButton::No,
                     QMessageBox::StandardButton::Yes);
-                
+
                 if (ret_button != QMessageBox::StandardButton::Yes) {
                     sender_pb->setChecked(false); // remain unchecked
-                    return; // return, do not open this io 
+                    return;                       // return, do not open this io
                 }
             }
-        } else if (sender_pb_out_num == power::ZHONGGU_IOOut_IOOUT10_WORK_FIXTURE) {
+        } else if (sender_pb_out_num ==
+                   power::ZHONGGU_IOOut_IOOUT10_WORK_FIXTURE) {
             if (checked == true) {
                 // 松开保护
-                auto ret_button = QMessageBox::information(this, tr("确认松工件夹具"), tr("确认松开工件夹具？"), 
-                    QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No,
+                auto ret_button = QMessageBox::information(
+                    this, tr("确认松工件夹具"), tr("确认松开工件夹具？"),
+                    QMessageBox::StandardButton::Yes |
+                        QMessageBox::StandardButton::No,
                     QMessageBox::StandardButton::Yes);
-                
+
                 if (ret_button != QMessageBox::StandardButton::Yes) {
                     sender_pb->setChecked(false); // remain unchecked
-                    return; // return, do not open this io 
+                    return;                       // return, do not open this io
                 }
             }
         }

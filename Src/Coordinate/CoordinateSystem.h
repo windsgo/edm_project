@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoordinateManager.h"
+#include "Motion/MoveDefines.h"
 
 #include <memory>
 
@@ -26,6 +27,14 @@ public:
 
     void update_motor_pos(const move::axis_t &new_motor_pos,
                           const move::axis_t &new_motor_pos_act);
+
+    void update_current_voffsets(const move::axis_t &new_v_offsets) {
+        curr_using_v_offsets_ = new_v_offsets;
+    }
+
+    const auto& get_current_voffsets() const {
+        return curr_using_v_offsets_;
+    }
 
     inline auto get_avaiable_coord_indexes() const {
         return cm_.get_avaiable_coord_indexes();
@@ -102,6 +111,9 @@ private:
     uint32_t curr_coord_index_;
     move::axis_t curr_coord_axis_cache_{0.0};
     move::axis_t curr_coord_axis_cache_act_{0.0}; // 实际坐标
+
+    // 保存当前的v_offset在这里
+    move::axis_t curr_using_v_offsets_{0.0}; // 当前速度偏置 (move线程返回回来的), 单位blu
 };
 
 } // namespace coord

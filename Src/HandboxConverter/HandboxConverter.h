@@ -24,7 +24,7 @@ public:
                      const std::function<void(void)> &cb_ent_auto,
                      const std::function<void(void)> &cb_stop_auto,
                      const std::function<void(void)> &cb_ack,
-                     const std::function<void(bool)> &cb_pump_on);
+                     const std::function<void(uint8_t)> &cb_pump);
 
 private:
     enum id {
@@ -60,7 +60,7 @@ private:
 
     std::function<void(void)> cb_ack_; // cb_ack_
 
-    std::function<void(bool)> cb_pump_on_; // 油泵开关
+    std::function<void(uint8_t)> cb_pump_; // 油泵开关
 };
 
 } // namespace edm
