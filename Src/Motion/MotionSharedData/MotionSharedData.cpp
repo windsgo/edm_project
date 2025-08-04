@@ -26,6 +26,8 @@ MotionSharedData::MotionSharedData() {
 
     for (size_t i = 0; i < EDM_SERVO_NUM; ++i) {
         gear_ratios_[i] = 1.0;
+
+        global_v_offsets_forced_zero_[i] = false; // 默认不强制为0
     }
 
 #if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL)

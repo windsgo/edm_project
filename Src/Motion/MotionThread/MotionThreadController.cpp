@@ -8,6 +8,7 @@
 #include "Utils/Format/edm_format.h"
 #include "Utils/Time/TimeUseStatistic.h"
 #include "config.h"
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <memory>
@@ -538,9 +539,14 @@ void MotionThreadController::_threadstate_running() {
                         // 设置速度偏置
                         auto v_offset =
                             s_motion_shared->get_global_v_offsets()[i];
+                        if (s_motion_shared
+                                ->get_global_v_offsets_forced_zero()[i]) {
+                            v_offset = 0; // 强制为0
+                        }
                         auto with_voffset_device = std::static_pointer_cast<
                             ecat::PanasonicServoDeviceWithVOffset>(device);
-                        with_voffset_device->set_v_offset(v_offset); // 设置速度偏置
+                        with_voffset_device->set_v_offset(
+                            v_offset); // 设置速度偏置
                     }
                 }
 
@@ -1022,21 +1028,71 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         }
 
         // 设置速度偏置
-        auto v_offset = test_voffset_cmd->v_offset();
-        s_motion_shared->set_global_v_offsets(v_offset);
+        const auto &v_offset_cmd = test_voffset_cmd->cmd();
 
-        // debug print
-        std::string printf_str = "v_offset: [";
-        for (int i = 0; i < v_offset.size(); ++i) {
-            printf_str += std::to_string(v_offset[i]);
-            if (i < v_offset.size() - 1) {
-                printf_str += ", ";
-            }
-        }
-        printf_str += "]";
-        s_logger->debug("***** TestVOffset Received, {}", printf_str);
+        s_logger->debug("***** TestVOffset Received, {}, {}, {}",
+                        v_offset_cmd.set_axis_index,
+                        (int)v_offset_cmd.set_cmd_type, v_offset_cmd.set_value);
 
         accept_cmd_flag = true;
+        switch (v_offset_cmd.set_cmd_type) {
+        case MotionCommandSettingTestVOffset::VOffsetSetCmdType::SetValue: {
+            s_logger->debug("SetValue: axis {}, value {}",
+                            v_offset_cmd.set_axis_index,
+                            v_offset_cmd.set_value);
+
+            if (v_offset_cmd.set_axis_index >=
+                s_motion_shared->get_global_v_offsets().size()) {
+                s_logger->error("Invalid axis index: {}",
+                                v_offset_cmd.set_axis_index);
+                break;
+            }
+
+            s_motion_shared->get_global_v_offsets().at(
+                v_offset_cmd.set_axis_index) = v_offset_cmd.set_value;
+            break;
+        }
+        case MotionCommandSettingTestVOffset::VOffsetSetCmdType::IncValue: {
+            s_logger->debug("IncValue: axis {}, value {}",
+                            v_offset_cmd.set_axis_index,
+                            v_offset_cmd.set_value);
+
+            if (v_offset_cmd.set_axis_index >=
+                s_motion_shared->get_global_v_offsets().size()) {
+                s_logger->error("Invalid axis index: {}",
+                                v_offset_cmd.set_axis_index);
+                break;
+            }
+
+            s_motion_shared->get_global_v_offsets().at(
+                v_offset_cmd.set_axis_index) += v_offset_cmd.set_value;
+            break;
+        }
+        case MotionCommandSettingTestVOffset::VOffsetSetCmdType::ForcedZero: {
+            s_logger->debug("ForcedZero: axis {}, value {}",
+                            v_offset_cmd.set_axis_index,
+                            v_offset_cmd.set_value);
+
+            if (v_offset_cmd.set_axis_index >=
+                s_motion_shared->get_global_v_offsets().size()) {
+                s_logger->error("Invalid axis index: {}",
+                                v_offset_cmd.set_axis_index);
+                break;
+            }
+
+            s_motion_shared->get_global_v_offsets_forced_zero().at(
+                v_offset_cmd.set_axis_index) = (v_offset_cmd.set_value > 0.5);
+
+            break;
+        }
+        default: {
+            s_logger->error("Unsupported VOffsetSetCmdType: {}",
+                            (int)v_offset_cmd.set_cmd_type);
+            accept_cmd_flag = false;
+            break;
+        }
+        }
+
         break;
     }
     default:
@@ -1087,7 +1143,14 @@ void MotionThreadController::_copy_info_cache() {
     info_cache_.curr_cmd_axis_blu = s_motion_shared->get_global_cmd_axis();
     s_motion_shared->get_act_axis(info_cache_.curr_act_axis_blu);
 
-    info_cache_.curr_v_offsets_blu = s_motion_shared->get_global_v_offsets();
+    // info_cache_.curr_v_offsets_blu = s_motion_shared->get_global_v_offsets();
+    for (std::size_t i = 0; i < s_motion_shared->get_global_v_offsets().size();
+         ++i) {
+        info_cache_.curr_v_offsets_blu[i] =
+            (s_motion_shared->get_global_v_offsets_forced_zero().at(i))
+                ? 0
+                : s_motion_shared->get_global_v_offsets()[i];
+    }
 
     info_cache_.sub_line_number = s_motion_shared->get_sub_line_num();
 

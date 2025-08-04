@@ -154,6 +154,12 @@ public:
     inline void set_global_v_offsets(const axis_t &v_offsets) {
         global_v_offsets_ = v_offsets;
     }
+    inline auto& get_global_v_offsets_forced_zero() {
+        return global_v_offsets_forced_zero_;
+    }
+    inline const auto& get_global_v_offsets_forced_zero() const {
+        return global_v_offsets_forced_zero_;
+    }
 
     axis_t get_act_axis() const;
     bool get_act_axis(axis_t &axis) const;
@@ -197,6 +203,8 @@ private:
                              // 简化指令坐标在各级之间传递的逻辑, 防止指令突变
 
     axis_t global_v_offsets_; // 全局共享速度偏置, 用于伺服速度偏置控制
+    std::array<bool, EDM_AXIS_NUM> global_v_offsets_forced_zero_{false}; // 全局共享速度偏置强制为0标志
+    // std::bitset<EDM_AXIS_NUM> global_v_offsets_forced_zero_{0}; // 全局共享速度偏置强制为0标志
 
     int sub_line_num_ {-1}; // 子行号, 用于G01GroupMotionCommand
 

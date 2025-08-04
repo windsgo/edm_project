@@ -56,6 +56,9 @@ SystemSettingPanel::SystemSettingPanel(SharedCoreData *shared_core_data,
     _update_ui();
 
     _do_save(); // set once
+
+    _init_voffset_page_buttons();
+    _init_voffset_page_infosignals();
 }
 
 SystemSettingPanel::~SystemSettingPanel() {
@@ -63,6 +66,282 @@ SystemSettingPanel::~SystemSettingPanel() {
     delete adc_calc_panel_;
 
     delete ui;
+}
+
+void SystemSettingPanel::_init_voffset_page_buttons() {
+
+#define XX_SEND_CMD__(cmd__, desc__)                                      \
+    do {                                                                  \
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd__);   \
+        bool ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd__, 200);  \
+        if (!ret) {                                                       \
+            QMessageBox::critical(this, desc__,                           \
+                                  QString("send ") + desc__ + " failed"); \
+            emit this->shared_core_data_->sig_error_message(              \
+                QString("send ") + desc__ + " failed", 2000);             \
+        } else {                                                          \
+            emit this->shared_core_data_->sig_info_message(               \
+                QString("send ") + desc__ + " success", 2000);            \
+        }                                                                 \
+    } while (0)
+
+#define XX_CONNECT_VOFF_ADD_N__(index__)                                       \
+    do {                                                                       \
+        connect(                                                               \
+            ui->pb_voff_add_##index__, &QPushButton::clicked, this, [this]() { \
+                auto cmd =                                                     \
+                    std::make_shared<move::MotionCommandSettingTestVOffset>(   \
+                        move::MotionCommandSettingTestVOffset::VOffsetSetCmd{  \
+                            index__,                                           \
+                            move::MotionCommandSettingTestVOffset::            \
+                                VOffsetSetCmdType::IncValue,                   \
+                            util::UnitConverter::mm2blu(0.01)});               \
+                XX_SEND_CMD__(cmd, "voff add");                                \
+            });                                                                \
+    } while (0)
+
+#define XX_CONNECT_VOFF_DEC_N__(index__)                                       \
+    do {                                                                       \
+        connect(                                                               \
+            ui->pb_voff_dec_##index__, &QPushButton::clicked, this, [this]() { \
+                auto cmd =                                                     \
+                    std::make_shared<move::MotionCommandSettingTestVOffset>(   \
+                        move::MotionCommandSettingTestVOffset::VOffsetSetCmd{  \
+                            index__,                                           \
+                            move::MotionCommandSettingTestVOffset::            \
+                                VOffsetSetCmdType::IncValue,                   \
+                            -util::UnitConverter::mm2blu(0.01)});              \
+                XX_SEND_CMD__(cmd, "voff dec");                                \
+            });                                                                \
+    } while (0)
+
+#define XX_CONNECT_VOFF_CLEAR_N__(index__)                                    \
+    do {                                                                      \
+        connect(                                                              \
+            ui->pb_voff_clear_##index__, &QPushButton::clicked, this,         \
+            [this]() {                                                        \
+                auto cmd =                                                    \
+                    std::make_shared<move::MotionCommandSettingTestVOffset>(  \
+                        move::MotionCommandSettingTestVOffset::VOffsetSetCmd{ \
+                            index__,                                          \
+                            move::MotionCommandSettingTestVOffset::           \
+                                VOffsetSetCmdType::SetValue,                  \
+                            0});                                              \
+                XX_SEND_CMD__(cmd, "voff clear");                             \
+            });                                                               \
+    } while (0)
+
+#define XX_CONNECT_VOFF_SET_VALUE_N__(index__)                                \
+    do {                                                                      \
+        connect(                                                              \
+            ui->pb_voff_set_value_##index__, &QPushButton::clicked, this,     \
+            [this]() {                                                        \
+                auto value = ui->dsb_set_voff_value_##index__->value();       \
+                auto cmd =                                                    \
+                    std::make_shared<move::MotionCommandSettingTestVOffset>(  \
+                        move::MotionCommandSettingTestVOffset::VOffsetSetCmd{ \
+                            index__,                                          \
+                            move::MotionCommandSettingTestVOffset::           \
+                                VOffsetSetCmdType::SetValue,                  \
+                            util::UnitConverter::mm2blu(value)});             \
+                XX_SEND_CMD__(cmd, "voff set value");                         \
+            });                                                               \
+    } while (0)
+
+#define XX_CONNECT_VOFF_FORCED_ZERO_N__(index__)                              \
+    do {                                                                      \
+        connect(                                                              \
+            ui->pb_voff_forced_zero_##index__, &QPushButton::clicked, this,   \
+            [this](bool checked) {                                            \
+                auto cmd =                                                    \
+                    std::make_shared<move::MotionCommandSettingTestVOffset>(  \
+                        move::MotionCommandSettingTestVOffset::VOffsetSetCmd{ \
+                            index__,                                          \
+                            move::MotionCommandSettingTestVOffset::           \
+                                VOffsetSetCmdType::ForcedZero,                \
+                            checked ? 1.0 : 0.0});                            \
+                XX_SEND_CMD__(cmd, "voff forced zero");                       \
+            });                                                               \
+    } while (0)
+
+    XX_CONNECT_VOFF_ADD_N__(0);
+    XX_CONNECT_VOFF_ADD_N__(1);
+    XX_CONNECT_VOFF_ADD_N__(2);
+    XX_CONNECT_VOFF_ADD_N__(3);
+    XX_CONNECT_VOFF_ADD_N__(4);
+    XX_CONNECT_VOFF_ADD_N__(5);
+
+    XX_CONNECT_VOFF_DEC_N__(0);
+    XX_CONNECT_VOFF_DEC_N__(1);
+    XX_CONNECT_VOFF_DEC_N__(2);
+    XX_CONNECT_VOFF_DEC_N__(3);
+    XX_CONNECT_VOFF_DEC_N__(4);
+    XX_CONNECT_VOFF_DEC_N__(5);
+
+    XX_CONNECT_VOFF_CLEAR_N__(0);
+    XX_CONNECT_VOFF_CLEAR_N__(1);
+    XX_CONNECT_VOFF_CLEAR_N__(2);
+    XX_CONNECT_VOFF_CLEAR_N__(3);
+    XX_CONNECT_VOFF_CLEAR_N__(4);
+    XX_CONNECT_VOFF_CLEAR_N__(5);
+
+    XX_CONNECT_VOFF_SET_VALUE_N__(0);
+    XX_CONNECT_VOFF_SET_VALUE_N__(1);
+    XX_CONNECT_VOFF_SET_VALUE_N__(2);
+    XX_CONNECT_VOFF_SET_VALUE_N__(3);
+    XX_CONNECT_VOFF_SET_VALUE_N__(4);
+    XX_CONNECT_VOFF_SET_VALUE_N__(5);
+
+    XX_CONNECT_VOFF_FORCED_ZERO_N__(0);
+    XX_CONNECT_VOFF_FORCED_ZERO_N__(1);
+    XX_CONNECT_VOFF_FORCED_ZERO_N__(2);
+    XX_CONNECT_VOFF_FORCED_ZERO_N__(3);
+    XX_CONNECT_VOFF_FORCED_ZERO_N__(4);
+    XX_CONNECT_VOFF_FORCED_ZERO_N__(5);
+#if 0
+    connect(ui->pb_voff_add_0, &QPushButton::clicked, this, [this]() {
+        auto cmd = std::make_shared<move::MotionCommandSettingTestVOffset>(
+            move::MotionCommandSettingTestVOffset::VOffsetSetCmd{
+                0,
+                move::MotionCommandSettingTestVOffset::VOffsetSetCmdType::
+                    IncValue,
+                util::UnitConverter::mm2blu(0.01)});
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+
+        bool ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 200);
+
+        if (!ret) {
+            QMessageBox::critical(this, "send voff add failed",
+                                  QString("send voff add failed"));
+            emit this->shared_core_data_->sig_error_message(
+                "send voff add failed", 2000);
+        } else {
+            emit this->shared_core_data_->sig_info_message(
+                "send voff add success", 2000);
+        }
+    });
+
+    connect(ui->pb_voff_dec_0, &QPushButton::clicked, this, [this]() {
+        auto cmd = std::make_shared<move::MotionCommandSettingTestVOffset>(
+            move::MotionCommandSettingTestVOffset::VOffsetSetCmd{
+                0,
+                move::MotionCommandSettingTestVOffset::VOffsetSetCmdType::
+                    IncValue,
+                -util::UnitConverter::mm2blu(0.01)});
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+        bool ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 200);
+
+        if (!ret) {
+            QMessageBox::critical(this, "send voff dec failed",
+                                  QString("send voff dec failed"));
+            emit this->shared_core_data_->sig_error_message(
+                "send voff dec failed", 2000);
+        } else {
+            emit this->shared_core_data_->sig_info_message(
+                "send voff dec success", 2000);
+        }
+    });
+
+    connect(ui->pb_voff_clear_0, &QPushButton::clicked, this, [this]() {
+        auto cmd = std::make_shared<move::MotionCommandSettingTestVOffset>(
+            move::MotionCommandSettingTestVOffset::VOffsetSetCmd{
+                0,
+                move::MotionCommandSettingTestVOffset::VOffsetSetCmdType::
+                    SetValue,
+                0});
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+        bool ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 200);
+
+        if (!ret) {
+            QMessageBox::critical(this, "send voff clear failed",
+                                  QString("send voff clear failed"));
+            emit this->shared_core_data_->sig_error_message(
+                "send voff clear failed", 2000);
+        } else {
+            emit this->shared_core_data_->sig_info_message(
+                "send voff clear success", 2000);
+        }
+    });
+
+    connect(ui->pb_voff_set_value_0, &QPushButton::clicked, this, [this]() {
+        auto value = ui->dsb_set_voff_value_0->value();
+        auto cmd = std::make_shared<move::MotionCommandSettingTestVOffset>(
+            move::MotionCommandSettingTestVOffset::VOffsetSetCmd{
+                0,
+                move::MotionCommandSettingTestVOffset::VOffsetSetCmdType::
+                    SetValue,
+                util::UnitConverter::mm2blu(value)});
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+        bool ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 200);
+
+        if (!ret) {
+            QMessageBox::critical(this, "send voff set value failed",
+                                  QString("send voff set value failed"));
+            emit this->shared_core_data_->sig_error_message(
+                "send voff set value failed", 2000);
+        } else {
+            emit this->shared_core_data_->sig_info_message(
+                "send voff set value success", 2000);
+        }
+    });
+
+    connect(
+        ui->pb_voff_forced_zero_0, &QPushButton::clicked, this,
+        [this](bool checked) {
+            auto cmd = std::make_shared<move::MotionCommandSettingTestVOffset>(
+                move::MotionCommandSettingTestVOffset::VOffsetSetCmd{
+                    0,
+                    move::MotionCommandSettingTestVOffset::VOffsetSetCmdType::
+                        ForcedZero,
+                    checked ? 1.0 : 0.0}); // 强制为0
+
+            shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+            bool ret = task::TaskHelper::WaitforCmdTobeAccepted(cmd, 200);
+
+            if (!ret) {
+                QMessageBox::critical(this, "send voff forced zero failed",
+                                      QString("send voff forced zero failed"));
+                emit this->shared_core_data_->sig_error_message(
+                    "send voff forced zero failed", 2000);
+            } else {
+                emit this->shared_core_data_->sig_info_message(
+                    "send voff forced zero success", 2000);
+            }
+        });
+#endif
+}
+
+void SystemSettingPanel::_init_voffset_page_infosignals() {
+    connect(shared_core_data_->get_info_dispatcher(),
+            &InfoDispatcher::info_updated, this,
+            [this](const move::MotionInfo &info) {
+                if (!this->isVisible()) {
+                    return;
+                }
+
+                const auto &v_offsets = info.curr_v_offsets_blu;
+                ui->lb_current_voff_0->setText(
+                    InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                        util::UnitConverter::blu2mm(v_offsets[0])));
+                ui->lb_current_voff_1->setText(
+                    InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                        util::UnitConverter::blu2mm(v_offsets[1])));
+                ui->lb_current_voff_2->setText(
+                    InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                        util::UnitConverter::blu2mm(v_offsets[2])));
+                ui->lb_current_voff_3->setText(
+                    InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                        util::UnitConverter::blu2mm(v_offsets[3])));
+                ui->lb_current_voff_4->setText(
+                    InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                        util::UnitConverter::blu2mm(v_offsets[4])));
+                ui->lb_current_voff_5->setText(
+                    InputHelper::MMDoubleToExplictlyPosNegFormatedQString(
+                        util::UnitConverter::blu2mm(v_offsets[5])));
+            });
 }
 
 void SystemSettingPanel::_init_button_cb() {

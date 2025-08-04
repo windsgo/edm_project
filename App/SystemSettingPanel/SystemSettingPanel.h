@@ -21,6 +21,10 @@ public:
     explicit SystemSettingPanel(SharedCoreData* shared_core_data, QWidget *parent = nullptr);
     ~SystemSettingPanel();
 
+private: // voffset页面相关
+    void _init_voffset_page_buttons();
+    void _init_voffset_page_infosignals();
+
 private:
     void _init_button_cb();
 

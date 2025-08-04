@@ -412,14 +412,27 @@ private:
 
 class MotionCommandSettingTestVOffset final : public MotionCommandBase {
 public:
-    MotionCommandSettingTestVOffset(const move::axis_t& v_offset)
+    enum class VOffsetSetCmdType {
+        SetValue, // 设置为给定值
+        IncValue, // 增加给定值(可正可负)
+        ForcedZero // 强制设置为0(以屏蔽motion线程内部可能自行进行的偏执修改, 如算法等)
+    };
+
+    struct VOffsetSetCmd {
+        uint32_t set_axis_index{0}; // 轴索引
+        VOffsetSetCmdType set_cmd_type{VOffsetSetCmdType::SetValue}; // 设置命令类型
+        move::unit_t set_value{0}; // 设置值, 在set_cmd_type为SetValue, IncValue时为设定值, 在
+                                   // set_cmd_type为ForcedZero时, 1(强制为0)或0(不强制为0)
+    };
+public:
+    MotionCommandSettingTestVOffset(const struct VOffsetSetCmd& cmd)
         : MotionCommandBase(MotionCommandSetting_TestVOffset),
-          v_offset_(v_offset) {}
+        cmd_(cmd) {}
     ~MotionCommandSettingTestVOffset() noexcept override = default;
 
-    const auto &v_offset() const { return v_offset_; }
+    const auto &cmd() const { return cmd_; }
 private:
-    move::axis_t v_offset_; // 速度偏置, 单位: blu , 具体单位未知, 取决于驱动器
+    struct VOffsetSetCmd cmd_;
 };
 
 // class MotionCommandStartLinearServoMove final

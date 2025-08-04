@@ -202,6 +202,8 @@ void CoordPanel::_update_info(const move::MotionInfo &info) {
     coord_sys_->update_motor_pos(info.curr_cmd_axis_blu,
                                  info.curr_act_axis_blu);
 
+    coord_sys_->update_current_voffsets(info.curr_v_offsets_blu);
+
     update_axis_display();
 }
 
