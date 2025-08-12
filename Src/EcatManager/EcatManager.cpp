@@ -176,6 +176,12 @@ EcatManager::EcatManager(std::string_view ifname, std::size_t iomap_size,
 #endif // EDM_ECAT_DRIVER_IGH
 
     servo_devices_.resize(servo_num_);
+
+    // !print ecat servo types
+    for (std::size_t i = 0; i < servo_num_; ++i) {
+        s_logger->info("servo {} init type: {}", i,
+                       static_cast<int>(s_slave_servo_type_vec[i]));
+    }
 }
 
 EcatManager::~EcatManager() {
