@@ -160,7 +160,7 @@
 #define EDM_OFFLINE_RUN_TYPE_9 \
     9 // 不连接ECAT, 连接CAN(操作中谷IO), 连接ZYNQ(伺服信息)
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_2 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_9 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 
