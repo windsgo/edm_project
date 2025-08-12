@@ -145,8 +145,9 @@ void GCodePanel::_init_autogcode_connections() {
                             task_manager_->autogcode_last_error_str().c_str()),
                         s_statusbar_timeout);
                 } else {
-                    QMessageBox::information(this, "GCode End",
-                                             "GCode Normally Exit.");
+                    // QMessageBox::information(this, "GCode End",
+                    //                          "GCode Normally Exit.");
+                    this->shared_core_data_->send_ioboard_bz_once();
                     emit this->shared_core_data_->sig_info_message(
                         "GCode End, GCode Normally Exit.", s_statusbar_timeout);
                 }

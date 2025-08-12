@@ -81,8 +81,8 @@ ec_pdo_entry_info_t slave_0_pdo_entries_with_v_offset[] = {
 };
 
 ec_pdo_info_t slave_0_pdos_with_v_offset[] = {
-    {0x1600, 5, slave_0_pdo_entries + 0}, /* Receive PDO mapping 1 */
-    {0x1a00, 8, slave_0_pdo_entries + 5}, /* Transmit PDO mapping 1 */
+    {0x1600, 5, slave_0_pdo_entries_with_v_offset + 0}, /* Receive PDO mapping 1 */
+    {0x1a00, 8, slave_0_pdo_entries_with_v_offset + 5}, /* Transmit PDO mapping 1 */
 };
 
 ec_sync_info_t slave_0_syncs_with_v_offset[] = {
@@ -94,13 +94,17 @@ ec_sync_info_t slave_0_syncs_with_v_offset[] = {
 
 static std::vector<ServoType> s_slave_servo_type_vec = {
     ServoType::Panasonic_A5B, // X
+
     ServoType::Panasonic_A5B, // Y
 
     ServoType::Panasonic_A5B, // Z
     // ServoType::Panasonic_A5B_WithVOffset, // Z, 带速度偏置
 
     ServoType::Panasonic_A5B, // B
-    ServoType::Panasonic_A5B, // C
+
+    // ServoType::Panasonic_A5B, // C
+    ServoType::Panasonic_A5B_WithVOffset, // C, 带速度偏置
+
     ServoType::Panasonic_A5B, // A
 };
 
@@ -365,6 +369,7 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
         ec_sync_info_t* sync_info;
         if (s_slave_servo_type_vec[i] ==
             ServoType::Panasonic_A5B_WithVOffset) {
+            s_logger->debug("registrating i={},sync_info = slave_0_syncs_with_v_offset;", i);
             sync_info = slave_0_syncs_with_v_offset;
         } else {
             sync_info = slave_0_syncs;
@@ -406,6 +411,7 @@ bool EcatManager::_connect_ecat_try_once(int expected_slavecount) {
 
         // v_offset (custom)
         if (s_slave_servo_type_vec[i] == ServoType::Panasonic_A5B_WithVOffset) {
+            s_logger->debug("registrating v_offset: i={}", i);
             temp.index = 0x60b1;
             temp.subindex = 0x00;
             temp.offset = &igh_domain_pdo_output_offsets_vec_[i].off_v_offset;

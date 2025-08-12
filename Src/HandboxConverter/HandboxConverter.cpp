@@ -74,10 +74,10 @@ void HandboxConverter::_frame_start_pointmove(const QCanBusFrame &frame) {
 
     uint8_t axis_bits = p_uchar[0];
     uint8_t dir_bits = p_uchar[1];
-    uint8_t speed_level = p_uchar[5]; // 速度档位 0-3
+    uint8_t speed_level = p_uchar[5];       // 速度档位 0-3
     bool touch_detect_enable = !p_uchar[6]; // 1-按住st, 0-不按st
 
-    move::axis_t dir {0.0};
+    move::axis_t dir{0.0};
     for (uint8_t i = 0; i < dir.size(); ++i) {
         if (axis_bits & (1 << i)) {
             if (dir_bits & (1 << i)) {
@@ -96,10 +96,16 @@ void HandboxConverter::_frame_start_pointmove(const QCanBusFrame &frame) {
         speed_level = 3;
     }
 
+    // s_logger->debug(
+    //     "dbx: start pm: axis_bits: {:08B}, dir_bits: {:08B}, speed_level: {}",
+    //     axis_bits, dir_bits, speed_level);
     cb_start_manual_pointmove_(dir, speed_level, touch_detect_enable);
 }
 
-void HandboxConverter::_frame_stop_pointmove() { cb_stop_manual_pointmove_(); }
+void HandboxConverter::_frame_stop_pointmove() {
+    // s_logger->debug("dbx: stop pm");
+    cb_stop_manual_pointmove_();
+}
 
 void HandboxConverter::_frame_pump(const QCanBusFrame &frame) {
     const uint32_t *p_uint32 =
@@ -110,9 +116,9 @@ void HandboxConverter::_frame_pump(const QCanBusFrame &frame) {
 #if 1
     cb_pump_(machineio);
 #else
-#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) \
-    || (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) \
-    || defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
+#if (EDM_POWER_TYPE == EDM_POWER_ZHONGGU_DRILL) || \
+    (EDM_POWER_TYPE == EDM_POWER_ZHONGGU) ||       \
+    defined(EDM_POWER_DIMEN_WITH_EXTRA_ZHONGGU_IO)
     if (machineio == 5) {
         // 开油泵
         cb_pump_on_(true);
