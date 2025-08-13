@@ -242,6 +242,14 @@ private:
     const uint32_t thread_cycle_us_ =
         SystemSettings::instance().get_motion_cycle_us();
 
+public:
+    void set_g01_speed_ratio(double ratio);
+    double get_g01_speed_ratio() const {
+        return g01_speed_ratio_;
+    }
+private:
+    double g01_speed_ratio_{1.0}; // G01速度比率
+
 private:
     // 电子齿轮比 (设定到驱动器用)
     std::array<double, EDM_SERVO_NUM> gear_ratios_;

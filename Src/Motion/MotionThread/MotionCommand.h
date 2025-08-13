@@ -103,6 +103,8 @@ enum MotionCommandType {
 
     MotionCommandSetting_TestVOffset, // 测试速度偏置
 
+    MotionCommandSetting_SetG01SpeedRatio, // 设置G01速度比率
+
     MotionCommand_Max
 };
 
@@ -433,6 +435,19 @@ public:
     const auto &cmd() const { return cmd_; }
 private:
     struct VOffsetSetCmd cmd_;
+};
+
+class MotionCommandSettingSetG01SpeedRatio final : public MotionCommandBase {
+public:
+    MotionCommandSettingSetG01SpeedRatio(
+        double speed_ratio)
+        : MotionCommandBase(MotionCommandSetting_SetG01SpeedRatio),
+          speed_ratio_(speed_ratio) {}
+    ~MotionCommandSettingSetG01SpeedRatio() noexcept override = default;    
+
+    double speed_ratio() const { return speed_ratio_; } 
+private:
+    double speed_ratio_{1.0}; // G01速度比率
 };
 
 // class MotionCommandStartLinearServoMove final

@@ -1,0 +1,11 @@
+i = RS274Interpreter()
+
+i.g54() # Set G54
+i.g90() # G90 mode
+i.f(100) # g00 100 mm/min
+i.g04(0.1) # delay 1 second
+
+i.g91().f(5).g00(x=2, m05=True)
+# i.g00(x=5000, y=5000, touch=True)
+
+i.m02()

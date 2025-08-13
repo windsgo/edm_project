@@ -173,6 +173,7 @@ void G01GroupAutoTask::_state_normal_running() {
 
     // test
     _servo_dis = util::UnitConverter::mm_min2blu_p(start_param_.items.at(index).feedrate);
+    _servo_dis *= s_motion_shared->get_g01_speed_ratio();
 
     traj_list_->run_once(_servo_dis);
 

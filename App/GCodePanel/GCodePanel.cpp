@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <qslider.h>
 
 #include "Logger/LogMacro.h"
 
@@ -107,6 +108,19 @@ void GCodePanel::_init_button_slots() {
                     QMessageBox::critical(this, "Save Error", "Failed to save time report to: " + save_path);
                 }
             });
+    
+
+    connect(ui->verticalSlider_g01speed, &QSlider::valueChanged, this, [this](int value) {
+        double ratio = static_cast<double>(value) / 10.0;
+
+        auto cmd = std::make_shared<move::MotionCommandSettingSetG01SpeedRatio>(ratio);
+
+        shared_core_data_->get_motion_cmd_queue()->push_command(cmd);
+
+        task::TaskHelper::WaitforCmdTobeAccepted(cmd);
+
+        ui->lb_curr_g01speed->setText(QString::fromStdString(EDM_FMT::format("{:+1.1f}", ratio)));
+    });
 }
 
 void GCodePanel::_init_autogcode_connections() {

@@ -1099,6 +1099,21 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
 
         break;
     }
+    case MotionCommandSetting_SetG01SpeedRatio: {
+        s_logger->trace("Handle MotionCmd: Setting_SetG01SpeedRatio");
+
+        auto set_g01_speed_ratio_cmd =
+            std::static_pointer_cast<MotionCommandSettingSetG01SpeedRatio>(cmd);
+
+        s_motion_shared->set_g01_speed_ratio(
+            set_g01_speed_ratio_cmd->speed_ratio());
+
+        s_logger->debug("***** G01 Speed Ratio Set: {}",
+                        set_g01_speed_ratio_cmd->speed_ratio());
+
+        accept_cmd_flag = true;
+        break;
+    }
     default:
         s_logger->warn("Unsupported MotionCommandType: {}", (int)cmd->type());
         cmd->ignore();

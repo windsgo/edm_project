@@ -1445,7 +1445,13 @@ void GCodeRunner::_switch_to_state(State new_state) {
         if (new_state == State::Running) {
             if (curr_gcode_num_ >= 0 && curr_gcode_num_ < gcode_list_.size() &&
                 gcode_list_[curr_gcode_num_]) {
-                return !gcode_list_[curr_gcode_num_]->is_motion_task();
+                
+                auto curr_gcode = gcode_list_[curr_gcode_num_];
+                if (curr_gcode->type() == GCodeTaskType::G01GroupMotionCommand) {
+                    return true;
+                }
+
+                return !curr_gcode->is_motion_task();
             }
         }
 

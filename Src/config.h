@@ -139,7 +139,7 @@
 #define EDM_IOBOARD_NEW_SERVODATA_1MS
 
 // OFFLINE DEFINE
-// #define EDM_OFFLINE_RUN
+#define EDM_OFFLINE_RUN
 
 #define EDM_OFFLINE_RUN_TYPE_1 1 // 完全不连接任何设备, 也不启动实时线程
 #define EDM_OFFLINE_RUN_TYPE_2 2 // 完全不连接任何设备, 但是启动实时线程
@@ -160,7 +160,7 @@
 #define EDM_OFFLINE_RUN_TYPE_9 \
     9 // 不连接ECAT, 连接CAN(操作中谷IO), 连接ZYNQ(伺服信息)
 
-#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_9 //! Choose an OFFLINE type
+#define EDM_OFFLINE_RUN_TYPE EDM_OFFLINE_RUN_TYPE_2 //! Choose an OFFLINE type
 
 #ifdef EDM_OFFLINE_RUN //! OFFLINE DEFINE START
 

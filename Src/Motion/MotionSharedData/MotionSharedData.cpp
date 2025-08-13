@@ -103,6 +103,14 @@ bool MotionSharedData::get_act_axis(axis_t &axis) const {
     return true;
 }
 
+void MotionSharedData::set_g01_speed_ratio(double ratio) {
+    // if (ratio < 0.0) {
+    //     s_logger->error("G01 speed ratio must be no less than 0, set to 0.0");
+    //     ratio = 0.0;
+    // }
+    g01_speed_ratio_ = ratio;
+}
+
 } // namespace move
 
 } // namespace edm
