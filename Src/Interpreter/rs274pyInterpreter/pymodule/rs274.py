@@ -83,12 +83,21 @@ class Points(object):
             self.__coords : list = [None, None, None, None, None, None]
             self.__line_number : int = line_number
             self.__code_str : str = code_str
+            self.__feedrate : int = 1
         
         def set_point(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> None:
             self.__coords = [x, y, z, b, c, a]
             for value in self.__coords:
                 if ((value is not None) and (not isinstance(value, (int, float)))):
                     raise InterpreterException(f"Point value type invalid: {type(value)} ")
+        
+        def set_feedrate(self, speed: int) -> None:
+            if (not isinstance(speed, int)):
+                raise InterpreterException(f"set_feedrate type invalid: {type(speed)} ")
+            self.__feedrate = speed
+        
+        def get_feedrate(self) -> int:
+            return self.__feedrate
         
         def get_point(self) -> list:
             return self.__coords
@@ -105,6 +114,7 @@ class Points(object):
     def __init__(self) -> None:
         self.__points : list[Points._Point] = []
         self.__current_coordinate_mode = CoordinateMode.Undefined
+        self.__feedrate = 1
         
     def _check_environment(self) -> None:
         if (self.__current_coordinate_mode == CoordinateMode.Undefined):
@@ -118,11 +128,24 @@ class Points(object):
         self.__current_coordinate_mode = CoordinateMode.IncrementMode
         return self
     
-    def push(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None) -> Points:
+    def f(self, speed : int) -> Points:
+        if (not isinstance(speed, int)):
+            raise InterpreterException(f"Feed Speed Type Not Valid: {type(speed)} " + _get_stackmessage())
+        
+        if (speed <= 0):
+            raise InterpreterException(f"Feed Speed Value ({speed}) Out of Range " + _get_stackmessage())
+        
+        self.__feedrate = speed
+    
+    def push(self, x: float = None, y: float = None, z: float = None, b: float = None, c: float = None, a: float = None, f: int = None) -> Points:
         self._check_environment()
         point = self._Point(self.__current_coordinate_mode, _get_caller_linenumber(), _get_caller_code())
         try:
             point.set_point(x, y, z, b, c, a)
+            if (f is not None):
+                point.set_feedrate(f)
+            else:
+                point.set_feedrate(self.__feedrate)
         except Exception as e:
             raise InterpreterException(e.__str__() + _get_stackmessage())
         
@@ -542,7 +565,8 @@ class RS274Interpreter(object):
                 CommandDictKey.CoordinateMode.name: p.get_coordinate_mode().name,
                 CommandDictKey.Coordinates.name: p.get_point(),
                 CommandDictKey.LineNumber.name: p.get_line_number(),
-                CommandDictKey.CommandStr.name: p.get_code_str()
+                CommandDictKey.CommandStr.name: p.get_code_str(),
+                CommandDictKey.FeedSpeed.name: p.get_feedrate()
             })
         
         return ret

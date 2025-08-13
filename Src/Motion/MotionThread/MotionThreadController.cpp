@@ -745,6 +745,10 @@ void MotionThreadController::_fetch_command_and_handle_and_copy_info_cache() {
         auto ret = motion_state_machine_->start_auto_g00(
             g00_cmd->speed_param(), g00_cmd->end_pos(),
             g00_cmd->touch_detect_enable());
+        
+        if (!ret) {
+            s_logger->warn("motion: start auto g00 failed");
+        }
 
         accept_cmd_flag = ret;
 

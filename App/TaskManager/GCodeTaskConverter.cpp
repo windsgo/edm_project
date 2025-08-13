@@ -354,6 +354,9 @@ _make_g01_group(const json::object &jo) {
                 point.cmd_values[i] = coords[i].as_double();
             }
         }
+
+        point.feedrate = item_jo.at("FeedSpeed").as_integer();
+        
         point_vec.push_back(point);
     }
 

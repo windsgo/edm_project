@@ -223,6 +223,7 @@ struct DrillStartParams {
 struct G01GroupItem {
     move::axis_t incs;
     int line{-1};
+    int feedrate{1};
 };
 
 struct G01GroupStartParam {

@@ -5,6 +5,7 @@
 #include "Logger/LogMacro.h"
 #include "Motion/MotionUtils/MotionUtils.h"
 #include "Motion/Trajectory/TrajectoryList.h"
+#include "Utils/UnitConverter/UnitConverter.h"
 #include <cassert>
 EDM_STATIC_LOGGER_NAME(s_logger, "motion");
 
@@ -74,6 +75,8 @@ void G01GroupAutoTask::_state_changeto(G01GroupAutoTask::State new_s) {
 }
 
 void G01GroupAutoTask::_mach_on(bool enable) {
+    return; // test
+
     cbs_.cb_mach_on(enable);
     cbs_.cb_enable_voltage_gate(enable);
 
@@ -167,6 +170,9 @@ void G01GroupAutoTask::_state_normal_running() {
 
     double _servo_dis = util::UnitConverter::mm_min2blu_p(
         s_motion_shared->cached_udp_message().servo_calced_speed_mm_min);
+
+    // test
+    _servo_dis = util::UnitConverter::mm_min2blu_p(start_param_.items.at(index).feedrate);
 
     traj_list_->run_once(_servo_dis);
 

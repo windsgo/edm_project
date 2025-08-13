@@ -514,6 +514,8 @@ void GCodeRunner::_check_to_next_gcode() {
     }
 
     _switch_to_state(State::CurrentNodeIniting);
+
+    QTimer::singleShot(50, [this](){_run_once();});
 }
 
 void GCodeRunner::_reset_state() {
@@ -744,7 +746,7 @@ void GCodeRunner::_state_current_node_initing() {
         shared_core_data_->get_motion_cmd_queue()->push_command(g00_cmd);
 
         // 等待命令被接收
-        if (!TaskHelper::WaitforCmdTobeAccepted(g00_cmd, 1000)) {
+        if (!TaskHelper::WaitforCmdTobeAccepted(g00_cmd)) {
             _abort("abort: start g00 failed, cmd not accepted by motion or "
                    "timeout");
             break;
@@ -1057,6 +1059,8 @@ void GCodeRunner::_state_current_node_initing() {
                 return;
             }
 
+            item.feedrate = point.feedrate;
+
             start_param.items.push_back(item);
             mach_start_pos = mach_target_pos;
         }
@@ -1067,7 +1071,7 @@ void GCodeRunner::_state_current_node_initing() {
         shared_core_data_->get_motion_cmd_queue()->push_command(g01group_cmd);
 
         // 等待命令被接收
-        if (!TaskHelper::WaitforCmdTobeAccepted(g01group_cmd, 1000)) {
+        if (!TaskHelper::WaitforCmdTobeAccepted(g01group_cmd)) {
             _abort(
                 "abort: start g01 group failed, cmd not accepted by motion or "
                 "timeout");

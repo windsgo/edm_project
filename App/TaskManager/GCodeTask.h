@@ -209,6 +209,7 @@ public:
         std::vector<std::optional<double>> cmd_values;
         GCodeCoordinateMode coord_mode{GCodeCoordinateMode::Undefined};
         int line_number{-1};
+        int feedrate{1};
     };
 
 public:
