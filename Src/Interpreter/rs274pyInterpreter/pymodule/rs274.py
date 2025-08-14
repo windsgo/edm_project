@@ -347,6 +347,12 @@ class RS274Interpreter(object):
         return self._command_set_coordinate_index(55)
     def g56(self) -> RS274Interpreter:
         return self._command_set_coordinate_index(56)
+    def g57(self) -> RS274Interpreter:
+        return self._command_set_coordinate_index(57)
+    def g58(self) -> RS274Interpreter:
+        return self._command_set_coordinate_index(58)
+    def g59(self) -> RS274Interpreter:
+        return self._command_set_coordinate_index(59)
     def set_coord(self, index: int) -> RS274Interpreter:
         return self._command_set_coordinate_index(index)
     # TODO 其他坐标系指定
